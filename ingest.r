@@ -1,8 +1,12 @@
 ingest {
-    writeLine("stdout", "Start ingest");
+    writeLine("stdout", "Start ingesting " ++ *srcColl ++ " to " ++ *dstColl);
 
-    msiDataObjCopy(*objPath,*objPath ++ "copy","forceFlag=",*Status); 
+    msiCollRsync(*srcColl, *dstColl, "nfsResc", "IRODS_TO_IRODS", *Status);
+
+    msiRmColl(*srcColl, "forceFlag=", *Status);
+
+    writeLine("stdout", "Finished ingesting");
 }
 
-INPUT *objPath="/ritZone/home/rods/testdir/foo.txt"
+INPUT *srcColl="", *dstColl=""
 OUTPUT ruleExecOut

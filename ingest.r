@@ -1,11 +1,17 @@
 ingest {
     writeLine("stdout", "Start ingesting " ++ *srcColl ++ " to " ++ *dstColl);
 
-    msiCollRsync(*srcColl, *dstColl, "nfsResc", "IRODS_TO_IRODS", *Status);
+    *err=errorcode(msiObjStat(*srcColl,*out));
+    if ( *err==0 ) {
+        writeLine("stdout", "Source does not exist");
+    } else {
 
-    msiRmColl(*srcColl, "forceFlag=", *Status);
+        msiCollRsync(*srcColl, *dstColl, "nfsResc", "IRODS_TO_IRODS", *Status);
 
-    writeLine("stdout", "Finished ingesting");
+        msiRmColl(*srcColl, "forceFlag=", *Status);
+
+        writeLine("stdout", "Finished ingesting");
+    }
 }
 
 INPUT *srcColl="", *dstColl=""

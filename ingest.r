@@ -26,7 +26,10 @@ ingest {
          *machine = "machineless";
     }
 
-    *dstColl = /ritZone/m4i-nanoscopy/*project/*machine;
+    msiGetIcatTime(*dateTime, "unix");
+    *dateUser = *dateTime ++ "_" ++ $userNameClient;
+
+    *dstColl = /ritZone/m4i-nanoscopy/*project/*machine/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");

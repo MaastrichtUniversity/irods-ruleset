@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*machine='bar'"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*machine='bar'" "*existingDir=''"
 
 createIngest {
     *tokenColl = /ritZone/ingest/*token;
@@ -19,11 +19,17 @@ createIngest {
     msiAddKeyVal(*metaKV, "machine", *machine);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
-    msiExecCmd("enable-ingest-zone.sh", *user ++ " /mnt/ingest/" ++ *token, "null", "null", "null", *status);
-    msiPhyPathReg(*tokenColl, "nfsResc", /mnt/ingest/*token, "mountPoint", *status);
+    if ( *existingDir != "" ) {
+        *phyDir = *existingDir
+    } else {
+        *phyDir = "/mnt/ingest/" ++ *token
+        msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
+    }
+
+    msiPhyPathReg(*tokenColl, "nfsResc", *phyDir, "mountPoint", *status);
 
     msiSetACL("default", "own", *user, *tokenColl)
 }
 
-INPUT *user="",*token="",*machine="",*project=""
+INPUT *user="",*token="",*machine="",*project="",*existingDir=""
 OUTPUT ruleExecOut

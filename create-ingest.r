@@ -5,7 +5,7 @@
 # irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*machine='bar'" "*existingDir=''"
 
 createIngest {
-    *tokenColl = /ritZone/ingest/*token;
+    *tokenColl = /ritZone/ingestZone/*token;
 
     *code = errorcode(msiCollCreate(*tokenColl, 0, *status));
 
@@ -22,11 +22,11 @@ createIngest {
     if ( *existingDir != "" ) {
         *phyDir = *existingDir
     } else {
-        *phyDir = "/mnt/ingest/" ++ *token
+        *phyDir = "/mnt/ingestZone/" ++ *token
         msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
     }
 
-    msiPhyPathReg(*tokenColl, "nfsResc", *phyDir, "mountPoint", *status);
+    msiPhyPathReg(*tokenColl, "demoResc", *phyDir, "mountPoint", *status);
 
     msiSetACL("default", "own", *user, *tokenColl)
 }

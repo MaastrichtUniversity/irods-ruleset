@@ -3,7 +3,7 @@
 # irule -F ingest.r "*token='creepy-click'"
 
 ingest {
-    *srcColl = /ritZone/ingest/*token;
+    *srcColl = /ritZone/ingestZone/*token;
 
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
         failmsg(-814000, "Unknown token");
@@ -29,7 +29,7 @@ ingest {
     msiGetIcatTime(*dateTime, "unix");
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
-    *dstColl = /ritZone/m4i-nanoscopy/*project/*machine/*dateUser;
+    *dstColl = /ritZone/archive/*project/*machine/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
@@ -37,7 +37,7 @@ ingest {
     msiWriteRodsLog("Ingesting *srcColl to *dstColl", *status);
 
     delay("<PLUSET>1s</PLUSET>") {
-         msiCollRsync(*srcColl, *dstColl, "nfsResc", "IRODS_TO_IRODS", *status);
+         msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
     
          # TODO: Handle errors
          *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
@@ -47,7 +47,7 @@ ingest {
 
          delay("<PLUSET>1m</PLUSET>") {
               msiRmColl(*srcColl, "forceFlag=", *OUT);
-              msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/" ++ *token, "null", "null", "null", *OUT);
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/ingestZone/" ++ *token, "null", "null", "null", *OUT);
          }
      }
 }

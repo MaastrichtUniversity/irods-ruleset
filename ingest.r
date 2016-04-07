@@ -29,7 +29,7 @@ ingest {
     msiGetIcatTime(*dateTime, "unix");
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
-    *dstColl = /ritZone/archive/*project/*department/*dateUser;
+    *dstColl = /ritZone/demo_ingest/*project/*department/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");

@@ -16,7 +16,7 @@ createIngest {
     }
 
     msiAddKeyVal(*metaKV, "project", *project);
-    msiAddKeyVal(*metaKV, "machine", *department);
+    msiAddKeyVal(*metaKV, "department", *department);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
     if ( *existingDir != "" ) {
@@ -31,5 +31,5 @@ createIngest {
     msiSetACL("default", "own", *user, *tokenColl)
 }
 
-INPUT *user="",*token="",*machine="",*project="",*existingDir=""
+INPUT *user="",*token="",*department="",*project="",*existingDir=""
 OUTPUT ruleExecOut

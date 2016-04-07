@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*machine='bar'" "*existingDir=''"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*department='bar'" "*existingDir=''"
 
 createIngest {
     *tokenColl = /ritZone/ingestZone/*token;
@@ -16,7 +16,7 @@ createIngest {
     }
 
     msiAddKeyVal(*metaKV, "project", *project);
-    msiAddKeyVal(*metaKV, "machine", *machine);
+    msiAddKeyVal(*metaKV, "machine", *department);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
     if ( *existingDir != "" ) {

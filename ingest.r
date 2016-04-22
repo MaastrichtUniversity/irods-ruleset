@@ -19,6 +19,16 @@ ingest {
          }
     }
 
+    *resource = "";
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/ritZone/demo_ingest/*project") {
+         if ( *av.META_COLL_ATTR_NAME == "resource" ) {
+             *resource = *av.META_COLL_ATTR_VALUE;
+         }
+    }
+
+    if ( *resource == "") {
+         failmsg(-1, "resource is empty!");
+    }
     if ( *project == "" ) {
          *project = "no-project";
     }
@@ -34,10 +44,10 @@ ingest {
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-    msiWriteRodsLog("Ingesting *srcColl to *dstColl", *status);
+    msiWriteRodsLog("Ingesting *srcColl to *dstColl with resource: *resource", *status);
 
     delay("<PLUSET>1s</PLUSET>") {
-         msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
+         msiCollRsync(*srcColl, *dstColl, *resource, "IRODS_TO_IRODS", *status);
     
          # TODO: Handle errors
          *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));

@@ -20,7 +20,7 @@ ingest {
     }
 
     *resource = "";
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/ritZone/demo_ingest/*project") {
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/ritZone/projects/*project") {
          if ( *av.META_COLL_ATTR_NAME == "resource" ) {
              *resource = *av.META_COLL_ATTR_VALUE;
          }
@@ -39,7 +39,7 @@ ingest {
     msiGetIcatTime(*dateTime, "unix");
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
-    *dstColl = /ritZone/demo_ingest/*project/*department/*dateUser;
+    *dstColl = /ritZone/projects/*project/*department/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");

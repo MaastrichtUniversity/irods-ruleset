@@ -5,7 +5,7 @@
 # irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*department='bar'" "*existingDir=''"
 
 createIngest {
-    *tokenColl = /ritZone/ingestZone/*token;
+    *tokenColl = /nlmumc/ingestZone/*token;
 
     *code = errorcode(msiCollCreate(*tokenColl, 0, *status));
 

@@ -3,7 +3,7 @@
 # irule -F ingest.r "*token='creepy-click'"
 
 ingest {
-    *srcColl = /ritZone/ingestZone/*token;
+    *srcColl = /nlmumc/ingestZone/*token;
 
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
         failmsg(-814000, "Unknown token");
@@ -20,7 +20,7 @@ ingest {
     }
 
     *resource = "";
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/ritZone/projects/*project") {
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
          if ( *av.META_COLL_ATTR_NAME == "resource" ) {
              *resource = *av.META_COLL_ATTR_VALUE;
          }
@@ -39,7 +39,7 @@ ingest {
     msiGetIcatTime(*dateTime, "unix");
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
-    *dstColl = /ritZone/projects/*project/*department/*dateUser;
+    *dstColl = /nlmumc/projects/*project/*department/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");

@@ -39,7 +39,8 @@ ingest {
     msiGetIcatTime(*dateTime, "unix");
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
-    *dstColl = /nlmumc/projects/*project/*department/*dateUser;
+    # TODO: Do something with department
+    *dstColl = /nlmumc/projects/*project/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");

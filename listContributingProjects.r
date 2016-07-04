@@ -1,8 +1,8 @@
 # Call with
 #
-# irule -F list-projects.r
+# irule -F listContributingProjects.r
 
-listProjects {
+listContributingProjects {
     *json_str = '[]';
     *size = 0;
 
@@ -13,7 +13,6 @@ listProjects {
 
     writeLine("stdout", *json_str);
 }
-
 
 INPUT *token=""
 OUTPUT ruleExecOut

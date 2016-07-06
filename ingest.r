@@ -6,17 +6,21 @@ ingest {
     *srcColl = /nlmumc/ingestZone/*token;
 
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
-        failmsg(-814000, "Unknown token");
+        failmsg(-814000, "Unknown ingest zone *token");
     }
 
-    *project = ""; *department = "";
+    *project = ""; *title = "";
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
          if ( *av.META_COLL_ATTR_NAME == "project" ) {
              *project = *av.META_COLL_ATTR_VALUE;
          }
-         if ( *av.META_COLL_ATTR_NAME == "department" ) {
-             *department = *av.META_COLL_ATTR_VALUE;
+         if ( *av.META_COLL_ATTR_NAME == "title" ) {
+             *title = *av.META_COLL_ATTR_VALUE;
          }
+    }
+
+    if ( *project == "" ) {
+             failmsg(-1, "project is empty!");
     }
 
     *resource = "";
@@ -29,23 +33,16 @@ ingest {
     if ( *resource == "") {
          failmsg(-1, "resource is empty!");
     }
-    if ( *project == "" ) {
-         *project = "no-project";
-    }
-    if ( *department == "" ) {
-         *department = "no-department";
-    }
 
     msiGetIcatTime(*dateTime, "unix");
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
-    # TODO: Do something with department
     *dstColl = /nlmumc/projects/*project/*dateUser;
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-    msiWriteRodsLog("Ingesting *srcColl to *dstColl with resource: *resource", *status);
+    msiWriteRodsLog("Ingesting *srcColl to *dstColl on resource: *resource", *status);
 
     delay("<PLUSET>1s</PLUSET>") {
          msiCollRsync(*srcColl, *dstColl, *resource, "IRODS_TO_IRODS", *status);

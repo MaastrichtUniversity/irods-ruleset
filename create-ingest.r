@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*department='bar'" "*existingDir=''"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*title='bar'" "*existingDir=''"
 
 createIngest {
     *tokenColl = /nlmumc/ingestZone/*token;
@@ -16,7 +16,7 @@ createIngest {
     }
 
     msiAddKeyVal(*metaKV, "project", *project);
-    msiAddKeyVal(*metaKV, "department", *department);
+    msiAddKeyVal(*metaKV, "title", *title);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
     if ( *existingDir != "" ) {
@@ -31,5 +31,5 @@ createIngest {
     msiSetACL("default", "own", *user, *tokenColl)
 }
 
-INPUT *user="",*token="",*department="",*project="",*existingDir=""
+INPUT *user="",*token="",*project="",*existingDir=""
 OUTPUT ruleExecOut

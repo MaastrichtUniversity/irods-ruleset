@@ -34,10 +34,7 @@ ingest {
          failmsg(-1, "resource is empty!");
     }
 
-    msiGetIcatTime(*dateTime, "unix");
-    *dateUser = *dateTime ++ "_" ++ $userNameClient;
-
-    *dstColl = /nlmumc/projects/*project/*dateUser;
+    createProjectCollection(*project, *dstColl);
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");

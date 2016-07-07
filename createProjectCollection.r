@@ -8,8 +8,11 @@ irule_dummy() {
     writeLine("stdout", *result);
 }
 
+
+# Creates collections in this form 20160707_0802_p.vanschayck
 IRULE_createProjectCollection(*project, *dstColl) {
-    msiGetIcatTime(*dateTime, "unix");
+    msiGetFormattedSystemTime(*dateTime, "human", "%d%02d%02d_%02d%02d");
+
     *dateUser = *dateTime ++ "_" ++ $userNameClient;
 
     *dstColl = /nlmumc/projects/*project/*dateUser;

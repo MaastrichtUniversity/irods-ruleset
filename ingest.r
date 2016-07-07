@@ -23,30 +23,19 @@ ingest {
         failmsg(-1, "project is empty!");
     }
 
-    *resource = "";
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
-        if ( *av.META_COLL_ATTR_NAME == "resource" ) {
-        *resource = *av.META_COLL_ATTR_VALUE;
-        }
-    }
-
-    if ( *resource == "") {
-        failmsg(-1, "resource is empty!");
-    }
-
     createProjectCollection(*project, *dstColl);
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-    msiWriteRodsLog("Ingesting *srcColl to *dstColl on resource: *resource", *status);
+    msiWriteRodsLog("Ingesting *srcColl to *dstColl", *status);
 
     delay("<PLUSET>1s</PLUSET>") {
-        msiCollRsync(*srcColl, *dstColl, *resource, "IRODS_TO_IRODS", *status);
+        # TODO: Handle errors
+        msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
 
         # Close collection by making all access read only
         closeProjectCollection(*dstColl);
-
 
         # TODO: Handle errors
         *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));

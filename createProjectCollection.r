@@ -10,12 +10,12 @@ irule_dummy() {
 
 
 # Creates collections in this form 20160707_0802_p.vanschayck
-IRULE_createProjectCollection(*project, *dstColl) {
+IRULE_createProjectCollection(*project, *projectCollection) {
     msiGetFormattedSystemTime(*dateTime, "human", "%d%02d%02d_%02d%02d");
 
-    *dateUser = *dateTime ++ "_" ++ $userNameClient;
+    *projectCollection = *dateTime ++ "_" ++ $userNameClient;
 
-    *dstColl = /nlmumc/projects/*project/*dateUser;
+    *dstColl = /nlmumc/projects/*project/*projectCollection;
 
     msiCollCreate(*dstColl, 0, *status);
 }

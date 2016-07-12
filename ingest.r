@@ -23,7 +23,8 @@ ingest {
         failmsg(-1, "project is empty!");
     }
 
-    createProjectCollection(*project, *dstColl);
+    createProjectCollection(*project, *projectCollection);
+    *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
     msiAddKeyVal(*metaKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
@@ -35,7 +36,10 @@ ingest {
         msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
 
         # Close collection by making all access read only
-        closeProjectCollection(*dstColl);
+        closeProjectCollection(*project, *projectCollection);
+
+        # Send metadata
+        sendMetadata(*project, *projectCollection);
 
         # TODO: Handle errors
         *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));

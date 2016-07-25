@@ -23,23 +23,48 @@ ingest {
         failmsg(-1, "project is empty!");
     }
 
-    createProjectCollection(*project, *projectCollection);
-    *dstColl = "/nlmumc/projects/*project/*projectCollection";
-
-    msiAddKeyVal(*metaKV, "state", "ingesting");
+    msiAddKeyVal(*metaKV, "state", "validating");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-    msiWriteRodsLog("Ingesting *srcColl to *dstColl", *status);
+    msiWriteRodsLog("Starting validation of *srcColl", 0);
 
-    delay("<PLUSET>1s</PLUSET>") {
+    # Send metadata
+    # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
+    sendMetadataFromIngest(*token);
+
+    delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
+
+        *validateState = "";
+        foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
+            if ( *av.META_COLL_ATTR_NAME == "validateState" ) {
+                *validateState = *av.META_COLL_ATTR_VALUE;
+            }
+        }
+
+        if ( *validateState == "incorrect" ) {
+            msiAddKeyVal(*metaKV, "state", "incorrect");
+            msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+            failmsg(0, "Metadata is incorrect");
+        }
+
+        if ( *validateState != "validated" ) {
+            failmsg(-1, "Metadata not validated yet");
+        }
+
+        createProjectCollection(*project, *projectCollection);
+        *dstColl = "/nlmumc/projects/*project/*projectCollection";
+
+        msiAddKeyVal(*metaKV, "state", "ingesting");
+        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+        msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
+
         # TODO: Handle errors
         msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
 
         # Close collection by making all access read only
         closeProjectCollection(*project, *projectCollection);
 
-        # Send metadata
-        sendMetadata(*project, *projectCollection);
+        msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
         # TODO: Handle errors
         *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));

@@ -3,80 +3,82 @@
 # irule -F ingest.r "*token='creepy-click'"
 
 ingest {
-    *srcColl = /nlmumc/ingestZone/*token;
+    remote("ires","") {
+		*srcColl = /nlmumc/ingest/zones/*token;
 
-    if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
-        failmsg(-814000, "Unknown ingest zone *token");
-    }
+		if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
+			failmsg(-814000, "Unknown ingest zone *token");
+		}
 
-    *project = ""; *title = "";
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
-        if ( *av.META_COLL_ATTR_NAME == "project" ) {
-            *project = *av.META_COLL_ATTR_VALUE;
-        }
-        if ( *av.META_COLL_ATTR_NAME == "title" ) {
-            *title = *av.META_COLL_ATTR_VALUE;
-        }
-    }
+		*project = ""; *title = "";
+		foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
+			if ( *av.META_COLL_ATTR_NAME == "project" ) {
+				*project = *av.META_COLL_ATTR_VALUE;
+			}
+			if ( *av.META_COLL_ATTR_NAME == "title" ) {
+				*title = *av.META_COLL_ATTR_VALUE;
+			}
+		}
 
-    if ( *project == "" ) {
-        failmsg(-1, "project is empty!");
-    }
+		if ( *project == "" ) {
+			failmsg(-1, "project is empty!");
+		}
 
-    msiAddKeyVal(*metaKV, "state", "validating");
-    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+		msiAddKeyVal(*metaKV, "state", "validating");
+		msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-    msiWriteRodsLog("Starting validation of *srcColl", 0);
+		msiWriteRodsLog("Starting validation of *srcColl", 0);
 
-    # Send metadata
-    # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
-    sendMetadataFromIngest(*token);
+		# Send metadata
+		# TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
+		sendMetadataFromIngest(*token);
 
-    delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
+		delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
 
-        *validateState = "";
-        foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
-            if ( *av.META_COLL_ATTR_NAME == "validateState" ) {
-                *validateState = *av.META_COLL_ATTR_VALUE;
-            }
-        }
+			*validateState = "";
+			foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
+				if ( *av.META_COLL_ATTR_NAME == "validateState" ) {
+					*validateState = *av.META_COLL_ATTR_VALUE;
+				}
+			}
 
-        if ( *validateState == "incorrect" ) {
-            msiAddKeyVal(*metaKV, "state", "incorrect");
-            msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-            failmsg(0, "Metadata is incorrect");
-        }
+			if ( *validateState == "incorrect" ) {
+				msiAddKeyVal(*metaKV, "state", "incorrect");
+				msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+				failmsg(0, "Metadata is incorrect");
+			}
 
-        if ( *validateState != "validated" ) {
-            failmsg(-1, "Metadata not validated yet");
-        }
+			if ( *validateState != "validated" ) {
+				failmsg(-1, "Metadata not validated yet");
+			}
 
-        createProjectCollection(*project, *projectCollection);
-        *dstColl = "/nlmumc/projects/*project/*projectCollection";
+			createProjectCollection(*project, *projectCollection);
+			*dstColl = "/nlmumc/projects/*project/*projectCollection";
 
-        msiAddKeyVal(*metaKV, "state", "ingesting");
-        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-        msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
+			msiAddKeyVal(*metaKV, "state", "ingesting");
+			msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+			msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
-        # TODO: Handle errors
-        msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
+			# TODO: Handle errors
+			msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status);
 
-        # Close collection by making all access read only
-        closeProjectCollection(*project, *projectCollection);
+			# Close collection by making all access read only
+			closeProjectCollection(*project, *projectCollection);
 
-        msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
+			msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
-        # TODO: Handle errors
-        *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+			# TODO: Handle errors
+			*code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
 
-        msiAddKeyVal(*metaKV, "state", "ingested");
-        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+			msiAddKeyVal(*metaKV, "state", "ingested");
+			msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-        delay("<PLUSET>1m</PLUSET>") {
-            msiRmColl(*srcColl, "forceFlag=", *OUT);
-            msiExecCmd("disable-ingest-zone.sh", "/mnt/ingestZone/" ++ *token, "null", "null", "null", *OUT);
-        }
-     }
+			delay("<PLUSET>1m</PLUSET>") {
+				msiRmColl(*srcColl, "forceFlag=", *OUT);
+				msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+			}
+		 }
+	}
 }
 
 INPUT *token=""

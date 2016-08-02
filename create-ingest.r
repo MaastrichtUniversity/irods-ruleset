@@ -2,10 +2,10 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*title='bar'" "*existingDir=''"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*title='bar'" "*existingDir=''" "*resourceServer='ires'" "*targetResource='iresResource'"
 
 createIngest {
-    remote("ires","") {
+    remote(*resourceServer,"") {
 		*tokenColl = /nlmumc/ingest/zones/*token;
 
 		*code = errorcode(msiCollCreate(*tokenColl, 0, *status));
@@ -28,12 +28,12 @@ createIngest {
 		}
 
 #		msiPhyPathReg(*tokenColl, "demoResc", *phyDir, "mountPoint", *status);
-		msiPhyPathReg(*tokenColl, "iresResource", *phyDir, "mountPoint", *status);
+		msiPhyPathReg(*tokenColl, *targetResource, *phyDir, "mountPoint", *status);
 
 		# Set the ACL's on the iRODS collection
 		msiSetACL("default", "own", *user, *tokenColl)
 	}
 }
 
-INPUT *user="",*token="",*project="",*existingDir=""
+INPUT *user="",*token="",*existingDir="",*project="",*resourceServer="",*targetResource=""
 OUTPUT ruleExecOut

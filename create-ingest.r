@@ -30,6 +30,7 @@ createIngest {
 #		msiPhyPathReg(*tokenColl, "demoResc", *phyDir, "mountPoint", *status);
 		msiPhyPathReg(*tokenColl, "iresResource", *phyDir, "mountPoint", *status);
 
+		# Set the ACL's on the iRODS collection
 		msiSetACL("default", "own", *user, *tokenColl)
 	}
 }

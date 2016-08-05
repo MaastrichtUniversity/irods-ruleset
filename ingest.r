@@ -63,7 +63,7 @@ ingest {
 		msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
 		# TODO: Handle errors
-		msiCollRsync(*srcColl, *dstColl, "demoResc", "IRODS_TO_IRODS", *status); # No need to specify resource here, since policy ensures that data is moved to proper resource
+		msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status); # Do not specify target resource here! Policy ensures that data is moved to proper resource and if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
 		
 
 		# Close collection by making all access read only

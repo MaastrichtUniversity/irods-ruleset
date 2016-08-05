@@ -21,6 +21,6 @@ acSetRescSchemeForCreate {
 
         msiSetDefaultResc(*resource, "forced");
     } else {
-        msiSetDefaultResc("demoResc","null");
+        msiSetDefaultResc("rootResc","null");
     }
 }

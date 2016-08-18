@@ -20,19 +20,19 @@
 # \param[in]  leftToRight true if we should chop from the left side
 #
 uuChop(*string, *head, *tail, *splitChar, *leftToRight) {
-	if (*string like "**splitChar*") {
-		if (*leftToRight) {
-			*tail =  triml(*string, *splitChar);
-			*head = substr(*string, 0, strlen(*string) - strlen(*tail) - 1);
-		} else {
-			*head =  trimr(*string, *splitChar);
-			*tail = substr(*string, strlen(*head) + 1, strlen(*string));
-		}
-	} else {
-		# No *splitChar in *string.
-		*head = if *leftToRight then ""      else *string;
-		*tail = if *leftToRight then *string else "";
-	}
+    if (*string like "**splitChar*") {
+        if (*leftToRight) {
+            *tail =  triml(*string, *splitChar);
+            *head = substr(*string, 0, strlen(*string) - strlen(*tail) - 1);
+        } else {
+            *head =  trimr(*string, *splitChar);
+            *tail = substr(*string, strlen(*head) + 1, strlen(*string));
+        }
+    } else {
+        # No *splitChar in *string.
+        *head = if *leftToRight then ""      else *string;
+        *tail = if *leftToRight then *string else "";
+    }
 }
 
 # \brief Split a file name into a base name and a file extension.
@@ -42,7 +42,7 @@ uuChop(*string, *head, *tail, *splitChar, *leftToRight) {
 # \param[out] extension
 #
 uuChopFileExtension(*fileName, *baseName, *extension) {
-	uuChop(*fileName, *baseName, *extension, ".", false);
+    uuChop(*fileName, *baseName, *extension, ".", false);
 }
 
 # \brief Split a path into a base name and a path.
@@ -52,13 +52,13 @@ uuChopFileExtension(*fileName, *baseName, *extension) {
 # \param[out] baseName
 #
 uuChopPath(*path, *parent, *baseName) {
-	if (*path like regex "^/[^/]*$") {
-		# *path is "/" or a top level directory.
-		*baseName = if strlen(*path) > 1 then substr(*path, 1, strlen(*path)) else "/";
-		*parent   = "/";
-	} else {
-		uuChop(*path, *parent, *baseName, "/", false);
-	}
+    if (*path like regex "^/[^/]*$") {
+        # *path is "/" or a top level directory.
+        *baseName = if strlen(*path) > 1 then substr(*path, 1, strlen(*path)) else "/";
+        *parent   = "/";
+    } else {
+        uuChop(*path, *parent, *baseName, "/", false);
+    }
 }
 
 # \brief Split a checksum into a checksum type and a value
@@ -86,7 +86,7 @@ uuChopChecksum(*checksum, *checksumType, *checksumValue) {
 # \param[out]	strOut
 #
 uuStrToUpper(*strIn, *strOut) {
-	uuStrShift(*strIn, *strOut, "upper");
+    uuStrShift(*strIn, *strOut, "upper");
 }
 
 # \brief Convert a string to lowercase characters
@@ -94,7 +94,7 @@ uuStrToUpper(*strIn, *strOut) {
 # \param[out]	strOut
 #
 uuStrToLower(*strIn, *strOut) {
-	uuStrShift(*strIn, *strOut, "lower");
+    uuStrShift(*strIn, *strOut, "lower");
 }
 
 # \brief (internal function) Convert a string to lowercase or uppercase
@@ -103,12 +103,12 @@ uuStrToLower(*strIn, *strOut) {
 # \param[in]	toCase	should be either "lower" or "upper"
 #
 uuStrShift(*strIn, *strOut, *toCase) {
-	*strOut = '';
-	for (*pos = 0; *pos < strlen(*strIn); *pos = *pos + 1) {
-		*c = substr(*strIn, *pos, *pos + 1);
-		uuChrShift(*c, *toCase);
-		*strOut = *strOut ++ *c;
-	}
+    *strOut = '';
+    for (*pos = 0; *pos < strlen(*strIn); *pos = *pos + 1) {
+        *c = substr(*strIn, *pos, *pos + 1);
+        uuChrShift(*c, *toCase);
+        *strOut = *strOut ++ *c;
+    }
 }
 
 # \brief Convert a single characterstring to lowercase or uppercase
@@ -116,21 +116,21 @@ uuStrShift(*strIn, *strOut, *toCase) {
 # \param[in]		toCase	should be either "lower" or "upper"
 #
 uuChrShift(*c, *toCase) {
-	*a1 = split("a b c d e f g h i j k l m n o p q r s t u v w x y z", " ");
-	*a2 = split("A B C D E F G H I J K L M N O P Q R S T U V W X Y Z", " ");
-	# assume transformation to uppercase
-	*aSource = *a1;
-	*aDestination = *a2;
-	if (*toCase == "lower") {
-		*aSource = *a2;
-		*aDestination = *a1;
-	}
-	*element = 0;
-	foreach (*source in *aSource) {
-		if (*c == *source) {
-			*c = elem(*aDestination, *element);
-			break;
-		}
-		*element = *element + 1;
-	}
+    *a1 = split("a b c d e f g h i j k l m n o p q r s t u v w x y z", " ");
+    *a2 = split("A B C D E F G H I J K L M N O P Q R S T U V W X Y Z", " ");
+    # assume transformation to uppercase
+    *aSource = *a1;
+    *aDestination = *a2;
+    if (*toCase == "lower") {
+        *aSource = *a2;
+        *aDestination = *a1;
+    }
+    *element = 0;
+    foreach (*source in *aSource) {
+        if (*c == *source) {
+            *c = elem(*aDestination, *element);
+            break;
+        }
+        *element = *element + 1;
+    }
 }

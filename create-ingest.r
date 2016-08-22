@@ -20,12 +20,13 @@ createIngest {
     msiAddKeyVal(*metaKV, "title", *title);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
-    remote(*resourceServer,"") { # Enabling the ingest zone needs to be done on the remote server
+    # Enabling the ingest zone needs to be done on the remote server
+    remote(*resourceServer,"") {
         if ( *existingDir != "" ) {
-                *phyDir = *existingDir
+            *phyDir = *existingDir
         } else {
             *phyDir = "/mnt/ingest/zones/" ++ *token
-                msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
+            msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
         }
 
         msiPhyPathReg(*tokenColl, *targetResource, *phyDir, "mountPoint", *status);

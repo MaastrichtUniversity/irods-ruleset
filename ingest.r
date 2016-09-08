@@ -30,7 +30,7 @@ ingest {
 
     # Send metadata
     # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
-    sendMetadataFromIngest(*token);
+    sendMetadataFromIngest(*token,*mirthURL);
 
     # TODO: For now, we force the validateState to 'validated' in order to let the rule continue.
     msiAddKeyVal(*metaKV, "validateState", "validated");
@@ -87,5 +87,5 @@ ingest {
     }
 }
 
-INPUT *token="",*resourceServer=""
+INPUT *token="",*resourceServer="",*mirthURL=""
 OUTPUT ruleExecOut

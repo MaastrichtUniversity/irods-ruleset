@@ -7,7 +7,9 @@ irule_dummy() {
 }
 
 IRULE_sendMetadata(*project, *collection) {
-    msi_http_send_file("http://fhml-srv024.unimaas.nl:6669/?project=*project&collection=*collection", "/nlmumc/projects/*project/*collection/metadata.xml")
+    msi_getenv("MIRTH_METADATA_CHANNEL", *mirthURL)
+
+    msi_http_send_file("*mirthURL/?project=*project&collection=*collection", "/nlmumc/projects/*project/*collection/metadata.xml")
 }
 
 INPUT *project='',*collection=''

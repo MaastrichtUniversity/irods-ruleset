@@ -6,10 +6,10 @@ irule_dummy() {
     IRULE_sendMetadataFromIngest(*token)
 }
 
-IRULE_sendMetadataFromIngest(*token,*mirthURL) {
-    # TODO: Parametrize this URL somehow
-    #msi_http_send_file("http://fhml-srv024.unimaas.nl:6669/?token=*token", "/nlmumc/ingest/zones/*token/metadata.xml")
-	msi_http_send_file("*mirthURL/?token=*token", "/nlmumc/ingest/zones/*token/metadata.xml")
+IRULE_sendMetadataFromIngest(*token) {
+    msi_getenv("MIRTH_METADATA_CHANNEL", *mirthURL)
+
+    msi_http_send_file("*mirthURL/?token=*token", "/nlmumc/ingest/zones/*token/metadata.xml")
 }
 
 INPUT *token='',*mirthURL=''

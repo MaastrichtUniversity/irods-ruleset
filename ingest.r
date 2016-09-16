@@ -30,11 +30,11 @@ ingest {
 
     # Send metadata
     # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
-    sendMetadataFromIngest(*token,*mirthURL);
+    sendMetadataFromIngest(*token);
 
     # TODO: For now, we force the validateState to 'validated' in order to let the rule continue.
-    msiAddKeyVal(*metaKV, "validateState", "validated");
-    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+    #msiAddKeyVal(*metaKV, "validateState", "validated");
+    #msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
 

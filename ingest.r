@@ -87,5 +87,5 @@ ingest {
     }
 }
 
-INPUT *token="",*resourceServer="",*mirthURL=""
+INPUT *token="",*resourceServer=""
 OUTPUT ruleExecOut

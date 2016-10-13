@@ -37,6 +37,14 @@ IRULE_createProject(*project) {
     *dstColl = /nlmumc/projects/*project;
 
     msiCollCreate(*dstColl, 0, *status);
+
+    # TODO: Determine whether setting defaults here is a good place
+    msiAddKeyVal(*metaKV, "title", "no-title");
+    msiAddKeyVal(*metaKV, "resource", "replRescUM01");
+    msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
+
+    # Set recursive permissions
+    msiSetACL("recursive", "inherit", "", *dstColl);
 }
 
 INPUT null

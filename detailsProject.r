@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F detailsProject.r "*project='MUMC-M4I-00001'"
+# irule -F detailsProject.r "*project='P000000001'"
 
 irule_dummy() {
     IRULE_detailsProject(*project, *result);

@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F listProjectContributors.r "*project='MUMC-M4I-00001'"
+# irule -F listProjectContributors.r "*project='P000000001'"
 
 irule_dummy() {
     IRULE_listProjectContributors(*project, *result);

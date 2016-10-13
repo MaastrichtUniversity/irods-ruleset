@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F sendMetadata.r "*project='MUMC-M4I-00001',*collection='20160711_1312_p.vanschayck'"
+# irule -F sendMetadata.r "*project='P000000001',*collection='C000000001'"
 
 irule_dummy() {
     IRULE_sendMetadata(*project, *collection)

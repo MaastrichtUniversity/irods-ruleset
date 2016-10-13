@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='foo'" "*title='bar'" "*existingDir=''" "*resourceServer='ires'" "*targetResource='iresResource'"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*existingDir=''" "*resourceServer='ires'" "*targetResource='iresResource'"
 
 createIngest {
     

@@ -9,7 +9,7 @@ irule_dummy() {
 }
 
 
-# Creates collections in the form C000000001
+# Creates projects in the form P000000001
 IRULE_createProject(*project) {
 
     *max = 0;

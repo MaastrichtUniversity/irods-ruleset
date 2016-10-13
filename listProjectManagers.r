@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F listProjectManagers.r "*project='MUMC-M4I-00001'"
+# irule -F listProjectManagers.r "*project='P000000001'"
 
 irule_dummy() {
     IRULE_listProjectManagers(*project, *result);

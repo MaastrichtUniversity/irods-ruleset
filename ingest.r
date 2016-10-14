@@ -42,7 +42,7 @@ ingest {
         }
 
         if ( *validateState == "incorrect" ) {
-            msiAddKeyVal(*metaKV, "state", "incorrect");
+            msiAddKeyVal(*metaKV, "state", "incorrect-validation");
             msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
             failmsg(0, "Metadata is incorrect");
         }
@@ -51,15 +51,26 @@ ingest {
             failmsg(-1, "Metadata not validated yet");
         }
 
+        msiAddKeyVal(*metaKV, "state", "ingesting");
+        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+
+        msiWriteRodsLog("Starting ingestion *srcColl", 0);
+
         # On a new delay queue, as we do not want to repeat this part after failure as above
         delay("<PLUSET>1s</PLUSET>") {
-            msiAddKeyVal(*metaKV, "state", "ingesting");
-            msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-            msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
-            # TODO: Handle errors
-            createProjectCollection(*project, *projectCollection);
+            *error = errorcode(createProjectCollection(*project, *projectCollection));
+
+            if ( *error < 0 ) {
+                # TODO: This could be moved to more generic error function
+                msiAddKeyVal(*metaKV, "state", "error-ingestion");
+                msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+                failmsg(0, "Error creating projectCollection for *srcColl");
+            }
+
             *dstColl = "/nlmumc/projects/*project/*projectCollection";
+
+            msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
             # TODO: Handle errors
             # Do not specify target resource here! Policy ensures that data is moved to proper resource and if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
@@ -74,14 +85,13 @@ ingest {
 
             msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
-            # TODO: Handle errors
-            *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
-
             msiAddKeyVal(*metaKV, "state", "ingested");
             msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-
             delay("<PLUSET>1m</PLUSET>") {
+                # TODO: Handle errors
+                *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+
                 msiRmColl(*srcColl, "forceFlag=", *OUT);
                 remote(*resourceServer,"") { # Disabling the ingest zone needs to be executed on remote ires server
                     msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);

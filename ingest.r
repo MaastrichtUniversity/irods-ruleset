@@ -32,10 +32,6 @@ ingest {
     # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
     sendMetadataFromIngest(*token);
 
-    # TODO: For now, we force the validateState to 'validated' in order to let the rule continue.
-    #msiAddKeyVal(*metaKV, "validateState", "validated");
-    #msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
 
         *validateState = "";
@@ -55,37 +51,41 @@ ingest {
             failmsg(-1, "Metadata not validated yet");
         }
 
-        createProjectCollection(*project, *projectCollection);
-        *dstColl = "/nlmumc/projects/*project/*projectCollection";
+        # On a new delay queue, as we do not want to repeat this part after failure as above
+        delay("<PLUSET>1s</PLUSET>") {
+            msiAddKeyVal(*metaKV, "state", "ingesting");
+            msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+            msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
-        msiAddKeyVal(*metaKV, "state", "ingesting");
-        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-        msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
+            # TODO: Handle errors
+            createProjectCollection(*project, *projectCollection);
+            *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
-        # TODO: Handle errors
-        # Do not specify target resource here! Policy ensures that data is moved to proper resource and if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
-        msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status);
-        
-        msiAddKeyVal(*titleKV, "title", *title);
-        msiGetObjType(*dstColl, *objType);
-        msiSetKeyValuePairsToObj(*titleKV, *dstColl, *objType);
-        
-        # Close collection by making all access read only
-        closeProjectCollection(*project, *projectCollection);
+            # TODO: Handle errors
+            # Do not specify target resource here! Policy ensures that data is moved to proper resource and if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
+            msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status);
 
-        msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
+            msiAddKeyVal(*titleKV, "title", *title);
+            msiGetObjType(*dstColl, *objType);
+            msiSetKeyValuePairsToObj(*titleKV, *dstColl, *objType);
 
-        # TODO: Handle errors
-        *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+            # Close collection by making all access read only
+            closeProjectCollection(*project, *projectCollection);
 
-        msiAddKeyVal(*metaKV, "state", "ingested");
-        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+            msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
+
+            # TODO: Handle errors
+            *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+
+            msiAddKeyVal(*metaKV, "state", "ingested");
+            msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
 
-        delay("<PLUSET>1m</PLUSET>") {
-            msiRmColl(*srcColl, "forceFlag=", *OUT);
-            remote(*resourceServer,"") { # Disabling the ingest zone needs to be executed on remote ires server
-                msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+            delay("<PLUSET>1m</PLUSET>") {
+                msiRmColl(*srcColl, "forceFlag=", *OUT);
+                remote(*resourceServer,"") { # Disabling the ingest zone needs to be executed on remote ires server
+                    msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+                }
             }
         }
     }

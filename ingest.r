@@ -65,7 +65,11 @@ ingest {
         # TODO: Handle errors
         # Do not specify target resource here! Policy ensures that data is moved to proper resource and if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
         msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status);
-
+        
+        msiAddKeyVal(*titleKV, "title", *title);
+        msiGetObjType(*dstColl, *objType);
+        msiSetKeyValuePairsToObj(*titleKV, *dstColl, *objType);
+        
         # Close collection by making all access read only
         closeProjectCollection(*project, *projectCollection);
 

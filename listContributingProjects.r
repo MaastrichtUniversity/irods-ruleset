@@ -9,6 +9,7 @@ listContributingProjects {
     foreach ( *Row in SELECT COLL_NAME WHERE COLL_ACCESS_NAME = 'modify object' and COLL_PARENT_NAME = '/nlmumc/projects' ) {
         uuChopPath(*Row.COLL_NAME, *collection, *project);
 
+        *title = "";
         foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {
                 *title = *av.META_COLL_ATTR_VALUE;
@@ -19,7 +20,12 @@ listContributingProjects {
         *o = "";
 
         msiAddKeyVal(*kvp, 'project', *project);
-        msiAddKeyVal(*kvp, 'title', *title);
+
+        if ( *title == "" ) {
+            msiAddKeyVal(*kvp, 'title', "no-title-AVU-set");
+        } else {
+            msiAddKeyVal(*kvp, 'title', *title);
+        }
 
         msi_json_objops(*o, *kvp, "set");
 

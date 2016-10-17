@@ -100,10 +100,14 @@ ingest {
             msiAddKeyVal(*metaKV, "state", "ingested");
             msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-            delay("<PLUSET>1m</PLUSET>") {
-                # TODO: Handle errors
-                *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+            # TODO: Handle errors
+            # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
+            # This is because of a bug in the unmount. This is kept in memory for
+            # the remaining of the irodsagent session.
+            # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
+            *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
 
+            delay("<PLUSET>1m</PLUSET>") {
                 msiRmColl(*srcColl, "forceFlag=", *OUT);
                 remote(*resourceServer,"") { # Disabling the ingest zone needs to be executed on remote ires server
                     msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);

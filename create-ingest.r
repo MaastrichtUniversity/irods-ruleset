@@ -37,5 +37,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*existingDir="",*project="",*resourceServer="",*targetResource=""
+INPUT *user="",*token="",*existingDir="",*project="",*resourceServer="",*targetResource="",*title=""
 OUTPUT ruleExecOut

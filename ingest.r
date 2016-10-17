@@ -28,9 +28,11 @@ ingest {
 
     msiWriteRodsLog("Starting validation of *srcColl", 0);
 
-    # Send metadata
+    # Validate metadata
     # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout
-    sendMetadataFromIngest(*token);
+    validateMetadataFromIngest(*token);
+    
+    msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl)
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
 
@@ -79,7 +81,17 @@ ingest {
             msiAddKeyVal(*titleKV, "title", *title);
             msiGetObjType(*dstColl, *objType);
             msiSetKeyValuePairsToObj(*titleKV, *dstColl, *objType);
-
+            
+            # Send Meta data
+            *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
+            
+            if ( *error < 0 ) {
+                # TODO: This could be moved to more generic error function
+                msiAddKeyVal(*metaKV, "state", "error-post-ingestion");
+                msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+                failmsg(0, "Error sending MetaData for indexing for *srcColl");
+            }            
+            
             # Close collection by making all access read only
             closeProjectCollection(*project, *projectCollection);
 

@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F ingest.r "*token='creepy-click'" "*resourceServer='ires'"
+# irule -F ingest.r "*token='creepy-click'"
 
 ingest {
     *srcColl = /nlmumc/ingest/zones/*token;
@@ -107,8 +107,13 @@ ingest {
             *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
 
             delay("<PLUSET>1m</PLUSET>") {
+                foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
+                    if ( *av.META_COLL_ATTR_NAME == "resourceHost" ) {
+                        *resourceHost = *av.META_COLL_ATTR_VALUE;
+                    }
+                }
                 msiRmColl(*srcColl, "forceFlag=", *OUT);
-                remote(*resourceServer,"") { # Disabling the ingest zone needs to be executed on remote ires server
+                remote(*resourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
                     msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
                 }
             }
@@ -116,5 +121,5 @@ ingest {
     }
 }
 
-INPUT *token="",*resourceServer=""
+INPUT *token=""
 OUTPUT ruleExecOut

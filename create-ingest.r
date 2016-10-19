@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*existingDir=''" "*resourceServer='ires'" "*targetResource='iresResource'"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*existingDir=''"
 
 createIngest {
     
@@ -20,8 +20,18 @@ createIngest {
     msiAddKeyVal(*metaKV, "title", *title);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
+        if ( *av.META_COLL_ATTR_NAME == "resourceHost" ) {
+            *resourceHost = *av.META_COLL_ATTR_VALUE;
+        }
+        if ( *av.META_COLL_ATTR_NAME == "resource" ) {
+            *resource = *av.META_COLL_ATTR_VALUE;
+        }
+    }
+
+
     # Enabling the ingest zone needs to be done on the remote server
-    remote(*resourceServer,"") {
+    remote(*resourceHost,"") {
         if ( *existingDir != "" ) {
             *phyDir = *existingDir
         } else {
@@ -29,7 +39,7 @@ createIngest {
             msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
         }
 
-        msiPhyPathReg(*tokenColl, *targetResource, *phyDir, "mountPoint", *status);
+        msiPhyPathReg(*tokenColl, *resource, *phyDir, "mountPoint", *status);
     }
 
     # Set the ACL's on the iRODS collection
@@ -37,5 +47,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*existingDir="",*project="",*resourceServer="",*targetResource="",*title=""
+INPUT *user="",*token="",*existingDir="",*project="",*title=""
 OUTPUT ruleExecOut

@@ -25,24 +25,7 @@ ingest {
 
     msiAddKeyVal(*metaKV, "state", "validating");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-
-    *delete = 0;
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
-        if ( *av.META_COLL_ATTR_NAME == "validateState" ) {
-            msiAddKeyVal(*delKV, *av.META_COLL_ATTR_NAME, *av.META_COLL_ATTR_VALUE);
-            *delete = *delete + 1;
-        }
-        if ( *av.META_COLL_ATTR_NAME == "validateMsg" ) {
-            msiAddKeyVal(*delKV, *av.META_COLL_ATTR_NAME, *av.META_COLL_ATTR_VALUE);
-             *delete = *delete + 1;
-        }
-    }
-    
-    if (*delete > 0){
-       msiRemoveKeyValuePairsFromObj(*delKV,*srcColl, "-C");
-       msiWriteRodsLog("Removed existing AVU from *srcColl", 0);
-    }
-   
+  
     msiWriteRodsLog("Starting validation of *srcColl", 0);
     # Validate metadata
     # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout   

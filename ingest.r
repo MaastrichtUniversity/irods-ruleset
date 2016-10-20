@@ -34,19 +34,8 @@ ingest {
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl)
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
-
-        *validateState = "";
-        foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
-            if ( *av.META_COLL_ATTR_NAME == "validateState" ) {
-                *validateState = *av.META_COLL_ATTR_VALUE;
-            }
-        }
-
-        if ( *validateState == "incorrect" ) {
-            msiAddKeyVal(*metaKV, "state", "incorrect-validation");
-            msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-            failmsg(0, "Metadata is incorrect");
-        }
+        *validateState ="";
+        queryAVU(*srcColl,"validateState",*validateState);
 
         if ( *validateState != "validated" ) {
             failmsg(-1, "Metadata not validated yet");
@@ -62,13 +51,6 @@ ingest {
 
             *error = errorcode(createProjectCollection(*project, *projectCollection));
 
-            if ( *error < 0 ) {
-                # TODO: This could be moved to more generic error function
-                msiAddKeyVal(*metaKV, "state", "error-ingestion");
-                msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-                failmsg(0, "Error creating projectCollection for *srcColl");
-            }
-
             *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
             msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
@@ -83,13 +65,6 @@ ingest {
             
             # Send Meta data
             *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
-            
-            if ( *error < 0 ) {
-                # TODO: This could be moved to more generic error function
-                msiAddKeyVal(*metaKV, "state", "error-post-ingestion");
-                msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-                failmsg(0, "Error sending MetaData for indexing for *srcColl");
-            }            
             
             # Close collection by making all access read only
             closeProjectCollection(*project, *projectCollection);
@@ -107,11 +82,9 @@ ingest {
             *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
 
             delay("<PLUSET>1m</PLUSET>") {
-                foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
-                    if ( *av.META_COLL_ATTR_NAME == "resourceHost" ) {
-                        *resourceHost = *av.META_COLL_ATTR_VALUE;
-                    }
-                }
+                *resourceHost = '';
+                queryAVU("/nlmumc/projects/*project","resourceHost",*resourceHost);
+                msiWriteRodsLog("Resource host *resourceHost", 0);
                 msiRmColl(*srcColl, "forceFlag=", *OUT);
                 remote(*resourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
                     msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);

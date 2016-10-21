@@ -21,17 +21,19 @@ createIngest {
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
-        if ( *av.META_COLL_ATTR_NAME == "resourceHost" ) {
-            *resourceHost = *av.META_COLL_ATTR_VALUE;
+        if ( *av.META_COLL_ATTR_NAME == "ingestResource" ) {
+            *ingestResource = *av.META_COLL_ATTR_VALUE;
         }
-        if ( *av.META_COLL_ATTR_NAME == "resource" ) {
-            *resource = *av.META_COLL_ATTR_VALUE;
-        }
+    }
+
+    # Obtain the resource host from the specified ingest resource
+    foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
+        *ingestResourceHost = *r.RESC_LOC
     }
 
 
     # Enabling the ingest zone needs to be done on the remote server
-    remote(*resourceHost,"") {
+    remote(*ingestResourceHost,"") {
         if ( *existingDir != "" ) {
             *phyDir = *existingDir
         } else {
@@ -39,7 +41,7 @@ createIngest {
             msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
         }
 
-        msiPhyPathReg(*tokenColl, *resource, *phyDir, "mountPoint", *status);
+        msiPhyPathReg(*tokenColl, *ingestResource, *phyDir, "mountPoint", *status);
     }
 
     # Set the ACL's on the iRODS collection

@@ -20,10 +20,16 @@ createIngest {
     msiAddKeyVal(*metaKV, "title", *title);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
+    *ingestResource = ""
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
         if ( *av.META_COLL_ATTR_NAME == "ingestResource" ) {
             *ingestResource = *av.META_COLL_ATTR_VALUE;
         }
+    }
+
+    if ( *ingestResource == "" ) {
+        # TODO: Make this fail check a property of the queryAVU function
+        failmsg(0, "*project has no ingestResource AVU set");
     }
 
     # Obtain the resource host from the specified ingest resource

@@ -1,0 +1,15 @@
+#irule -F setErrorAVU.r irule -F setErrorAVU.r "*collection='/nlmumc/home/rods'" "*attribute='attr'" "*value='val'" "*message='crash'"
+
+irule_dummy() {
+    IRULE_setErrorAVU(*collection, *attribute, *value,*message)
+}
+
+
+IRULE_setErrorAVU(*collection, *attribute, *value,*message) {    
+     msiAddKeyVal(*metaKV,  *attribute, *value);
+     msiSetKeyValuePairsToObj(*metaKV, *collection, "-C");
+     failmsg(0, "*message for *collection");
+}
+
+INPUT *collection='', *attribute='', *value='',*message=''
+OUTPUT ruleExecOut

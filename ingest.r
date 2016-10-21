@@ -37,6 +37,10 @@ ingest {
         *validateState ="";
         queryAVU(*srcColl,"validateState",*validateState);
 
+        if ( *validateState == "incorrect" ) {
+              setErrorAVU(*srcColl,"state", "incorrect-validation","Metadata is incorrect") ;
+         }
+
         if ( *validateState != "validated" ) {
             failmsg(-1, "Metadata not validated yet");
         }
@@ -50,6 +54,9 @@ ingest {
         delay("<PLUSET>1s</PLUSET>") {
 
             *error = errorcode(createProjectCollection(*project, *projectCollection));
+             if ( *error < 0 ) {
+                  setErrorAVU(*srcColl,"state", "error-ingestion","Error creating projectCollection") ;
+             }
 
             *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
@@ -65,6 +72,10 @@ ingest {
             
             # Send Meta data
             *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
+
+            if ( *error < 0 ) {
+                   setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing ") ;
+            }
             
             # Close collection by making all access read only
             closeProjectCollection(*project, *projectCollection);

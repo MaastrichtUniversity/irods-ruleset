@@ -1,8 +1,9 @@
 # Call with
-# irule -F queryAVU.r "*path='/nlmumc/ingest/zones/grieving-giant'" "*name='title'"
+# irule -F queryAVU.r "*collName='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'"
 
 irule_dummy() {
     IRULE_queryAVU(*collName, *attribute, *value)
+     writeLine("stdout", *value);
 }
 
 
@@ -16,5 +17,5 @@ IRULE_queryAVU(*collName, *attribute, *value) {
    msiWriteRodsLog("Output of query is value: *value", 0);
 }
 
-INPUT null
+INPUT *collName='', *attribute='', *value=''
 OUTPUT ruleExecOut

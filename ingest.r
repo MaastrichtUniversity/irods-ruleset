@@ -33,6 +33,7 @@ ingest {
     
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl)
 
+
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
         *validateState ="";
         queryAVU(*srcColl,"validateState",*validateState);

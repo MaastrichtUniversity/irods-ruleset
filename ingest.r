@@ -95,10 +95,16 @@ ingest {
 
             delay("<PLUSET>1m</PLUSET>") {
                 *resourceHost = '';
-                queryAVU("/nlmumc/projects/*project","resourceHost",*resourceHost);
-                msiWriteRodsLog("Resource host *resourceHost", 0);
+                queryAVU("/nlmumc/projects/*project","ingestResource",*ingestResource);
+
+                # Obtain the resource host from the specified ingest resource
+                foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
+                    *ingestResourceHost = *r.RESC_LOC
+                }
+
+                msiWriteRodsLog("Resource host *ingestResourceHost", 0);
                 msiRmColl(*srcColl, "forceFlag=", *OUT);
-                remote(*resourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
+                remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
                     msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
                 }
             }

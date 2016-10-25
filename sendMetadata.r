@@ -8,8 +8,6 @@ irule_dummy() {
 }
 
 IRULE_sendMetadata(*mirthURL , *project, *collection) {
-    
-    msiWriteRodsLog("send metadat url *mirthURL", 0);
     msi_http_send_file("*mirthURL/?project=*project&collection=*collection", "/nlmumc/projects/*project/*collection/metadata.xml")
 }
 

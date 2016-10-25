@@ -3,18 +3,17 @@
 
 irule_dummy() {
     IRULE_queryAVU(*collName, *attribute, *value)
-     writeLine("stdout", *value);
+    writeLine("stdout", *value);
 }
 
 
 IRULE_queryAVU(*collName, *attribute, *value) {
     *output = "";
-   foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == *collName) {
-                    if ( *av.META_COLL_ATTR_NAME == *attribute) {
-                        *value = *av.META_COLL_ATTR_VALUE;
-                    }
-   }
-   msiWriteRodsLog("Output of query is value: *value", 0);
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == *collName) {
+        if ( *av.META_COLL_ATTR_NAME == *attribute) {
+            *value = *av.META_COLL_ATTR_VALUE;
+        }
+    }
 }
 
 INPUT *collName='', *attribute='', *value=''

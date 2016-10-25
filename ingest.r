@@ -33,7 +33,6 @@ ingest {
     
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl)
 
-
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
         *validateState ="";
         queryAVU(*srcColl,"validateState",*validateState);
@@ -55,7 +54,7 @@ ingest {
         # We also do not want any repeats of this, as this would create a new project collection
         delay("<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>") {
 
-            *error = errorcode(createProjectCollection(*project, *projectCollection));
+            *error = errorcode(createProjectCollection(*project, *projectCollection, *title));
             if ( *error < 0 ) {
                 setErrorAVU(*srcColl,"state", "error-ingestion","Error creating projectCollection") ;
             }
@@ -69,10 +68,6 @@ ingest {
             if ( *error < 0 ) {
                 setErrorAVU(*srcColl,"state", "error-ingestion","Error rsyncing ingest zone") ;
             }
-
-            msiAddKeyVal(*titleKV, "title", *title);
-            msiGetObjType(*dstColl, *objType);
-            msiSetKeyValuePairsToObj(*titleKV, *dstColl, *objType);
             
             # Send Meta data
             *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));

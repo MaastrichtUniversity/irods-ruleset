@@ -1,16 +1,16 @@
 # Call with
 #
-# irule -F createProjectCollection.r "*project='P000000001'"
+# irule -F createProjectCollection.r "*project='P000000001'" "*title='Testing'"
 
 irule_dummy() {
-    IRULE_createProjectCollection(*project, *result);
+    IRULE_createProjectCollection(*project, *result, *title);
 
     writeLine("stdout", *result);
 }
 
 
 # Creates collections in the form C000000001
-IRULE_createProjectCollection(*project, *projectCollection) {
+IRULE_createProjectCollection(*project, *projectCollection, *title) {
 
     *max = 0;
 
@@ -37,6 +37,10 @@ IRULE_createProjectCollection(*project, *projectCollection) {
     *dstColl = /nlmumc/projects/*project/*projectCollection;
 
     msiCollCreate(*dstColl, 0, *status);
+
+    # Add title metadata
+    msiAddKeyVal(*titleKV, "title", *title);
+    msiSetKeyValuePairsToObj(*titleKV, *dstColl, "-C");
 }
 
 INPUT *project=$"P000000001"

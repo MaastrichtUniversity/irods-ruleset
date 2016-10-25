@@ -52,20 +52,23 @@ ingest {
         msiWriteRodsLog("Starting ingestion *srcColl", 0);
 
         # On a new delay queue, as we do not want to repeat this part after failure as above
-        delay("<PLUSET>1s</PLUSET>") {
+        # We also do not want any repeats of this, as this would create a new project collection
+        delay("<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>") {
 
             *error = errorcode(createProjectCollection(*project, *projectCollection));
-             if ( *error < 0 ) {
-                  setErrorAVU(*srcColl,"state", "error-ingestion","Error creating projectCollection") ;
-             }
+            if ( *error < 0 ) {
+                setErrorAVU(*srcColl,"state", "error-ingestion","Error creating projectCollection") ;
+            }
 
             *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
             msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
-            # TODO: Handle errors
             # Do not specify target resource here! Policy ensures that data is moved to proper resource and if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
-            msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status);
+            *error = errorcode(msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status));
+            if ( *error < 0 ) {
+                setErrorAVU(*srcColl,"state", "error-ingestion","Error rsyncing ingest zone") ;
+            }
 
             msiAddKeyVal(*titleKV, "title", *title);
             msiGetObjType(*dstColl, *objType);
@@ -75,7 +78,7 @@ ingest {
             *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
             if ( *error < 0 ) {
-                   setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing ") ;
+                setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing ") ;
             }
             
             # Close collection by making all access read only

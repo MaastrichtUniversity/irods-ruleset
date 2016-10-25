@@ -8,6 +8,7 @@ irule_dummy() {
 IRULE_setErrorAVU(*collection, *attribute, *value,*message) {    
      msiAddKeyVal(*metaKV,  *attribute, *value);
      msiSetKeyValuePairsToObj(*metaKV, *collection, "-C");
+     msiWriteRodsLog(*message, 0);
      failmsg(0, "*message for *collection");
 }
 

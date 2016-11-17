@@ -27,10 +27,15 @@ ingest {
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
   
     msiWriteRodsLog("Starting validation of *srcColl", 0);
+
     # Validate metadata
-    # TODO: This should possibly be done on a delayed queue, as Mirthconnect may timeout   
-    validateMetadataFromIngest(*token);
-    
+    msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL)
+
+    delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
+        validateMetadataFromIngest(*token,*mirthValidationURL);
+    }
+
+    # Continue ingest and send to Solr
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl)
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {

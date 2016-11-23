@@ -39,7 +39,7 @@ ingest {
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl)
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
-		ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token);
+        ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token);
     }
 }
 

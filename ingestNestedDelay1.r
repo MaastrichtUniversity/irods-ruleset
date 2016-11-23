@@ -42,6 +42,3 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
         }
     }
 }
-
-INPUT *srcColl="", *project="", *title="", *mirthMetaDataUrl="", *token=""
-OUTPUT ruleExecOut

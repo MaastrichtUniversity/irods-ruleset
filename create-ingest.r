@@ -20,7 +20,7 @@ createIngest {
     msiAddKeyVal(*metaKV, "title", *title);
     msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
 
-    *ingestResource = ""
+    *ingestResource = "";
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
         if ( *av.META_COLL_ATTR_NAME == "ingestResource" ) {
             *ingestResource = *av.META_COLL_ATTR_VALUE;
@@ -34,16 +34,16 @@ createIngest {
 
     # Obtain the resource host from the specified ingest resource
     foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
-        *ingestResourceHost = *r.RESC_LOC
+        *ingestResourceHost = *r.RESC_LOC;
     }
 
 
     # Enabling the ingest zone needs to be done on the remote server
     remote(*ingestResourceHost,"") {
         if ( *existingDir != "" ) {
-            *phyDir = *existingDir
+            *phyDir = *existingDir;
         } else {
-            *phyDir = "/mnt/ingest/zones/" ++ *token
+            *phyDir = "/mnt/ingest/zones/" ++ *token;
             msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
         }
 

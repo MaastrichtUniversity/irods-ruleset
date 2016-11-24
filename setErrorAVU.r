@@ -1,7 +1,7 @@
 #irule -F setErrorAVU.r irule -F setErrorAVU.r "*collection='/nlmumc/home/rods'" "*attribute='attr'" "*value='val'" "*message='crash'"
 
 irule_dummy() {
-    IRULE_setErrorAVU(*collection, *attribute, *value,*message)
+    IRULE_setErrorAVU(*collection, *attribute, *value,*message);
 }
 
 

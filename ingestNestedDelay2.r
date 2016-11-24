@@ -47,7 +47,7 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
 
         # Obtain the resource host from the specified ingest resource
         foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
-            *ingestResourceHost = *r.RESC_LOC
+            *ingestResourceHost = *r.RESC_LOC;
         }
 
         msiWriteRodsLog("Resource host *ingestResourceHost", 0);

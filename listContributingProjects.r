@@ -29,7 +29,7 @@ listContributingProjects {
 
         msi_json_objops(*o, *kvp, "set");
 
-        msi_json_arrayops(*json_str, *o, "add", *size)
+        msi_json_arrayops(*json_str, *o, "add", *size);
     }
 
     writeLine("stdout", *json_str);

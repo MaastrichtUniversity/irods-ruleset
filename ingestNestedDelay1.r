@@ -10,12 +10,12 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
         # It's not going to happen, set the state to error-reaching-validator
         msiAddKeyVal(*metaKV, "state", "error-reaching-validator");
         msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-        failmsg(0, "Finished trying to reach the external validation channel. I give up...")
+        failmsg(0, "Finished trying to reach the external validation channel. I give up...");
     }
 
     if(int(*validateRepCounter) > 0) {
         # This REPEAT cannot be executed
-        failmsg(-1, "Validate rule did not execute. I'm trying again...")
+        failmsg(-1, "Validate rule did not execute. I'm trying again...");
 
     }else{
         # Validation channel has been reached. Now we can query for validation-outcome.

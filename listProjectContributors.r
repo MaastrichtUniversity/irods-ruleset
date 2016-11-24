@@ -19,7 +19,7 @@ IRULE_listProjectContributors(*project,*result) {
     msiExecGenQuery(*Query, *QOut);
 
     foreach ( *Row in *QOut ) {
-        *objectID = *Row.COLL_ACCESS_USER_ID
+        *objectID = *Row.COLL_ACCESS_USER_ID;
 
         *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
         foreach (*R in *O) {
@@ -28,11 +28,11 @@ IRULE_listProjectContributors(*project,*result) {
         }
 
         if ( *objectType == "rodsgroup" ) {
-            msi_json_arrayops(*groups, *objectName, "add", *groupSize)
+            msi_json_arrayops(*groups, *objectName, "add", *groupSize);
         }
 
         if ( *objectType == "rodsuser" ) {
-            msi_json_arrayops(*users, *objectName, "add", *userSize)
+            msi_json_arrayops(*users, *objectName, "add", *userSize);
         }
 
         # objectType rodsadmin are skipped

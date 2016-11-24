@@ -51,7 +51,7 @@ validateMetadataFromIngest(*token,*mirthURL) {
         *newCounter = int(*validateRepCounter) + 1;
         msiAddKeyVal(*metaKV, "validateRepCounter", str(*newCounter));
         msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-        failmsg(-1, "Error with validation channel")
+        failmsg(-1, "Error with validation channel");
     }else{
         foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
             # Determine if there is a RepCounter and delete it, in order to let ingestNestedDelay1-rule know that it may continue

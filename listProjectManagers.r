@@ -16,7 +16,7 @@ IRULE_listProjectManagers(*project, *result) {
     *userSize = 0;
 
     foreach ( *Row in select COLL_ACCESS_USER_ID where COLL_ACCESS_NAME = 'own' and COLL_NAME = '/nlmumc/projects/*project' ) {
-        *objectID = *Row.COLL_ACCESS_USER_ID
+        *objectID = *Row.COLL_ACCESS_USER_ID;
 
         *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
         foreach (*R in *O) {
@@ -25,11 +25,11 @@ IRULE_listProjectManagers(*project, *result) {
         }
 
         if ( *objectType == "rodsgroup" ) {
-            msi_json_arrayops(*groups, *objectName, "add", *groupSize)
+            msi_json_arrayops(*groups, *objectName, "add", *groupSize);
         }
 
         if ( *objectType == "rodsuser" ) {
-            msi_json_arrayops(*users, *objectName, "add", *userSize)
+            msi_json_arrayops(*users, *objectName, "add", *userSize);
         }
 
         # objectType rodsadmin are skipped

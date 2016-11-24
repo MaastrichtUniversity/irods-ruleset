@@ -51,7 +51,7 @@ createIngest {
     }
 
     # Set the ACL's on the iRODS collection
-    msiSetACL("default", "own", *user, *tokenColl)
+    msiSetACL("default", "own", *user, *tokenColl);
 
 }
 

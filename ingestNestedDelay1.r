@@ -23,7 +23,7 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
         queryAVU(*srcColl,"validateState",*validateState);
 
         if ( *validateState == "incorrect" ) {
-            setErrorAVU(*srcColl,"state", "incorrect-validation", "Metadata is incorrect") ;
+            setErrorAVU(*srcColl,"state", "warning-validation-incorrect", "Metadata is incorrect") ;
         }
 
         if ( *validateState != "validated" ) {

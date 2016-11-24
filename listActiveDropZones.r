@@ -54,7 +54,7 @@ listActiveDropZones {
         }
 
         if ( *state == "" ) {
-            msiAddKeyVal(*kvp, 'state', "N/A");
+            msiAddKeyVal(*kvp, 'state', "open");
         } else {
             msiAddKeyVal(*kvp, 'state', *state);
         }

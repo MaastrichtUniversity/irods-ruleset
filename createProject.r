@@ -34,7 +34,7 @@ IRULE_createProject(*project) {
 
     *project = "P" ++ *project;
 
-    *dstColl = /nlmumc/projects/*project;
+    *dstColl = "/nlmumc/projects/*project";
 
     msiCollCreate(*dstColl, 0, *status);
 

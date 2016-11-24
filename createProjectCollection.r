@@ -15,7 +15,7 @@ IRULE_createProjectCollection(*project, *projectCollection, *title) {
     *max = 0;
 
     # Find out the current max collection number
-    foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
+    foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = "/nlmumc/projects/*project" ) {
         uuChopPath(*Row.COLL_NAME, *path, *c);
 
         *i = int(substr(*c, 1, 10));
@@ -34,7 +34,7 @@ IRULE_createProjectCollection(*project, *projectCollection, *title) {
 
     *projectCollection = "C" ++ *projectCollection;
 
-    *dstColl = /nlmumc/projects/*project/*projectCollection;
+    *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
     msiCollCreate(*dstColl, 0, *status);
 

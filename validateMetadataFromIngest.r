@@ -8,7 +8,7 @@
 # - Validation channel has NOT been reached in any of the 10 attempts --> validateRepCounter AVU has value 10
 
 validateMetadataFromIngest(*token,*mirthURL) {
-    *srcColl = /nlmumc/ingest/zones/*token;
+    *srcColl = "/nlmumc/ingest/zones/*token";
     *delete = 0;
     
     # Determine REPEAT count

@@ -9,7 +9,7 @@ irule_dummy() {
 IRULE_closeProjectCollection(*project, *projectCollection) {
 
     # Degrade all access to read only
-    foreach ( *Row in select COLL_ACCESS_USER_ID where COLL_NAME = '/nlmumc/projects/*project/*projectCollection' ) {
+    foreach ( *Row in select COLL_ACCESS_USER_ID where COLL_NAME = "/nlmumc/projects/*project/*projectCollection" ) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
 
         *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';

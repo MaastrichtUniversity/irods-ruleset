@@ -6,7 +6,7 @@
 
 createIngest {
     
-    *tokenColl = /nlmumc/ingest/zones/*token;
+    *tokenColl = "/nlmumc/ingest/zones/*token";
 
     *code = errorcode(msiCollCreate(*tokenColl, 0, *status));
 

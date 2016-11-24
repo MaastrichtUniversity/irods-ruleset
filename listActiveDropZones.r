@@ -6,7 +6,7 @@ listActiveDropZones {
     *json_str = '[]';
     *size = 0;
 
-    foreach ( *Row in SELECT COLL_NAME WHERE COLL_ACCESS_NAME = 'own' and COLL_PARENT_NAME = '/nlmumc/ingest/zones' ) {
+    foreach ( *Row in SELECT COLL_NAME WHERE COLL_ACCESS_NAME = 'own' and COLL_PARENT_NAME = "/nlmumc/ingest/zones" ) {
         uuChopPath(*Row.COLL_NAME, *collection, *token);
 
         *title = "";

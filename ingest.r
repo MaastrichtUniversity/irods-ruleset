@@ -3,7 +3,7 @@
 # irule -F ingest.r "*token='creepy-click'"
 
 ingest {
-    *srcColl = /nlmumc/ingest/zones/*token;
+    *srcColl = "/nlmumc/ingest/zones/*token";
 
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
         failmsg(-814000, "Unknown ingest zone *token");

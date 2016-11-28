@@ -38,7 +38,10 @@ ingest {
     # Validate metadata
     msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
 
+    msiWriteRodsLog("*token,*mirthValidationURL", 0);
+
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
+        msiWriteRodsLog("*token,*mirthValidationURL", 0);
         validateMetadataFromIngest(*token,*mirthValidationURL);
     }
 
@@ -46,6 +49,7 @@ ingest {
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl);
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
+        msiWriteRodsLog("*srcColl, *project, *title, *mirthMetaDataUrl, *token", 0);
         ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token);
     }
 }

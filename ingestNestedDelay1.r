@@ -38,6 +38,7 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
         # On a new delay queue, as we do not want to repeat this part after failure as above
         # We also do not want any repeats of this, as this would create a new project collection
         delay("<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>") {
+            msiWriteRodsLog("*srcColl, *project, *title, *mirthMetaDataUrl, *token", 0);
             ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token);
         }
     }

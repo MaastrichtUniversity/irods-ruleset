@@ -9,21 +9,22 @@ ingest {
         failmsg(-814000, "Unknown ingest zone *token");
     }
 
-    # Check for valid state to start ingestion
-    *state = "";
-    queryAVU(*srcColl,"state",*state);
-    if ( *state != "open" && *state != "warning-validation-incorrect" ) {
-        failmsg(-1, "Invalid state to start ingestion.");
-    }
-
-    *project = ""; *title = "";
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*srcColl") {
+    *state = ""; *project = ""; *title = "";
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == *srcColl) {
         if ( *av.META_COLL_ATTR_NAME == "project" ) {
             *project = *av.META_COLL_ATTR_VALUE;
         }
         if ( *av.META_COLL_ATTR_NAME == "title" ) {
             *title = *av.META_COLL_ATTR_VALUE;
         }
+        if ( *av.META_COLL_ATTR_NAME == "state" ) {
+            *state = *av.META_COLL_ATTR_VALUE;
+        }
+    }
+
+    # Check for valid state to start ingestion
+    if ( *state != "open" && *state != "warning-validation-incorrect" ) {
+        failmsg(-1, "Invalid state to start ingestion.");
     }
 
     if ( *project == "" ) {

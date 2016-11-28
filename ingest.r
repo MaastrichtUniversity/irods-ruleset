@@ -12,7 +12,7 @@ ingest {
     # Check for valid state to start ingestion
     *state = "";
     queryAVU(*srcColl,"state",*state);
-    if ( *state != "" && *state != "warning-validation-incorrect" ) {
+    if ( *state != "open" && *state != "warning-validation-incorrect" ) {
         failmsg(-1, "Invalid state to start ingestion.");
     }
 

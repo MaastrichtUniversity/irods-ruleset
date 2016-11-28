@@ -54,7 +54,7 @@ listActiveDropZones {
         }
 
         if ( *state == "" ) {
-            msiAddKeyVal(*kvp, 'state', "open");
+            msiAddKeyVal(*kvp, 'state', "no-state-AVU-set");
         } else {
             msiAddKeyVal(*kvp, 'state', *state);
         }
@@ -72,7 +72,7 @@ listActiveDropZones {
         }
 
         if ( *project == "" ) {
-            msiAddKeyVal(*kvp, 'project', "No-project-AVU-set");
+            msiAddKeyVal(*kvp, 'project', "no-project-AVU-set");
             msiAddKeyVal(*kvp, 'projectTitle', "No-projectTitle-AVU-set");
         } else {
             msiAddKeyVal(*kvp, 'project', *project);

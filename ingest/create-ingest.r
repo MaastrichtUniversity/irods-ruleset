@@ -19,7 +19,8 @@ createIngest {
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
     msiAddKeyVal(*metaKV, "state", "open");
-    msiAssociateKeyValuePairsToObj(*metaKV, "*tokenColl", "-C");
+    msiWriteRodsLog("Add: *project", 0);
+    msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
     *ingestResource = "";
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {

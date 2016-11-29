@@ -19,7 +19,6 @@ createIngest {
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
     msiAddKeyVal(*metaKV, "state", "open");
-    msiWriteRodsLog("Add: *project", 0);
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
     *ingestResource = "";

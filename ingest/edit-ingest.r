@@ -5,6 +5,13 @@
 editIngest {
     *tokenColl = "/nlmumc/ingest/zones/*token";
 
+    # Check for valid state to edit a drop zone
+    *state = "";
+    queryAVU(*tokenColl,"state",*state);
+    if ( *state != "open" && *state != "warning-validation-incorrect" ) {
+        failmsg(-1, "Invalid state to edit drop zone.");
+    }
+
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
 

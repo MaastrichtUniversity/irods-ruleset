@@ -10,10 +10,7 @@ IRULE_closeDropZone(*token) {
 
     *srcColl = "/nlmumc/ingest/zones/*token"
 
-    *project = '';
     queryAVU(*srcColl,"project",*project);
-
-    *resourceHost = '';
     queryAVU("/nlmumc/projects/*project","ingestResource",*ingestResource);
 
     # Obtain the resource host from the specified ingest resource

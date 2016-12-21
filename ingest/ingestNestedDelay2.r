@@ -42,7 +42,6 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
     *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
 
     delay("<PLUSET>1m</PLUSET>") {
-        *resourceHost = '';
         queryAVU("/nlmumc/projects/*project","ingestResource",*ingestResource);
 
         # Obtain the resource host from the specified ingest resource

@@ -13,6 +13,7 @@ IRULE_detailsProject(*project, *result) {
 
     listProjectContributors(*project,*contributors);
     listProjectManagers(*project,*managers);
+    listProjectViewers(*project,*viewers);
 
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
          if ( *av.META_COLL_ATTR_NAME == "resource" ) {
@@ -20,7 +21,7 @@ IRULE_detailsProject(*project, *result) {
          }
     }
 
-    *details = '{ "resource": "*resource", "contributors": *contributors, "managers": *managers}';
+    *details = '{ "resource": "*resource", "viewers": *viewers,"contributors": *contributors, "managers": *managers}';
     *result = *details;
 }
 

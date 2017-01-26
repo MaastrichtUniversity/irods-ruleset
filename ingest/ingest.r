@@ -9,7 +9,7 @@ ingest {
         failmsg(-814000, "Unknown ingest zone *token");
     }
 
-    *state = ""; *project = ""; *title = "";
+    *state = ""; *project = "";
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == *srcColl) {
         if ( *av.META_COLL_ATTR_NAME == "project" ) {
             *project = *av.META_COLL_ATTR_VALUE;

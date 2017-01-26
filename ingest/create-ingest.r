@@ -22,7 +22,7 @@ createIngest {
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
     # Obtain the resource host from the specified ingest resource
-    queryAVU("/nlmumc/projects/*project","ingestResource",*ingestResource);
+    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
     foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
         *ingestResourceHost = *r.RESC_LOC;
     }

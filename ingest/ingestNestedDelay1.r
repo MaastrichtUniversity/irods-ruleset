@@ -4,7 +4,7 @@
 
 ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
     *validateRepCounter = "";
-    queryAVU(*srcColl,"validateRepCounter",*validateRepCounter);
+    getCollectionAVU(*srcColl,"validateRepCounter",*validateRepCounter,"","false"); # should not be fatal, since *validateRepCounter might not exist in some cases
 
     if(int(*validateRepCounter) == 10) {
         # It's not going to happen, set the state to error-reaching-validator
@@ -20,7 +20,7 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
     }else{
         # Validation channel has been reached. Now we can query for validation-outcome.
         *validateState ="";
-        queryAVU(*srcColl,"validateState",*validateState);
+        getCollectionAVU(*srcColl,"validateState",*validateState,"","true");
 
         if ( *validateState == "incorrect" ) {
             setErrorAVU(*srcColl,"state", "warning-validation-incorrect", "Metadata is incorrect") ;

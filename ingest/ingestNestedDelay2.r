@@ -23,7 +23,7 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
     if ( *error < 0 ) {
-        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing ") ;
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing");
     }
 
     # Close collection by making all access read only
@@ -39,7 +39,11 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
     # This is because of a bug in the unmount. This is kept in memory for
     # the remaining of the irodsagent session.
     # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
-    *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+    *error = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+
+    if ( *error < 0 ) {
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error unmounting");
+    }
 
     delay("<PLUSET>1m</PLUSET>") {
         getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");

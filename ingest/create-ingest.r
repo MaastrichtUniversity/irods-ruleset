@@ -40,8 +40,9 @@ createIngest {
         msiPhyPathReg(*tokenColl, *ingestResource, *phyDir, "mountPoint", *status);
     }
 
-    # Set the ACL's on the iRODS collection
+    # Set the ACL's on the iRODS collection (for both the current user and service-account)
     msiSetACL("default", "own", *user, *tokenColl);
+    msiSetACL("default", "own", "service-dropzones@maastrichtuniversity.nl", *tokenColl);
 
 }
 

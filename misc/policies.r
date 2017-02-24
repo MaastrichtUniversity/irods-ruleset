@@ -2,8 +2,9 @@
 
 acSetRescSchemeForCreate {
     ### Policy to set proper storage resource & prevent file creation directly in P-folder ###
-    if($objPath like regex "/nlmumc/projects/P........./.*") {
-        if($objPath like regex "/nlmumc/projects/P........./C........./.*") {
+    # Since 'acPreProcForCreate' does not fire in iRODS 4.1.x, we made 'acSetRescSchemeForCreate' a combined policy
+    if($objPath like regex "/nlmumc/projects/P[0-9]{9}/.*") {
+        if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
             # This is a proper location to store project files
             *resource = "";
 
@@ -39,18 +40,13 @@ acSetRescSchemeForCreate {
 
 acPreprocForCollCreate {
     ### Policy to regulate folder creation within projects ###
-    if($collName like regex "/nlmumc/projects/P........./.*") {
-        if($collName like regex "/nlmumc/projects/P........./C........." || $collName like regex "/nlmumc/projects/P........./C........./.*") {
-            # Creating a C-folder or subfolder of projectcollection
-            #msiWriteRodsLog("DEBUG: Creating folder '$collName'", *status);
-        } else {
+    if($collName like regex "/nlmumc/projects/P[0-9]{9}/.*") {
+        if( ! ($collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}" || $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*")) {
             # Creating a non-C folder at project level
             msiWriteRodsLog("DEBUG: Folder '$collName' not compliant with naming convention", *status);
             cut;
             msiOprDisallowed;
         }
-    } else {
-        #msiWriteRodsLog("DEBUG: No create-policy active outside of projects. Creating folder '$collName'", *status);
     }
 }
 

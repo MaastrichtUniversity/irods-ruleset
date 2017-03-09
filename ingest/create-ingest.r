@@ -18,7 +18,7 @@ createIngest {
 
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
-    msiAddKeyVal(*metaKV, "author", *user);
+    #msiAddKeyVal(*metaKV, "author", *user);
     msiAddKeyVal(*metaKV, "state", "open");
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 

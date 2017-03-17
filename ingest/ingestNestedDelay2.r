@@ -2,7 +2,7 @@
 #
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingestNestedDelay1.r rule
 
-ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
+ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token) {
     *error = errorcode(createProjectCollection(*project, *projectCollection, *title));
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-ingestion","Error creating projectCollection") ;
@@ -18,6 +18,10 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-ingestion","Error rsyncing ingest zone") ;
     }
+
+    # Add creator AVU (i.e. current user) to project collection
+    msiAddKeyVal(*metaKV, "creator", *user);
+    msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
     # Send metadata
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));

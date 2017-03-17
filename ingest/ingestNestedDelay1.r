@@ -2,7 +2,7 @@
 #
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingest.r rule
 
-ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
+ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token) {
     *validateRepCounter = ""; # the validateRepCounter-AVU does not always exist, so the dummy variable must be present here in order to pass the conditional statements below
     getCollectionAVU(*srcColl,"validateRepCounter",*validateRepCounter,"","false"); # should not be fatal, since *validateRepCounter might not exist in some cases
 
@@ -37,7 +37,7 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token) {
         # On a new delay queue, as we do not want to repeat this part after failure as above
         # We also do not want any repeats of this, as this would create a new project collection
         delay("<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>") {
-            ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *token);
+            ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token);
         }
     }
 }

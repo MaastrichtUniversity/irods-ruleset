@@ -15,13 +15,10 @@ IRULE_detailsProject(*project, *result) {
     listProjectManagers(*project,*managers);
     listProjectViewers(*project,*viewers);
 
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
-         if ( *av.META_COLL_ATTR_NAME == "resource" ) {
-             *resource = *av.META_COLL_ATTR_VALUE;
-         }
-    }
+    getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+    getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
 
-    *details = '{ "resource": "*resource", "viewers": *viewers,"contributors": *contributors, "managers": *managers}';
+    *details = '{ "title": "*title", "resource": "*resource", "viewers": *viewers,"contributors": *contributors, "managers": *managers}';
     *result = *details;
 }
 

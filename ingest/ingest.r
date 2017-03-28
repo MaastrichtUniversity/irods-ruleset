@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F ingest.r "*token='creepy-click'"
+# irule -F ingest.r "*user='username@domain.com'" "*token='creepy-click'"
 
 ingest {
     *srcColl = "/nlmumc/ingest/zones/*token";
@@ -47,9 +47,9 @@ ingest {
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl);
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
-        ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *token);
+        ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token);
     }
 }
 
-INPUT *token=""
+INPUT *user="",*token=""
 OUTPUT ruleExecOut

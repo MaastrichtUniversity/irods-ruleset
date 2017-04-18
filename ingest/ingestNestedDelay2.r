@@ -14,10 +14,25 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     # Do not specify target resource here! Policy ensures that data is moved to proper resource and
     # if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
+    *before = time()
     *error = errorcode(msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status));
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-ingestion","Error rsyncing ingest zone") ;
     }
+    *after = time()
+    *dblbefore = double(*before);
+    *dblafter = double(*after);
+    *dbldifference = *dblafter - *dblbefore;
+    *size = "0";
+    *count = 0;
+    foreach ( *Row in select sum(DATA_SIZE), count(COLL_NAME) where COLL_NAME like "*dstColl%" AND DATA_REPL_NUM ="0" ) {
+       *size = *Row.DATA_SIZE;
+       *count = *Row.COLL_NAME; 
+    }
+    *result = double(*size);
+    *avgSpeed = *result/(*dbldifference*1024*1024);
+    msiWriteRodsLog("Sync took  *dbldifference seconds", 0);
+    msiWriteRodsLog("AVG speed was *avgSpeed Mb/s for *count files ", 0);
 
     # Add creator AVU (i.e. current user) to project collection
     msiAddKeyVal(*metaKV, "creator", *user);

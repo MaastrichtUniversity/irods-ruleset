@@ -22,7 +22,7 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     *after = time()
     *dblbefore = double(*before);
     *dblafter = double(*after);
-    *dbldifference = *dblafter - *dblbefore;
+    *dbldifference = (*dblafter - *dblbefore) + 1;
     *size = "0";
     *count = 0;
     foreach ( *Row in select sum(DATA_SIZE), count(COLL_NAME) where COLL_NAME like "*dstColl%" AND DATA_REPL_NUM ="0" ) {

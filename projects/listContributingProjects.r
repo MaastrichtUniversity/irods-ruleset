@@ -29,7 +29,7 @@ listContributingProjects {
     *groups=substr(*groups, 1, strlen(*groups));
 
     # Create GenQuery since ordinary select statement cannot deal with "in (*groups)" construction
-    msiMakeGenQuery("COLL_NAME", "COLL_ACCESS_NAME = 'modify object' and COLL_ACCESS_USER_ID in (*groups) and COLL_PARENT_NAME = '/nlmumc/projects'", *Query);
+    msiMakeGenQuery("COLL_NAME", "COLL_ACCESS_NAME in ('own', 'modify object') and COLL_ACCESS_USER_ID in (*groups) and COLL_PARENT_NAME = '/nlmumc/projects'", *Query);
     msiExecGenQuery(*Query, *QOut);
 
     # Loop over SQL result and generate JSON array with project info

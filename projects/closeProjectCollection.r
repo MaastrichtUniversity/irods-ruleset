@@ -18,8 +18,13 @@ IRULE_closeProjectCollection(*project, *projectCollection) {
             *objectType = *R.USER_TYPE;
         }
 
-        msiSetACL("recursive", "read", *objectName, "/nlmumc/projects/*project/*projectCollection");
+        # Save yourself for last, otherwise you can't close anymore
+        if ( *objectName != $userNameClient ) {
+            msiSetACL("recursive", "read", *objectName, "/nlmumc/projects/*project/*projectCollection");
+        }
     }
+
+    msiSetACL("recursive", "read", $userNameClient, "/nlmumc/projects/*project/*projectCollection");
 }
 
 INPUT *project=$"MUMC-M4I-00001", *projectCollection='20160707_0803_p.vanschayck'

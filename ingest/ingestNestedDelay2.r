@@ -58,7 +58,12 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         }
 
         msiWriteRodsLog("Resource host *ingestResourceHost", 0);
-        msiRmColl(*srcColl, "forceFlag=", *OUT);
+        *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
+
+        if ( *error < 0 ) {
+            setErrorAVU(*srcColl,"state", "error-post-ingestion","Error removing Dropzone-collection");
+        }
+
         remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
             msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
         }

@@ -5,7 +5,11 @@
 # irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*existingDir=''"
 
 createIngest {
-    
+    checkDropZoneACL(*user, *hasDropZonepermission);
+    if (*hasDropZonepermission == "false") {
+        failmsg(-1, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
+    }
+
     *tokenColl = "/nlmumc/ingest/zones/*token";
 
     *code = errorcode(msiCollCreate(*tokenColl, 0, *status));

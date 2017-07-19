@@ -7,7 +7,7 @@ listProjectsByUser{
      msiString2KeyValPair("", *titleKvp);
     *json_str2 = '[]';
     *size2 = 0;
-    foreach ( *Row in SELECT USER_NAME ) {
+    foreach ( *Row in SELECT USER_NAME WHERE USER_TYPE ='rodsuser') {
        *groups = '';
        *json_str = '[]';
        *size = 0;

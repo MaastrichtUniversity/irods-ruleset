@@ -12,9 +12,47 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
+    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
+
+    # Obtain the resource host from the specified ingest resource
+    foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
+         *ingestResourceHost = *r.RESC_LOC;
+    }
+    msiWriteRodsLog("DEBUG: Resource host *ingestResourceHost", 0);
+       
+    # Determine pre-ingest time to calculate average ingest speed
+    *time = time();
+    *strtime = timestrf(*time, "%s");
+    *before = double(*strtime);
+
+    # Ingest the files from local directory on resource server to iRODS collection
+    remote(*ingestResourceHost,"") {
     # Do not specify target resource here! Policy ensures that data is moved to proper resource and
     # if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
-    *error = errorcode(msiCollRsync(*srcColl, *dstColl, "null", "IRODS_TO_IRODS", *status));
+        *error = errorcode(msiput_dataobj_or_coll("/mnt/ingest/zones/*token", "null", "numThreads=10++++forceFlag=", *dstColl, *real_path));
+    }  
+    msiWriteRodsLog("DEBUG: Done remote", 0);
+
+    # Determine post-ingest time to calculate average ingest speed
+    *time = time();
+    *strtime = timestrf(*time, "%s");
+    *after = double(*strtime);  
+    *difference = double(*after - *before)+1;
+
+    # Get number of files and total size
+    *size = "0";
+    *count = 0;
+    foreach ( *Row in select sum(DATA_SIZE), count(COLL_NAME) where COLL_NAME like "*dstColl%" AND DATA_REPL_NUM ="0" ) {
+       *size = *Row.DATA_SIZE;
+       *count = *Row.COLL_NAME; 
+    }
+
+    # Calculate average ingest speed
+    *result = double(*size);
+    *avgSpeed = *result/(*difference*1024*1024);
+    msiWriteRodsLog("Sync took  *difference seconds", 0);
+    msiWriteRodsLog("AVG speed was *avgSpeed MB/s for *count files ", 0);
+
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-ingestion","Error rsyncing ingest zone") ;
     }
@@ -50,13 +88,13 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     }
 
     delay("<PLUSET>1m</PLUSET>") {
-        getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
+        *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
-        # Obtain the resource host from the specified ingest resource
-        foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
-            *ingestResourceHost = *r.RESC_LOC;
+        if ( *error < 0 ) {
+            setErrorAVU(*srcColl,"state", "error-post-ingestion","Error removing Dropzone-collection");
         }
 
+<<<<<<< HEAD
         msiWriteRodsLog("Resource host *ingestResourceHost", 0);
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
@@ -64,6 +102,8 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
             setErrorAVU(*srcColl,"state", "error-post-ingestion","Error removing Dropzone-collection");
         }
 
+=======
+>>>>>>> RITDEV-250
         remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
             msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
         }

@@ -1,3 +1,5 @@
 # Build rulesets
 *.re
 test.r
+
+.idea

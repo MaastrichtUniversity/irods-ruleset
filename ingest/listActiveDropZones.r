@@ -1,8 +1,22 @@
 # Call with
 #
-# irule -F listActiveDropZones.r
+# irule -F rules/ingest/listActiveDropZones.r "*report='true'"
 
-listActiveDropZones {
+irule_dummy() {
+    IRULE_listActiveDropZones(*report, *result);
+    writeLine("stdout", *result);
+}
+
+
+# Wrapper rule specific for Pacman, which enforces the report argument to 'false'
+listActiveDropZonesPacman {
+    *report="false";
+    listActiveDropZones(*report, *result);
+    writeLine("stdout", *result);
+}
+
+
+IRULE_listActiveDropZones(*report, *result) {
     *json_str = '[]';
     *size = 0;
 
@@ -81,14 +95,55 @@ listActiveDropZones {
 
         msiAddKeyVal(*kvp, 'date', *date);
 
+        # Extract additional info when *report == "true"
+        if ( *report == "true" ) {
+
+            ### USERNAME
+            *userList = list();
+            *userName = "";
+
+            foreach (*av in SELECT COLL_ACCESS_USER_ID WHERE COLL_NAME == "/nlmumc/ingest/zones/*token") {
+                # Determine username for userID
+                *userID = *av.COLL_ACCESS_USER_ID;
+                foreach ( *Row in SELECT USER_NAME WHERE USER_ID == *userID ) {
+                    # Limit to non-service accounts
+                    # TODO: Can be limited further to only mumc.nl accounts
+                    if ( *Row.USER_NAME like "*@mumc.nl" || *Row.USER_NAME like "*@maastrichtuniversity.nl" ) {
+                        *userList = cons(*Row.USER_NAME, *userList);
+                    }
+                }
+            }
+
+            # Take the first element from the list and store it as userName.
+            *length = size(*userList);
+            if (*length > 1) {
+                msiWriteRodsLog("WARNING: listActiveDropZones found multiple creators for DropZone /nlmumc/ingest/zones/*token. Only the first will be displayed in the report", 0);
+            }
+            *userName = elem(*userList,0)
+
+            #writeLine("stdout", "DEBUG: userList is *userList");
+            #writeLine("stdout", "DEBUG: userName is *userName");
+
+            if ( *userName != "" ) {
+                msiAddKeyVal(*kvp, 'userName', *userName);
+            }
+
+            ### DROPZONE START & END DATE
+			*fmt = "%.4d-%.2d-%.2d";
+			msi_time_ts2str( int(*date), *fmt, *startDate );
+			msi_time_ts2str( (int(*date) + 7776000), *fmt, *endDate ); # increase with the amount of seconds in 90 days
+          
+            msiAddKeyVal(*kvp, 'startDate', *startDate);
+            msiAddKeyVal(*kvp, 'endDate', *endDate);
+        }
 
         msi_json_objops(*o, *kvp, "set");
 
         msi_json_arrayops(*json_str, *o, "add", *size)
     }
 
-    writeLine("stdout", *json_str);
+    *result = *json_str;
 }
 
-INPUT *token=""
+INPUT *report=''
 OUTPUT ruleExecOut

@@ -129,9 +129,9 @@ IRULE_listActiveDropZones(*report, *result) {
             }
 
             ### DROPZONE START & END DATE
-			*fmt = "%.4d-%.2d-%.2d";
-			msi_time_ts2str( int(*date), *fmt, *startDate );
-			msi_time_ts2str( (int(*date) + 7776000), *fmt, *endDate ); # increase with the amount of seconds in 90 days
+            *fmt = "%.4d-%.2d-%.2d";
+            msi_time_ts2str( int(*date), *fmt, *startDate );
+            msi_time_ts2str( (int(*date) + 7776000), *fmt, *endDate ); # increase with the amount of seconds in 90 days
           
             msiAddKeyVal(*kvp, 'startDate', *startDate);
             msiAddKeyVal(*kvp, 'endDate', *endDate);

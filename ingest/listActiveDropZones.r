@@ -7,15 +7,6 @@ irule_dummy() {
     writeLine("stdout", *result);
 }
 
-
-# Wrapper rule specific for Pacman, which enforces the report argument to 'false'
-listActiveDropZonesPacman {
-    *report="false";
-    listActiveDropZones(*report, *result);
-    writeLine("stdout", *result);
-}
-
-
 IRULE_listActiveDropZones(*report, *result) {
     *json_str = '[]';
     *size = 0;

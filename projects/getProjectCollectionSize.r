@@ -10,7 +10,7 @@ irule_dummy() {
 IRULE_getProjectCollectionSize(*project, *projectCollection,*result) {
     *size = "0";
 
-    foreach ( *Row in select sum(DATA_SIZE) where COLL_NAME like "/nlmumc/projects/*project/*projectCollection%" ) {
+    foreach ( *Row in select sum(DATA_SIZE) where COLL_NAME like "/nlmumc/projects/*project/*projectCollection%" AND DATA_REPL_NUM ="0") {
         *size = *Row.DATA_SIZE;
     }
     *result = *size;

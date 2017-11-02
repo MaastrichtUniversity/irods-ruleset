@@ -32,7 +32,7 @@ IRULE_reportProjects(*result) {
 		listProjectManagers(*project,*managers);
 
 		# Calculate the size of this project
-		getFolderSize("/nlmumc/projects/*project", *dataSize) # dataSize is the result variable that will be created by this rule
+		getCollectionSize("/nlmumc/projects/*project", *dataSize) # dataSize is the result variable that will be created by this rule
 		
 		# Validate the contents of variables and construct json object
 		if ( *title == "" ) {

@@ -1,16 +1,15 @@
 # Call with
 #
-# irule -F createProject.r
+# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'"
 
 irule_dummy() {
-    IRULE_createProject(*result);
-
+    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title);
     writeLine("stdout", *result);
 }
 
 
 # Creates projects in the form P000000001
-IRULE_createProject(*project) {
+IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title) {
 
     *max = 0;
 
@@ -39,13 +38,20 @@ IRULE_createProject(*project) {
     msiCollCreate(*dstColl, 0, *status);
 
     # TODO: Determine whether setting defaults here is a good place
-    msiAddKeyVal(*metaKV, "title", "no-title");
-    msiAddKeyVal(*metaKV, "resource", "replRescUM01");
+    msiAddKeyVal(*metaKV, "authorizationPeriodEndDate", *authorizationPeriodEndDate);
+    msiAddKeyVal(*metaKV, "dataRetentionPeriodEndDate", *dataRetentionPeriodEndDate);
+    msiAddKeyVal(*metaKV, "ingestResource", *ingestResource);
+    msiAddKeyVal(*metaKV, "resource", *resource);
+    msiAddKeyVal(*metaKV, "title", *title);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
+
     # Set recursive permissions
+    msiSetACL("default", "read", "service-dwh", *dstColl);
+    msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("recursive", "inherit", "", *dstColl);
+    
 }
 
-INPUT null
+INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title=""
 OUTPUT ruleExecOut

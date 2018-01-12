@@ -11,7 +11,7 @@ IRULE_getDestinationResources(*result) {
     *resources = '[]';
     *resourcesSize = 0;
 
-    foreach ( *Row in select RESC_NAME, RESC_COMMENT where RESC_LOC = 'EMPTY_RESC_HOST') {
+    foreach ( *Row in select RESC_NAME, RESC_COMMENT where RESC_LOC = 'EMPTY_RESC_HOST' AND RESC_NAME != 'rootResc') {
         *name = *Row.RESC_NAME
         *comment = *Row.RESC_COMMENT
         *r = ' { "name": "*name", "comment": "*comment" } '

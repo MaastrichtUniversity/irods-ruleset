@@ -40,12 +40,14 @@ listContributingProjects {
         getCollectionAVU("/nlmumc/projects/*project","title",*title,"no-title-AVU-set","false");
         listProjectContributors(*project,*contributors);
         listProjectManagers(*project,*managers);
+       listProjectViewers(*project,*viewers);
 
         msiString2KeyValPair("", *kvp);
         msiAddKeyVal(*kvp, 'project', *project);
         msiAddKeyVal(*kvp, 'title', *title);
         msiAddKeyVal(*kvp, 'contributors', *contributors);
         msiAddKeyVal(*kvp, 'managers', *managers);
+        msiAddKeyVal(*kvp, 'viewers', *viewers);
 
         *o = ""
         msi_json_objops(*o, *kvp, "set");

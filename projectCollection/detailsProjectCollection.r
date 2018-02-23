@@ -11,7 +11,7 @@ irule_dummy() {
 IRULE_detailsProjectCollection(*project, *collection, *result) {
     *details = "";
 
-    getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
+    getCollectionAVU("/nlmumc/projects/*project/*collection","title",*title,"","true");
     
     *details = '{}';
 

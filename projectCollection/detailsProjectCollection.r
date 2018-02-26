@@ -12,8 +12,9 @@ IRULE_detailsProjectCollection(*project, *collection, *result) {
     *details = "";
 
     getCollectionAVU("/nlmumc/projects/*project/*collection","title",*title,"","true");
+    getCollectionAVU("/nlmumc/projects/*project/*collection","PID",*PID,"no-PID-set","false");
     
-    *details = '{}';
+    *details = '{"PID": "*PID"}';
 
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);

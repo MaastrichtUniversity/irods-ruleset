@@ -67,6 +67,17 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing");
     }
+    
+    #Get collection size
+    getCollectionSize(*dstColl, *size);
+    msiWriteRodsLog("The size is of *dstColl is *size MB", 0);
+
+    # Add size AVU to project collection
+    msiAddKeyVal(*metaKV, "dcat:byteSize", str(double(*size)*1024*1024));
+    msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
+    msiAddKeyVal(*metaKV, "sizeMB", *size);
+    msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
+
 
     # Close collection by making all access read only
     closeProjectCollection(*project, *projectCollection);

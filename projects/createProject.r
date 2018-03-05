@@ -42,6 +42,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "dataRetentionPeriodEndDate", *dataRetentionPeriodEndDate);
     msiAddKeyVal(*metaKV, "ingestResource", *ingestResource);
     msiAddKeyVal(*metaKV, "resource", *resource);
+    msiAddKeyVal(*metaKV, "storageQuotaGb", *storageQuotaGb);
     msiAddKeyVal(*metaKV, "title", *title);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 

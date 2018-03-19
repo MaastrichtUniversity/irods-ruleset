@@ -3,6 +3,10 @@
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingestNestedDelay1.r rule
 
 ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token) {
+    msiWriteRodsLog("Starting ingestion *srcColl", 0);
+    msiAddKeyVal(*metaKV, "state", "ingesting");
+    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+
     *error = errorcode(createProjectCollection(*project, *projectCollection, *title));
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-ingestion","Error creating projectCollection") ;

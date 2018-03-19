@@ -29,10 +29,8 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
             failmsg(-1, "Metadata not validated yet");
         }
 
-        msiAddKeyVal(*metaKV, "state", "ingesting");
+        msiAddKeyVal(*metaKV, "state", "in-queue-for-ingestion");
         msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-
-        msiWriteRodsLog("Starting ingestion *srcColl", 0);
 
         # On a new delay queue, as we do not want to repeat this part after failure as above
         # We also do not want any repeats of this, as this would create a new project collection

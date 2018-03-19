@@ -87,7 +87,10 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error unmounting");
     }
 
-    delay("<PLUSET>1m</PLUSET>") {
+    # Get environment config option for setting the delay for drop zone removal
+    msi_getenv("IRODS_INGEST_REMOVE_DELAY", *irodsIngestRemoveDelay);
+
+    delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
         if ( *error < 0 ) {

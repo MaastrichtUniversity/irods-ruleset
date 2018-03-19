@@ -3,19 +3,21 @@
 # irule -F listProjectContributors.r "*project='P000000001'"
 
 irule_dummy() {
-    IRULE_listProjectContributors(*project, *result);
+    IRULE_listProjectContributors(*project, 'true', *result);
 
     writeLine("stdout", *result);
 }
 
-IRULE_listProjectContributors(*project,*result) {
+IRULE_listProjectContributors(*project, *result) {
     *groups = '[]';
     *groupSize = 0;
 
     *users = '[]';
     *userSize = 0;
 
-    msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in ('own', 'modify object')  and COLL_NAME = '/nlmumc/projects/*project'", *Query);
+    *criteria = "'modify object'"
+
+    msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in (*criteria)  and COLL_NAME = '/nlmumc/projects/*project'", *Query);
     msiExecGenQuery(*Query, *QOut);
 
     foreach ( *Row in *QOut ) {

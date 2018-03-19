@@ -31,11 +31,16 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     # Ingest the files from local directory on resource server to iRODS collection
     remote(*ingestResourceHost,"") {
-    # Do not specify target resource here! Policy ensures that data is moved to proper resource and
-    # if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
+        # Do not specify target resource here! Policy ensures that data is moved to proper resource and
+        # if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
+
         *error = errorcode(msiput_dataobj_or_coll("/mnt/ingest/zones/*token", "null", "numThreads=10++++forceFlag=", *dstColl, *real_path));
     }  
     msiWriteRodsLog("DEBUG: Done remote", 0);
+
+    if ( *error < 0 ) {
+        setErrorAVU(*srcColl, "state", "error-ingestion","Error copying ingest zone") ;
+    }
 
     # Determine post-ingest time to calculate average ingest speed
     *time = time();
@@ -57,10 +62,6 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiWriteRodsLog("Sync took  *difference seconds", 0);
     msiWriteRodsLog("AVG speed was *avgSpeed MB/s for *count files ", 0);
 
-    if ( *error < 0 ) {
-        setErrorAVU(*srcColl,"state", "error-ingestion","Error rsyncing ingest zone") ;
-    }
-
     # Add creator AVU (i.e. current user) to project collection
     msiAddKeyVal(*metaKV, "creator", *user);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
@@ -69,7 +70,7 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
     if ( *error < 0 ) {
-        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending MetaData for indexing");
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
     }
 
     # Close collection by making all access read only
@@ -80,7 +81,6 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiAddKeyVal(*metaKV, "state", "ingested");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
 
-    # TODO: Handle errors
     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
     # This is because of a bug in the unmount. This is kept in memory for
     # the remaining of the irodsagent session.
@@ -91,7 +91,10 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error unmounting");
     }
 
-    delay("<PLUSET>1m</PLUSET>") {
+    # Get environment config option for setting the delay for drop zone removal
+    msi_getenv("IRODS_INGEST_REMOVE_DELAY", *irodsIngestRemoveDelay);
+
+    delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
         if ( *error < 0 ) {

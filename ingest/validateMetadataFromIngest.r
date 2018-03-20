@@ -10,6 +10,12 @@
 validateMetadataFromIngest(*token,*mirthURL) {
     *srcColl = "/nlmumc/ingest/zones/*token";
     *delete = 0;
+
+    # Set DropZone status AVU to 'validating'
+    msiAddKeyVal(*metaKV, "state", "validating");
+    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+
+    msiWriteRodsLog("Starting validation of *srcColl", 0);
     
     # Determine REPEAT count
     *validateRepCounter = "0";

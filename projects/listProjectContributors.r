@@ -1,21 +1,25 @@
 # Call with
 #
-# irule -F listProjectContributors.r "*project='P000000001'"
+# irule -F listProjectContributors.r "*project='P000000001'" "*inherited='true'"
 
 irule_dummy() {
-    IRULE_listProjectContributors(*project, 'true', *result);
+    IRULE_listProjectContributors(*project, *inherited, *result);
 
     writeLine("stdout", *result);
 }
 
-IRULE_listProjectContributors(*project, *result) {
+IRULE_listProjectContributors(*project, *inherited, *result) {
     *groups = '[]';
     *groupSize = 0;
 
     *users = '[]';
     *userSize = 0;
 
-    *criteria = "'modify object'"
+    if ( *inherited == "true" ) {
+        *criteria = "'own', 'modify object'"
+    } else {
+        *criteria = "'modify object'"
+    }
 
     msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in (*criteria)  and COLL_NAME = '/nlmumc/projects/*project'", *Query);
     msiExecGenQuery(*Query, *QOut);
@@ -43,5 +47,5 @@ IRULE_listProjectContributors(*project, *result) {
     *result = '{"users": *users, "groups": *groups }';
 }
 
-INPUT *project=$"MUMC-M4I-00001"
+INPUT *project=$"P00000001", *inherited=""
 OUTPUT ruleExecOut

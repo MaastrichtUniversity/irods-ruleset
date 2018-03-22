@@ -1,19 +1,19 @@
 # Call with
 #
-# irule -F detailsProject.r "*project='P000000001'"
+# irule -F detailsProject.r "*project='P000000001'" "*inherited='false'"
 
 irule_dummy() {
-    IRULE_detailsProject(*project, *result);
+    IRULE_detailsProject(*project, *inherited, *result);
 
     writeLine("stdout", *result);
 }
 
-IRULE_detailsProject(*project, *result) {
+IRULE_detailsProject(*project, *inherited, *result) {
     *details = "";
 
-    listProjectContributors(*project,*contributors);
+    listProjectContributors(*project, *inherited, *contributors);
     listProjectManagers(*project,*managers);
-    listProjectViewers(*project,*viewers);
+    listProjectViewers(*project, *inherited, *viewers);
 
     getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
@@ -28,6 +28,6 @@ IRULE_detailsProject(*project, *result) {
     *result = *details;
 }
 
-INPUT *project=""
+INPUT *project="", *inherited=""
 OUTPUT ruleExecOut
 

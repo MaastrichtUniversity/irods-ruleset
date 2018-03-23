@@ -48,21 +48,21 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     *after = double(*strtime);  
     *difference = double(*after - *before)+1;
 
-    # Get number of files and total size
-    *size = "0";
-    *count = 0;
-    foreach ( *Row in select sum(DATA_SIZE), count(COLL_NAME) where COLL_NAME like "*dstColl%" AND DATA_REPL_NUM ="0" ) {
-       *size = *Row.DATA_SIZE;
-       *count = *Row.COLL_NAME; 
-    }
+    # Calculate the number of files and total size of the ProjectCollection
+    calcCollectionSize(*dstColl, "B", *size);
+    calcCollectionFiles(*dstColl, *numFiles);
 
     # Calculate average ingest speed
     *result = double(*size);
-    *avgSpeed = *result/(*difference*1024*1024);
-    msiWriteRodsLog("*token : Sync took  *difference seconds", 0);
-    msiWriteRodsLog("*token : AVG speed was *avgSpeed MB/s for *count files ", 0);
+    *avgSpeed = (*result/1024/1024)/*difference;
+    *sizeGiB = double(*size)/1024/1024/1024
+    msiWriteRodsLog("*srcColl : Ingested *sizeGiB GiB in *numFiles files", 0);
+    msiWriteRodsLog("*srcColl : Sync took *difference seconds", 0);
+    msiWriteRodsLog("*srcColl : AVG speed was *avgSpeed MiB/s", 0);
 
-    # Add creator AVU (i.e. current user) to project collection
+    # Add multiple AVUs to ProjectCollection
+    msiAddKeyVal(*metaKV, "dcat:byteSize", str(*size));
+    msiAddKeyVal(*metaKV, "numFiles", str(*numFiles));
     msiAddKeyVal(*metaKV, "creator", *user);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
@@ -72,16 +72,6 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
     }
-    
-    #Calculate the collection size
-    calcCollectionSize(*dstColl, "B", *size);
-
-    # Add size AVU to project collection
-    msiAddKeyVal(*metaKV, "dcat:byteSize", str(*size));
-    msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
-    msiAddKeyVal(*metaKV, "sizeGiB", str(ceiling(double(*size)/1024/1024/1024)));
-    msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
-
 
     # Close collection by making all access read only
     closeProjectCollection(*project, *projectCollection);

@@ -4,8 +4,8 @@
 
 ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token) {
     msiWriteRodsLog("Starting ingestion *srcColl", 0);
-    msiAddKeyVal(*metaKV, "state", "ingesting");
-    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+    msiAddKeyVal(*stateKV, "state", "ingesting");
+    msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
     *error = errorcode(createProjectCollection(*project, *projectCollection, *title));
     if ( *error < 0 ) {
@@ -88,8 +88,8 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
-    msiAddKeyVal(*metaKV, "state", "ingested");
-    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+    msiAddKeyVal(*stateKV, "state", "ingested");
+    msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
     # This is because of a bug in the unmount. This is kept in memory for

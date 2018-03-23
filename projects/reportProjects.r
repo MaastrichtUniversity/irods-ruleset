@@ -13,51 +13,53 @@ irule_dummy() {
 IRULE_reportProjects(*result) {
     *jsonStr = '[]';
 
-	foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = "/nlmumc/projects" ) {
-		# Declare variables
-		*outcome = "";
-		*size = 0;
-		*title = "";
+    foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = "/nlmumc/projects" ) {
+        # Declare variables
+        *outcome = "";
+        *size = 0;
+        *title = "";
         *resource = "";
-		*managers = "";
+        *managers = "";
+        *viewers = "";
         
         # Retrieve the project from the directory name
-		uuChopPath(*Row.COLL_NAME, *dir, *project);
-		
-		# Retrieve AVUs based on project
-		getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
-		getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
-		
-		# Retrieve the project manager(s)
-		listProjectManagers(*project,*managers);
+        uuChopPath(*Row.COLL_NAME, *dir, *project);
 
-		# Calculate the size of this project
-		getCollectionSize("/nlmumc/projects/*project", *dataSize) # dataSize is the result variable that will be created by this rule
-		
-		# Validate the contents of variables and construct json object
-		if ( *title == "" ) {
+        # Retrieve AVUs based on project
+        getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+
+        # Retrieve the project manager(s) and viewers
+        listProjectManagers(*project,*managers);
+        listProjectViewers(*project,*viewers);
+
+        # Calculate the size of this project
+        calcCollectionSize("/nlmumc/projects/*project", "GiB", *dataSize) # dataSize is the result variable that will be created by this rule
+
+        # Validate the contents of variables and construct json object
+        if ( *title == "" ) {
             *titleStr = "no-title-AVU-set";
         } else {
             *titleStr = *title;
         }
-		
-		if ( *resource == "" ) {
+
+        if ( *resource == "" ) {
             *resourceStr = "no-resource-AVU-set";
         } else {
             *resourceStr = *resource;
         }
 
-		# Outcome contains the results from this iteration
-		*outcome = '{"project":"*project", "resource": "*resourceStr", "dataSize": "*dataSize MB", "managers": *managers}';
+        # Outcome contains the results from this iteration
+        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*dataSize", "managers": *managers, "viewers": *viewers}';
 
-		# Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
+        # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
         msiString2KeyValPair("", *titleKvp);
         msiAddKeyVal(*titleKvp, "title", *titleStr);
         msi_json_objops(*outcome, *titleKvp, "add");
 
-		# Append the final outcome to the jsonString
-		msi_json_arrayops(*jsonStr, *outcome, "add", *size)
-	}
+        # Append the final outcome to the jsonString
+        msi_json_arrayops(*jsonStr, *outcome, "add", *size);
+    }
 
     # jsonStr now contains information about all projects. Return this in the result variable
     *result = *jsonStr;

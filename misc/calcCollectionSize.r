@@ -24,30 +24,28 @@ IRULE_calcCollectionSize(*collection, *unit, *round, *result) {
 
         if ( *unit == "B" ) {
             *size = double(*sizeBytes);
-        }
-        if ( *unit == "KiB" ) {
+        } else if ( *unit == "KiB" ) {
             *size = double(*sizeBytes)/1024;
-        }
-        if ( *unit == "MiB" ) {
+        } else if ( *unit == "MiB" ) {
             *size = double(*sizeBytes)/1024/1024;
-        }
-        if ( *unit == "GiB" ) {
+        } else if ( *unit == "GiB" ) {
             *size = double(*sizeBytes)/1024/1024/1024;
-        }
-        if ( *unit == "TiB" ) {
+        } else if ( *unit == "TiB" ) {
             *size = double(*sizeBytes)/1024/1024/1024/1024;
+        } else {
+            failmsg(-1, "Invalid input for 'unit'. Options are: B | KiB | MiB | GiB | TiB");
         }
     }
-    
+
     # Do the rounding
     if ( *round == "none") {
         *size = *size;
-    }
-    if ( *round == "floor") {
+    } else if ( *round == "floor") {
         *size = floor(*size);
-    }
-    if ( *round == "ceiling") {
+    } else if ( *round == "ceiling") {
         *size = ceiling(*size);
+    } else {
+        failmsg(-1, "Invalid input for 'round'. Options are: none | floor | ceiling");
     }
     
     *result = *size;

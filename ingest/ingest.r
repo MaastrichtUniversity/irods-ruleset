@@ -31,15 +31,13 @@ ingest {
         failmsg(-1, "Project is empty.");
     }
 
-    msiAddKeyVal(*metaKV, "state", "validating");
+    msiWriteRodsLog("Setting status *srcColl to in queue", 0);
+    msiAddKeyVal(*metaKV, "state", "in-queue-for-validation");
     msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
-  
-    msiWriteRodsLog("Starting validation of *srcColl", 0);
-
-    # Validate metadata
-    msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
+        # Validate metadata
+        msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
         validateMetadataFromIngest(*token,*mirthValidationURL);
     }
 

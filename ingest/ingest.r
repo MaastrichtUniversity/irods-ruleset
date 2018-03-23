@@ -32,8 +32,8 @@ ingest {
     }
 
     msiWriteRodsLog("Setting status *srcColl to in queue", 0);
-    msiAddKeyVal(*metaKV, "state", "in-queue-for-validation");
-    msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+    msiAddKeyVal(*stateKV, "state", "in-queue-for-validation");
+    msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
         # Validate metadata

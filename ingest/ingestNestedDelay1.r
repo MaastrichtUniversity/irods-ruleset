@@ -8,8 +8,8 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     if(int(*validateRepCounter) == 10) {
         # It's not going to happen, set the state to error-reaching-validator
-        msiAddKeyVal(*metaKV, "state", "error-reaching-validator");
-        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+        msiAddKeyVal(*stateKV, "state", "error-reaching-validator");
+        msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
         failmsg(0, "Finished trying to reach the external validation channel. I give up...");
     }
 
@@ -29,8 +29,8 @@ ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
             failmsg(-1, "Metadata not validated yet");
         }
 
-        msiAddKeyVal(*metaKV, "state", "in-queue-for-ingestion");
-        msiSetKeyValuePairsToObj(*metaKV, *srcColl, "-C");
+        msiAddKeyVal(*stateKV, "state", "in-queue-for-ingestion");
+        msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
         # On a new delay queue, as we do not want to repeat this part after failure as above
         # We also do not want any repeats of this, as this would create a new project collection

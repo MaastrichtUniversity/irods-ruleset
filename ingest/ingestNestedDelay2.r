@@ -59,8 +59,8 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     # Calculate average ingest speed
     *result = double(*size);
     *avgSpeed = *result/(*difference*1024*1024);
-    msiWriteRodsLog("Sync took  *difference seconds", 0);
-    msiWriteRodsLog("AVG speed was *avgSpeed MB/s for *count files ", 0);
+    msiWriteRodsLog("*token : Sync took  *difference seconds", 0);
+    msiWriteRodsLog("*token : AVG speed was *avgSpeed MB/s for *count files ", 0);
 
     # Add creator AVU (i.e. current user) to project collection
     msiAddKeyVal(*metaKV, "creator", *user);
@@ -73,14 +73,13 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
     }
     
-    #Get collection size
-    getCollectionSize(*dstColl, *size);
-    msiWriteRodsLog("The size is of *dstColl is *size MB", 0);
+    #Calculate the collection size
+    calcCollectionSize(*dstColl, "B", *size);
 
     # Add size AVU to project collection
-    msiAddKeyVal(*metaKV, "dcat:byteSize", str(double(*size)*1024*1024));
+    msiAddKeyVal(*metaKV, "dcat:byteSize", str(*size));
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
-    msiAddKeyVal(*metaKV, "sizeMB", *size);
+    msiAddKeyVal(*metaKV, "sizeGiB", str(ceiling(double(*size)/1024/1024/1024)));
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
 

@@ -49,7 +49,7 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     *difference = double(*after - *before)+1;
 
     # Calculate the number of files and total size of the ProjectCollection
-    calcCollectionSize(*dstColl, "B", *size);
+    calcCollectionSize(*dstColl, "B", "ceiling", *size);
     calcCollectionFiles(*dstColl, *numFiles);
 
     # Calculate average ingest speed

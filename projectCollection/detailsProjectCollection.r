@@ -13,12 +13,13 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
 
     getCollectionAVU("/nlmumc/projects/*project/*collection","title",*title,"","true");
     getCollectionAVU("/nlmumc/projects/*project/*collection","PID",*PID,"no-PID-set","false");
+    getCollectionSize("/nlmumc/projects/*project/*collection", "B", "none", *byteSize);
 
     listProjectManagers(*project, *managers);
     listProjectContributors(*project, *inherited, *contributors);
     listProjectViewers(*project, *inherited, *viewers);
     
-    *details = '{"project": "*project", "collection": "*collection", "PID": "*PID", "viewers": *viewers,"contributors": *contributors, "managers": *managers}';
+    *details = '{"project": "*project", "collection": "*collection", "PID": "*PID", "byteSize": *byteSize, "viewers": *viewers,"contributors": *contributors, "managers": *managers}';
 
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);

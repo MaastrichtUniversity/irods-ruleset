@@ -38,17 +38,21 @@ IRULE_calcCollectionSize(*collection, *unit, *round, *result) {
     }
 
     # Do the rounding
-    if ( *round == "none") {
-        *size = *size;
-    } else if ( *round == "floor") {
-        *size = floor(*size);
-    } else if ( *round == "ceiling") {
-        *size = ceiling(*size);
+    if ( *unit == "B" ) {
+        *result = str(*sizeBytes);
     } else {
-        failmsg(-1, "Invalid input for 'round'. Options are: none | floor | ceiling");
+        if ( *round == "none") {
+            *size = *size;
+        } else if ( *round == "floor") {
+            *size = floor(*size);
+        } else if ( *round == "ceiling") {
+            *size = ceiling(*size);
+        } else {
+            failmsg(-1, "Invalid input for 'round'. Options are: none | floor | ceiling");
+        }
+        *result = str(*size);
     }
-    
-    *result = *size;
+
 }
 
 INPUT *collection="",*unit="",*round=""

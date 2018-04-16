@@ -190,10 +190,13 @@ ifExists(*i){
     }
 
     # Check for collection
-    foreach(*row in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = '*coll' AND COLL_NAME = '*data'){
+    foreach(*row2 in SELECT COLL_NAME WHERE COLL_NAME = '*i'){
         *b = 1;
         break;
     }
+
+    # This returns the value of the var *b to the caller
+    *b;
 }
 
 INPUT *Coll="",*Resc="",*tocResc="",*tarResc=""

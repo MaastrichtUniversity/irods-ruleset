@@ -24,22 +24,23 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
 
     # Now we address some names of files: the tarball, the manifest, and the excluded file
     # The name of your tarball. The default provided is the name of the collection.
-    # This is a bit tricky to reliably gett
-    # rim from the left all of our /'s away until only 1 block of text remains.
+    # This is a bit tricky to reliably get
+    # Trim from the left all of our /'s away until only 1 block of text remains.
     # If you have more than 9 subdirectories, it will need expanded
     # in any case, a suffix of '.tar' is appended in the rule.
     *Tar=triml(triml(triml(triml(triml(triml(triml(triml(triml(*Coll, "/"), "/"), "/"), "/"), "/"), "/"), "/"), "/"), "/");
 
     # Build path for the manifest, tarball, and temp holding of any excluded file
     *foundation="/nlmumc/home/"++$userNameClient++"/tar-temp";
-    if(ifExists(*foundation)==0){
-    msiCollCreate(*foundation, 0, *status)
+    if(ifExists(*foundation)==1){
+        failmsg(-1,"Error, already found a temporary tar directory. Unfinished existing tar process? Check "++*foundation++".");
     }
+    msiCollCreate(*foundation, 0, *status)
 
     # The name of the table of contents / manifest file you want generated
     *ToCfile="manifest.txt";
 
-    # The flag to do checksums    not. 1 = true. any other value is false.
+    # The flag to do checksums    note: 1 = true; any other value is false.
     *CheckSums=1;
 
     # The metadata file name (collection and parent collection pathing and all is mapped out below)
@@ -82,7 +83,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         writeLine("stdout","metadata file already exists");
         failmsg(-1,"Warning, almost overwrote meta-data. Check in"++*foundation++".");
     }
-    # Make sure that the exlucded file actually exists..
+    # Make sure that the excluded file actually exists..
     if((ifExists(*EXdown))==0){
         writeLine("stdout","excluded file does not exist");
         failmsg(-1,"Warning, file targeted for exclusion does not exist..");
@@ -182,11 +183,17 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
 ifExists(*i){
     *b = 0;
     msiSplitPath(*i, *coll, *data);
+
     foreach(*row in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = '*coll' AND DATA_NAME = '*data'){
         *b = 1;
         break;
     }
-    *b;
+
+    # Check for collection
+    foreach(*row in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = '*coll' AND COLL_NAME = '*data'){
+        *b = 1;
+        break;
+    }
 }
 
 INPUT *Coll="",*Resc="",*tocResc="",*tarResc=""

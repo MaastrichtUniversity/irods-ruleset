@@ -121,19 +121,5 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     writeLine("stdout","Deleted manifest "++*Coll++"/"++*tocFile);
 }
 
-# Basic file-existance checker function.
-# Checks if a file exists
-# *i is a full file path "/tempZone/home/rods/testfile.dat" or so
-# Returns 0 if no file, 1 if file found.
-ifExists(*i){
-    *b = 0;
-    msiSplitPath(*i, *coll, *data);
-    foreach(*row in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = '*coll' AND DATA_NAME = '*data'){
-        *b = 1;
-        break;
-    }
-    *b;
-}
-
 INPUT *Tar="",*Resc=""
 OUTPUT ruleExecOut

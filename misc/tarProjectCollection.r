@@ -99,11 +99,10 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiDataObjRename(*EXdown, *EXup, "0", *stat);
 
     # Then tarball entire collection.
-    #remote("ires","") {
     msiTarFileCreate(*TarUp, *Coll, *Resc, "");
-    #}
 
-    writeLine("stdout","created TAR file "++*TarUp);
+    msiWriteRodsLog("tarProjectCollection: Created TAR file: *TarUp", 0);
+    writeLine("stdout","tarProjectCollection: Created TAR file: *TarUp");
 
     # Creates a new table of contents in our collection
     msiDataObjCreate(*tocUp, "forceFlag=", *TOC);

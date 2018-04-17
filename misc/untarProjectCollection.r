@@ -68,6 +68,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
                 && *row.DATA_NAME != *CheckSums
             ){
                 writeLine("stdout","WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+                msiWriteRodsLog("WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.", 0);
             } else{
                 writeLine("stdout","Checksum for "++*rpath++" is good.");
             }
@@ -102,6 +103,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
                 && *row.DATA_NAME != *excludeFile
                 && *row.DATA_NAME != *CheckSums
             ){
+                msiWriteRodsLog("WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.", 0);
                 writeLine("stdout","WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
             } else{
                 writeLine("stdout","Checksum for "++*rpath++" is good.");

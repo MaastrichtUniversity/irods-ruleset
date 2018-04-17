@@ -158,6 +158,12 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiDataObjClose(*TOC, *stat);
     msiDataObjClose(*CKS, *stat);
 
+    # Delete all remaining (now empty) collections
+    foreach(*row in SELECT COLL_NAME where COLL_PARENT_NAME = *Coll) {
+        msiRmColl(*row.COLL_NAME, "forceFlag=", *Status);
+    }
+
+
     #----------------------------------------------
     #Step 3- Move the tarball and manifest into the collection, along with previously existing meta-data file.
 

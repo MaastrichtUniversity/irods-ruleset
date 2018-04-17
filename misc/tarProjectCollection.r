@@ -174,6 +174,12 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         msiDataObjRename(*CKSup, *CKSdown, "0", *stat);
         msiDataObjPhymv(*CKSdown, *tocResc, "null", "", "null", *stat);
     }
+
+    # Safety check. *foundation collection should be empty!
+    foreach(*row in SELECT DATA_NAME WHERE COLL_NAME = '*foundation'){
+        failmsg(-1,"Warning, collecion used for tar'ing is not empty! Not deleting it. Check in"++*foundation++".");
+    }
+    msiRmColl(*foundation, "forceFlag=", *status);
 }
 
 # Basic file-existance checker function.

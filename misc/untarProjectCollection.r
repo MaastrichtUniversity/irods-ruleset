@@ -19,11 +19,11 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     msiSplitPath(*Tar, *Coll, *tData);
  
     # The name of the table of contents / manifest file you want generated
-    *tocFile="manifest.txt";
+    *tocFile = "manifest.txt";
  
     # This exception here will prevent us from checking checksums in data that was not tarballed
     # This includes: the tarball itself, the checksum file itself, and a meta-data.xml file
-    *excludeFile="metadata.xml";
+    *excludeFile = "metadata.xml";
 
     # Step 1, untar the collection after moving it to the right resource
     msiDataObjPhymv(*Tar, *Resc, "null", "", "null", *stat);
@@ -32,7 +32,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
 
     # Step 2, validate the checksums of the files.
     # Opens our checksum file. Currently set to 10000 bytes.
-    *CheckSums=trimr(*tData, ".tar")++".cksums"
+    *CheckSums = trimr(*tData, ".tar")++".cksums"
 
     if( ifExists(*Coll++"/"++*CheckSums)== 1){
         msiDataObjOpen(*Coll++"/"++*CheckSums,*CKsums);
@@ -42,10 +42,10 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         # We have to search twice, once for the precise collection and another with
         foreach( *row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *Coll){
             # Our logical iRODS Path
-            *ipath=*row.COLL_NAME++"/"++*row.DATA_NAME;
+            *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
 
             # Our relative path to the tar collection
-            *rpath="."++triml(*ipath, *Coll);
+            *rpath = "."++triml(*ipath, *Coll);
 
             # Checks our new checksum of each file from the tarball
             msiDataObjChksum(*ipath, "forceChksum=", *new);
@@ -78,10 +78,10 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         *CollRec=*Coll++"/%";
         foreach(*row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *CollRec){
             # Our logical iRODS Path
-            *ipath=*row.COLL_NAME++"/"++*row.DATA_NAME;
+            *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
 
             # Our relative path to the tar collection
-            *rpath="."++triml(*ipath, *Coll);
+            *rpath = "."++triml(*ipath, *Coll);
 
             # Checks our new checksum of each file from the tarball
             msiDataObjChksum(*ipath, "forceChksum=", *new);

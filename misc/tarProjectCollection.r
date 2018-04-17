@@ -28,7 +28,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     # Trim from the left all of our /'s away until only 1 block of text remains.
     # If you have more than 9 subdirectories, it will need expanded
     # in any case, a suffix of '.tar' is appended in the rule.
-    *Tar=triml(triml(triml(triml(triml(triml(triml(triml(triml(*Coll, "/"), "/"), "/"), "/"), "/"), "/"), "/"), "/"), "/");
+    *Tar = triml(triml(triml(triml(triml(triml(triml(triml(triml(*Coll, "/"), "/"), "/"), "/"), "/"), "/"), "/"), "/"), "/");
 
     # Build path for the manifest, tarball, and temp holding of any excluded file
     *foundation="/nlmumc/home/"++$userNameClient++"/tar-temp";
@@ -38,53 +38,53 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiCollCreate(*foundation, 0, *status)
 
     # The name of the table of contents / manifest file you want generated
-    *ToCfile="manifest.txt";
+    *ToCfile = "manifest.txt";
 
     # The flag to do checksums    note: 1 = true; any other value is false.
-    *CheckSums=1;
+    *CheckSums = 1;
 
     # The metadata file name (collection and parent collection pathing and all is mapped out below)
     # This file will be excluded from tarring and such.
     # limited to one file at the moment.
-    *excludeFile="metadata.xml";
+    *excludeFile = "metadata.xml";
 
 
     #----------------------------------------------
     # Step 1- Checks on existing data, some location mapping
     # Up and Down refer to up in the build spot of *foundation or down in the target collection
     # Tarball file name, with a suffix to make it uniquely identifiable
-    *TarUp=*foundation++"/"++*Tar++".tar";
-    *TarDown=*Coll++"/"++*Tar++".tar";
+    *TarUp = *foundation++"/"++*Tar++".tar";
+    *TarDown = *Coll++"/"++*Tar++".tar";
 
     # Checksum File for manifest/record
-    *tocUp=*foundation++"/"++*ToCfile;
-    *tocDown=*Coll++"/"++*ToCfile;
+    *tocUp = *foundation++"/"++*ToCfile;
+    *tocDown = *Coll++"/"++*ToCfile;
 
     # Excluded file
-    *EXup=*foundation++"/"++*excludeFile;
-    *EXdown=*Coll++"/"++*excludeFile;
+    *EXup = *foundation++"/"++*excludeFile;
+    *EXdown = *Coll++"/"++*excludeFile;
 
     # Checksums File
-    *CKSup=*foundation++"/"++*Tar++".cksums";
-    *CKSdown=*Coll++"/"++*Tar++".cksums"
+    *CKSup = *foundation++"/"++*Tar++".cksums";
+    *CKSdown = *Coll++"/"++*Tar++".cksums"
 
     # Make sure no tarball already exists with this name in this location
-    if(ifExists(*TarUp)==1){
+    if( ifExists(*TarUp)==1 ){
         writeLine("stdout","Have to delete an existing tarball");
         failmsg(-1,"Warning, already found a tarball. Check in"++*foundation++".");
     }
     # Checking that there is no manifest file already existing.
-    if(ifExists(*tocUp)==1){
+    if( ifExists(*tocUp)==1 ){
         writeLine("stdout","metadata file already exists");
         failmsg(-1,"Warning, almost overwrote manifest file. Check in"++*foundation++".");
     }
     # Make sure no meta-data was currently migrated and risk overwrite.
-    if(ifExists(*EXup)==1){
+    if( ifExists(*EXup)==1 ){
         writeLine("stdout","metadata file already exists");
         failmsg(-1,"Warning, almost overwrote meta-data. Check in"++*foundation++".");
     }
     # Make sure that the excluded file actually exists..
-    if((ifExists(*EXdown))==0){
+    if( ifExists(*EXdown)==0 ){
         writeLine("stdout","excluded file does not exist");
         failmsg(-1,"Warning, file targeted for exclusion does not exist..");
     }
@@ -120,8 +120,8 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     # This is because if we ran "/zone/coll/coll%" we would get /zone/coll/coll AND /zone/coll/collate
 
     foreach(*data in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = *Coll) {
-        *ipath=*data.COLL_NAME++"/"++*data.DATA_NAME;
-        *rpath="./"++triml(*ipath, *Coll++"/");
+        *ipath = *data.COLL_NAME++"/"++*data.DATA_NAME;
+        *rpath = "./"++triml(*ipath, *Coll++"/");
 
         # Filtering out optional checksums or not
         if(*CheckSums==1){
@@ -138,8 +138,8 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     # This second query pulls the subdirectories of our target collection. Adding "/%" to our collection name.
     *CollRec=*Coll++"/%";
     foreach(*data in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME like *CollRec) {
-        *ipath=*data.COLL_NAME++"/"++*data.DATA_NAME;
-        *rpath="./"++triml(*ipath, *Coll++"/");
+        *ipath = *data.COLL_NAME++"/"++*data.DATA_NAME;
+        *rpath = "./"++triml(*ipath, *Coll++"/");
 
         # Filtering out optional checksums or not
         if(*CheckSums==1){

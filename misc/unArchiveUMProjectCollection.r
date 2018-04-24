@@ -1,7 +1,7 @@
 # Move SURFsara tape archive back to UM
 #
 # Call with
-# irule -F archiveUMProjectCollection.r "*project='P000000001'" "*projectCollection='C000000001'"
+# irule -F unArchiveUMProjectCollection.r "*project='P000000001'" "*projectCollection='C000000001'"
 
 irule_dummy() {
     IRULE_unArchiveUMProjectCollection(*project, *projectCollection);

@@ -32,7 +32,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
 
     # Build path for the manifest, tarball, and temp holding of any excluded file
     *foundation="/nlmumc/home/"++$userNameClient++"/tar-temp";
-    if(ifExists(*foundation)==1){
+    if(fileOrCollectionExists(*foundation)==1){
         failmsg(-1,"Error, already found a temporary tar directory. Unfinished existing tar process? Check "++*foundation++".");
     }
     msiCollCreate(*foundation, 0, *status)
@@ -69,27 +69,27 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     *CKSdown = *Coll++"/"++*Tar++".cksums"
 
     # Make sure no tarball already exists with this name in this location
-    if( ifExists(*TarUp)==1 ){
+    if( fileOrCollectionExists(*TarUp)==1 ){
         writeLine("stdout","Have to delete an existing tarball");
         failmsg(-1,"Warning, already found a tarball. Check in"++*foundation++".");
     }
     # Checking that there is no manifest file already existing.
-    if( ifExists(*tocUp)==1 ){
+    if( fileOrCollectionExists(*tocUp)==1 ){
         writeLine("stdout","metadata file already exists");
         failmsg(-1,"Warning, almost overwrote manifest file. Check in"++*foundation++".");
     }
     # Make sure no meta-data was currently migrated and risk overwrite.
-    if( ifExists(*EXup)==1 ){
+    if( fileOrCollectionExists(*EXup)==1 ){
         writeLine("stdout","metadata file already exists");
         failmsg(-1,"Warning, almost overwrote meta-data. Check in"++*foundation++".");
     }
     # Make sure that the excluded file actually exists..
-    if( ifExists(*EXdown)==0 ){
+    if( fileOrCollectionExists(*EXdown)==0 ){
         writeLine("stdout","excluded file does not exist");
         failmsg(-1,"Warning, file targeted for exclusion does not exist..");
     }
     # Checking that no existing CKSUM file exists
-    if ( ifExists(*CKSup)==1 && *CheckSums==1 ){
+    if ( fileOrCollectionExists(*CKSup)==1 && *CheckSums==1 ){
         writeLine("stdout","Have to delete an existing tarball");
         failmsg(-1,"Warning, already found a checksum file. Check in"++*foundation++".");
     }
@@ -185,29 +185,6 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         failmsg(-1,"Warning, collecion used for tar'ing is not empty! Not deleting it. Check in"++*foundation++".");
     }
     msiRmColl(*foundation, "forceFlag=", *status);
-}
-
-# Basic file-existance checker function.
-# Checks if a file exists
-# *i is a full file path "/tempZone/home/rods/testfile.dat" or so
-# Returns 0 if no file, 1 if file found.
-ifExists(*i){
-    *b = 0;
-    msiSplitPath(*i, *coll, *data);
-
-    foreach(*row in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = '*coll' AND DATA_NAME = '*data'){
-        *b = 1;
-        break;
-    }
-
-    # Check for collection
-    foreach(*row2 in SELECT COLL_NAME WHERE COLL_NAME = '*i'){
-        *b = 1;
-        break;
-    }
-
-    # This returns the value of the var *b to the caller
-    *b;
 }
 
 INPUT *Coll="",*Resc="",*tocResc="",*tarResc=""

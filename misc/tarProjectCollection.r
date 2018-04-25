@@ -149,8 +149,6 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         }
 
         msiDataObjWrite(*TOC, *rpath++"\n", *stat);
-
-        msiDataObjUnlink("objPath="++*ipath++"++++forceFlag=", *rmstat);
     }
 
     # This second query pulls the subdirectories of our target collection. Adding "/%" to our collection name.
@@ -167,24 +165,71 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         }
 
         msiDataObjWrite(*TOC, *rpath++"\n", *stat);
-
-        msiDataObjUnlink("objPath="++*ipath++"++++forceFlag=", *rmstat);
     }
 
     # Close our file
     msiDataObjClose(*TOC, *stat);
     msiDataObjClose(*CKS, *stat);
 
-    # Delete all remaining (now empty) collections
-    foreach(*row in SELECT COLL_NAME where COLL_PARENT_NAME = *Coll) {
-        msiRmColl(*row.COLL_NAME, "forceFlag=", *Status);
-    }
-
-    msiWriteRodsLog("tarProjectCollection: Finished checksums. Starting objPhyMove to destination resource *tarResc", 0);
-
+    msiWriteRodsLog("tarProjectCollection: Finished checksums. Starting cleanup.", 0);
 
     #----------------------------------------------
-    #Step 3- Move the tarball and manifest into the collection, along with previously existing meta-data file.
+    #Step 3- Cleanup. Deleting objects as they are now in the tarball
+    #
+    # Deleting objects in a foreach loop will race-conditon out
+    # if there are more than 255 items found
+    # To counter this, we use a while/foreach combo that counts out
+    # and resets if over 200 items.
+
+    # Using *i to count and reset, we delete in batches of 200 and reset the foreach
+    *deleted = 1;
+    *i = 0;
+    while(*deleted == 1) {
+        *deleted = 0;
+        foreach(*row in SELECT COLL_NAME where COLL_PARENT_NAME = *Coll){
+            *deleted = 1;
+            *i = *i + 1;
+
+            # If *i is at 200, break the foreach and reset.
+            if(*i >= 200){
+                *i = 0;
+                break;
+            }
+
+            # As long as our counter is below 201, we proceed to delete and lower total
+            msiRmColl(*row.COLL_NAME,"forceFlag=",*Status);
+            msiWriteRodsLog(*row.COLL_NAME++" was removed, status: "++*Status, 0);
+        }
+    }
+
+    # Now we scrub the data objects left in the target collection
+    # Using the same while/foreach to counter the race condition
+
+    # Using *i to count and reset, we delete in batches of 200 and reset the foreach
+    *deleted = 1;
+    *i = 0;
+    while(*deleted == 1){
+        *deleted = 0;
+        foreach(*cleanup in select DATA_NAME where COLL_NAME = *Coll){
+            *ipath=*Coll++"/"++*cleanup.DATA_NAME;
+            *deleted = 1;
+            *i = *i + 1;
+
+            # If *i is at 200, break the foreach and reset.
+            if(*i >= 200){
+                *i = 0;
+                break;
+            }
+
+            msiDataObjUnlink("objPath="++*ipath++"++++forceFlag=", *rmstat);
+            msiWriteRodsLog(*ipath, 0);
+        }
+    }
+
+    #----------------------------------------------
+    #Step 4- Move the tarball and manifest into the collection, along with previously existing meta-data file.
+
+    msiWriteRodsLog("tarProjectCollection: Finished cleanup. Starting objPhyMove to destination resource *tarResc", 0);
 
     msiDataObjRename(*TarUp, *TarDown, "0", *Stat);
     msiDataObjPhymv(*TarDown, *tarResc, "null", "", "null", *stat);

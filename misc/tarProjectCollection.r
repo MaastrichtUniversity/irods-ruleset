@@ -35,7 +35,6 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     if(fileOrCollectionExists(*foundation)==1){
         failmsg(-1,"Error, already found a temporary tar directory. Unfinished existing tar process? Check "++*foundation++".");
     }
-    msiCollCreate(*foundation, 0, *status)
 
     # The name of the table of contents / manifest file you want generated
     *ToCfile = "manifest.txt";
@@ -69,32 +68,49 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     *CKSdown = *Coll++"/"++*Tar++".cksums"
 
     # Make sure no tarball already exists with this name in this location
-    if( fileOrCollectionExists(*TarUp)==1 ){
-        writeLine("stdout","Have to delete an existing tarball");
+    if( fileOrCollectionExists(*TarUp) == 1 ){
         failmsg(-1,"Warning, already found a tarball. Check in"++*foundation++".");
     }
+
     # Checking that there is no manifest file already existing.
-    if( fileOrCollectionExists(*tocUp)==1 ){
-        writeLine("stdout","metadata file already exists");
+    if( fileOrCollectionExists(*tocUp) == 1 ){
         failmsg(-1,"Warning, almost overwrote manifest file. Check in"++*foundation++".");
     }
+
     # Make sure no meta-data was currently migrated and risk overwrite.
-    if( fileOrCollectionExists(*EXup)==1 ){
-        writeLine("stdout","metadata file already exists");
+    if( fileOrCollectionExists(*EXup) == 1 ){
         failmsg(-1,"Warning, almost overwrote meta-data. Check in"++*foundation++".");
     }
+
     # Make sure that the excluded file actually exists..
-    if( fileOrCollectionExists(*EXdown)==0 ){
-        writeLine("stdout","excluded file does not exist");
-        failmsg(-1,"Warning, file targeted for exclusion does not exist..");
+    if( fileOrCollectionExists(*EXdown) == 0 ){
+        failmsg(-1,"Warning, file targeted for exclusion does not exist.");
     }
+
     # Checking that no existing CKSUM file exists
-    if ( fileOrCollectionExists(*CKSup)==1 && *CheckSums==1 ){
-        writeLine("stdout","Have to delete an existing tarball");
+    if ( fileOrCollectionExists(*CKSup) == 1 && *CheckSums == 1 ){
         failmsg(-1,"Warning, already found a checksum file. Check in"++*foundation++".");
     }
 
-    msiWriteRodsLog("tarProjectCollection: Finished checks. Started creating TAR file: *TarUp");
+    # Checking that *Resc exists
+    if ( resourceExists(*Resc) == 0 ){
+        failmsg(-1,"Error, resource *Resc does not exist");
+    }
+
+    # Checking that *tocResc exists
+    if ( resourceExists(*Resc) == 0 ){
+        failmsg(-1,"Error, resource *tocResc does not exist");
+    }
+
+    # Checking that *tarResc exists
+    if ( resourceExists(*tarResc) == 0 ){
+        failmsg(-1,"Error, resource *tarResc does not exist");
+    }
+
+    msiWriteRodsLog("tarProjectCollection: Finished checks. Started creating TAR file: *TarUp", 0);
+
+    # Create temporary directory
+    msiCollCreate(*foundation, 0, *status)
     
     # Move meta-data out of the collection. Otherwise you may overwrite an updated file upon un-tarring,
     # replacing new information with an old tar image.

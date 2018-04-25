@@ -25,6 +25,13 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # This includes: the tarball itself, the checksum file itself, and a meta-data.xml file
     *excludeFile = "metadata.xml";
 
+    # Checking that *Resc exists
+    if ( resourceExists(*Resc) == 0 ){
+        failmsg(-1,"Error, resource *Resc does not exist");
+    }
+
+    msiWriteRodsLog("untarProjectCollection: Starting untar of *Tar to *Resc.", 0);
+
     # Step 1, untar the collection after moving it to the right resource
     msiDataObjPhymv(*Tar, *Resc, "null", "", "null", *stat);
     msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
@@ -34,7 +41,10 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # Opens our checksum file. Currently set to 10000 bytes.
     *CheckSums = trimr(*tData, ".tar")++".cksums"
 
-    if( ifExists(*Coll++"/"++*CheckSums)== 1){
+    if( fileOrCollectionExists(*Coll++"/"++*CheckSums) == 1){
+
+        msiWriteRodsLog("untarProjectCollection: Finished untar. Starting checksums", 0);
+
         msiDataObjOpen(*Coll++"/"++*CheckSums,*CKsums);
         msiDataObjRead(*CKsums, 25000, *file_BUF);
 
@@ -114,8 +124,10 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         msiDataObjUnlink("objPath="++*Coll++"/"++*CheckSums++"++++forceFlag=", *stat2);
         writeLine("stdout","Deleted checksums file "++*Coll++"/"++*CheckSums);
     }
- 
-    # Step 4, we remove the original tarball.
+
+    msiWriteRodsLog("untarProjectCollection: Finished checkums. Deleting tarbals and manifest", 0);
+
+    # Step 3, we remove the original tarball.
     # Forceflag will prevent trash holdings
     msiDataObjUnlink("objPath="++*Tar++"++++forceFlag=", *stat);
     msiDataObjUnlink("objPath="++*Coll++"/"++*tocFile++"++++forceFlag=", *stat2);

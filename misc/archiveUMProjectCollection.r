@@ -28,8 +28,13 @@ IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
         tarProjectCollection("/nlmumc/projects/*project/*projectCollection", *sourceResource, *sourceResource, *archResc)
     }
 
+    *tar = "/nlmumc/projects/*project/*projectCollection/"++*projectCollection++".tar"
+
+    # Perform checksum checks on both source resource and destination resource. As this is a long distance transfer
+    msiDataObjChksum(*tar, "verifyChksum=++++ChksumAll=", *chkSum);
+
     # Trim away the remaining copy on source resource
-    msiDataObjTrim("/nlmumc/projects/*project/*projectCollection/"++*projectCollection++".tar", *sourceResource, "1", "1", "null", *Status)
+    msiDataObjTrim(*tar, *sourceResource, "1", "1", "null", *Status)
 
     # Close project collection
     closeProjectCollection(*project, *projectCollection)

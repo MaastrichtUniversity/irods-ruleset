@@ -93,6 +93,8 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         writeLine("stdout","Have to delete an existing tarball");
         failmsg(-1,"Warning, already found a checksum file. Check in"++*foundation++".");
     }
+
+    msiWriteRodsLog("tarProjectCollection: Finished checks. Started creating TAR file: *TarUp");
     
     # Move meta-data out of the collection. Otherwise you may overwrite an updated file upon un-tarring,
     # replacing new information with an old tar image.
@@ -101,8 +103,8 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     # Then tarball entire collection.
     msiTarFileCreate(*TarUp, *Coll, *Resc, "");
 
-    msiWriteRodsLog("tarProjectCollection: Created TAR file: *TarUp", 0);
-    writeLine("stdout","tarProjectCollection: Created TAR file: *TarUp");
+    msiWriteRodsLog("tarProjectCollection: Created TAR file. Starting checksums.", 0);
+    writeLine("stdout","tarProjectCollection: Created TAR file. Starting checksums.");
 
     # Creates a new table of contents in our collection
     msiDataObjCreate(*tocUp, "forceFlag=", *TOC);
@@ -162,6 +164,8 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         msiRmColl(*row.COLL_NAME, "forceFlag=", *Status);
     }
 
+    msiWriteRodsLog("tarProjectCollection: Finished checksums. Starting objPhyMove to destination resource *tarResc", 0);
+
 
     #----------------------------------------------
     #Step 3- Move the tarball and manifest into the collection, along with previously existing meta-data file.
@@ -185,6 +189,8 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
         failmsg(-1,"Warning, collecion used for tar'ing is not empty! Not deleting it. Check in"++*foundation++".");
     }
     msiRmColl(*foundation, "forceFlag=", *status);
+
+    msiWriteRodsLog("tarProjectCollection: Finished objPhyMove and cleaned up *foundation.", 0);
 }
 
 INPUT *Coll="",*Resc="",*tocResc="",*tarResc=""

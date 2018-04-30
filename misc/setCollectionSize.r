@@ -26,7 +26,7 @@ IRULE_setCollectionSize(*project, *projectCollection) {
         msiWriteRodsLog("Start operation 'setCollectionSize' for *dstColl", 0);
 
         # Open Collection
-        openProjectCollection(*project, *projectCollection);
+        openProjectCollection(*project, *projectCollection, 'rods' , 'own');
 
         # Calculate the number of files and total size of the ProjectCollection
         calcCollectionSize(*dstColl, "B", "ceiling", *size);

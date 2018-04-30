@@ -35,7 +35,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # Step 1, untar the collection after moving it to the right resource
     msiDataObjPhymv(*Tar, *Resc, "null", "", "null", *stat);
     msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
-    writeLine("stdout","Unpacking TAR file to "++*Coll);
+    writeLine("stdout","Unpacking TAR file to " ++ *Coll);
 
     # Step 2, validate the checksums of the files.
     # Opens our checksum file. Currently set to 10000 bytes.
@@ -70,23 +70,24 @@ IRULE_untarProjectCollection(*Tar, *Resc){
             # Converts our result into a string useable for operations.
             *old=triml(str(*cKVP),*rpath++"=");
 
-            # Excluding the two files
-            if ( *old != *new
-                && *row.DATA_NAME != *tData
-                && *row.DATA_NAME != *tocFile
-                && *row.DATA_NAME != *excludeFile
-                && *row.DATA_NAME != *CheckSums
-            ){
-                writeLine("stdout","WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-                msiWriteRodsLog("WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.", 0);
-            } else{
+            # Check checksums
+            if ( *row.DATA_NAME == *tData
+                || *row.DATA_NAME == *tocFile
+                || *row.DATA_NAME == *excludeFile
+                || *row.DATA_NAME == *CheckSums
+            ) {
+                writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
+            } else if( *old != *new ) {
+                writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+                failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+            } else {
                 writeLine("stdout","Checksum for "++*rpath++" is good.");
             }
         }
 
         # Our recursive search to deal with the subdirectories
-        *CollRec=*Coll++"/%";
-        foreach(*row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *CollRec){
+        *CollRec = *Coll ++ "/%";
+        foreach(*row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME like *CollRec){
             # Our logical iRODS Path
             *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
 
@@ -106,16 +107,17 @@ IRULE_untarProjectCollection(*Tar, *Resc){
             # Converts our result into a string useable for operations.
             *old=triml(str(*cKVP),*rpath++"=");
 
-            # Excluding the two files
-            if( *old != *new
-                && *row.DATA_NAME != *tData
-                && *row.DATA_NAME != *tocFile
-                && *row.DATA_NAME != *excludeFile
-                && *row.DATA_NAME != *CheckSums
-            ){
-                msiWriteRodsLog("WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.", 0);
-                writeLine("stdout","WARNING!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-            } else{
+            # Check checksums
+            if ( *row.DATA_NAME == *tData
+                || *row.DATA_NAME == *tocFile
+                || *row.DATA_NAME == *excludeFile
+                || *row.DATA_NAME == *CheckSums
+            ) {
+                writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
+            } else if( *old != *new ) {
+                writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+                failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+            } else {
                 writeLine("stdout","Checksum for "++*rpath++" is good.");
             }
         }

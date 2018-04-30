@@ -222,7 +222,6 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
             }
 
             msiDataObjUnlink("objPath="++*ipath++"++++forceFlag=", *rmstat);
-            msiWriteRodsLog(*ipath, 0);
         }
     }
 

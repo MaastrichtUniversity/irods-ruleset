@@ -34,7 +34,12 @@ IRULE_reportProjects(*result) {
         listProjectViewers(*project,*viewers);
 
         # Calculate the size of this project
-        calcCollectionSize("/nlmumc/projects/*project", "GiB", *dataSize) # dataSize is the result variable that will be created by this rule
+        *projSize = int(0);
+        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
+            *projectCollection = *Row.COLL_NAME;
+            getCollectionSize(*projectCollection, "GiB", "ceiling", *collSize) # *collSize is the result variable that will be created by this rule
+            *projSize = *projSize + int(*collSize);
+        }
 
         # Validate the contents of variables and construct json object
         if ( *title == "" ) {
@@ -50,7 +55,7 @@ IRULE_reportProjects(*result) {
         }
 
         # Outcome contains the results from this iteration
-        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*dataSize", "managers": *managers, "viewers": *viewers}';
+        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "managers": *managers, "viewers": *viewers}';
 
         # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
         msiString2KeyValPair("", *titleKvp);

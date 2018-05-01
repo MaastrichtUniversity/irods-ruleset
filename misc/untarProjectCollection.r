@@ -30,6 +30,12 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         failmsg(-1,"Error, resource *Resc does not exist");
     }
 
+    # Checking that checksum file exists
+    *CheckSums = trimr(*tData, ".tar")++".cksums"
+    if( fileOrCollectionExists(*Coll++"/"++*CheckSums) != 1 ){
+        failmsg(-1,"Error, checksum ile *CheckSums does not exist");
+    }
+
     msiWriteRodsLog("untarProjectCollection: Starting untar of *Tar to *Resc.", 0);
 
     # Step 1, untar the collection after moving it to the right resource
@@ -38,94 +44,89 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     writeLine("stdout","Unpacking TAR file to " ++ *Coll);
 
     # Step 2, validate the checksums of the files.
-    # Opens our checksum file. Currently set to 10000 bytes.
-    *CheckSums = trimr(*tData, ".tar")++".cksums"
+    msiWriteRodsLog("untarProjectCollection: Finished untar. Starting checksums", 0);
 
-    if( fileOrCollectionExists(*Coll++"/"++*CheckSums) == 1){
+    # Opens our checksum file.
+    msiDataObjOpen(*Coll++"/"++*CheckSums,*CKsums);
+    msiDataObjRead(*CKsums, 25000, *file_BUF);
 
-        msiWriteRodsLog("untarProjectCollection: Finished untar. Starting checksums", 0);
+    # To prevent the searching of similarily named collections (such as ~/FileGen and ~/FileGeneration)
+    # We have to search twice, once for the precise collection and another with
+    foreach( *row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *Coll){
+        # Our logical iRODS Path
+        *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
 
-        msiDataObjOpen(*Coll++"/"++*CheckSums,*CKsums);
-        msiDataObjRead(*CKsums, 25000, *file_BUF);
+        # Our relative path to the tar collection
+        *rpath = "."++triml(*ipath, *Coll);
 
-        # To prevent the searching of similarily named collections (such as ~/FileGen and ~/FileGeneration)
-        # We have to search twice, once for the precise collection and another with
-        foreach( *row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *Coll){
-            # Our logical iRODS Path
-            *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
+        # Checks our new checksum of each file from the tarball
+        msiDataObjChksum(*ipath, "forceChksum=", *new);
 
-            # Our relative path to the tar collection
-            *rpath = "."++triml(*ipath, *Coll);
+        # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
+        msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
+        msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
 
-            # Checks our new checksum of each file from the tarball
-            msiDataObjChksum(*ipath, "forceChksum=", *new);
+        # Takes our Tag Structure and searches the opened checksum manifest for a match
+        msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
 
-            # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
-            msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
-            msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
+        # Converts our result into a string useable for operations.
+        *old=triml(str(*cKVP),*rpath++"=");
 
-            # Takes our Tag Structure and searches the opened checksum manifest for a match
-            msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
-
-            # Converts our result into a string useable for operations.
-            *old=triml(str(*cKVP),*rpath++"=");
-
-            # Check checksums
-            if ( *row.DATA_NAME == *tData
-                || *row.DATA_NAME == *tocFile
-                || *row.DATA_NAME == *excludeFile
-                || *row.DATA_NAME == *CheckSums
-            ) {
-                writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
-            } else if( *old != *new ) {
-                writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-                failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-            } else {
-                writeLine("stdout","Checksum for "++*rpath++" is good.");
-            }
+        # Check checksums
+        if ( *row.DATA_NAME == *tData
+            || *row.DATA_NAME == *tocFile
+            || *row.DATA_NAME == *excludeFile
+            || *row.DATA_NAME == *CheckSums
+        ) {
+            writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
+        } else if( *old != *new ) {
+            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+        } else {
+            writeLine("stdout","Checksum for "++*rpath++" is good.");
         }
-
-        # Our recursive search to deal with the subdirectories
-        *CollRec = *Coll ++ "/%";
-        foreach(*row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME like *CollRec){
-            # Our logical iRODS Path
-            *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
-
-            # Our relative path to the tar collection
-            *rpath = "."++triml(*ipath, *Coll);
-
-            # Checks our new checksum of each file from the tarball
-            msiDataObjChksum(*ipath, "forceChksum=", *new);
-
-            # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
-            msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
-            msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
-
-            # Takes our Tag Structure and searches the opened checksum manifest for a match
-            msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
-
-            # Converts our result into a string useable for operations.
-            *old=triml(str(*cKVP),*rpath++"=");
-
-            # Check checksums
-            if ( *row.DATA_NAME == *tData
-                || *row.DATA_NAME == *tocFile
-                || *row.DATA_NAME == *excludeFile
-                || *row.DATA_NAME == *CheckSums
-            ) {
-                writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
-            } else if( *old != *new ) {
-                writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-                failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-            } else {
-                writeLine("stdout","Checksum for "++*rpath++" is good.");
-            }
-        }
-
-        msiDataObjClose(*CKsums, *stat);
-        msiDataObjUnlink("objPath="++*Coll++"/"++*CheckSums++"++++forceFlag=", *stat2);
-        writeLine("stdout","Deleted checksums file "++*Coll++"/"++*CheckSums);
     }
+
+    # Our recursive search to deal with the subdirectories
+    *CollRec = *Coll ++ "/%";
+    foreach(*row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME like *CollRec){
+        # Our logical iRODS Path
+        *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
+
+        # Our relative path to the tar collection
+        *rpath = "."++triml(*ipath, *Coll);
+
+        # Checks our new checksum of each file from the tarball
+        msiDataObjChksum(*ipath, "forceChksum=", *new);
+
+        # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
+        msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
+        msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
+
+        # Takes our Tag Structure and searches the opened checksum manifest for a match
+        msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
+
+        # Converts our result into a string useable for operations.
+        *old=triml(str(*cKVP),*rpath++"=");
+
+        # Check checksums
+        if ( *row.DATA_NAME == *tData
+            || *row.DATA_NAME == *tocFile
+            || *row.DATA_NAME == *excludeFile
+            || *row.DATA_NAME == *CheckSums
+        ) {
+            writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
+        } else if( *old != *new ) {
+            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+        } else {
+            writeLine("stdout","Checksum for "++*rpath++" is good.");
+        }
+    }
+
+    msiDataObjClose(*CKsums, *stat);
+    msiDataObjUnlink("objPath="++*Coll++"/"++*CheckSums++"++++forceFlag=", *stat2);
+    writeLine("stdout","Deleted checksums file "++*Coll++"/"++*CheckSums);
 
     msiWriteRodsLog("untarProjectCollection: Finished checkums. Deleting tarbals and manifest", 0);
 

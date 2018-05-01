@@ -80,8 +80,8 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         ) {
             writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
         } else if( *old != *new ) {
-            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
+            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
         } else {
             writeLine("stdout","Checksum for "++*rpath++" is good.");
         }
@@ -117,8 +117,8 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         ) {
             writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
         } else if( *old != *new ) {
-            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
-            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad.");
+            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
+            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
         } else {
             writeLine("stdout","Checksum for "++*rpath++" is good.");
         }

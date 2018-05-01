@@ -53,37 +53,39 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # To prevent the searching of similarily named collections (such as ~/FileGen and ~/FileGeneration)
     # We have to search twice, once for the precise collection and another with
     foreach( *row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *Coll){
-        # Our logical iRODS Path
-        *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
-
-        # Our relative path to the tar collection
-        *rpath = "."++triml(*ipath, *Coll);
-
-        # Checks our new checksum of each file from the tarball
-        msiDataObjChksum(*ipath, "forceChksum=", *new);
-
-        # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
-        msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
-        msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
-
-        # Takes our Tag Structure and searches the opened checksum manifest for a match
-        msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
-
-        # Converts our result into a string useable for operations.
-        *old=triml(str(*cKVP),*rpath++"=");
-
-        # Check checksums
         if ( *row.DATA_NAME == *tData
             || *row.DATA_NAME == *tocFile
             || *row.DATA_NAME == *excludeFile
             || *row.DATA_NAME == *CheckSums
         ) {
             writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
-        } else if( *old != *new ) {
-            writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
-            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
         } else {
-            writeLine("stdout","Checksum for "++*rpath++" is good.");
+            # Our logical iRODS Path
+            *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
+
+            # Our relative path to the tar collection
+            *rpath = "."++triml(*ipath, *Coll);
+
+            # Checks our new checksum of each file from the tarball
+            msiDataObjChksum(*ipath, "forceChksum=", *new);
+
+            # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
+            msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
+            msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
+
+            # Takes our Tag Structure and searches the opened checksum manifest for a match
+            msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
+
+            # Converts our result into a string useable for operations.
+            *old = triml(str(*cKVP),*rpath ++ "=");
+
+            # Check checksums
+            if( *old != *new ) {
+                writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
+                failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
+            } else {
+                writeLine("stdout","Checksum for "++*rpath++" is good.");
+            }
         }
     }
 
@@ -107,16 +109,10 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
 
         # Converts our result into a string useable for operations.
-        *old=triml(str(*cKVP),*rpath++"=");
+        *old = triml(str(*cKVP), *rpath ++ "=");
 
         # Check checksums
-        if ( *row.DATA_NAME == *tData
-            || *row.DATA_NAME == *tocFile
-            || *row.DATA_NAME == *excludeFile
-            || *row.DATA_NAME == *CheckSums
-        ) {
-            writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
-        } else if( *old != *new ) {
+        if( *old != *new ) {
             writeLine("stdout","ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
             failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
         } else {

@@ -19,31 +19,29 @@ IRULE_getCollectionSize(*collection, *unit, *round, *result) {
 
     getCollectionAVU(*collection,"dcat:byteSize",*sizeBytes,"","true")
 
-	if ( *unit == "B" ) {
-		*size = double(*sizeBytes);
-	}
-	if ( *unit == "KiB" ) {
-		*size = double(*sizeBytes)/1024;
-	}
-	if ( *unit == "MiB" ) {
-		*size = double(*sizeBytes)/1024/1024;
-	}
-	if ( *unit == "GiB" ) {
-		*size = double(*sizeBytes)/1024/1024/1024;
-	}
-	if ( *unit == "TiB" ) {
-		*size = double(*sizeBytes)/1024/1024/1024/1024;
-	}
+    if ( *unit == "B" ) {
+        *size = double(*sizeBytes);
+    } else if ( *unit == "KiB" ) {
+        *size = double(*sizeBytes)/1024;
+    } else if ( *unit == "MiB" ) {
+        *size = double(*sizeBytes)/1024/1024;
+    } else if ( *unit == "GiB" ) {
+        *size = double(*sizeBytes)/1024/1024/1024;
+    } else if ( *unit == "TiB" ) {
+        *size = double(*sizeBytes)/1024/1024/1024/1024;
+    } else {
+        failmsg(-1, "Invalid input for 'unit'. Options are: B | KiB | MiB | GiB | TiB");
+    }
 
     # Do the rounding
     if ( *round == "none") {
         *size = *size;
-    }
-    if ( *round == "floor") {
+    } else if ( *round == "floor") {
         *size = floor(*size);
-    }
-    if ( *round == "ceiling") {
+    } else if ( *round == "ceiling") {
         *size = ceiling(*size);
+    } else {
+        failmsg(-1, "Invalid input for 'round'. Options are: none | floor | ceiling");
     }
     
     *result = *size;

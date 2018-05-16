@@ -17,7 +17,7 @@ irule_dummy() {
 IRULE_getCollectionSize(*collection, *unit, *round, *result) {
     *sizeBytes = "0";
 
-    getCollectionAVU(*collection,"dcat:byteSize",*sizeBytes,"","true")
+    getCollectionAVU(*collection,"dcat:byteSize",*sizeBytes,"0","false")
 
     if ( *unit == "B" ) {
         *size = double(*sizeBytes);

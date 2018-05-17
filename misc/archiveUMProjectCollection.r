@@ -9,7 +9,7 @@ irule_dummy() {
 
 IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
     # Open project collection
-    openProjectCollection(*project, *projectCollection)
+    openProjectCollection(*project, *projectCollection, 'rods', 'own')
 
     # Obtain the project resource from the project
     getCollectionAVU("/nlmumc/projects/*project","resource",*sourceResource,"","true");

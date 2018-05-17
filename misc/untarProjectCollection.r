@@ -53,6 +53,13 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # To prevent the searching of similarily named collections (such as ~/FileGen and ~/FileGeneration)
     # We have to search twice, once for the precise collection and another with
     foreach( *row in SELECT DATA_NAME, COLL_NAME WHERE COLL_NAME = *Coll){
+        # Our logical iRODS Path
+        *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
+
+        # Our relative path to the tar collection
+        *rpath = "."++triml(*ipath, *Coll);
+
+        # Check for objects that need to be excluded
         if ( *row.DATA_NAME == *tData
             || *row.DATA_NAME == *tocFile
             || *row.DATA_NAME == *excludeFile
@@ -60,24 +67,21 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         ) {
             writeLine("stdout","Skipping " ++ *rpath ++ " for checksums.");
         } else {
-            # Our logical iRODS Path
-            *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
-
-            # Our relative path to the tar collection
-            *rpath = "."++triml(*ipath, *Coll);
+            # Escape the path to prevent undesired regexes to be performed
+            *escapedRpath = escapeRegexString(*rpath);
 
             # Checks our new checksum of each file from the tarball
             msiDataObjChksum(*ipath, "forceChksum=", *new);
 
             # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
-            msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
+            msiStrToBytesBuf("<PRETAG>*escapedRpath::</PRETAG>*escapedRpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
             msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
 
             # Takes our Tag Structure and searches the opened checksum manifest for a match
             msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
 
             # Converts our result into a string useable for operations.
-            *old = triml(str(*cKVP),*rpath ++ "=");
+            *old = triml(str(*cKVP),*escapedRpath ++ "=");
 
             # Check checksums
             if( *old != *new ) {
@@ -98,18 +102,21 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         # Our relative path to the tar collection
         *rpath = "."++triml(*ipath, *Coll);
 
+        # Escape the path to prevent undesired regexes to be performed
+        *escapedRpath = escapeRegexString(*rpath);
+
         # Checks our new checksum of each file from the tarball
         msiDataObjChksum(*ipath, "forceChksum=", *new);
 
         # Builds our Tag Structure for filtering meta-data out of a bytes-buffer
-        msiStrToBytesBuf("<PRETAG>*rpath::</PRETAG>*rpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
+        msiStrToBytesBuf("<PRETAG>*escapedRpath::</PRETAG>*escapedRpath<POSTTAG>\n</POSTTAG>", *tag_BUF);
         msiReadMDTemplateIntoTagStruct(*tag_BUF, *tags);
 
         # Takes our Tag Structure and searches the opened checksum manifest for a match
         msiExtractTemplateMDFromBuf(*file_BUF, *tags, *cKVP);
 
         # Converts our result into a string useable for operations.
-        *old = triml(str(*cKVP), *rpath ++ "=");
+        *old = triml(str(*cKVP), *escapedRpath ++ "=");
 
         # Check checksums
         if( *old != *new ) {

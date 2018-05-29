@@ -136,11 +136,9 @@ uuChrShift(*c, *toCase) {
 }
 
 # This escapes a string to be used in an iRODS regular expression
-escapeRegexString(*s){
-    # Make copy of source string, so we return new copy
-    *i = *s
+escapeRegexString(*i){
+    *output = "";
 
-    # This will filter through a string and escape out predefied chars.
     # This is a comma separated list of characters to escape.
     # Keep the \ symbol first to prevent clipping later added escapes.
     # In addition to regexp, I also included a space.
@@ -148,32 +146,22 @@ escapeRegexString(*s){
     *chars =``\,^,$,{,},[,],(,),.,*,+,?,|,<,>,-, ,&,``;
     *charList = split(*chars, ",");
 
-    foreach(*char in *charList){
-        # This catches any char not first or last and escapes it
-        *iList = split(*i, *char);
+    # Loop through the input string
+    for (*pos = 0; *pos < strlen(*i); *pos = *pos + 1) {
+       *c = substr(*i, *pos, *pos + 1);
 
-        if(size(*iList) > 1){
-            *i = hd(*iList);
+       *o = *c;
 
-            foreach(*iTail in tl(*iList)) {
-                *i = *i ++ "\\" ++ *char ++ *iTail;
+       foreach(*char in *charList){
+            if ( *char == *c ) {
+                *o = "\\" ++ *c;
+                break;
             }
-        }
+       }
 
-        # Catches any first character that matches our list, escapes it
-        msiSubstr(*i, "0", "1", *iHead);
-        if( *iHead == *char ) {
-            *i="\\" ++ *i;
-        }
-
-        msiSubstr(*i, "-1", "1", *iLast)
-
-        if(*iLast == *char){
-            msiSubstr(*i, "0", str(strlen(*i) - 1), *j)
-            *i=*j ++ "\\" ++ *char;
-        }
+       *output = *output ++ *o;
     }
 
     # Return our escaped string
-    "*i";
+    "*output";
 }

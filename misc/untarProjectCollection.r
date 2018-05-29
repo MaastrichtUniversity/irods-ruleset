@@ -48,7 +48,11 @@ IRULE_untarProjectCollection(*Tar, *Resc){
 
     # Opens our checksum file.
     msiDataObjOpen(*Coll++"/"++*CheckSums,*CKsums);
-    msiDataObjRead(*CKsums, 25000, *file_BUF);
+
+    # (2^32)/2 - 1 = 2147483648
+    # Could not figure out a way to find the actual size of the file. Instead trying to read the maximum size that's
+    # possible. Not pretty, but workable
+    msiDataObjRead(*CKsums, 2147483648, *file_BUF);
 
     # To prevent the searching of similarily named collections (such as ~/FileGen and ~/FileGeneration)
     # We have to search twice, once for the precise collection and another with

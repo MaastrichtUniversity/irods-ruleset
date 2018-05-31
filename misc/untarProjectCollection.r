@@ -27,13 +27,13 @@ IRULE_untarProjectCollection(*Tar, *Resc){
 
     # Checking that *Resc exists
     if ( resourceExists(*Resc) == 0 ){
-        failmsg(-1,"Error, resource *Resc does not exist");
+        failmsg(-1,"untarProjectCollection: Error, resource *Resc does not exist");
     }
 
     # Checking that checksum file exists
     *CheckSums = trimr(*tData, ".tar")++".cksums"
     if( fileOrCollectionExists(*Coll++"/"++*CheckSums) != 1 ){
-        failmsg(-1,"Error, checksum ile *CheckSums does not exist");
+        failmsg(-1,"untarProjectCollection: Error, checksum ile *CheckSums does not exist");
     }
 
     msiWriteRodsLog("untarProjectCollection: Starting untar of *Tar to *Resc.", 0);
@@ -43,8 +43,8 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
     writeLine("stdout","Unpacking TAR file to " ++ *Coll);
 
-    # Step 2, validate the checksums of the files.
-    msiWriteRodsLog("untarProjectCollection: Finished untar. Starting checksums", 0);
+    # Step 2, open the checksums of the files. And all files were extracted and registered by looping through checksums
+    msiWriteRodsLog("untarProjectCollection: Finished untar. Validating all file in checksum exist", 0);
 
     # Opens our checksum file.
     msiDataObjOpen(*Coll++"/"++*CheckSums,*CKsums);
@@ -53,6 +53,27 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # Could not figure out a way to find the actual size of the file. Instead trying to read the maximum size that's
     # possible. Not pretty, but workable
     msiDataObjRead(*CKsums, 2147483647, *file_BUF);
+
+    # This block of code will convert our buff to a string for manipulation.
+    # We trim the leading "." and everything after the "::"
+    # Then we run a check if the file exists in the collection.
+    # If a file is not found, the process is halted
+    msiBytesBufToStr(*file_BUF, *file_BUF_str);
+    *file_List = split(*file_BUF_str,"\n");
+    *countFileList = size(*file_List);
+
+    foreach(*file_S in *file_List){
+
+        if( fileOrCollectionExists( *Coll ++ trimr( triml( *file_S, "\."), "::") ) != 1 ){
+            writeLine("stdout", "Error: Did not find " ++ *file_S);
+            failmsg(-1, "untarProjectCollection: ERROR! Not all files listed in checksum file were found registered in iCAT after untar. Did not find " ++ *file_S);
+        }
+    }
+
+    msiWriteRodsLog("untarProjectCollection: Found *countFileList files in checksum file and all were present in iCAT.", 0);
+
+    # Step 3, Validate checksums
+    msiWriteRodsLog("untarProjectCollection: Finished untar. Validating checksums", 0);
 
     # To prevent the searching of similarily named collections (such as ~/FileGen and ~/FileGeneration)
     # We have to search twice, once for the precise collection and another with
@@ -90,7 +111,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
             # Check checksums
             if( *old != *new ) {
                 writeLine("stdout","ERROR!!!\n"++*rpath++" (*escapedRpath) does not have a matching checksum to our records! This is bad. *old != *new");
-                failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
+                failmsg(-1, "untarProjectCollection: ERROR " ++ *rpath ++ " does not have a matching checksum to our records! This is bad. *old != *new");
             } else {
                 writeLine("stdout","Checksum for "++*rpath++" is good.");
             }
@@ -125,7 +146,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
         # Check checksums
         if( *old != *new ) {
             writeLine("stdout","ERROR!!!\n"++*rpath++" (*escapedRpath) does not have a matching checksum to our records! This is bad. *old != *new");
-            failmsg(-1, "ERROR!!!\n"++*rpath++" does not have a matching checksum to our records! This is bad. *old != *new");
+            failmsg(-1, "untarProjectCollection: ERROR " ++ *rpath ++ " does not have a matching checksum to our records! This is bad. *old != *new");
         } else {
             writeLine("stdout","Checksum for "++*rpath++" is good.");
         }
@@ -137,7 +158,7 @@ IRULE_untarProjectCollection(*Tar, *Resc){
 
     msiWriteRodsLog("untarProjectCollection: Finished checkums. Deleting tarbals and manifest", 0);
 
-    # Step 3, we remove the original tarball.
+    # Step 4, we remove the original tarball.
     # Forceflag will prevent trash holdings
     msiDataObjUnlink("objPath="++*Tar++"++++forceFlag=", *stat);
     msiDataObjUnlink("objPath="++*Coll++"/"++*tocFile++"++++forceFlag=", *stat2);

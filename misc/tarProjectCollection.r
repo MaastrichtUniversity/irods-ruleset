@@ -251,6 +251,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiRmColl(*foundation, "forceFlag=", *status);
 
     msiWriteRodsLog("tarProjectCollection: Finished objPhyMove and cleaned up *foundation.", 0);
+    writeLine("stdout","tarProjectCollection: Finished checksums, cleanup and moving to final destination.");
 }
 
 INPUT *Coll="",*Resc="",*tocResc="",*tarResc=""

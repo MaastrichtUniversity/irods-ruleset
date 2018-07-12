@@ -9,7 +9,7 @@ irule_dummy() {
 
 IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
     # Open project collection
-    openProjectCollection(*project, *projectCollection, 'rods', 'own')
+    openProjectCollection(*project, *projectCollection, 'service-surfarchive', 'own')
 
     # Obtain the project resource from the project
     getCollectionAVU("/nlmumc/projects/*project","resource",*sourceResource,"","true");
@@ -34,10 +34,27 @@ IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
     msiDataObjChksum(*tar, "verifyChksum=++++ChksumAll=", *chkSum);
 
     # Trim away the remaining copy on source resource
-    msiDataObjTrim(*tar, *sourceResource, "1", "1", "null", *Status)
+    msiDataObjTrim(*tar, *sourceResource, "1", "1", "null", *Status);
 
     # Close project collection
-    closeProjectCollection(*project, *projectCollection)
+    closeProjectCollection(*project, *projectCollection);
+
+    foreach ( *Row in select DATA_ACCESS_USER_ID where COLL_NAME = "/nlmumc/projects/*project/*projectCollection" and DATA_NAME = "*projectCollection.tar" ) {
+        *objectID = *Row.DATA_ACCESS_USER_ID;
+
+        *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
+        foreach (*R in *O) {
+            *objectName = *R.USER_NAME;
+            *objectType = *R.USER_TYPE;
+        }
+
+        # Ignore service-surfarchive
+        if ( *objectName != 'service-surfarchive' ) {
+            msiSetACL("default", "admin:null", *objectName, *tar);
+        }
+    }
+
+    msiSetACL("default", "admin:write", 'service-surfarchive', *tar);
 }
 
 INPUT *project='', *projectCollection='', *archResc=''

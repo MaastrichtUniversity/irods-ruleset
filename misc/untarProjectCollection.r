@@ -40,8 +40,25 @@ IRULE_untarProjectCollection(*Tar, *Resc){
 
     # Step 1, untar the collection after moving it to the right resource
     msiDataObjPhymv(*Tar, *Resc, "null", "", "null", *stat);
-    msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
-    writeLine("stdout","Unpacking TAR file to " ++ *Coll);
+
+    # Due to a bug the extraction of files over a certain size fail. So we manually have do this
+    #msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
+
+    foreach(*tarball in select DATA_PATH where DATA_NAME = *tData AND COLL_NAME = *Coll and DATA_REPL_NUM = '0'){
+        # Physical data path
+        *dataPath = *tarball.DATA_PATH;
+
+        # Physical data dir
+        *dataDir = trimr(*dataPath, "/");
+    }
+
+    # Execute external untar command
+    msiExecCmd("untar.sh", "*dataPath *dataDir", "", "", "", *result);
+
+    # Register extracted files into icat
+    msiPhyPathReg(*Coll, *Resc, *dataDir, "collection", *stat);
+
+    writeLine("stdout","Unpacked TAR file to " ++ *Coll);
 
     # Step 2, open the checksums of the files. And all files were extracted and registered by looping through checksums
     msiWriteRodsLog("untarProjectCollection: Finished untar. Validating all file in checksum exist", 0);

@@ -22,6 +22,7 @@ IRULE_reportProjects(*result) {
         *principalInvestigator = "";
         *respCostCenter = "";
         *pricePerGiBPerYear = "";
+        *storageQuotaGiB = "";
         *managers = "";
         *viewers = "";
         
@@ -34,6 +35,7 @@ IRULE_reportProjects(*result) {
         getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
         getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
         getCollectionAVU("/nlmumc/projects/*project","NCIT:C88193",*pricePerGiBPerYear,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
 
         # Retrieve the project manager(s) and viewers
         listProjectManagers(*project,*managers);
@@ -78,8 +80,14 @@ IRULE_reportProjects(*result) {
             *pricePerGiBPerYearStr = *pricePerGiBPerYear;
         }
 
+        if ( *storageQuotaGiB == "" ) {
+            *storageQuotaGiBStr = "storageQuotaGiB-AVU-set";
+        } else {
+            *storageQuotaGiBStr = *storageQuotaGiB;
+        }
+
         # Outcome contains the results from this iteration
-        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "pricePerGiBPerYear": "*pricePerGiBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "viewers": *viewers}';
+        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGiBPerYear": "*pricePerGiBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "viewers": *viewers}';
 
         # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
         msiString2KeyValPair("", *titleKvp);

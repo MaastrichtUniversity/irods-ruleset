@@ -8,6 +8,8 @@ irule_dummy() {
 }
 
 IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
+    msiWriteRodsLog("archiveUMProjectCollection: Start opening projectCollection and tar process on resource server.", 0);
+
     # Open project collection
     openProjectCollection(*project, *projectCollection, 'service-surfarchive', 'own')
 
@@ -55,6 +57,8 @@ IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
     }
 
     msiSetACL("default", "admin:write", 'service-surfarchive', *tar);
+
+    msiWriteRodsLog("archiveUMProjectCollection: Finished final checksum, trimming of remaining copy and closing of projectCollection.", 0);
 }
 
 INPUT *project='', *projectCollection='', *archResc=''

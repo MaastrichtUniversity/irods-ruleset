@@ -38,18 +38,24 @@ IRULE_untarProjectCollection(*Tar, *Resc){
 
     msiWriteRodsLog("untarProjectCollection: Starting untar of *Tar to *Resc.", 0);
 
-    # Step 1, untar the collection after moving it to the right resource
-    msiDataObjPhymv(*Tar, *Resc, "null", "", "null", *stat);
+    # Step 1, untar the collection after replicating it to the right resource
+    msiDataObjRepl(*Tar, "destRescName=*Resc", *stat);
 
     # Due to a bug the extraction of files over a certain size fail. So we manually have do this
     #msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
 
-    foreach(*tarball in select DATA_PATH where DATA_NAME = *tData AND COLL_NAME = *Coll and DATA_REPL_NUM = '0'){
+    # This query may return a data paths for each replicate. Only the last one is used
+    *dataPath = ""
+    foreach(*tarball in select DATA_PATH where DATA_NAME = *tData and COLL_NAME = *Coll and RESC_NAME = '*Resc'){
         # Physical data path
         *dataPath = *tarball.DATA_PATH;
 
         # Physical data dir
         *dataDir = trimr(*dataPath, "/");
+    }
+
+    if ( *dataPath == "" ) {
+        failmsg(-1,"untarProjectCollection: Error, could not determine physical data path");
     }
 
     # Execute external untar command

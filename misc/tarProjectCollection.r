@@ -231,7 +231,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiWriteRodsLog("tarProjectCollection: Finished cleanup. Starting objPhyMove to destination resource *tarResc", 0);
 
     msiDataObjRename(*TarUp, *TarDown, "0", *Stat);
-    msiDataObjPhymv(*TarDown, *tarResc, "null", "", "null", *stat);
+    msiDataObjRepl(*TarDown, "destRescName=*tarResc++++verifyChksum=", *stat);
 
     msiDataObjRename(*tocUp, *tocDown, "0", *Stat3);
     msiDataObjPhymv(*tocDown, *tocResc, "null", "", "null", *stat);

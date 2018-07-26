@@ -41,12 +41,13 @@ IRULE_untarProjectCollection(*Tar, *Resc){
     # Step 1, untar the collection after replicating it to the right resource
     msiDataObjRepl(*Tar, "destRescName=*Resc", *stat);
 
-    # Due to a bug the extraction of files over a certain size fail. So we manually have do this
+    # TODO: Due to a bug the extraction of files over a certain size fail. So we manually have do this
     #msiTarFileExtract(*Tar, *Coll, *Resc, *Stat);
 
-    # This query may return a data paths for each replicate. Only the last one is used
     *dataPath = ""
-    foreach(*tarball in select DATA_PATH where DATA_NAME = *tData and COLL_NAME = *Coll and RESC_NAME = '*Resc'){
+    # TODO: We're specifying DATA_REPL_NUM = '3'. This will be the first child-resource of the replicated resource.
+    # This only works in case data is comming from a replicated resource and going to a replicated resource!
+    foreach(*tarball in select DATA_PATH where DATA_NAME = *tData and COLL_NAME = *Coll and RESC_NAME = '*Resc' and DATA_REPL_NUM = '3'){
         # Physical data path
         *dataPath = *tarball.DATA_PATH;
 

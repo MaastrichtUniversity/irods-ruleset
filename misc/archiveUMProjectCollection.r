@@ -32,9 +32,6 @@ IRULE_archiveUMProjectCollection(*project, *projectCollection, *archResc) {
 
     *tar = "/nlmumc/projects/*project/*projectCollection/"++*projectCollection++".tar"
 
-    # Trim away the remaining copy on source resource. The checksum has been verified during msiDataObjRepl
-    msiDataObjTrim(*tar, *sourceResource, "0", "1", "null", *Status);
-
     # Close project collection
     closeProjectCollection(*project, *projectCollection);
 

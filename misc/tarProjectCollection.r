@@ -174,7 +174,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiWriteRodsLog("tarProjectCollection: Finished checksums. Starting cleanup.", 0);
 
     #----------------------------------------------
-    #Step 3- Cleanup. Deleting objects as they are now in the tarball
+    # Step 3- Cleanup. Deleting objects as they are now in the tarball
     #
     # Deleting objects in a foreach loop will race-conditon out
     # if there are more than 255 items found
@@ -228,10 +228,13 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     #----------------------------------------------
     #Step 4- Move the tarball and manifest into the collection, along with previously existing meta-data file.
 
-    msiWriteRodsLog("tarProjectCollection: Finished cleanup. Starting objPhyMove to destination resource *tarResc", 0);
+    msiWriteRodsLog("tarProjectCollection: Finished cleanup. Starting DataObjRepl to destination resource *tarResc", 0);
 
     msiDataObjRename(*TarUp, *TarDown, "0", *Stat);
     msiDataObjRepl(*TarDown, "destRescName=*tarResc++++verifyChksum=", *stat);
+
+    # Trim away the remaining copies of tar on source resource. The checksum has been verified during msiDataObjRepl
+    msiDataObjTrim(*TarDown, *Resc, "0", "1", "null", *Status);
 
     msiDataObjRename(*tocUp, *tocDown, "0", *Stat3);
     msiDataObjPhymv(*tocDown, *tocResc, "null", "", "null", *stat);
@@ -246,7 +249,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
 
     # Safety check. *foundation collection should be empty!
     foreach(*row in SELECT DATA_NAME WHERE COLL_NAME = '*foundation'){
-        failmsg(-1,"Warning, collecion used for tar'ing is not empty! Not deleting it. Check in"++*foundation++".");
+        failmsg(-1,"Warning, collection used for tar'ing is not empty! Not deleting it. Check in"++*foundation++".");
     }
     msiRmColl(*foundation, "forceFlag=", *status);
 

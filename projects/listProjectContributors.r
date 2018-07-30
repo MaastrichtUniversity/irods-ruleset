@@ -1,6 +1,11 @@
 # Call with
 #
 # irule -F listProjectContributors.r "*project='P000000001'" "*inherited='true'"
+#
+# Role inheritance
+# *inherited='true' cumulates authorizations to designate the role. i.e. A contributor has OWN or WRITE access
+# *inherited='false' only shows explicit contributors. i.e. A contributor only has WRITE access
+
 
 irule_dummy() {
     IRULE_listProjectContributors(*project, *inherited, *result);

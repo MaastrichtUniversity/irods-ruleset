@@ -1,21 +1,32 @@
 # Call with
 #
-# irule -F listProjectViewers.r "*project='P000000001'"
+# irule -F listProjectViewers.r "*project='P000000001'" "*inherited='true'"
+#
+# Role inheritance
+# *inherited='true' cumulates authorizations to designate the role. i.e. A contributor has OWN or WRITE access
+# *inherited='false' only shows explicit contributors. i.e. A contributor only has WRITE access
+
 
 irule_dummy() {
-    IRULE_listProjectViewers(*project, *result);
+    IRULE_listProjectViewers(*project, *inherited, *result);
 
     writeLine("stdout", *result);
 }
 
-IRULE_listProjectViewers(*project,*result) {
+IRULE_listProjectViewers(*project, *inherited, *result) {
     *groups = '[]';
     *groupSize = 0;
 
     *users = '[]';
     *userSize = 0;
 
-    msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in ('own', 'read object', 'modify object')  and COLL_NAME = '/nlmumc/projects/*project'", *Query);
+    if ( *inherited == "true" ) {
+        *criteria = "'own', 'modify object', 'read object'"
+    } else {
+        *criteria = "'read object'"
+    }
+
+    msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in (*criteria)  and COLL_NAME = '/nlmumc/projects/*project'", *Query);
     msiExecGenQuery(*Query, *QOut);
 
     foreach ( *Row in *QOut ) {
@@ -41,5 +52,5 @@ IRULE_listProjectViewers(*project,*result) {
     *result = '{"users": *users, "groups": *groups }';
 }
 
-INPUT *project=$"MUMC-M4I-00001"
+INPUT *project=$"P000000001",*inherited=""
 OUTPUT ruleExecOut

@@ -31,7 +31,7 @@ IRULE_reportProjects(*result) {
 
         # Retrieve the project manager(s) and viewers
         listProjectManagers(*project,*managers);
-        listProjectViewers(*project,*viewers);
+        listProjectViewers(*project,"false",*viewers);
 
         # Calculate the size of this project
         *projSize = int(0);

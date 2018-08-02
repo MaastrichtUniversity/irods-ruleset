@@ -38,5 +38,5 @@ IRULE_listProjectManagers(*project, *result) {
     *result = '{"users": *users, "groups": *groups }';
 }
 
-INPUT *project=$"MUMC-M4I-00001"
+INPUT *project=$"P000000001"
 OUTPUT ruleExecOut

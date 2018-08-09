@@ -13,11 +13,11 @@ IRULE_delayedExecTest(*pluset) {
     msi_time_ts2str( int(*ts) + 7200, *fmt, *strtime ); # Add 7200 seconds for UTC+2
 
     # Write stdout debug message
-    writeLine("stdout", "Current time is *strtime UTC. Adding to queue with delay of *pluset");
+    writeLine("stdout", "Current time is *strtime. Adding to queue with delay of *pluset");
 
     delay("<PLUSET>*pluset</PLUSET>") {
         # Write delayed rodsLog message
-        msiWriteRodsLog("This message should appear *pluset after *strtime UTC", 0);
+        msiWriteRodsLog("This message should appear *pluset after *strtime", 0);
     }
 }
 

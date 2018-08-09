@@ -31,10 +31,9 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     # Ingest the files from local directory on resource server to iRODS collection
     remote(*ingestResourceHost,"") {
-        # Do not specify target resource here! Policy ensures that data is moved to proper resource and
-        # if you DO specify it, the ingest workflow will crash with errors about resource hierarchy.
-
-        *error = errorcode(msiput_dataobj_or_coll("/mnt/ingest/zones/*token", "null", "numThreads=10++++forceFlag=", *dstColl, *real_path));
+        # You can enter any string for the *resc argument in 'msiput_dataobj_or_coll'. Policy will ensure that data will be copied to proper resource.
+        # Note: do not enter the value 'null' for *resc. That will cause the microservice to error out.
+        *error = errorcode(msiput_dataobj_or_coll("/mnt/ingest/zones/*token", "dummy_resource", "numThreads=10++++forceFlag=", *dstColl, *real_path));
     }  
     msiWriteRodsLog("DEBUG: Done remote", 0);
 

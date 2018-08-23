@@ -1,5 +1,5 @@
 # The rule dirs to be processed
-RULEDIRS = ingest misc projects
+RULEDIRS = ingest misc projects projectCollection
 
 # The make target
 all: $(RULEDIRS)

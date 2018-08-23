@@ -134,3 +134,34 @@ uuChrShift(*c, *toCase) {
         *element = *element + 1;
     }
 }
+
+# This escapes a string to be used in an iRODS regular expression
+escapeRegexString(*i){
+    *output = "";
+
+    # This is a comma separated list of characters to escape.
+    # Keep the \ symbol first to prevent clipping later added escapes.
+    # In addition to regexp, I also included a space.
+    # Everything within the pairs of backticks (``) is treated as a string
+    *chars =``\,^,$,{,},[,],(,),.,*,+,?,|,<,>,-, ,&,``;
+    *charList = split(*chars, ",");
+
+    # Loop through the input string
+    for (*pos = 0; *pos < strlen(*i); *pos = *pos + 1) {
+       *c = substr(*i, *pos, *pos + 1);
+
+       *o = *c;
+
+       foreach(*char in *charList){
+            if ( *char == *c ) {
+                *o = "\\" ++ *c;
+                break;
+            }
+       }
+
+       *output = *output ++ *o;
+    }
+
+    # Return our escaped string
+    "*output";
+}

@@ -19,6 +19,10 @@ IRULE_reportProjects(*result) {
         *size = 0;
         *title = "";
         *resource = "";
+        *principalInvestigator = "";
+        *respCostCenter = "";
+        *pricePerGBPerYear = "";
+        *storageQuotaGiB = "";
         *managers = "";
         *viewers = "";
         
@@ -28,6 +32,10 @@ IRULE_reportProjects(*result) {
         # Retrieve AVUs based on project
         getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
         getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","NCIT:C88193",*pricePerGBPerYear,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
 
         # Retrieve the project manager(s) and viewers
         listProjectManagers(*project,*managers);
@@ -54,8 +62,32 @@ IRULE_reportProjects(*result) {
             *resourceStr = *resource;
         }
 
+        if ( *principalInvestigator == "" ) {
+            *principalInvestigatorStr = "no-principalInvestigator-AVU-set";
+        } else {
+            *principalInvestigatorStr = *principalInvestigator;
+        }
+
+        if ( *respCostCenter == "" ) {
+            *respCostCenterStr = "no-respCostCenter-AVU-set";
+        } else {
+            *respCostCenterStr = *respCostCenter;
+        }
+
+        if ( *pricePerGBPerYear == "" ) {
+            *pricePerGBPerYearStr = "no-pricePerGBPerYear-AVU-set";
+        } else {
+            *pricePerGBPerYearStr = *pricePerGBPerYear;
+        }
+
+        if ( *storageQuotaGiB == "" ) {
+            *storageQuotaGiBStr = "storageQuotaGiB-AVU-set";
+        } else {
+            *storageQuotaGiBStr = *storageQuotaGiB;
+        }
+
         # Outcome contains the results from this iteration
-        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "managers": *managers, "viewers": *viewers}';
+        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGBPerYear": "*pricePerGBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "viewers": *viewers}';
 
         # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
         msiString2KeyValPair("", *titleKvp);

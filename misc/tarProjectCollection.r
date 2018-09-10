@@ -230,8 +230,11 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
 
     msiWriteRodsLog("tarProjectCollection: Finished cleanup. Starting DataObjRepl to destination resource *tarResc", 0);
 
-    msiDataObjRename(*TarUp, *TarDown, "0", *Stat);
+    # First replicate to the archive resource
     msiDataObjRepl(*TarDown, "destRescName=*tarResc++++verifyChksum=", *stat);
+    # Then rename/move the tar back to the projectCollection.
+    # The order of these steps are important. See RITDEV-490
+    msiDataObjRename(*TarUp, *TarDown, "0", *Stat);
 
     # Trim away the remaining copies of tar on source resource. The checksum has been verified during msiDataObjRepl
     msiDataObjTrim(*TarDown, *Resc, "0", "1", "null", *Status);
@@ -253,7 +256,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     }
     msiRmColl(*foundation, "forceFlag=", *status);
 
-    msiWriteRodsLog("tarProjectCollection: Finished objPhyMove and cleaned up *foundation.", 0);
+    msiWriteRodsLog("tarProjectCollection: Finished DataObjRepl and cleaned up *foundation.", 0);
     writeLine("stdout","tarProjectCollection: Finished checksums, cleanup and moving to final destination.");
 }
 

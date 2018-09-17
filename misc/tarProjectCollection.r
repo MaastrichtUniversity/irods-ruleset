@@ -231,7 +231,7 @@ IRULE_tarProjectCollection(*Coll, *Resc, *tocResc, *tarResc){
     msiWriteRodsLog("tarProjectCollection: Finished cleanup. Starting DataObjRepl to destination resource *tarResc", 0);
 
     # First replicate to the archive resource
-    msiDataObjRepl(*TarDown, "destRescName=*tarResc++++verifyChksum=", *stat);
+    msiDataObjRepl(*TarUp, "destRescName=*tarResc++++verifyChksum=", *stat);
     # Then rename/move the tar back to the projectCollection.
     # The order of these steps are important. See RITDEV-490
     msiDataObjRename(*TarUp, *TarDown, "0", *Stat);

@@ -55,17 +55,3 @@ acPreprocForCollCreate {
         }
     }
 }
-
-acPostProcForPut {
-    ### Policy to send new HL7CDA files for MDL to MirthConnect ###
-    if($objPath like "/nlmumc/projects/P000000010/C000000001/*.xml") {
-        msi_getenv("MIRTH_MDL_EXPORT_CHANNEL", *mirthMdlURL);
-
-        #msiWriteRodsLog("DEBUG: Send MDL data to url *mirthMdlURL", 0);
-        *error = errorcode(msi_http_send_file("*mirthMdlURL", "$objPath"));
-
-        if ( *error < 0 ) {
-            failmsg(-1, "Error with sending to MDL MirthC channel *mirthMdlURL");
-        }
-    }
-}

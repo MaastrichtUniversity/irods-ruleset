@@ -93,6 +93,9 @@ IRULE_listActiveDropZones(*report, *result) {
             *userList = list();
             *userName = "";
 
+            # DEBUG statements
+            #writeLine("stdout", "DEBUG: Dropzone is *token");
+
             foreach (*av in SELECT COLL_ACCESS_USER_ID WHERE COLL_NAME == "/nlmumc/ingest/zones/*token") {
                 # Determine username for userID
                 *userID = *av.COLL_ACCESS_USER_ID;
@@ -107,11 +110,16 @@ IRULE_listActiveDropZones(*report, *result) {
 
             # Take the first element from the list and store it as userName.
             *length = size(*userList);
-            if (*length > 1) {
-                msiWriteRodsLog("WARNING: listActiveDropZones found multiple creators for DropZone /nlmumc/ingest/zones/*token. Only the first will be displayed in the report", 0);
+            if (*length == 0) {
+                *userName = "ERROR: Creator missing for this dropzone!"
+            } else {
+                if (*length > 1) {
+                    msiWriteRodsLog("WARNING: listActiveDropZones found multiple creators for DropZone /nlmumc/ingest/zones/*token. Only the first will be displayed in the report", 0);
+                }
+                *userName = elem(*userList,0)
             }
-            *userName = elem(*userList,0)
 
+            # DEBUG statements
             #writeLine("stdout", "DEBUG: userList is *userList");
             #writeLine("stdout", "DEBUG: userName is *userName");
 

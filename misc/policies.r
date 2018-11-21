@@ -55,3 +55,22 @@ acPreprocForCollCreate {
         }
     }
 }
+
+acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) {
+    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter") {
+        # Get the value for the PI registered
+        getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
+
+        msiWriteRodsLog("DEBUG: User $userNameClient and PI is *pi", *status);
+
+        if( $userNameClient == *pi ) {
+            # Do nothing and resume normal operation
+        }else{
+            # Disallow setting the AVU
+            msiWriteRodsLog("DEBUG: User $userNameClient is not allowed to set *AName AVU", *status);
+            cut;
+            msiOprDisallowed;
+        }
+    }
+}

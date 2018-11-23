@@ -104,7 +104,7 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit,
 # This PEP is triggered with AVUmetadata operations for data, collection, user and resources that are equivalent to the icommand:
 # imeta cp
 acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceItemName,*TargetItemName) {
-    msiWriteRodsLog("DEBUG: COPY option kicked off", *status);
+#    msiWriteRodsLog("DEBUG: COPY option kicked off", *status);
 
-    # This policy is currently not active
+    # This policy is currently not doing anything
 }

@@ -42,12 +42,13 @@ IRULE_reportProjects(*result) {
         listProjectViewers(*project,"false",*viewers);
 
         # Calculate the size of this project
-        *projSize = int(0);
+        *projSize = double(0);
         foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
             *projectCollection = *Row.COLL_NAME;
-            getCollectionSize(*projectCollection, "GiB", "ceiling", *collSize) # *collSize is the result variable that will be created by this rule
-            *projSize = *projSize + int(*collSize);
+            getCollectionSize(*projectCollection, "GiB", "none", *collSize) # *collSize is the result variable that will be created by this rule
+            *projSize = *projSize + double(*collSize);
         }
+        *projSize = ceiling(*projSize);
 
         # Validate the contents of variables and construct json object
         if ( *title == "" ) {

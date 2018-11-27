@@ -55,3 +55,56 @@ acPreprocForCollCreate {
         }
     }
 }
+
+
+# This PEP is triggered with AVUmetadata operations for data, collection, user and resources that are equivalent to the icommand:
+# imeta add, adda, addw, set, rm, rmw, rmi
+acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) {
+#    msiWriteRodsLog("DEBUG: ADD, SET, RM option kicked off", *status);
+
+    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter") {
+        # Get the value for the PI registered
+        getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
+
+        if( $userNameClient == *pi || $userNameClient == "rods") {
+            # Do nothing and resume normal operation
+        }else{
+            # Disallow setting the AVU
+            msiWriteRodsLog("ERROR: User $userNameClient is not allowed to set *AName AVU", *status);
+            cut;
+            msiOprDisallowed;
+        }
+    }
+}
+
+# This PEP is triggered with AVUmetadata operations for data, collection, user and resources that are equivalent to the icommand:
+# imeta mod
+# Note 1: Metalnx uses the 'mod'-option
+# Note 2: There is a bug in Metalnx version 1.0-258 which is triggering this PEP randomly (i.e. PEP is not triggered on every edit operation). Confirmed that policy works as intended when using Metalnx version 2.0.0
+acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit) {
+#    msiWriteRodsLog("DEBUG: MOD option kicked off", *status);
+
+    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter") {
+        # Get the value for the PI registered
+        getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
+
+        if( $userNameClient == *pi || $userNameClient == "rods") {
+            # Do nothing and resume normal operation
+        }else{
+            # Disallow setting the AVU
+            msiWriteRodsLog("ERROR: User $userNameClient is not allowed to set *AName AVU", *status);
+            cut;
+            msiOprDisallowed;
+        }
+    }
+}
+
+# This PEP is triggered with AVUmetadata operations for data, collection, user and resources that are equivalent to the icommand:
+# imeta cp
+acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceItemName,*TargetItemName) {
+#    msiWriteRodsLog("DEBUG: COPY option kicked off", *status);
+
+    # This policy is currently not doing anything
+}

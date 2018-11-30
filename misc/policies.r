@@ -4,13 +4,7 @@ acSetRescSchemeForCreate {
     ### Policy to set proper storage resource & prevent file creation directly in P-folder ###
     # Since 'acPreProcForCreate' does not fire in iRODS 4.1.x, we made 'acSetRescSchemeForCreate' a combined policy
     if($objPath like regex "/nlmumc/projects/P[0-9]{9}/.*") {
-
-        # We're testing here for both "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*" and "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}".
-        # The second test will allow objects to be created at project level with the form  C[0-9]{9}
-        # This is a workaround for a bug where msiPhyPathReg() first tries to create an object when registering a collection
-        # This workaround can be removed once we start using msiTarFileExtract() in untarProjectCollection.r
-
-        if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*" || $objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}") {
+        if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
             # This is a proper location to store project files
             *resource = "";
 

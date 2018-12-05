@@ -24,6 +24,7 @@ IRULE_reportProjects(*result) {
         *pricePerGBPerYear = "";
         *storageQuotaGiB = "";
         *managers = "";
+        *contributors = "";
         *viewers = "";
         
         # Retrieve the project from the directory name
@@ -39,15 +40,17 @@ IRULE_reportProjects(*result) {
 
         # Retrieve the project manager(s) and viewers
         listProjectManagers(*project,*managers);
+        listProjectContributors(*project, "false", *contributors);
         listProjectViewers(*project,"false",*viewers);
 
         # Calculate the size of this project
-        *projSize = int(0);
+        *projSize = double(0);
         foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
             *projectCollection = *Row.COLL_NAME;
-            getCollectionSize(*projectCollection, "GiB", "ceiling", *collSize) # *collSize is the result variable that will be created by this rule
-            *projSize = *projSize + int(*collSize);
+            getCollectionSize(*projectCollection, "GiB", "none", *collSize) # *collSize is the result variable that will be created by this rule
+            *projSize = *projSize + double(*collSize);
         }
+        *projSize = ceiling(*projSize);
 
         # Validate the contents of variables and construct json object
         if ( *title == "" ) {
@@ -87,7 +90,7 @@ IRULE_reportProjects(*result) {
         }
 
         # Outcome contains the results from this iteration
-        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGBPerYear": "*pricePerGBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "viewers": *viewers}';
+        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGBPerYear": "*pricePerGBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
         # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
         msiString2KeyValPair("", *titleKvp);

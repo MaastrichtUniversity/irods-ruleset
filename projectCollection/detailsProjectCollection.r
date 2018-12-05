@@ -26,7 +26,7 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     listProjectContributors(*project, *inherited, *contributors);
     listProjectViewers(*project, *inherited, *viewers);
     
-    *details = '{"numFiles": "*numFiles", "creator": "*creator", "project": "*project", "collection": "*collection", "PID": "*PID", "byteSize": *byteSize, "viewers": *viewers,"contributors": *contributors, "managers": *managers}';
+    *details = '{"project": "*project", "collection": "*collection", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);

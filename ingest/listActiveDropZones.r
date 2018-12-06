@@ -108,10 +108,11 @@ IRULE_listActiveDropZones(*report, *result) {
                 }
             }
 
-            # Take the first element from the list and store it as userName.
+            # Parse the userList and store the first element as userName (== creator).
             *length = size(*userList);
             if (*length == 0) {
-                *userName = "ERROR: Creator missing for this dropzone!"
+                *userName = "N/A"
+                msiWriteRodsLog("ERROR: Missing creator for dropzone /nlmumc/ingest/zones/*token", 0);
             } else {
                 if (*length > 1) {
                     msiWriteRodsLog("WARNING: listActiveDropZones found multiple creators for DropZone /nlmumc/ingest/zones/*token. Only the first will be displayed in the report", 0);

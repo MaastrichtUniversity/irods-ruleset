@@ -18,7 +18,7 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
 
     getCollectionAVU("/nlmumc/projects/*project/*collection","title",*title,"N/A","false");
     getCollectionAVU("/nlmumc/projects/*project/*collection","creator",*creator,"N/A","false");
-    getCollectionAVU("/nlmumc/projects/*project/*collection","numFiles",*numFiles,"","true");
+    getCollectionAVU("/nlmumc/projects/*project/*collection","numFiles",*numFiles,"N/A","false");
     getCollectionAVU("/nlmumc/projects/*project/*collection","PID",*PID,"no-PID-set","false");
     getCollectionSize("/nlmumc/projects/*project/*collection", "B", "none", *byteSize);
 

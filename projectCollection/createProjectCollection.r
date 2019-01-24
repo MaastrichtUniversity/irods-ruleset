@@ -43,5 +43,5 @@ IRULE_createProjectCollection(*project, *projectCollection, *title) {
     msiSetKeyValuePairsToObj(*titleKV, *dstColl, "-C");
 }
 
-INPUT *project=$"P000000001"
+INPUT *project=$"P000000001", *title=""
 OUTPUT ruleExecOut

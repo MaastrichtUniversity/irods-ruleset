@@ -47,6 +47,11 @@ IRULE_createProjectCollection(*project, *projectCollection, *title) {
 #        msiWriteRodsLog("DEBUG: Collection '*title' attempt no. *retry : Trying to create *dstColl", 0);
     }
 
+    # Make the rule fail if it doesn't succeed in creating the collection
+    if ( *error < 0 && *retry >= 10 ) {
+        failmsg(*error, "Collection '*title' attempt no. *retry : Unable to create *dstColl");
+    }
+
     # Add title metadata
     msiAddKeyVal(*titleKV, "title", *title);
     msiSetKeyValuePairsToObj(*titleKV, *dstColl, "-C");

@@ -1,19 +1,17 @@
 # Makefile to build and install the iRODS ruleset
 #
-#   make install   - combine rules and copy it to the "/etc/irods" dir
-#   make all       - builds the rules
+#   make - combine rules and copy it to the "/etc/irods" dir
 #
 
 # Input files.
 
-RULE_FILES ?= $(wildcard *.r)
+RULE_FILES = $(wildcard *.r)
 
 # Output files.
 
-RULESET_NAME ?= rit-projects.re
-RULESET_FILE := $(RULESET_NAME)
-
-INSTALL_DIR  ?= /etc/irods
+RULESET_NAME = rit-projects.re
+RULES_DEST ?= /etc/irods
+RULESET_FILE := $(RULES_DEST)/$(RULESET_NAME)
 
 # Make targets.
 
@@ -22,11 +20,3 @@ all: $(RULESET_FILE)
 $(RULESET_FILE): $(RULE_FILES)
 	cat $(RULE_FILES) | sed '/^\s*\(#.*\)\?$$/d' | sed -E '/^(INPUT|OUTPUT).*/d' | sed 's/IRULE_//' > $(RULESET_FILE)
 
-install: $(RULESET_FILE)
-	cp --backup $(RULESET_FILE) $(INSTALL_DIR)/$(RULESET_NAME)
-
-clean:
-	rm -f $(RULESET_FILE)
-
-update:
-	git pull

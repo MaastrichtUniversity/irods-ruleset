@@ -6,7 +6,6 @@
 
 createIngest {
     checkDropZoneACL(*user, *hasDropZonepermission);
-    msiWriteRodsLog("This log statement doesnt say anything. Its only purpose is to prevent SYS_HEADER_READ_LEN_ERR by the statement below", 0);
     if (*hasDropZonepermission == "false") {
         failmsg(-1, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
     }

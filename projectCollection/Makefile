@@ -9,7 +9,7 @@ RULE_FILES = $(wildcard *.r)
 
 # Output files.
 
-RULESET_NAME = rit-ingest.re
+RULESET_NAME = rit-projectCollection.re
 RULES_DEST ?= /etc/irods
 RULESET_FILE := $(RULES_DEST)/$(RULESET_NAME)
 

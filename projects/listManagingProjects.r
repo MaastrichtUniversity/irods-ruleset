@@ -38,9 +38,9 @@ listManagingProjects {
 
         # Get project details
         getCollectionAVU("/nlmumc/projects/*project","title",*title,"no-title-AVU-set","false");
-        listProjectContributors(*project,*contributors);
-        listProjectManagers(*project,*managers);
-        listProjectViewers(*project,*viewers);
+        listProjectContributors(*project, 'false', *contributors);
+        listProjectManagers(*project, *managers);
+        listProjectViewers(*project, 'false', *viewers);
 
         msiString2KeyValPair("", *kvp);
         msiAddKeyVal(*kvp, 'project', *project);

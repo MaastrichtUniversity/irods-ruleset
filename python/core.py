@@ -2,16 +2,16 @@ import json
 import sys
 import jsonavu
 
+
 def pythonFunctionCore(rule_args, callback, rei):
 	arg = global_vars["*arg"][1:-1]                # strip the quotes
 	callback.writeLine("stdout", "arg = " + arg)
 
 
-
 def getProjectDetailsAsAVU(rule_args, callback, rei):
-        project = global_vars["*project"][1:-1]                # strip the quotes
-	ret_val = callback.detailsProject(project,'false',"")
-        managers = ret_val['arguments'][2] 
+	project = global_vars["*project"][1:-1]                # strip the quotes
+	ret_val = callback.detailsProject(project, 'false', "")
+	managers = ret_val['arguments'][2]
 	callback.writeLine("stdout", "Project = " + project)
 	callback.writeLine("stdout", "Managers = " + str(managers))
 

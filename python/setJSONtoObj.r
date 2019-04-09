@@ -23,7 +23,20 @@ def main(rule_args, callback, rei):
     callback.writeLine("serverLog", json_string)
     callback.writeLine("serverLog", "type is " + input_type )
   
-    data = json.loads(json_string)
+    try:
+      data = json.loads(json_string)
+    except ValueError, e:
+      callback.writeLine("serverLog", "Invalid json provided")
+      raise
+    
+    ret_val = callback.msi_rmw_avu(input_type, object, "%","%","%"+json_root+"%")
+    callback.writeLine("serverLog", str(ret_val) )
+    if ret_val['status'] == False and ret_val['code'] == -819000:
+      callback.writeLine("stdout", "No metadata items could be removed")
+    elif ret_val['status'] == "False":
+      callback.writeLine("stdout", "msi failed with: " + ret_val['code'])
+    
+    
     avu = jsonavu.json2avu(data, json_root)
     max_a_len = len(max(avu, key=lambda k: len(str(k["a"])))["a"])
     max_v_len = len(max(avu, key=lambda k: len(str(k["v"])))["v"])

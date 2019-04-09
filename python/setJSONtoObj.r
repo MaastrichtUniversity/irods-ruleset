@@ -11,7 +11,6 @@
 # Example : irule -r irods_rule_engine_plugin-python-instance -F setJSONtoObj.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*inputType='-d'" "*jsonRoot='root'" "*jsonString='{\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}'"
 
 
-from genquery import (row_iterator, paged_iterator, AS_DICT, AS_LIST)
 import json
 import jsonavu
 
@@ -30,7 +29,7 @@ def main(rule_args, callback, rei):
     max_v_len = len(max(avu, key=lambda k: len(str(k["v"])))["v"])
     out_format = "%" + str(max_a_len + 5) + "s %" + str(max_v_len + 5) + "s %15s"
     for i in avu:
-          #ret_val = callback.msiSetAVU(input_type, object, i["a"],i["v"],i["u"])
+          ret_val = callback.msi_add_avu(input_type, object, i["a"],i["v"],i["u"])
           callback.writeLine("stdout", out_format % (i["a"], i["v"], i["u"]))
 
 

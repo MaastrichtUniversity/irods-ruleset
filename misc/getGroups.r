@@ -12,13 +12,11 @@ IRULE_getGroups(*showSpecialGroups, *result) {
     *groupsSize = 0;
 
     foreach ( *Row in select USER_NAME where USER_TYPE = 'rodsgroup') {
-    		 if ( str(*showSpecialGroups) == "false" ) {
-    		 			if ( *Row.USER_NAME != "public" &&  *Row.USER_NAME != "rodsadmin"
-    		 					&&  *Row.USER_NAME != "DH-ingest" &&  *Row.USER_NAME != "DH-project-admins") {
-                      msi_json_arrayops(*groups, *Row.USER_NAME, "add", *groupsSize);
-               }             
-         }
-         else{
+        if ( str(*showSpecialGroups) == "false" ) {
+            if ( *Row.USER_NAME != "public" &&  *Row.USER_NAME != "rodsadmin" && *Row.USER_NAME != "DH-ingest" && *Row.USER_NAME != "DH-project-admins" ) {
+                msi_json_arrayops(*groups, *Row.USER_NAME, "add", *groupsSize);
+            }
+         } else {
             msi_json_arrayops(*groups, *Row.USER_NAME, "add", *groupsSize);
          }
     }

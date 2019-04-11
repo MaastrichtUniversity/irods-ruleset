@@ -11,39 +11,15 @@
 # Example : irule -r irods_rule_engine_plugin-python-instance -F setJSONtoObj.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*inputType='-d'" "*jsonRoot='root'" "*jsonString='{\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}'"
 
 
-import json
-import jsonavu
-
-
 def main(rule_args, callback, rei):
-    object = global_vars["*object"][1:-1]  # strip the quotes
-    input_type = global_vars["*inputType"][1:-1]  # strip the quotes
-    json_root = global_vars["*jsonRoot"][1:-1]  # strip the quotes
-    json_string = global_vars["*jsonString"][1:-1]  # strip the quotes
-    callback.writeLine("serverLog", json_string)
-    callback.writeLine("serverLog", "type is " + input_type )
-  
-    try:
-      data = json.loads(json_string)
-    except ValueError, e:
-      callback.writeLine("serverLog", "Invalid json provided")
-      raise
-    
-    ret_val = callback.msi_rmw_avu(input_type, object, "%","%","%"+json_root+"%")
-    callback.writeLine("serverLog", str(ret_val) )
-    if ret_val['status'] == False and ret_val['code'] == -819000:
-      callback.writeLine("stdout", "No metadata items could be removed")
-    elif ret_val['status'] == "False":
-      callback.writeLine("stdout", "msi failed with: " + ret_val['code'])
-    
-    
-    avu = jsonavu.json2avu(data, json_root)
-    max_a_len = len(max(avu, key=lambda k: len(str(k["a"])))["a"])
-    max_v_len = len(max(avu, key=lambda k: len(str(k["v"])))["v"])
-    out_format = "%" + str(max_a_len + 5) + "s %" + str(max_v_len + 5) + "s %15s"
-    for i in avu:
-          ret_val = callback.msi_add_avu(input_type, object, i["a"],i["v"],i["u"])
-          callback.writeLine("stdout", out_format % (i["a"], i["v"], i["u"]))
+    # load input variables
+    object = global_vars["*object"][1:-1]
+    input_type = global_vars["*inputType"][1:-1]
+    json_root = global_vars["*jsonRoot"][1:-1]
+    json_string = global_vars["*jsonString"][1:-1]
+
+    # Make call to function in core.py
+    callback.setJSONtoObj(object, input_type, json_root ,json_string )
 
 
 INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata.xml', *inputType = '-d', *jsonRoot = 'root', *jsonString='{\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}'

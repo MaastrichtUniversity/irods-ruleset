@@ -1,55 +1,80 @@
 # Policies
 
+### Policy to set destination resources for projectCollections ###
 acSetRescSchemeForCreate {
-    ### Policy to set proper storage resource & prevent file creation directly in P-folder ###
-    # Since 'acPreProcForCreate' does not fire in iRODS 4.1.x, we made 'acSetRescSchemeForCreate' a combined policy
-    if($objPath like regex "/nlmumc/projects/P[0-9]{9}/.*") {
-        if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
-            # This is a proper location to store project files
-            *resource = "";
+    if( $objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*" ) {
+        uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
+        uuChop(*tail, *project, *tail, "/", true);
 
-            uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
-            uuChop(*tail, *project, *tail, "/", true);
+        getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
 
-            foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project") {
-                if ( *av.META_COLL_ATTR_NAME == "resource" ) {
-                    *resource = *av.META_COLL_ATTR_VALUE;
-                }
-            }
+        # Check if we are actually performing a replication
+        *replCheck="false";
+        errorcode( *replCheck = temporaryStorage.inRepl );
 
-            if ( *resource == "") {
-                failmsg(-1, "resource is empty!");
-            }
-
+        if (*replCheck == 'false') {
             msiWriteRodsLog("DEBUG: Setting resource for project *project to resource *resource", *status);
-            msiSetDefaultResc(*resource, "forced");
-        } else {
-            # Somebody tries to create a file outside of a projectcollection
-            uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
-            uuChop(*tail, *project, *tail, "/", true);
-
-            msiWriteRodsLog("DEBUG: Not allowed to create files in projecfolder '*project' for objPath '$objPath'", *status);
-            cut;
-            msiOprDisallowed;
+            msiSetDefaultResc("UM-hnas-4k","forced")
         }
     } else {
-        # We are not in a projectfolder at all
+        # We are not in a projectCollection
         msiSetDefaultResc("rootResc","null");
     }
 }
 
-acPreprocForCollCreate {
-    ### Policy to regulate folder creation within projects ###
-    if($collName like regex "/nlmumc/projects/P[0-9]{9}/.*") {
-        if( ! ($collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}" || $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*")) {
-            # Creating a non-C folder at project level
-            msiWriteRodsLog("DEBUG: Folder '$collName' not compliant with naming convention", *status);
-            cut;
-            msiOprDisallowed;
-        }
+### Policy to set destination resource for replication of projectCollections ###
+acSetRescSchemeForRepl {
+    if( $objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*" ) {
+        uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
+        uuChop(*tail, *project, *tail, "/", true);
+
+        getCollectionAVU("/nlmumc/projects/*project","replResource",*resource,"","true");
+
+        # Signal to other rules that we're in replication
+        temporaryStorage.inRepl = "true"
+
+        msiWriteRodsLog("DEBUG: Setting replication resource for project *project to resource *resource.", *status);
+
+        # TODO: Allow for replication to other resources such as the tape archive.
+        msiSetDefaultResc(*resource,"forced")
+    } else {
+        # We are not in a projectCollection
+        msiSetDefaultResc("rootResc","null");
     }
 }
 
+### Policy to prevent file creation directly in P-collection ###
+pep_resource_create_pre(*instance, *comm, *context) {
+    *path = *comm.logical_path;
+
+    if( (*path like regex "/nlmumc/projects/P[0-9]{9}/.*") && ! (*path like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") ) {
+        msiWriteRodsLog("ERROR: Not allowed to create objects directly in project at '*path'", *status);
+        cut;
+        msiOprDisallowed;
+    }
+}
+
+### Policy to prevent file renaming into P-collection ###
+pep_resource_rename_pre(*instance, *comm, *context, *new) {
+   *path = *comm.logical_path;
+
+   if( (*path like regex "/nlmumc/projects/P[0-9]{9}/.*") && ! (*path like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") ) {
+       msiWriteRodsLog("ERROR: Not allowed to rename objects directly in project at '*path'", *status);
+       cut;
+       msiOprDisallowed;
+   }
+}
+
+### Policy to prevent invalidly named collection creation directly in P-collection ###
+acPreprocForCollCreate {
+    ### Policy to regulate folder creation within projects ###
+    if($collName like regex "/nlmumc/projects/P[0-9]{9}/.*" && !( $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}") && !( $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") ) {
+        # Creating a non-C folder at project level
+        msiWriteRodsLog("ERROR: Invalid naming of collection in project '$collName'", *status);
+        cut;
+        msiOprDisallowed;
+    }
+}
 
 # This PEP is triggered with AVUmetadata operations for data, collection, user and resources that are equivalent to the icommand:
 # imeta add, adda, addw, set, rm, rmw, rmi

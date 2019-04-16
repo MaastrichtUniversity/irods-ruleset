@@ -1,15 +1,15 @@
 # Call with
 #
-# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'" "*pricePerGBPerYear='0.32'"
+# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='UM-hnas-4k'" "*replResource='UM-hnas-4k-repl'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'" "*pricePerGBPerYear='0.32'"
 
 irule_dummy() {
-    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter,*pricePerGBPerYear);
+    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*replResource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter,*pricePerGBPerYear);
     writeLine("stdout", *result);
 }
 
 
 # Creates projects in the form P000000001
-IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter,*pricePerGBPerYear) {
+IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*replResource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter,*pricePerGBPerYear) {
 
     *max = 0;
 
@@ -42,6 +42,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "dataRetentionPeriodEndDate", *dataRetentionPeriodEndDate);
     msiAddKeyVal(*metaKV, "ingestResource", *ingestResource);
     msiAddKeyVal(*metaKV, "resource", *resource);
+    msiAddKeyVal(*metaKV, "replResource", *replResource);
     msiAddKeyVal(*metaKV, "storageQuotaGb", *storageQuotaGb);
     msiAddKeyVal(*metaKV, "title", *title);
     msiAddKeyVal(*metaKV, "OBI:0000103", *principalInvestigator);
@@ -58,5 +59,5 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     
 }
 
-INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *respCostCenter="", *pricePerGBPerYear=""
+INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *replResource="", *storageQuotaGb="", *title="", *principalInvestigator="", *respCostCenter="", *pricePerGBPerYear=""
 OUTPUT ruleExecOut

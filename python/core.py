@@ -33,10 +33,8 @@ def setJSONtoObj(rule_args, callback, rei):
         callback.writeLine("serverLog", "Invalid json provided")
         raise
 
-    ret_val = callback.msi_rmw_avu(input_type, object, "%", "%", "%" + json_root + "%")
-    if ret_val['status'] == False and ret_val['code'] == -819000:
-        callback.writeLine("stdout", "No metadata items could be removed")
-    elif ret_val['status'] == "False":
+    ret_val = callback.msi_rmw_avu(input_type, object, "%", "%", json_root + "_%")
+    if ret_val['status'] == False and ret_val['code'] != -819000:
         callback.writeLine("stdout", "msi failed with: " + ret_val['code'])
 
     avu = jsonavu.json2avu(data, json_root)
@@ -58,6 +56,7 @@ def getJSONfromObj(rule_args, callback, rei):
     object = rule_args[0]
     input_type = rule_args[1]
     json_root = rule_args[2]
+    result = rule_args[3]
     result_list = []
     # data object
     if input_type == '-d':

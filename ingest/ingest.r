@@ -9,7 +9,7 @@ ingest {
         failmsg(-814000, "Unknown ingest zone *token");
     }
 
-    *state = ""; *project = "";
+    *state = ""; *project = ""; *title = "";
     foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == *srcColl) {
         if ( *av.META_COLL_ATTR_NAME == "project" ) {
             *project = *av.META_COLL_ATTR_VALUE;
@@ -37,6 +37,7 @@ ingest {
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
         # Validate metadata
+        *mirthValidationURL = "";
         msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
         validateMetadataFromIngest(*token,*mirthValidationURL);
     }

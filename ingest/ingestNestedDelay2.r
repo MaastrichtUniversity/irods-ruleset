@@ -80,6 +80,13 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiAddKeyVal(*stateKV, "state", "ingested");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
+    # Start replication of projectCollection
+    *error = errorcode(replicateProjectCollection(*project, *projectCollection, *status));
+
+    if ( *error < 0 ) {
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error replicating destination project-collection (status: *status)");
+    }
+
     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
     # This is because of a bug in the unmount. This is kept in memory for
     # the remaining of the irodsagent session.
@@ -90,13 +97,11 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error unmounting");
     }
 
-    # TODO: Error handling
-    replicateProjectCollection(*project, *projectCollection);
-
     # Get environment config option for setting the delay for drop zone removal
     msi_getenv("IRODS_INGEST_REMOVE_DELAY", *irodsIngestRemoveDelay);
 
     delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET>") {
+        # Delete the dropzone (not the contents yet)
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
         if ( *error < 0 ) {

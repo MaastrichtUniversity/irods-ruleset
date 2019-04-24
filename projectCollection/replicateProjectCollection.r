@@ -3,18 +3,20 @@
 # irule -F replicateProjectCollection.r "*project='P000000001'" "*projectCollection='C000000001'"
 
 irule_dummy() {
-    IRULE_replicateProjectCollection(*project, *projectCollection)
+    *status = 0;
+
+    IRULE_replicateProjectCollection(*project, *projectCollection, *status)
 }
 
-IRULE_replicateProjectCollection(*project, *projectCollection) {
-    # Find out the resource and replication resource
-    getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+IRULE_replicateProjectCollection(*project, *projectCollection, *status) {
+    # Find out the replication resource
     getCollectionAVU("/nlmumc/projects/*project","replResource",*replResource,"","true");
 
     *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
     # Execute the replication
-    msiCollRepl(*dstColl, "destRescName=*replResource++++rescName=*resource", *status);
+    # The policy will also enforce the destination resource, but no harm in setting it here again
+    msiCollRepl(*dstColl, "destRescName=*replResource", *status);
 }
 
 INPUT *project='',*projectCollection=''

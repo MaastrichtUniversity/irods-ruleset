@@ -14,9 +14,9 @@ IRULE_replicateProjectCollection(*project, *projectCollection, *status) {
 
     *dstColl = "/nlmumc/projects/*project/*projectCollection";
 
-    # Execute the replication
+    # Execute the replication and verify checksum
     # The policy will also enforce the destination resource, but no harm in setting it here again
-    msiCollRepl(*dstColl, "destRescName=*replResource", *status);
+    msiCollRepl(*dstColl, "destRescName=*replResource++++verifyChksum=", *status);
 }
 
 INPUT *project='',*projectCollection=''

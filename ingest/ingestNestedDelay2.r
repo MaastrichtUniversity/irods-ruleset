@@ -80,6 +80,13 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiAddKeyVal(*stateKV, "state", "ingested");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
+    # Start checksum calculation of projectCollection
+    *error = errorcode(checksumProjectCollection(*project, *projectCollection, *status));
+
+    if ( *error < 0 ) {
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error during checksum caclulation of destination project-collection");
+    }
+
     # Start replication of projectCollection
     *error = errorcode(replicateProjectCollection(*project, *projectCollection, *status));
 

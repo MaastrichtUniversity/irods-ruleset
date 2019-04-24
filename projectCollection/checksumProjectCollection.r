@@ -14,7 +14,7 @@ IRULE_checksumProjectCollection(*project, *projectCollection, *status) {
     # Perform the checksum recursively
     *coll = *coll ++ "%"
 
-    foreach(*data in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME = *coll) {
+    foreach(*data in SELECT COLL_NAME, DATA_NAME WHERE COLL_NAME like *coll) {
         *ipath = *data.COLL_NAME ++"/"++*data.DATA_NAME;
 
         msiDataObjChksum(*ipath, "verifyChksum=", *chkSum);

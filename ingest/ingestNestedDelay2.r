@@ -72,9 +72,6 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
     }
 
-    # Close collection by making all access read only
-    closeProjectCollection(*project, *projectCollection);
-
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
     msiAddKeyVal(*stateKV, "state", "ingested");
@@ -84,15 +81,18 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     *error = errorcode(checksumProjectCollection(*project, *projectCollection, *status));
 
     if ( *error < 0 ) {
-        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error during checksum caclulation of destination project-collection");
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error during checksum calculation of destination projectCollection");
     }
 
     # Start replication of projectCollection
     *error = errorcode(replicateProjectCollection(*project, *projectCollection, *status));
 
     if ( *error < 0 ) {
-        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error replicating destination project-collection (status: *status)");
+        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error replicating destination projectCollection (status: *status)");
     }
+
+    # Close collection by making all access read only
+    closeProjectCollection(*project, *projectCollection);
 
     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
     # This is because of a bug in the unmount. This is kept in memory for

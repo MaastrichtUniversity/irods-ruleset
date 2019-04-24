@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*existingDir=''"
+# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'"
 
 createIngest {
     checkDropZoneACL(*user, *hasDropZonepermission);
@@ -35,12 +35,8 @@ createIngest {
 
     # Enabling the ingest zone needs to be done on the remote server
     remote(*ingestResourceHost,"") {
-        if ( *existingDir != "" ) {
-            *phyDir = *existingDir;
-        } else {
-            *phyDir = "/mnt/ingest/zones/" ++ *token;
-            msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
-        }
+        *phyDir = "/mnt/ingest/zones/" ++ *token;
+        msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
 
         msiPhyPathReg(*tokenColl, *ingestResource, *phyDir, "mountPoint", *status);
     }
@@ -51,5 +47,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*existingDir="",*project="",*title=""
+INPUT *user="",*token="",*project="",*title=""
 OUTPUT ruleExecOut

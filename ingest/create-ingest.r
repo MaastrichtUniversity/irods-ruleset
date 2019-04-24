@@ -5,6 +5,7 @@
 # irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'"
 
 createIngest {
+    *hasDropZonepermission = "";
     checkDropZoneACL(*user, *hasDropZonepermission);
     if (*hasDropZonepermission == "false") {
         failmsg(-1, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
@@ -27,6 +28,7 @@ createIngest {
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
     # Obtain the resource host from the specified ingest resource
+    *ingestResource = "";
     getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
     foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
         *ingestResourceHost = *r.RESC_LOC;

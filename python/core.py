@@ -6,8 +6,9 @@ from genquery import (row_iterator, paged_iterator, AS_DICT, AS_LIST)
 from jsonschema import validate
 from jsonschema.exceptions import *
 import requests
+import re
 
-##Global vars
+# Global vars
 activelyUpdatingAVUs = False
 
 # This rule stores a given json string as AVU's to an object
@@ -16,19 +17,14 @@ activelyUpdatingAVUs = False
 #                             -R for resource
 #                             -C for collection
 #                             -u for user
-# Argument 2:   Url to the JSON-Schema example https://api.myjson.com/bins/17vejk
-# Argument 3:   the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
-# Argument 4:  the JSON string (make sure the quotes are escaped)  {\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}
+# Argument 2:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+# Argument 3:  the JSON string (make sure the quotes are escaped)  {\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}
 #
 def setJSONtoObj(rule_args, callback, rei):
     object = rule_args[0]
     input_type = rule_args[1]
-    json_schema_url = rule_args[2]
-    json_root = rule_args[3]
-    json_string = rule_args[4]
-
-    r = requests.get(json_schema_url)
-    schema = r.json()
+    json_root = rule_args[2]
+    json_string = rule_args[3]
 
     try:
         data = json.loads(json_string)
@@ -36,21 +32,31 @@ def setJSONtoObj(rule_args, callback, rei):
         callback.writeLine("serverLog", "Invalid json provided")
         callback.msiExit("-1101000", "Invalid json provided")
 
-    try:
-        validate(instance=data, schema=schema)
-    except ValidationError, e:
-        callback.writeLine("serverLog", "JSON Instance could not be validated against JSON-schema " + str(e.message))
-        callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema")
+    # check if validation is required
+    validation_required = False
+    json_schema_url = ""
+    # Get all avu's with attribute $id
+    ret_val = callback.getAVUfromObj(object, input_type, '$id', "")
+    ids = json.loads(ret_val['arguments'][3])
+    for element in ids:
+        if element['u'] == json_root:
+            validation_required = True
+            json_schema_url = element['v']
+
+    if validation_required :
+        r = requests.get(json_schema_url)
+        schema = r.json()
+        try:
+            validate(instance=data, schema=schema)
+        except ValidationError, e:
+            callback.writeLine("serverLog", "JSON Instance could not be validated against JSON-schema " + str(e.message))
+            callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema : "+ str(e.message))
 
     # load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating AVU and want to disable some of the checks.
     global activelyUpdatingAVUs
     activelyUpdatingAVUs = True
 
     ret_val = callback.msi_rmw_avu(input_type, object, "%", "%", json_root + "_%")
-
-    # Set the $id avu
-    callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
-
     if ret_val['status'] == False and ret_val['code'] != -819000:
         callback.writeLine("stdout", "msi failed with: " + ret_val['code'])
 
@@ -252,6 +258,49 @@ def getAVUfromObj(rule_args, callback, rei):
     result = json.dumps(result_list)
     rule_args[3] = result
 
+
+
+# This rule stores a given json-schema as AVU's to an object
+# Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
+# Argument 1: The object type -d for data object
+#                             -R for resource
+#                             -C for collection
+#                             -u for user
+# Argument 2:   Url to the JSON-Schema example https://api.myjson.com/bins/17vejk
+# Argument 3:   the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+
+def setJSONschematoObj(rule_args, callback, rei):
+    object = rule_args[0]
+    input_type = rule_args[1]
+    json_schema_url = rule_args[2]
+    json_root = rule_args[3]
+
+    #check if this root has been used before
+    ret_val = callback.getAVUfromObj(object, input_type, '', "")
+    all_avu = json.loads(ret_val['arguments'][3])
+    # From these avu's extract the unit (root)
+    root_list = []
+    for element in all_avu:
+        # Regular expression pattern for unit field
+        pattern = re.compile('^([a-zA-Z0-9_]+)_([0-9]+)_([osbnze])((?<=o)[0-9]+)?((?:#[0-9]+?)*)')
+        # Match unit to extract all info
+        unit = pattern.match(str(element['u']))
+        # This AVU may be unrelated to the JSON
+        if not unit:
+            continue
+        root = unit.group(1)
+        root_list.append(root)
+    callback.writeLine("serverLog", "root_list" + str(root_list))
+    if json_root in root_list:
+        callback.writeLine("serverLog", "Root " + json_root + " is already in use")
+        callback.msiExit("-1101000", "Root " + json_root + " is already in use")
+
+    # Delete existing $id AVU for this json root
+    callback.msi_rmw_avu(input_type, object, '$id', "%", json_root)
+    #Set new $id AVU
+    callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
+
+
 #def acPreProcForModifyAVUMetadata(rule_args, callback, rei):
 #    callback.writeLine("serverLog", "Python acPreProcForModifyAVUMetadata")
 #    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
@@ -308,7 +357,7 @@ def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
         unit = str(rule_args[8])
         for root in root_list:
             #if the unit start with one of the roots, disallow the operation
-            if unit.startswith(root):
+            if unit.startswith(root + "_"):
                 callback.msiOprDisallowed()
 
 

@@ -3,6 +3,9 @@ import sys
 import jsonavu
 import session_vars
 from genquery import (row_iterator, paged_iterator, AS_DICT, AS_LIST)
+from jsonschema import validate
+from jsonschema.exceptions import *
+import requests
 
 ##Global vars
 activelyUpdatingAVUs = False
@@ -13,26 +16,41 @@ activelyUpdatingAVUs = False
 #                             -R for resource
 #                             -C for collection
 #                             -u for user
-# Argument 2:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
-# Argument 3:  the JSON string (make sure the quotes are escaped)  {\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}
+# Argument 2:   Url to the JSON-Schema example https://api.myjson.com/bins/17vejk
+# Argument 3:   the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+# Argument 4:  the JSON string (make sure the quotes are escaped)  {\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}
 #
 def setJSONtoObj(rule_args, callback, rei):
     object = rule_args[0]
     input_type = rule_args[1]
-    json_root = rule_args[2]
-    json_string = rule_args[3]
+    json_schema_url = rule_args[2]
+    json_root = rule_args[3]
+    json_string = rule_args[4]
 
-    #load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating AVU and want to disable some of the checks.
-    global activelyUpdatingAVUs
-    activelyUpdatingAVUs= True
+    r = requests.get(json_schema_url)
+    schema = r.json()
 
     try:
         data = json.loads(json_string)
     except ValueError, e:
         callback.writeLine("serverLog", "Invalid json provided")
-        raise
+        callback.msiExit("-1101000", "Invalid json provided")
+
+    try:
+        validate(instance=data, schema=schema)
+    except ValidationError, e:
+        callback.writeLine("serverLog", "JSON Instance could not be validated against JSON-schema " + str(e.message))
+        callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema")
+
+    # load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating AVU and want to disable some of the checks.
+    global activelyUpdatingAVUs
+    activelyUpdatingAVUs = True
 
     ret_val = callback.msi_rmw_avu(input_type, object, "%", "%", json_root + "_%")
+
+    # Set the $id avu
+    callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
+
     if ret_val['status'] == False and ret_val['code'] != -819000:
         callback.writeLine("stdout", "msi failed with: " + ret_val['code'])
 

@@ -4,13 +4,8 @@ import jsonavu
 import session_vars
 from genquery import (row_iterator, paged_iterator, AS_DICT, AS_LIST)
 
-
-def acPreprocForDataObjOpen(rule_args, callback, rei):
-    var_map = session_vars.get_map(rei)
-    callback.writeLine("serverLog", "acPreprocForDataObjOpen")
-    object_path = var_map['data_object']['object_path']
-    callback.writeLine("serverLog", object_path)
-
+##Global vars
+activelyUpdatingAVUs = False
 
 # This rule stores a given json string as AVU's to an object
 # Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
@@ -27,6 +22,10 @@ def setJSONtoObj(rule_args, callback, rei):
     json_root = rule_args[2]
     json_string = rule_args[3]
 
+    #load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating AVU and want to disable some of the checks.
+    global activelyUpdatingAVUs
+    activelyUpdatingAVUs= True
+
     try:
         data = json.loads(json_string)
     except ValueError, e:
@@ -42,6 +41,8 @@ def setJSONtoObj(rule_args, callback, rei):
     for i in avu:
         ret_val = callback.msi_add_avu(input_type, object, i["a"], i["v"], i["u"])
 
+    #Set global variable activelyUpdatingAVUsthis to false. At this point we are done updating AVU and want to enable some of the checks.
+    activelyUpdatingAVUs = False
 
 # This rule return a json string from AVU's set to an object
 # Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata_cedar.jsonld, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
@@ -58,6 +59,7 @@ def getJSONfromObj(rule_args, callback, rei):
     json_root = rule_args[2]
     result = rule_args[3]
     result_list = []
+
     # data object
     if input_type == '-d':
         ret_val = callback.msiSplitPath(object, "", "")
@@ -122,3 +124,229 @@ def getJSONfromObj(rule_args, callback, rei):
         data_back = jsonavu.avu2json(result_list, json_root)
         result = json.dumps(data_back)
     rule_args[3] = result
+
+# This rule return a json string from AVU's set to an object
+# Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata_cedar.jsonld, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
+# Argument 1: The object type -d for data object
+#                             -R for resource
+#                             -C for collection
+#                             -u for user
+# Argument 2:  if you want only items with specific attribute name you can set a filter here
+#
+# OUTPUT:  json string with AVU's set to an object
+def getAVUfromObj(rule_args, callback, rei):
+    object = rule_args[0]
+    input_type = rule_args[1]
+    filter = rule_args[2]
+    result = rule_args[3]
+    result_list = []
+    # data object
+    if input_type == '-d':
+        ret_val = callback.msiSplitPath(object, "", "")
+        data_object = ret_val['arguments'][2]
+        collection = ret_val['arguments'][1]
+        rows = row_iterator(
+            ["META_DATA_ATTR_NAME", "META_DATA_ATTR_VALUE", "META_DATA_ATTR_UNITS"],
+            "COLL_NAME = '" + collection + "' AND DATA_NAME = '" + data_object + "'",
+            AS_DICT,
+            callback)
+        for row in rows:
+            if filter == '':
+                result_list.append({
+                    "a": row["META_DATA_ATTR_NAME"],
+                    "v": row["META_DATA_ATTR_VALUE"],
+                    "u": row["META_DATA_ATTR_UNITS"]
+                })
+            else:
+                if row["META_DATA_ATTR_NAME"] == filter:
+                    result_list.append({
+                        "a": row["META_DATA_ATTR_NAME"],
+                        "v": row["META_DATA_ATTR_VALUE"],
+                        "u": row["META_DATA_ATTR_UNITS"]
+                    })
+
+    # collection
+    elif input_type == '-C':
+        rows = row_iterator(
+            ["META_COLL_ATTR_NAME", "META_COLL_ATTR_VALUE", "META_COLL_ATTR_UNITS"],
+            "COLL_NAME = '" + object + "'",
+            AS_DICT,
+            callback)
+        for row in rows:
+            if filter == '':
+                result_list.append({
+                    "a": row["META_COLL_ATTR_NAME"],
+                    "v": row["META_COLL_ATTR_VALUE"],
+                    "u": row["META_COLL_ATTR_UNITS"]
+                })
+            else:
+                if row["META_COLL_ATTR_NAME"] == filter:
+                    result_list.append({
+                        "a": row["META_COLL_ATTR_NAME"],
+                        "v": row["META_COLL_ATTR_VALUE"],
+                        "u": row["META_COLL_ATTR_UNITS"]
+                    })
+    # resource
+    elif input_type == '-R':
+        rows = row_iterator(
+            ["META_RESC_ATTR_NAME", "META_RESC_ATTR_VALUE", "META_RESC_ATTR_UNITS"],
+            "RESC_NAME = '" + object + "'",
+            AS_DICT,
+            callback)
+        for row in rows:
+            if filter == '':
+                result_list.append({
+                    "a": row["META_RESC_ATTR_NAME"],
+                    "v": row["META_RESC_ATTR_VALUE"],
+                    "u": row["META_RESC_ATTR_UNITS"]
+                })
+            else:
+                if row["META_RESC_ATTR_NAME"] == filter:
+                    result_list.append({
+                        "a": row["META_RESC_ATTR_NAME"],
+                        "v": row["META_RESC_ATTR_VALUE"],
+                        "u": row["META_RESC_ATTR_UNITS"]
+                    })
+    # user
+    elif input_type == '-u':
+        rows = row_iterator(
+            ["META_USER_ATTR_NAME", "META_USER_ATTR_VALUE", "META_USER_ATTR_UNITS"],
+            "USER_NAME = '" + object + "'",
+            AS_DICT,
+            callback)
+        for row in rows:
+            if filter == '':
+                result_list.append({
+                    "a": row["META_USER_ATTR_NAME"],
+                    "v": row["META_USER_ATTR_VALUE"],
+                    "u": row["META_USER_ATTR_UNITS"]
+                })
+            else:
+                if row["META_USER_ATTR_NAME"] == filter:
+                    result_list.append({
+                        "a": row["META_USER_ATTR_NAME"],
+                        "v": row["META_USER_ATTR_VALUE"],
+                        "u": row["META_USER_ATTR_UNITS"]
+                    })
+    else:
+        callback.writeLine("serverLog", "type should be -d, -C, -R or -u")
+
+    result = json.dumps(result_list)
+    rule_args[3] = result
+
+#def acPreProcForModifyAVUMetadata(rule_args, callback, rei):
+#    callback.writeLine("serverLog", "Python acPreProcForModifyAVUMetadata")
+#    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+####
+
+def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_pre")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+def pep_database_set_avu_metadata_post(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_post")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+def pep_database_set_avu_metadata_except(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_except")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+#####
+
+def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_pre")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+def pep_database_add_avu_metadata_wild_post(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_post")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+def pep_database_add_avu_metadata_wild_except(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_except")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+####
+
+def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
+    # callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_pre")
+    # callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "activelyUpdatingAVUs is: " + str(activelyUpdatingAVUs))
+    # for i in range(len(rule_args)):
+    #     callback.writeLine("serverLog", "Argument " + str(i) + "is " + str(rule_args[i]))
+
+    global activelyUpdatingAVUs
+    #Check if we are activelyUpdatingAVUs from setJSONtoObj. In that case we do not want the filtering below
+    if not activelyUpdatingAVUs:
+        #Get all avu's with attribute $id
+        ret_val = callback.getAVUfromObj(rule_args[5], rule_args[4], '$id', "")
+        ids = json.loads(ret_val['arguments'][3])
+        # From these avu's extract the unit (root)
+        root_list = []
+        for element in ids:
+            root_list.append(element['u'])
+        # Get the unit from the avu that is currently added.
+        unit = str(rule_args[8])
+        for root in root_list:
+            #if the unit start with one of the roots, disallow the operation
+            if unit.startswith(root):
+                callback.msiOprDisallowed()
+
+
+def pep_database_add_avu_metadata_post(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_post")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_add_avu_metadata_except(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_except")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+####
+
+def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_prep")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_mod_avu_metadata_post(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_post")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_mod_avu_metadata_except(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_except")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+####
+
+def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_pre")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_del_avu_metadata_post(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_post")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_del_avu_metadata_except(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_except")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+####
+
+def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_pre")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_copy_avu_metadata_post(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_post")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+
+def pep_database_copy_avu_metadata_except(rule_args, callback, rei):
+    callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_except")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))

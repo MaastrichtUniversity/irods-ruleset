@@ -7,7 +7,7 @@
 # Argument 3:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 #              if empty string is supplied the irods_avu_json parsing is skipped and a json representing a array of avu's is returned
 
-# Example : irule -F getJSONfromObj.r "*object='/nlmumc/projects/P000000003/C000000001/metadata_cedar.jsonld'" "*inputType='-d'" "*jsonRoot='root'"
+# Example : irule -F getJSONfromObj.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*objectType='-d'" "*jsonRoot='root'"
 
 
 main(){
@@ -21,5 +21,5 @@ main(){
     writeLine("stdout", *result)
 }
 
-INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata_cedar.jsonld', *objectType = '-d', *jsonRoot = 'root'
+INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata.xml', *objectType = '-d', *jsonRoot = 'root'
 OUTPUT ruleExecOut

@@ -85,7 +85,7 @@ def getJSONfromObj(rule_args, callback, rei):
     result_list = []
 
     # data object
-    if input_type == '-d':
+    if input_type == '-d' or input_type == '-D':
         ret_val = callback.msiSplitPath(object, "", "")
         data_object = ret_val['arguments'][2]
         collection = ret_val['arguments'][1]
@@ -101,7 +101,7 @@ def getJSONfromObj(rule_args, callback, rei):
                 "u": row["META_DATA_ATTR_UNITS"]
             })
     # collection
-    elif input_type == '-C':
+    elif input_type == '-c' or input_type == '-C':
         rows = row_iterator(
             ["META_COLL_ATTR_NAME", "META_COLL_ATTR_VALUE", "META_COLL_ATTR_UNITS"],
             "COLL_NAME = '" + object + "'",
@@ -114,7 +114,7 @@ def getJSONfromObj(rule_args, callback, rei):
                 "u": row["META_COLL_ATTR_UNITS"]
             })
     # resource
-    elif input_type == '-R':
+    elif input_type == '-r' or input_type == '-R':
         rows = row_iterator(
             ["META_RESC_ATTR_NAME", "META_RESC_ATTR_VALUE", "META_RESC_ATTR_UNITS"],
             "RESC_NAME = '" + object + "'",
@@ -127,7 +127,7 @@ def getJSONfromObj(rule_args, callback, rei):
                 "u": row["META_RESC_ATTR_UNITS"]
             })
     # user
-    elif input_type == '-u':
+    elif input_type == '-u' or input_type == '-U':
         rows = row_iterator(
             ["META_USER_ATTR_NAME", "META_USER_ATTR_VALUE", "META_USER_ATTR_UNITS"],
             "USER_NAME = '" + object + "'",
@@ -165,7 +165,7 @@ def getAVUfromObj(rule_args, callback, rei):
     result = rule_args[3]
     result_list = []
     # data object
-    if input_type == '-d':
+    if input_type == '-d' or input_type == '-D':
         ret_val = callback.msiSplitPath(object, "", "")
         data_object = ret_val['arguments'][2]
         collection = ret_val['arguments'][1]
@@ -190,7 +190,7 @@ def getAVUfromObj(rule_args, callback, rei):
                     })
 
     # collection
-    elif input_type == '-C':
+    elif input_type == '-c' or input_type == '-C':
         rows = row_iterator(
             ["META_COLL_ATTR_NAME", "META_COLL_ATTR_VALUE", "META_COLL_ATTR_UNITS"],
             "COLL_NAME = '" + object + "'",
@@ -211,7 +211,7 @@ def getAVUfromObj(rule_args, callback, rei):
                         "u": row["META_COLL_ATTR_UNITS"]
                     })
     # resource
-    elif input_type == '-R':
+    elif input_type == '-r' or input_type == '-R':
         rows = row_iterator(
             ["META_RESC_ATTR_NAME", "META_RESC_ATTR_VALUE", "META_RESC_ATTR_UNITS"],
             "RESC_NAME = '" + object + "'",
@@ -232,7 +232,7 @@ def getAVUfromObj(rule_args, callback, rei):
                         "u": row["META_RESC_ATTR_UNITS"]
                     })
     # user
-    elif input_type == '-u':
+    elif input_type == '-u' or input_type == '-U':
         rows = row_iterator(
             ["META_USER_ATTR_NAME", "META_USER_ATTR_VALUE", "META_USER_ATTR_UNITS"],
             "USER_NAME = '" + object + "'",
@@ -305,12 +305,43 @@ def setJSONschematoObj(rule_args, callback, rei):
 #    callback.writeLine("serverLog", "Python acPreProcForModifyAVUMetadata")
 #    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
 
-
+# This function checks if a UNIT change should be allowed. If UNIT is part of an existing json changing should not be allowed.
+# Only in the case we we are actively updating AVU trough setJSONtoObj
+# Argument 0:   The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
+# Argument 1:   The object type -d for data object
+#                             -R for resource
+#                             -C for collection
+#                             -u for user
+# Argument 2:   The existing value for unit
+# Output 0:     Boolean
+def allowAVUChange(object, object_type, unit, callback):
+    global activelyUpdatingAVUs
+    # Check if we are activelyUpdatingAVUs from setJSONtoObj. In that case we do not want the filtering below
+    if not activelyUpdatingAVUs:
+        # Get all avu's with attribute $id
+        ret_val = callback.getAVUfromObj(object, object_type, '$id', "")
+        ids = json.loads(ret_val['arguments'][3])
+        # From these avu's extract the unit (root)
+        root_list = []
+        for element in ids:
+            root_list.append(element['u'])
+        # Get the unit from the avu that is currently added.
+        unit = str(unit)
+        for root in root_list:
+            # if the unit start with one of the roots, disallow the operation
+            if unit.startswith(root + "_"):
+                return False
+    return True
 ####
 
 def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_pre")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    object_name = rule_args[4]
+    object_type = rule_args[3]
+    object_unit = rule_args[7]
+    if not allowAVUChange(object_name, object_type, object_unit, callback):
+        callback.msiOprDisallowed()
 
 def pep_database_set_avu_metadata_post(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_post")
@@ -325,6 +356,11 @@ def pep_database_set_avu_metadata_except(rule_args, callback, rei):
 def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_pre")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    object_name = rule_args[5]
+    object_type = rule_args[4]
+    object_unit = rule_args[8]
+    if not allowAVUChange(object_name, object_type, object_unit, callback):
+        callback.msiOprDisallowed()
 
 def pep_database_add_avu_metadata_wild_post(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_post")
@@ -337,28 +373,13 @@ def pep_database_add_avu_metadata_wild_except(rule_args, callback, rei):
 ####
 
 def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
-    # callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_pre")
-    # callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-    # callback.writeLine("serverLog", "activelyUpdatingAVUs is: " + str(activelyUpdatingAVUs))
-    # for i in range(len(rule_args)):
-    #     callback.writeLine("serverLog", "Argument " + str(i) + "is " + str(rule_args[i]))
-
-    global activelyUpdatingAVUs
-    #Check if we are activelyUpdatingAVUs from setJSONtoObj. In that case we do not want the filtering below
-    if not activelyUpdatingAVUs:
-        #Get all avu's with attribute $id
-        ret_val = callback.getAVUfromObj(rule_args[5], rule_args[4], '$id', "")
-        ids = json.loads(ret_val['arguments'][3])
-        # From these avu's extract the unit (root)
-        root_list = []
-        for element in ids:
-            root_list.append(element['u'])
-        # Get the unit from the avu that is currently added.
-        unit = str(rule_args[8])
-        for root in root_list:
-            #if the unit start with one of the roots, disallow the operation
-            if unit.startswith(root + "_"):
-                callback.msiOprDisallowed()
+    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_pre")
+    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    object_name = rule_args[5]
+    object_type = rule_args[4]
+    object_unit = rule_args[8]
+    if not allowAVUChange(object_name, object_type, object_unit, callback):
+        callback.msiOprDisallowed()
 
 
 def pep_database_add_avu_metadata_post(rule_args, callback, rei):
@@ -375,6 +396,16 @@ def pep_database_add_avu_metadata_except(rule_args, callback, rei):
 def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_prep")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    object_name = rule_args[4]
+    object_type = rule_args[3]
+    object_old_unit = rule_args[7]
+    object_new_unit = rule_args[10]
+    #If old unit starts with one of the roots disallow
+    if not allowAVUChange(object_name, object_type, object_old_unit, callback):
+        callback.msiOprDisallowed()
+    # If new unit starts with one of the roots disallow
+    if not allowAVUChange(object_name, object_type, object_new_unit, callback):
+        callback.msiOprDisallowed()
 
 
 def pep_database_mod_avu_metadata_post(rule_args, callback, rei):
@@ -391,6 +422,11 @@ def pep_database_mod_avu_metadata_except(rule_args, callback, rei):
 def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_pre")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    object_name = rule_args[5]
+    object_type = rule_args[4]
+    object_unit = rule_args[8]
+    if not allowAVUChange(object_name, object_type, object_unit, callback):
+        callback.msiOprDisallowed()
 
 
 def pep_database_del_avu_metadata_post(rule_args, callback, rei):

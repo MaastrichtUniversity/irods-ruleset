@@ -260,7 +260,7 @@ def getAVUfromObj(rule_args, callback, rei):
 
 
 
-# This rule stores a given json-schema as AVU's to an object
+# This rule stores a given JSON-schema as AVU's to an object
 # Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
 # Argument 1: The object type -d for data object
 #                             -R for resource
@@ -268,36 +268,39 @@ def getAVUfromObj(rule_args, callback, rei):
 #                             -u for user
 # Argument 2:   Url to the JSON-Schema example https://api.myjson.com/bins/17vejk
 # Argument 3:   the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
-
-def setJSONschematoObj(rule_args, callback, rei):
+def setJsonSchemaToObj(rule_args, callback, rei):
     object = rule_args[0]
     input_type = rule_args[1]
     json_schema_url = rule_args[2]
     json_root = rule_args[3]
 
-    #check if this root has been used before
+    # Check if this root has been used before
     ret_val = callback.getAVUfromObj(object, input_type, '', "")
     all_avu = json.loads(ret_val['arguments'][3])
+
     # From these avu's extract the unit (root)
     root_list = []
     for element in all_avu:
         # Regular expression pattern for unit field
+        # TODO: Get this from avujson module
         pattern = re.compile('^([a-zA-Z0-9_]+)_([0-9]+)_([osbnze])((?<=o)[0-9]+)?((?:#[0-9]+?)*)')
+
         # Match unit to extract all info
         unit = pattern.match(str(element['u']))
-        # This AVU may be unrelated to the JSON
-        if not unit:
-            continue
-        root = unit.group(1)
-        root_list.append(root)
-    callback.writeLine("serverLog", "root_list" + str(root_list))
-    if json_root in root_list:
-        callback.writeLine("serverLog", "Root " + json_root + " is already in use")
-        callback.msiExit("-1101000", "Root " + json_root + " is already in use")
 
-    # Delete existing $id AVU for this json root
+        # If unit is matching
+        if unit:
+            root = unit.group(1)
+            root_list.append(root)
+
+    if json_root in root_list:
+        callback.writeLine("serverLog", "JSON root " + json_root + " is already in use")
+        callback.msiExit("-1101000", "JSON root " + json_root + " is already in use")
+
+    # Delete existing $id AVU for this JSON root
     callback.msi_rmw_avu(input_type, object, '$id', "%", json_root)
-    #Set new $id AVU
+
+    # Set new $id AVU
     callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
 
 

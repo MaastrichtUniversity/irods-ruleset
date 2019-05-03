@@ -8,12 +8,12 @@
 # Argument 4:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 #
 
-# Example : irule -F setJSONschematoObj.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'"
+# Example : irule -F setJsonSchemaToObj.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'"
 
 
 main() {
     # Make call to function in core.py
-    setJSONschematoObj(*object, *objectType, *jsonSchema, *jsonRoot)
+    setJsonSchemaToObj(*object, *objectType, *jsonSchema, *jsonRoot)
 }
 
 INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata.xml', *objectType = '-d', *jsonSchema = 'https://api.myjson.com/bins/17vejk', *jsonRoot = 'root'

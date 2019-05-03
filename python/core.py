@@ -301,10 +301,6 @@ def setJSONschematoObj(rule_args, callback, rei):
     callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
 
 
-#def acPreProcForModifyAVUMetadata(rule_args, callback, rei):
-#    callback.writeLine("serverLog", "Python acPreProcForModifyAVUMetadata")
-#    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
 # This function checks if a UNIT change should be allowed. If UNIT is part of an existing json changing should not be allowed.
 # Only in the case we we are actively updating AVU trough setJSONtoObj
 # Argument 0:   The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
@@ -317,20 +313,24 @@ def setJSONschematoObj(rule_args, callback, rei):
 def allowAVUChange(object, object_type, unit, callback):
     global activelyUpdatingAVUs
     # Check if we are activelyUpdatingAVUs from setJSONtoObj. In that case we do not want the filtering below
-    if not activelyUpdatingAVUs:
-        # Get all avu's with attribute $id
-        ret_val = callback.getAVUfromObj(object, object_type, '$id', "")
-        ids = json.loads(ret_val['arguments'][3])
-        # From these avu's extract the unit (root)
-        root_list = []
-        for element in ids:
-            root_list.append(element['u'])
-        # Get the unit from the avu that is currently added.
-        unit = str(unit)
-        for root in root_list:
-            # if the unit start with one of the roots, disallow the operation
-            if unit.startswith(root + "_"):
-                return False
+    if activelyUpdatingAVUs:
+        return True
+
+    # Get all avu's with attribute $id
+    ret_val = callback.getAVUfromObj(object, object_type, '$id', "")
+    ids = json.loads(ret_val['arguments'][3])
+
+    # From these avu's extract the unit (root)
+    root_list = []
+    for element in ids:
+        root_list.append(element['u'])
+
+    # Get the unit from the avu that is currently added.
+    for root in root_list:
+        # If the unit start with one of the roots, disallow the operation
+        if str(unit).startswith(root + "_"):
+            return False
+
     return True
 ####
 
@@ -445,11 +445,3 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
 
 
-def pep_database_copy_avu_metadata_post(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_post")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-
-def pep_database_copy_avu_metadata_except(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_except")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))

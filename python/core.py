@@ -11,16 +11,24 @@ import re
 activelyUpdatingAVUs = False
 
 
-# This rule stores a given json string as AVU's to an object
-# Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
-# Argument 1: The object type -d for data object
-#                             -R for resource
-#                             -C for collection
-#                             -u for user
-# Argument 2:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
-# Argument 3:  the JSON string (make sure the quotes are escaped)  {\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}
-#
 def setJsonToObj(rule_args, callback, rei):
+    """
+    This rule stores a given json string as AVU's to an object.
+
+    :param rule_args:
+        Argument 0: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 1: The object type
+                        -d for data object
+                        -R for resource
+                        -C for collection
+                        -u for user
+        Argument 2:  The JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+        Argument 3:  the JSON string {"k1":"v1","k2":{"k3":"v2","k4":"v3"},"k5":["v4","v5"],"k6":[{"k7":"v6","k8":"v7"}]}
+    :param callback:
+    :param rei:
+    :return:
+    """
+
     object = rule_args[0]
     object_type = rule_args[1]
     json_root = rule_args[2]
@@ -79,16 +87,23 @@ def setJsonToObj(rule_args, callback, rei):
     activelyUpdatingAVUs = False
 
 
-# This rule return a json string from AVU's set to an object
-# Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata_cedar.jsonld, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
-# Argument 1: The object type -d for data object
-#                             -R for resource
-#                             -C for collection
-#                             -u for user
-# Argument 2:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
-#
-# OUTPUT:  json string from AVU's set to an object
 def getJsonFromObj(rule_args, callback, rei):
+    """
+    This function return a JSON string from AVU's set to an object
+
+    :param rule_args:
+        Argument 0: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 1: The object type
+                        -d for data object
+                        -R for resource
+                        -C for collection
+                        -u for user
+        Argument 2: The JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+        Argument 3: The
+    :param callback:
+    :param rei:
+    :return: JSON string is returned in rule_args[3]
+    """
     object = rule_args[0]
     object_type = rule_args[1]
     json_root = rule_args[2]
@@ -112,8 +127,19 @@ def getJsonFromObj(rule_args, callback, rei):
     rule_args[3] = result
 
 
-# Helper function to convert iRODS object type to the corresponding field names
 def getFieldsForType(callback, object_type, object):
+    """
+    Helper function to convert iRODS object type to the corresponding field names in GenQuery
+
+    :param callback:
+    :param object_type: The object type
+                        -d for data object
+                        -R for resource
+                        -C for collection
+                        -u for user
+    :param object:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :return: an dictionary with the field names set in a, v, u and a WHERE clausal
+    """
     fields = dict()
 
     if object_type.lower() == '-d':
@@ -155,15 +181,23 @@ def getFieldsForType(callback, object_type, object):
     return fields
 
 
-# This rule stores a given JSON-schema as AVU's to an object
-# Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
-# Argument 1: The object type -d for data object
-#                             -R for resource
-#                             -C for collection
-#                             -u for user
-# Argument 2:   Url to the JSON-Schema example https://api.myjson.com/bins/17vejk
-# Argument 3:   the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 def setJsonSchemaToObj(rule_args, callback, rei):
+    """
+    This rule stores a given JSON-schema as AVU's to an object
+
+    :param rule_args:
+        Argument 0: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 1: The object type
+                        -d for data object
+                        -R for resource
+                        -C for collection
+                        -u for user
+        Argument 2: URL to the JSON-Schema example https://api.myjson.com/bins/17vejk
+        Argument 3: The JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+    :param callback:
+    :param rei:
+    :return:
+    """
     object = rule_args[0]
     object_type = rule_args[1]
     json_schema_url = rule_args[2]
@@ -198,18 +232,24 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
 
 
-# This function checks if a UNIT change should be allowed. If UNIT is part of an existing json changing should not be allowed.
-# Only in the case we we are actively updating AVU trough setJsonToObj
-# Argument 0:   The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
-# Argument 1:   The object type -d for data object
-#                             -R for resource
-#                             -C for collection
-#                             -u for user
-# Argument 2:   The existing value for unit
-# Output 0:     Boolean
 def allowAvuChange(object, object_type, unit, callback):
+    """
+    This function checks if an AVU change should be allowed. If the unit is part of an existing JSON changing should
+    not be allowed. Unless the change is done from setJsonToObj()
+
+    :param object: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object_type:
+            The object type
+                -d for data object
+                -R for resource
+                -C for collection
+                -u for user
+    :param unit: The unit to check for
+    :param callback:
+    :return: boolean
+    """
     global activelyUpdatingAVUs
-    # Check if we are activelyUpdatingAVUs from setJSONtoObj. In that case we do not want the filtering below
+    # Check if we are activelyUpdatingAVUs from setJsonToObj. In that case we do not want the filtering below
     if activelyUpdatingAVUs:
         return True
 

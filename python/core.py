@@ -268,8 +268,7 @@ def allowAvuChange(object, object_type, unit, callback):
 
 
 def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_pre")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "pep_database_set_avu_metadata_pre. Arguments: " + str(len(rule_args)))
 
     object_name = rule_args[4]
     object_type = rule_args[3]
@@ -307,8 +306,8 @@ def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
 
 
 def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_pre")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "pep_database_add_avu_metadata_wild_pre. Arguments: " + str(len(rule_args)))
+
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_unit = rule_args[8]
@@ -318,8 +317,8 @@ def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
 
 
 def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_pre")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "pep_database_add_avu_metadata_pre. Arguments: " + str(len(rule_args)))
+
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_unit = rule_args[8]
@@ -329,8 +328,8 @@ def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
 
 
 def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_prep")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "pep_database_mod_avu_metadata_prep. Arguments: " + str(len(rule_args)))
+
     object_name = rule_args[4]
     object_type = rule_args[3]
     object_old_unit = rule_args[7]
@@ -346,8 +345,8 @@ def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
 
 
 def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_pre")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "pep_database_del_avu_metadata_pre. Arguments: " + str(len(rule_args)))
+
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_unit = rule_args[8]

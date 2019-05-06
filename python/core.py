@@ -208,28 +208,23 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     # Regular expression pattern for unit field
-    # TODO: Get this from avujson module
-    pattern = re.compile('^([a-zA-Z0-9_]+)_([0-9]+)_([osbnze])((?<=o)[0-9]+)?((?:#[0-9]+?)*)')
+    pattern = re.compile(jsonavu.RE_UNIT)
 
     root_list = []
     for avu in avus:
         # Match unit to extract all info
-        unit = pattern.match(str(avu[fields['u']]))
+        unit = str(avu[fields['u']])
 
         # If unit is matching
-        if unit:
-            root = unit.group(1)
-            root_list.append(root)
-
-    if json_root in root_list:
-        callback.writeLine("serverLog", "JSON root " + json_root + " is already in use")
-        callback.msiExit("-1101000", "JSON root " + json_root + " is already in use")
+        if pattern.match(unit) and unit.startswith(json_root + "_"):
+            callback.writeLine("serverLog", "JSON root " + json_root + " is already in use")
+            callback.msiExit("-1101000", "JSON root " + json_root + " is already in use")
 
     # Delete existing $id AVU for this JSON root
-    callback.msi_rmw_avu(input_type, object, '$id', "%", json_root)
+    callback.msi_rmw_avu(object_type, object, '$id', "%", json_root)
 
     # Set new $id AVU
-    callback.msi_add_avu(input_type, object, '$id', json_schema_url, json_root)
+    callback.msi_add_avu(object_type, object, '$id', json_schema_url, json_root)
 
 
 def allowAvuChange(object, object_type, unit, callback):

@@ -263,8 +263,6 @@ def allowAvuChange(object, object_type, unit, callback):
     for row in rows:
         root_list.append(row[fields['u']])
 
-    callback.writeLine("serverLog", "foo: " + str(unit))
-
     # Get the unit from the avu that is currently added.
     for root in root_list:
         # If the unit start with one of the roots, disallow the operation
@@ -281,11 +279,36 @@ def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
     object_name = rule_args[4]
     object_type = rule_args[3]
     object_unit = rule_args[7]
+    object_attribute = rule_args[5]
 
-    # TODO: Implement case where old root is being modified during set
+    # This policy is not using the helper allowAvuChange function as the set operation can also modify units indirectly
 
-    if not allowAvuChange(object_name, object_type, object_unit, callback):
-        callback.msiOprDisallowed()
+    # Get all AVUs with attribute $id
+    fields = getFieldsForType(callback, object_type, object_name)
+    fields_id = fields['WHERE'] + " AND %s = '$id'" % (fields['a'])
+    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields_id, genquery.AS_DICT, callback)
+
+    # From these AVUs extract the unit (root)
+    root_list = []
+    for row in rows:
+        root_list.append(row[fields['u']])
+
+    # Get the unit from the avu that is currently added.
+    for root in root_list:
+        # If the unit start with one of the roots, disallow the operation
+        if str(object_unit).startswith(root + "_"):
+            callback.msiOprDisallowed()
+
+    # A set operation can also change the unit of existing attributes
+    fields_a = fields['WHERE'] + " AND %s = '%s'" % (fields['a'], object_attribute)
+    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields_a, genquery.AS_DICT, callback)
+
+    for row in rows:
+        callback.writeLine("serverLog", "Row root " + row[fields['u']])
+        for root in root_list:
+            # If the unit start with one of the roots, disallow the operation
+            if str(row[fields['u']]).startswith(root + "_"):
+                callback.msiOprDisallowed()
 
 
 def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
@@ -305,6 +328,7 @@ def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_unit = rule_args[8]
+
     if not allowAvuChange(object_name, object_type, object_unit, callback):
         callback.msiOprDisallowed()
 

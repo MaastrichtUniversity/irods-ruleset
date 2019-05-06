@@ -258,6 +258,45 @@ def getAVUfromObj(rule_args, callback, rei):
     result = json.dumps(result_list)
     rule_args[3] = result
 
+# Helper function to convert iRODS object type to the corresponding field names
+def getFieldsForType(callback, object_type, object):
+    fields = dict()
+
+    if object_type.lower() == '-d':
+        fields['a'] = "META_DATA_ATTR_NAME"
+        fields['v'] = "META_DATA_ATTR_VALUE"
+        fields['u'] = "META_DATA_ATTR_UNITS"
+
+        # For a data object the path needs to be split in the object and collection
+        ret_val = callback.msiSplitPath(object, "", "")
+        object = ret_val['arguments'][2]
+        collection = ret_val['arguments'][1]
+
+        fields['WHERE'] = "COLL_NAME = '" + collection + "' AND DATA_NAME = '" + object + "'"
+
+    elif object_type.lower() == '-c':
+        fields['a'] = "META_COLL_ATTR_NAME"
+        fields['v'] = "META_COLL_ATTR_VALUE"
+        fields['u'] = "META_COLL_ATTR_UNITS"
+
+        fields['WHERE'] = "COLL_NAME = '" + object + "'"
+
+    elif object_type.lower() == '-r':
+        fields['a'] = "META_RESC_ATTR_NAME"
+        fields['v'] = "META_RESC_ATTR_VALUE"
+        fields['u'] = "META_RESC_ATTR_UNITS"
+
+        fields['WHERE'] = "RESC_NAME = '" + object + "'"
+
+    elif object_type.lower() == '-u':
+        fields['a'] = "META_USER_ATTR_NAME"
+        fields['v'] = "META_USER_ATTR_VALUE"
+        fields['u'] = "META_USER_ATTR_UNITS"
+
+        fields['WHERE'] = "USER_NAME = '" + object + "'"
+
+
+    return fields
 
 
 # This rule stores a given JSON-schema as AVU's to an object
@@ -270,23 +309,22 @@ def getAVUfromObj(rule_args, callback, rei):
 # Argument 3:   the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 def setJsonSchemaToObj(rule_args, callback, rei):
     object = rule_args[0]
-    input_type = rule_args[1]
+    object_type = rule_args[1]
     json_schema_url = rule_args[2]
     json_root = rule_args[3]
 
     # Check if this root has been used before
-    ret_val = callback.getAVUfromObj(object, input_type, '', "")
-    all_avu = json.loads(ret_val['arguments'][3])
+    fields = getFieldsForType(callback, object_type, object)
+    avus = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
 
-    # From these avu's extract the unit (root)
+    # Regular expression pattern for unit field
+    # TODO: Get this from avujson module
+    pattern = re.compile('^([a-zA-Z0-9_]+)_([0-9]+)_([osbnze])((?<=o)[0-9]+)?((?:#[0-9]+?)*)')
+
     root_list = []
-    for element in all_avu:
-        # Regular expression pattern for unit field
-        # TODO: Get this from avujson module
-        pattern = re.compile('^([a-zA-Z0-9_]+)_([0-9]+)_([osbnze])((?<=o)[0-9]+)?((?:#[0-9]+?)*)')
-
+    for avu in avus:
         # Match unit to extract all info
-        unit = pattern.match(str(element['u']))
+        unit = pattern.match(str(avu[fields['u']]))
 
         # If unit is matching
         if unit:

@@ -298,7 +298,6 @@ def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
     rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields_a, genquery.AS_DICT, callback)
 
     for row in rows:
-        callback.writeLine("serverLog", "Row root " + row[fields['u']])
         for root in root_list:
             # If the unit start with one of the roots, disallow the operation
             if str(row[fields['u']]).startswith(root + "_"):

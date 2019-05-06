@@ -77,76 +77,27 @@ def setJSONtoObj(rule_args, callback, rei):
 # Argument 2:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 #
 # OUTPUT:  json string from AVU's set to an object
-def getJSONfromObj(rule_args, callback, rei):
+def getJsonFromObj(rule_args, callback, rei):
     object = rule_args[0]
-    input_type = rule_args[1]
+    object_type = rule_args[1]
     json_root = rule_args[2]
-    result = rule_args[3]
-    result_list = []
 
-    # data object
-    if input_type == '-d' or input_type == '-D':
-        ret_val = callback.msiSplitPath(object, "", "")
-        data_object = ret_val['arguments'][2]
-        collection = ret_val['arguments'][1]
-        rows = row_iterator(
-            ["META_DATA_ATTR_NAME", "META_DATA_ATTR_VALUE", "META_DATA_ATTR_UNITS"],
-            "COLL_NAME = '" + collection + "' AND DATA_NAME = '" + data_object + "'",
-            AS_DICT,
-            callback)
-        for row in rows:
-            result_list.append({
-                "a": row["META_DATA_ATTR_NAME"],
-                "v": row["META_DATA_ATTR_VALUE"],
-                "u": row["META_DATA_ATTR_UNITS"]
-            })
-    # collection
-    elif input_type == '-c' or input_type == '-C':
-        rows = row_iterator(
-            ["META_COLL_ATTR_NAME", "META_COLL_ATTR_VALUE", "META_COLL_ATTR_UNITS"],
-            "COLL_NAME = '" + object + "'",
-            AS_DICT,
-            callback)
-        for row in rows:
-            result_list.append({
-                "a": row["META_COLL_ATTR_NAME"],
-                "v": row["META_COLL_ATTR_VALUE"],
-                "u": row["META_COLL_ATTR_UNITS"]
-            })
-    # resource
-    elif input_type == '-r' or input_type == '-R':
-        rows = row_iterator(
-            ["META_RESC_ATTR_NAME", "META_RESC_ATTR_VALUE", "META_RESC_ATTR_UNITS"],
-            "RESC_NAME = '" + object + "'",
-            AS_DICT,
-            callback)
-        for row in rows:
-            result_list.append({
-                "a": row["META_RESC_ATTR_NAME"],
-                "v": row["META_RESC_ATTR_VALUE"],
-                "u": row["META_RESC_ATTR_UNITS"]
-            })
-    # user
-    elif input_type == '-u' or input_type == '-U':
-        rows = row_iterator(
-            ["META_USER_ATTR_NAME", "META_USER_ATTR_VALUE", "META_USER_ATTR_UNITS"],
-            "USER_NAME = '" + object + "'",
-            AS_DICT,
-            callback)
-        for row in rows:
-            result_list.append({
-                "a": row["META_USER_ATTR_NAME"],
-                "v": row["META_USER_ATTR_VALUE"],
-                "u": row["META_USER_ATTR_UNITS"]
-            })
-    else:
-        callback.writeLine("serverLog", "type should be -d, -C, -R or -u")
+    # Get all AVUs
+    fields = getFieldsForType(callback, object_type, object)
+    rows = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
 
-    if json_root == '':
-        result = json.dumps(result_list)
-    else:
-        data_back = jsonavu.avu2json(result_list, json_root)
-        result = json.dumps(data_back)
+    avus = []
+    for row in rows:
+        avus.append({
+            "a": row["META_DATA_ATTR_NAME"],
+            "v": row["META_DATA_ATTR_VALUE"],
+            "u": row["META_DATA_ATTR_UNITS"]
+        })
+
+    # Convert AVUs to JSON
+    parsed_data = jsonavu.avu2json(avus, json_root)
+    result = json.dumps(parsed_data)
+
     rule_args[3] = result
 
 # This rule return a json string from AVU's set to an object
@@ -294,6 +245,9 @@ def getFieldsForType(callback, object_type, object):
         fields['u'] = "META_USER_ATTR_UNITS"
 
         fields['WHERE'] = "USER_NAME = '" + object + "'"
+    else:
+        callback.writeLine("serverLog", "Object type should be -d, -C, -R or -u")
+        callback.msiExit("-1101000", "Object type should be -d, -C, -R or -u")
 
 
     return fields

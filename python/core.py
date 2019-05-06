@@ -20,30 +20,35 @@ activelyUpdatingAVUs = False
 # Argument 2:  the JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 # Argument 3:  the JSON string (make sure the quotes are escaped)  {\"k1\":\"v1\",\"k2\":{\"k3\":\"v2\",\"k4\":\"v3\"},\"k5\":[\"v4\",\"v5\"],\"k6\":[{\"k7\":\"v6\",\"k8\":\"v7\"}]}
 #
-def setJSONtoObj(rule_args, callback, rei):
+def setJsonToObj(rule_args, callback, rei):
     object = rule_args[0]
-    input_type = rule_args[1]
+    object_type = rule_args[1]
     json_root = rule_args[2]
     json_string = rule_args[3]
 
     try:
         data = json.loads(json_string)
-    except ValueError, e:
+    except ValueError:
         callback.writeLine("serverLog", "Invalid json provided")
         callback.msiExit("-1101000", "Invalid json provided")
+        return
 
     # check if validation is required
     validation_required = False
     json_schema_url = ""
-    # Get all avu's with attribute $id
-    ret_val = callback.getAVUfromObj(object, input_type, '$id', "")
-    ids = json.loads(ret_val['arguments'][3])
-    for element in ids:
-        if element['u'] == json_root:
-            validation_required = True
-            json_schema_url = element['v']
+
+    # Find AVUs with a = '$id', and u = json_root. Their value is the JSON-schema URL
+    fields = getFieldsForType(callback, object_type, object)
+    fields['WHERE'] = fields['WHERE'] + " AND %s = '$id' AND %s = '%s'" % (fields['a'], fields['u'], json_root)
+    rows = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
+
+    # We're only expecting one row to be returned if any
+    for row in rows:
+        validation_required = True
+        json_schema_url = row[fields['v']]
 
     if validation_required :
+        # TODO: This needs to accept more types of URLs, and handle errors
         r = requests.get(json_schema_url)
         schema = r.json()
         try:
@@ -51,21 +56,25 @@ def setJSONtoObj(rule_args, callback, rei):
         except ValidationError, e:
             callback.writeLine("serverLog", "JSON Instance could not be validated against JSON-schema " + str(e.message))
             callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema : "+ str(e.message))
+            return
 
-    # load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating AVU and want to disable some of the checks.
+    # Load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating
+    # AVUs and want to disable the check for not being able to set JSON AVUs directly
     global activelyUpdatingAVUs
     activelyUpdatingAVUs = True
 
-    ret_val = callback.msi_rmw_avu(input_type, object, "%", "%", json_root + "_%")
+    ret_val = callback.msi_rmw_avu(object_type, object, "%", "%", json_root + "_%")
     if ret_val['status'] == False and ret_val['code'] != -819000:
-        callback.writeLine("stdout", "msi failed with: " + ret_val['code'])
+        callback.writeLine("stdout", "msi_rmw_avu failed with: " + ret_val['code'])
+        return
 
     avu = jsonavu.json2avu(data, json_root)
 
     for i in avu:
-        ret_val = callback.msi_add_avu(input_type, object, i["a"], i["v"], i["u"])
+        callback.msi_add_avu(object_type, object, i["a"], i["v"], i["u"])
 
-    #Set global variable activelyUpdatingAVUsthis to false. At this point we are done updating AVU and want to enable some of the checks.
+    # Set global variable activelyUpdatingAVUsthis to false. At this point we are done updating AVU and want
+    # to enable some of the checks.
     activelyUpdatingAVUs = False
 
 # This rule return a json string from AVU's set to an object

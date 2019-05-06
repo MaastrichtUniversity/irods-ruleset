@@ -13,7 +13,7 @@
 
 main() {
     # Make call to function in core.py
-    setJSONtoObj(*object, *objectType, *jsonRoot, *jsonString)
+    setJsonToObj(*object, *objectType, *jsonRoot, *jsonString)
 }
 
 INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata.xml', *objectType = '-d', *jsonRoot = 'root', *jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21}'

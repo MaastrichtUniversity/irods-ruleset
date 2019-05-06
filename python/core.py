@@ -2,14 +2,14 @@ import json
 import sys
 import jsonavu
 import session_vars
-from genquery import (row_iterator, paged_iterator, AS_DICT, AS_LIST)
-from jsonschema import validate
-from jsonschema.exceptions import *
+import genquery
+import jsonschema
 import requests
 import re
 
 # Global vars
 activelyUpdatingAVUs = False
+
 
 # This rule stores a given json string as AVU's to an object
 # Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
@@ -40,22 +40,23 @@ def setJsonToObj(rule_args, callback, rei):
     # Find AVUs with a = '$id', and u = json_root. Their value is the JSON-schema URL
     fields = getFieldsForType(callback, object_type, object)
     fields['WHERE'] = fields['WHERE'] + " AND %s = '$id' AND %s = '%s'" % (fields['a'], fields['u'], json_root)
-    rows = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
+    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     # We're only expecting one row to be returned if any
     for row in rows:
         validation_required = True
         json_schema_url = row[fields['v']]
 
-    if validation_required :
+    if validation_required:
         # TODO: This needs to accept more types of URLs, and handle errors
         r = requests.get(json_schema_url)
         schema = r.json()
         try:
-            validate(instance=data, schema=schema)
-        except ValidationError, e:
-            callback.writeLine("serverLog", "JSON Instance could not be validated against JSON-schema " + str(e.message))
-            callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema : "+ str(e.message))
+            jsonschema.validate(instance=data, schema=schema)
+        except jsonschema.exceptions.ValidationError, e:
+            callback.writeLine("serverLog",
+                               "JSON Instance could not be validated against JSON-schema " + str(e.message))
+            callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema : " + str(e.message))
             return
 
     # Load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating
@@ -77,6 +78,7 @@ def setJsonToObj(rule_args, callback, rei):
     # to enable some of the checks.
     activelyUpdatingAVUs = False
 
+
 # This rule return a json string from AVU's set to an object
 # Argument 0: The object (/nlmumc/projects/P000000003/C000000001/metadata_cedar.jsonld, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
 # Argument 1: The object type -d for data object
@@ -93,7 +95,7 @@ def getJsonFromObj(rule_args, callback, rei):
 
     # Get all AVUs
     fields = getFieldsForType(callback, object_type, object)
-    rows = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
+    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     avus = []
     for row in rows:
@@ -150,7 +152,6 @@ def getFieldsForType(callback, object_type, object):
         callback.writeLine("serverLog", "Object type should be -d, -C, -R or -u")
         callback.msiExit("-1101000", "Object type should be -d, -C, -R or -u")
 
-
     return fields
 
 
@@ -170,7 +171,7 @@ def setJsonSchemaToObj(rule_args, callback, rei):
 
     # Check if this root has been used before
     fields = getFieldsForType(callback, object_type, object)
-    avus = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
+    avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     # Regular expression pattern for unit field
     # TODO: Get this from avujson module
@@ -215,7 +216,7 @@ def allowAvuChange(object, object_type, unit, callback):
     # Get all AVUs with attribute $id
     fields = getFieldsForType(callback, object_type, object)
     fields['WHERE'] = fields['WHERE'] + " AND %s = '$id'" % (fields['a'])
-    rows = row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], AS_DICT, callback)
+    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     # From these AVUs extract the unit (root)
     root_list = []
@@ -231,26 +232,21 @@ def allowAvuChange(object, object_type, unit, callback):
             return False
 
     return True
-####
+
 
 def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_pre")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
     object_name = rule_args[4]
     object_type = rule_args[3]
     object_unit = rule_args[7]
+
+    # TODO: Implement case where old root is being modified during set
+
     if not allowAvuChange(object_name, object_type, object_unit, callback):
         callback.msiOprDisallowed()
 
-def pep_database_set_avu_metadata_post(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_post")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-def pep_database_set_avu_metadata_except(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_set_avu_metadata_except")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-#####
 
 def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_pre")
@@ -258,18 +254,10 @@ def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_unit = rule_args[8]
+
     if not allowAvuChange(object_name, object_type, object_unit, callback):
         callback.msiOprDisallowed()
 
-def pep_database_add_avu_metadata_wild_post(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_post")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-def pep_database_add_avu_metadata_wild_except(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_wild_except")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-####
 
 def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_pre")
@@ -281,17 +269,6 @@ def pep_database_add_avu_metadata_pre(rule_args, callback, rei):
         callback.msiOprDisallowed()
 
 
-def pep_database_add_avu_metadata_post(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_post")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-
-def pep_database_add_avu_metadata_except(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_add_avu_metadata_except")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-####
-
 def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_prep")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
@@ -299,24 +276,15 @@ def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
     object_type = rule_args[3]
     object_old_unit = rule_args[7]
     object_new_unit = rule_args[10]
-    #If old unit starts with one of the roots disallow
+
+    # If old unit starts with one of the roots disallow
     if not allowAvuChange(object_name, object_type, object_old_unit, callback):
         callback.msiOprDisallowed()
+
     # If new unit starts with one of the roots disallow
     if not allowAvuChange(object_name, object_type, object_new_unit, callback):
         callback.msiOprDisallowed()
 
-
-def pep_database_mod_avu_metadata_post(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_post")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-
-def pep_database_mod_avu_metadata_except(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_mod_avu_metadata_except")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-####
 
 def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_pre")
@@ -324,23 +292,13 @@ def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_unit = rule_args[8]
+
     if not allowAvuChange(object_name, object_type, object_unit, callback):
         callback.msiOprDisallowed()
 
-
-def pep_database_del_avu_metadata_post(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_post")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-
-def pep_database_del_avu_metadata_except(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_del_avu_metadata_except")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
-
-####
 
 def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_pre")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
 
-
+    # TODO: Implement allowAvuChange() check during copy operation

@@ -96,12 +96,12 @@ def setJsonToObj(rule_args, callback, rei):
 
 def getJsonFromObj(rule_args, callback, rei):
     """
-    This function return a JSON string from AVU's set to an object
+    This function return a JSON string from AVU's set to an object_name
 
     :param rule_args:
-        Argument 0: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 0: The object_name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
         Argument 1: The object type
-                        -d for data object
+                        -d for data object_name
                         -R for resource
                         -C for collection
                         -u for user
@@ -111,12 +111,12 @@ def getJsonFromObj(rule_args, callback, rei):
     :param rei:
     :return: JSON string is returned in rule_args[3]
     """
-    object = rule_args[0]
+    object_name = rule_args[0]
     object_type = rule_args[1]
     json_root = rule_args[2]
 
     # Get all AVUs
-    fields = getFieldsForType(callback, object_type, object)
+    fields = getFieldsForType(callback, object_type, object_name)
     rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     avus = []
@@ -134,7 +134,7 @@ def getJsonFromObj(rule_args, callback, rei):
     rule_args[3] = result
 
 
-def getFieldsForType(callback, object_type, object):
+def getFieldsForType(callback, object_type, object_name):
     """
     Helper function to convert iRODS object type to the corresponding field names in GenQuery
 
@@ -144,7 +144,7 @@ def getFieldsForType(callback, object_type, object):
                         -R for resource
                         -C for collection
                         -u for user
-    :param object:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object_name:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
     :return: an dictionary with the field names set in a, v, u and a WHERE clausal
     """
     fields = dict()
@@ -155,32 +155,32 @@ def getFieldsForType(callback, object_type, object):
         fields['u'] = "META_DATA_ATTR_UNITS"
 
         # For a data object the path needs to be split in the object and collection
-        ret_val = callback.msiSplitPath(object, "", "")
-        object = ret_val['arguments'][2]
+        ret_val = callback.msiSplitPath(object_name, "", "")
+        object_name = ret_val['arguments'][2]
         collection = ret_val['arguments'][1]
 
-        fields['WHERE'] = "COLL_NAME = '" + collection + "' AND DATA_NAME = '" + object + "'"
+        fields['WHERE'] = "COLL_NAME = '" + collection + "' AND DATA_NAME = '" + object_name + "'"
 
     elif object_type.lower() == '-c':
         fields['a'] = "META_COLL_ATTR_NAME"
         fields['v'] = "META_COLL_ATTR_VALUE"
         fields['u'] = "META_COLL_ATTR_UNITS"
 
-        fields['WHERE'] = "COLL_NAME = '" + object + "'"
+        fields['WHERE'] = "COLL_NAME = '" + object_name + "'"
 
     elif object_type.lower() == '-r':
         fields['a'] = "META_RESC_ATTR_NAME"
         fields['v'] = "META_RESC_ATTR_VALUE"
         fields['u'] = "META_RESC_ATTR_UNITS"
 
-        fields['WHERE'] = "RESC_NAME = '" + object + "'"
+        fields['WHERE'] = "RESC_NAME = '" + object_name + "'"
 
     elif object_type.lower() == '-u':
         fields['a'] = "META_USER_ATTR_NAME"
         fields['v'] = "META_USER_ATTR_VALUE"
         fields['u'] = "META_USER_ATTR_UNITS"
 
-        fields['WHERE'] = "USER_NAME = '" + object + "'"
+        fields['WHERE'] = "USER_NAME = '" + object_name + "'"
     else:
         callback.writeLine("serverLog", "Object type should be -d, -C, -R or -u")
         callback.msiExit("-1101000", "Object type should be -d, -C, -R or -u")
@@ -193,7 +193,7 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     This rule stores a given JSON-schema as AVU's to an object
 
     :param rule_args:
-        Argument 0: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 0: The object_name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
         Argument 1: The object type
                         -d for data object
                         -R for resource
@@ -205,13 +205,13 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     :param rei:
     :return:
     """
-    object = rule_args[0]
+    object_name = rule_args[0]
     object_type = rule_args[1]
     json_schema_url = rule_args[2]
     json_root = rule_args[3]
 
     # Check if this root has been used before
-    fields = getFieldsForType(callback, object_type, object)
+    fields = getFieldsForType(callback, object_type, object_name)
     avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     # Regular expression pattern for unit field
@@ -228,18 +228,18 @@ def setJsonSchemaToObj(rule_args, callback, rei):
             callback.msiExit("-1101000", "JSON root " + json_root + " is already in use")
 
     # Delete existing $id AVU for this JSON root
-    callback.msi_rmw_avu(object_type, object, '$id', "%", json_root)
+    callback.msi_rmw_avu(object_type, object_name, '$id', "%", json_root)
 
     # Set new $id AVU
-    callback.msi_add_avu(object_type, object, '$id', json_schema_url, json_root)
+    callback.msi_add_avu(object_type, object_name, '$id', json_schema_url, json_root)
 
 
-def allowAvuChange(object, object_type, unit, callback):
+def allowAvuChange(object_name, object_type, unit, callback):
     """
     This function checks if an AVU change should be allowed. If the unit is part of an existing JSON changing should
     not be allowed. Unless the change is done from setJsonToObj()
 
-    :param object: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object_name: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
     :param object_type:
             The object type
                 -d for data object
@@ -256,7 +256,7 @@ def allowAvuChange(object, object_type, unit, callback):
         return True
 
     # Get all AVUs with attribute $id
-    fields = getFieldsForType(callback, object_type, object)
+    fields = getFieldsForType(callback, object_type, object_name)
     fields['WHERE'] = fields['WHERE'] + " AND %s = '$id'" % (fields['a'])
     rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 

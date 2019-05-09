@@ -122,9 +122,9 @@ def getJsonFromObj(rule_args, callback, rei):
     avus = []
     for row in rows:
         avus.append({
-            "a": row["META_DATA_ATTR_NAME"],
-            "v": row["META_DATA_ATTR_VALUE"],
-            "u": row["META_DATA_ATTR_UNITS"]
+            "a": row[fields['a']],
+            "v": row[fields['v']],
+            "u": row[fields['u']]
         })
 
     # Convert AVUs to JSON

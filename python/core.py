@@ -351,9 +351,7 @@ def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
 
 
 def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
-    callback.writeLine("serverLog", "pep_database_del_avu_metadata_pre. Arguments: " + str(len(rule_args)))
-    for i in range(len(rule_args)):
-        callback.writeLine("serverLog", "Argument " + str(i) + "is " + str(rule_args[i]))
+    # callback.writeLine("serverLog", "pep_database_del_avu_metadata_pre. Arguments: " + str(len(rule_args)))
     object_name = rule_args[5]
     object_type = rule_args[4]
     object_attribute = rule_args[6]
@@ -377,8 +375,7 @@ def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
 
 
 def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
-    callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_pre")
-    callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+    # callback.writeLine("serverLog", "pep_database_copy_avu_metadata_pre. Arguments: " + str(len(rule_args)))
 
     object_name_from = rule_args[5]
     object_type_from = rule_args[3]
@@ -404,12 +401,9 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
 
     # For all AVUs on the from object check if one starts with the one of the root from the to object
     for avu in avus_from:
-        callback.writeLine("serverLog", str(avu))
         for root in root_list_to:
-            callback.writeLine("serverLog", str(root))
             # Match unit to extract all info
             unit = str(avu[fields_from['u']])
-            callback.writeLine("serverLog", str(unit))
 
             # If unit is matching
             if pattern.match(unit) and unit.startswith(root + "_"):

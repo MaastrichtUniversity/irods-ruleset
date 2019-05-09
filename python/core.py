@@ -309,10 +309,11 @@ def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
             if str(row[fields['u']]).startswith(root + "_"):
                 callback.msiOprDisallowed()
 
+
 # TODO pep_database_add_avu_metadata_wild_pre does not work for wildcards
 def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
-    #callback.writeLine("serverLog", "pep_database_add_avu_metadata_wild_pre. Arguments: " + str(len(rule_args)))
-    #for i in range(len(rule_args)):
+    # callback.writeLine("serverLog", "pep_database_add_avu_metadata_wild_pre. Arguments: " + str(len(rule_args)))
+    # for i in range(len(rule_args)):
     #    callback.writeLine("serverLog", "Argument " + str(i) + "is " + str(rule_args[i]))
 
     object_name = rule_args[5]
@@ -421,4 +422,4 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
                 # callback.msiExit("-1101000", "JSON root " + root + " is already in use in the to object")
                 callback.msiOprDisallowed()
 
-    # TODO: Do more copy cases need to be covered
+    # TODO: Do more copy cases need to be covered?

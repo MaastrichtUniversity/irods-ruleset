@@ -1,5 +1,5 @@
 # This rule stores a given json-schema as AVU's to an object
-# Argument 1: The object (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
+# Argument 1: The object name (/nlmumc/projects/P000000003/C000000001/metadata.xml, /nlmumc/projects/P000000003/C000000001/, user@mail.com, demoResc
 # Argument 2: The object type -d for data object
 #                             -R for resource
 #                             -C for collection

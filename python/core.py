@@ -16,7 +16,7 @@ def setJsonToObj(rule_args, callback, rei):
     This rule stores a given json string as AVU's to an object.
 
     :param rule_args:
-        Argument 0: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 0: The object name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
         Argument 1: The object type
                         -d for data object
                         -R for resource
@@ -29,7 +29,7 @@ def setJsonToObj(rule_args, callback, rei):
     :return:
     """
 
-    object = rule_args[0]
+    object_name = rule_args[0]
     object_type = rule_args[1]
     json_root = rule_args[2]
     json_string = rule_args[3]
@@ -46,7 +46,7 @@ def setJsonToObj(rule_args, callback, rei):
     json_schema_url = ""
 
     # Find AVUs with a = '$id', and u = json_root. Their value is the JSON-schema URL
-    fields = getFieldsForType(callback, object_type, object)
+    fields = getFieldsForType(callback, object_type, object_name)
     fields['WHERE'] = fields['WHERE'] + " AND %s = '$id' AND %s = '%s'" % (fields['a'], fields['u'], json_root)
     rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
@@ -56,7 +56,7 @@ def setJsonToObj(rule_args, callback, rei):
         json_schema_url = row[fields['v']]
 
     if validation_required:
-        # TODO: This needs to accept more types of URLs, and handle errors
+        # TODO: This needs to accept more types of URLs
         try:
             r = requests.get(json_schema_url)
         except requests.exceptions.RequestException as e:  # This is the correct syntax
@@ -79,7 +79,7 @@ def setJsonToObj(rule_args, callback, rei):
     global activelyUpdatingAVUs
     activelyUpdatingAVUs = True
 
-    ret_val = callback.msi_rmw_avu(object_type, object, "%", "%", json_root + "_%")
+    ret_val = callback.msi_rmw_avu(object_type, object_name, "%", "%", json_root + "_%")
     if ret_val['status'] == False and ret_val['code'] != -819000:
         callback.writeLine("serverLog", "msi_rmw_avu failed with: " + ret_val['code'])
         return
@@ -87,7 +87,7 @@ def setJsonToObj(rule_args, callback, rei):
     avu = jsonavu.json2avu(data, json_root)
 
     for i in avu:
-        callback.msi_add_avu(object_type, object, i["a"], i["v"], i["u"])
+        callback.msi_add_avu(object_type, object_name, i["a"], i["v"], i["u"])
 
     # Set global variable activelyUpdatingAVUsthis to false. At this point we are done updating AVU and want
     # to enable some of the checks.
@@ -96,12 +96,12 @@ def setJsonToObj(rule_args, callback, rei):
 
 def getJsonFromObj(rule_args, callback, rei):
     """
-    This function return a JSON string from AVU's set to an object_name
+    This function return a JSON string from AVU's set to an object
 
     :param rule_args:
-        Argument 0: The object_name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 0: The object name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
         Argument 1: The object type
-                        -d for data object_name
+                        -d for data object
                         -R for resource
                         -C for collection
                         -u for user
@@ -144,7 +144,7 @@ def getFieldsForType(callback, object_type, object_name):
                         -R for resource
                         -C for collection
                         -u for user
-    :param object_name:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object name:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
     :return: an dictionary with the field names set in a, v, u and a WHERE clausal
     """
     fields = dict()
@@ -193,7 +193,7 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     This rule stores a given JSON-schema as AVU's to an object
 
     :param rule_args:
-        Argument 0: The object_name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 0: The object name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
         Argument 1: The object type
                         -d for data object
                         -R for resource
@@ -239,7 +239,7 @@ def allowAvuChange(object_name, object_type, unit, callback):
     This function checks if an AVU change should be allowed. If the unit is part of an existing JSON changing should
     not be allowed. Unless the change is done from setJsonToObj()
 
-    :param object_name: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object name: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
     :param object_type:
             The object type
                 -d for data object
@@ -351,14 +351,29 @@ def pep_database_mod_avu_metadata_prep(rule_args, callback, rei):
 
 
 def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
-    # callback.writeLine("serverLog", "pep_database_del_avu_metadata_pre. Arguments: " + str(len(rule_args)))
-
+    callback.writeLine("serverLog", "pep_database_del_avu_metadata_pre. Arguments: " + str(len(rule_args)))
+    for i in range(len(rule_args)):
+        callback.writeLine("serverLog", "Argument " + str(i) + "is " + str(rule_args[i]))
     object_name = rule_args[5]
     object_type = rule_args[4]
+    object_attribute = rule_args[6]
+    object_value = rule_args[7]
     object_unit = rule_args[8]
 
     if not allowAvuChange(object_name, object_type, object_unit, callback):
         callback.msiOprDisallowed()
+
+    # Wild card removal check
+    if "%" in [object_attribute,object_value,object_unit]:
+        # Get all AVU for the from object
+        fields = getFieldsForType(callback, object_type, object_name)
+        avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'],
+                                          genquery.AS_DICT, callback)
+        for avu in avus:
+            unit = str(avu[fields['u']])
+            if not allowAvuChange(object_name, object_type, unit, callback):
+                callback.msiOprDisallowed()
+
 
 
 def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
@@ -404,4 +419,4 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
 
 
 
-    # TODO: Implement allowAvuChange() check during copy operation
+    # TODO: Do more copy cases need to be covered

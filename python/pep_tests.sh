@@ -2,6 +2,16 @@
 
 cd /rules/python
 
+icd  /nlmumc/home/rods
+
+if ils /nlmumc/home/rods/setJsonToObj.r; then
+    irm /nlmumc/home/rods/setJsonToObj.r
+fi
+if ils /nlmumc/home/rods/getJsonFromObj.r; then
+    irm /nlmumc/home/rods/getJsonFromObj.r
+fi
+
+
 # imeta add
 iput setJsonToObj.r
 irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'"
@@ -59,6 +69,13 @@ if imeta set -d /nlmumc/home/rods/setJsonToObj.r a4 v4 root_daniel; then
    echo ERROR  imeta set -d /nlmumc/home/rods/setJsonToObj.r a4 v4 root_daniel should NOT work
    exit 1
 fi
+
+if imeta set -d /nlmumc/home/rods/setJsonToObj.r lastName test ; then
+   echo ERROR imeta set -d /nlmumc/home/rods/setJsonToObj.r lastName test   should NOT work
+   exit 1
+fi
+
+
 
 irm /nlmumc/home/rods/setJsonToObj.r
 
@@ -126,3 +143,4 @@ irm /nlmumc/home/rods/setJsonToObj.r
 
 echo DONE all tests passed
 
+#imeta addw -d /nlmumc/home/rods/% a4 v4 root_daniel

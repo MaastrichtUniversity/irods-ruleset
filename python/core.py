@@ -309,9 +309,11 @@ def pep_database_set_avu_metadata_pre(rule_args, callback, rei):
             if str(row[fields['u']]).startswith(root + "_"):
                 callback.msiOprDisallowed()
 
-
+# TODO pep_database_add_avu_metadata_wild_pre does not work for wildcards
 def pep_database_add_avu_metadata_wild_pre(rule_args, callback, rei):
-    # callback.writeLine("serverLog", "pep_database_add_avu_metadata_wild_pre. Arguments: " + str(len(rule_args)))
+    #callback.writeLine("serverLog", "pep_database_add_avu_metadata_wild_pre. Arguments: " + str(len(rule_args)))
+    #for i in range(len(rule_args)):
+    #    callback.writeLine("serverLog", "Argument " + str(i) + "is " + str(rule_args[i]))
 
     object_name = rule_args[5]
     object_type = rule_args[4]
@@ -372,7 +374,6 @@ def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
             fields_a = fields_a + " AND %s = '%s'" % (fields['v'], object_value)
         if object_unit != "%":
             fields_a = fields_a + " AND %s = '%s'" % (fields['u'], object_unit)
-        callback.writeLine("serverLog", "AVU " + str(fields_a))
         avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields_a,
                                      genquery.AS_DICT, callback)
         for avu in avus:

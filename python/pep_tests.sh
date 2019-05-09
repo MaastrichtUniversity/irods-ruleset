@@ -141,6 +141,66 @@ fi
 
 irm /nlmumc/home/rods/setJsonToObj.r
 
+
+# setJsonSchemaToObj
+iput setJsonToObj.r
+if ! irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'"; then
+    echo ERROR irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'" should work
+    exit 1
+fi
+
+irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21}'"
+
+if irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://google.com'" "*jsonRoot='root'"; then
+   echo ERROR irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'" should NOT work
+   exit 1
+fi
+
+irm /nlmumc/home/rods/setJsonToObj.r
+
+# setJsonToObj
+iput setJsonToObj.r
+irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'"
+
+if ! irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21}'"; then
+    echo ERROR irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21}'" should work
+    exit 1
+fi
+
+if irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21'"; then
+    echo ERROR irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21'" should work
+    exit 1
+fi
+
+
+if irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":\"21\"}'"; then
+    echo ERROR irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":\"21\"}'" should work
+    exit 1
+fi
+
+irm /nlmumc/home/rods/setJsonToObj.r
+
+# getJsonFromObj
+iput setJsonToObj.r
+irule -F setJsonSchemaToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonSchema='https://api.myjson.com/bins/17vejk'" "*jsonRoot='root'"
+irule -F setJsonToObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" "*jsonString='{\"firstName\":\"John\",\"lastName\":\"Doe\",\"age\":21}'"
+
+if ! irule -F getJsonFromObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" ; then
+    echo ERROR irule -F getJsonFromObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'" should work
+    exit 1
+fi
+
+res=$(irule -F getJsonFromObj.r "*object='/nlmumc/home/rods/setJsonToObj.r'" "*objectType='-d'" "*jsonRoot='root'")
+
+
+if ! [ "$res" == '{"lastName": "Doe", "age": 21, "firstName": "John"}' ]; then
+    echo ERROR Output of getJsonFromObj.r is not as expected
+    exit 1
+fi
+
+irm /nlmumc/home/rods/setJsonToObj.r
+
+
 echo DONE all tests passed
 
 #imeta addw -d /nlmumc/home/rods/% a4 v4 root_daniel

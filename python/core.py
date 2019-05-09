@@ -80,7 +80,7 @@ def setJsonToObj(rule_args, callback, rei):
     activelyUpdatingAVUs = True
 
     ret_val = callback.msi_rmw_avu(object_type, object_name, "%", "%", json_root + "_%")
-    if ret_val['status'] == False and ret_val['code'] != -819000:
+    if ret_val['status'] is False and ret_val['code'] != -819000:
         callback.writeLine("serverLog", "msi_rmw_avu failed with: " + ret_val['code'])
         return
 
@@ -144,7 +144,7 @@ def getFieldsForType(callback, object_type, object_name):
                         -R for resource
                         -C for collection
                         -u for user
-    :param object name:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object_name:  The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
     :return: an dictionary with the field names set in a, v, u and a WHERE clausal
     """
     fields = dict()
@@ -217,7 +217,6 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     # Regular expression pattern for unit field
     pattern = re.compile(jsonavu.RE_UNIT)
 
-    root_list = []
     for avu in avus:
         # Match unit to extract all info
         unit = str(avu[fields['u']])
@@ -239,7 +238,7 @@ def allowAvuChange(object_name, object_type, unit, callback):
     This function checks if an AVU change should be allowed. If the unit is part of an existing JSON changing should
     not be allowed. Unless the change is done from setJsonToObj()
 
-    :param object name: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+    :param object_name: The object (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
     :param object_type:
             The object type
                 -d for data object
@@ -362,16 +361,24 @@ def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
         callback.msiOprDisallowed()
 
     # Wild card removal check
-    if "%" in [object_attribute,object_value,object_unit]:
+    if "%" in [object_attribute, object_value, object_unit]:
         # Get all AVU for the from object
         fields = getFieldsForType(callback, object_type, object_name)
-        avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'],
-                                          genquery.AS_DICT, callback)
+        fields_a = fields['WHERE']
+        # if a,v or u is not wild card add to filter
+        if object_attribute != "%":
+            fields_a = fields_a + " AND %s = '%s'" % (fields['a'], object_attribute)
+        if object_value != "%":
+            fields_a = fields_a + " AND %s = '%s'" % (fields['v'], object_value)
+        if object_unit != "%":
+            fields_a = fields_a + " AND %s = '%s'" % (fields['u'], object_unit)
+        callback.writeLine("serverLog", "AVU " + str(fields_a))
+        avus = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields_a,
+                                     genquery.AS_DICT, callback)
         for avu in avus:
             unit = str(avu[fields['u']])
             if not allowAvuChange(object_name, object_type, unit, callback):
                 callback.msiOprDisallowed()
-
 
 
 def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
@@ -384,12 +391,14 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
 
     # Get all AVU for the from object
     fields_from = getFieldsForType(callback, object_type_from, object_name_from)
-    avus_from = genquery.row_iterator([fields_from['a'], fields_from['v'], fields_from['u']], fields_from['WHERE'], genquery.AS_DICT, callback)
+    avus_from = genquery.row_iterator([fields_from['a'], fields_from['v'], fields_from['u']], fields_from['WHERE'],
+                                      genquery.AS_DICT, callback)
 
     # Get all AVUs with attribute $id from the to object
     fields_to = getFieldsForType(callback, object_type_to, object_name_to)
     fields_id = fields_to['WHERE'] + " AND %s = '$id'" % (fields_to['a'])
-    rows = genquery.row_iterator([fields_to['a'], fields_to['v'], fields_to['u']], fields_id, genquery.AS_DICT, callback)
+    rows = genquery.row_iterator([fields_to['a'], fields_to['v'], fields_to['u']], fields_id, genquery.AS_DICT,
+                                 callback)
 
     # From these AVUs extract the unit (root)
     root_list_to = []
@@ -407,10 +416,8 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
 
             # If unit is matching
             if pattern.match(unit) and unit.startswith(root + "_"):
-                callback.writeLine("serverLog", "JSON root " + root + " is already in use in the to object")
-                callback.msiExit("-1101000", "JSON root " + root + " is already in use in the to object")
+                # callback.writeLine("serverLog", "JSON root " + root + " is already in use in the to object")
+                # callback.msiExit("-1101000", "JSON root " + root + " is already in use in the to object")
                 callback.msiOprDisallowed()
-
-
 
     # TODO: Do more copy cases need to be covered

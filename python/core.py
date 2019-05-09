@@ -57,7 +57,14 @@ def setJsonToObj(rule_args, callback, rei):
 
     if validation_required:
         # TODO: This needs to accept more types of URLs, and handle errors
-        r = requests.get(json_schema_url)
+        try:
+            r = requests.get(json_schema_url)
+        except requests.exceptions.RequestException as e:  # This is the correct syntax
+            callback.writeLine("serverLog",
+                               "JSON schema could not be downloaded :" + str(e.message))
+            callback.msiExit("-1101000", "JSON schema could not be downloaded : " + str(e.message))
+            return
+
         schema = r.json()
         try:
             jsonschema.validate(instance=data, schema=schema)
@@ -357,5 +364,44 @@ def pep_database_del_avu_metadata_pre(rule_args, callback, rei):
 def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
     callback.writeLine("serverLog", "Python pep_database_copy_avu_metadata_pre")
     callback.writeLine("serverLog", "Length of arguments is: " + str(len(rule_args)))
+
+    object_name_from = rule_args[5]
+    object_type_from = rule_args[3]
+    object_name_to = rule_args[6]
+    object_type_to = rule_args[4]
+
+    # Get all AVU for the from object
+    fields_from = getFieldsForType(callback, object_type_from, object_name_from)
+    avus_from = genquery.row_iterator([fields_from['a'], fields_from['v'], fields_from['u']], fields_from['WHERE'], genquery.AS_DICT, callback)
+
+    # Get all AVUs with attribute $id from the to object
+    fields_to = getFieldsForType(callback, object_type_to, object_name_to)
+    fields_id = fields_to['WHERE'] + " AND %s = '$id'" % (fields_to['a'])
+    rows = genquery.row_iterator([fields_to['a'], fields_to['v'], fields_to['u']], fields_id, genquery.AS_DICT, callback)
+
+    # From these AVUs extract the unit (root)
+    root_list_to = []
+    for row in rows:
+        root_list_to.append(row[fields_to['u']])
+
+    # Regular expression pattern for unit field
+    pattern = re.compile(jsonavu.RE_UNIT)
+
+    # For all AVUs on the from object check if one starts with the one of the root from the to object
+    for avu in avus_from:
+        callback.writeLine("serverLog", str(avu))
+        for root in root_list_to:
+            callback.writeLine("serverLog", str(root))
+            # Match unit to extract all info
+            unit = str(avu[fields_from['u']])
+            callback.writeLine("serverLog", str(unit))
+
+            # If unit is matching
+            if pattern.match(unit) and unit.startswith(root + "_"):
+                callback.writeLine("serverLog", "JSON root " + root + " is already in use in the to object")
+                callback.msiExit("-1101000", "JSON root " + root + " is already in use in the to object")
+                callback.msiOprDisallowed()
+
+
 
     # TODO: Implement allowAvuChange() check during copy operation

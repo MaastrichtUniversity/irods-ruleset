@@ -233,6 +233,43 @@ def setJsonSchemaToObj(rule_args, callback, rei):
     callback.msi_add_avu(object_type, object_name, '$id', json_schema_url, json_root)
 
 
+def getJsonSchemaFromObject(rule_args, callback, rei):
+    """
+    This rule get the json formatted Schema AVUs
+
+    :param rule_args:
+        Argument 0: The object name (/nlmumc/P000000003, /nlmumc/projects/metadata.xml, user@mail.com, demoResc)
+        Argument 1: The object type
+                        -d for data object
+                        -R for resource
+                        -C for collection
+                        -u for user
+    :param callback:
+    :param rei:
+    :return: json formatted Schema AVUs
+    """
+
+    object_name = rule_args[0]
+    object_type = rule_args[1]
+
+    # Get all AVUs with attribute $id
+    fields = getFieldsForType(callback, object_type, object_name)
+    fields['WHERE'] = fields['WHERE'] + " AND %s = '$id'" % (fields['a'])
+    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
+
+    avus = []
+    for row in rows:
+        avus.append({
+            "a": row[fields['a']],
+            "v": row[fields['v']],
+            "u": row[fields['u']]
+        })
+
+    result = json.dumps(avus)
+
+    rule_args[2] = result
+
+
 def allowAvuChange(object_name, object_type, unit, callback):
     """
     This function checks if an AVU change should be allowed. If the unit is part of an existing JSON changing should

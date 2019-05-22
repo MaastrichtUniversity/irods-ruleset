@@ -102,3 +102,11 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 
     # This policy is currently not doing anything
 }
+
+# Enforce single threaded iRODS data connections when using Ceph S3 resources
+acSetNumThreads {
+    if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
+        msiSetNumThreads("default","0","default");
+    }
+}
+

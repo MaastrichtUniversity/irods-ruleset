@@ -19,6 +19,10 @@ IRULE_listProjectManagers(*project, *result) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
 
         *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
+
+        *objectName = "";
+        *objectType = "";
+
         foreach (*R in *O) {
             *objectName = *R.USER_NAME;
             *objectType = *R.USER_TYPE;

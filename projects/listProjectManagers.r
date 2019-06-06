@@ -36,7 +36,7 @@ IRULE_listProjectManagers(*project, *result) {
             msi_json_arrayops(*users, *objectName, "add", *userSize);
         }
 
-        # objectType rodsadmin are skipped
+        # All other cases of objectType, such as "" or "rodsadmin", are skipped
     }
 
     *result = '{"users": *users, "groups": *groups }';

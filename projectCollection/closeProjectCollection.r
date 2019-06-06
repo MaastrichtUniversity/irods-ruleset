@@ -22,8 +22,9 @@ IRULE_closeProjectCollection(*project, *projectCollection) {
             *objectType = *R.USER_TYPE;
         }
 
-        # Save yourself for last, otherwise you can't close anymore
-        if ( *objectName != $userNameClient ) {
+        # Skip cases where *objectName could not be resolved (happens with deleted users)
+        # && save yourself (= the current user) for last, otherwise you can't close anymore
+        if ( *objectName != "" && *objectName != $userNameClient ) {
             msiSetACL("recursive", "read", *objectName, "/nlmumc/projects/*project/*projectCollection");
         }
     }
@@ -31,5 +32,5 @@ IRULE_closeProjectCollection(*project, *projectCollection) {
     msiSetACL("recursive", "read", $userNameClient, "/nlmumc/projects/*project/*projectCollection");
 }
 
-INPUT *project=$"MUMC-M4I-00001", *projectCollection='20160707_0803_p.vanschayck'
+INPUT *project=$"P000000001", *projectCollection='C000000001'
 OUTPUT ruleExecOut

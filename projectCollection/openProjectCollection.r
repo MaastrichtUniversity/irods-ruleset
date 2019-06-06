@@ -11,7 +11,7 @@ irule_dummy() {
 
 IRULE_openProjectCollection(*project, *projectCollection, *user, *rights) {
 
-    # Recursively assign ownership rights for rodsadmin to all collections within project
+    # Recursively assign ownership rights for *user to a projectCollection
     msiSetACL("recursive", "admin:*rights", "*user", "/nlmumc/projects/*project/*projectCollection");
 
 }

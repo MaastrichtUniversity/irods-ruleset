@@ -4,8 +4,9 @@
 #                             -R for resource
 #                             -C for collection
 #                             -u for user
+# Argument 3: The JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
 
-# Example : irule -F getJsonSchemaFromObject.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*objectType='-d'"
+# Example : irule -F getJsonSchemaFromObject.r "*object='/nlmumc/projects/P000000003/C000000001/metadata.xml'" "*objectType='-d'" "*jsonRoot='root'"
 
 
 main(){
@@ -14,11 +15,11 @@ main(){
 
     # Call the python function
 
-    getJsonSchemaFromObject(*object, *objectType, *result)
+    getJsonSchemaFromObject(*object, *objectType, *jsonRoot, *result)
 
     # Print
     writeLine("stdout", *result)
 }
 
-INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata.xml', *objectType = '-d'
+INPUT *object = '/nlmumc/projects/P000000003/C000000001/metadata.xml', *objectType = '-d' , *jsonRoot = 'root'
 OUTPUT ruleExecOut

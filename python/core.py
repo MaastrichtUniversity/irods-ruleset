@@ -1,20 +1,14 @@
 import json
-import sys
 import jsonavu
-import session_vars
 import genquery
 import jsonschema
 import requests
 import requests_cache
 import irods_types
-
 import re
 
 # Global vars
 activelyUpdatingAVUs = False
-
-# Global configs
-requests_cache.install_cache('/tmp/irods_avu_json-ruleset-cache', backend='sqlite', expire_after=300)
 
 
 def setJsonToObj(rule_args, callback, rei):
@@ -43,33 +37,25 @@ def setJsonToObj(rule_args, callback, rei):
     try:
         data = json.loads(json_string)
     except ValueError:
-        callback.msiExit("-1101000", "Invalid json provided")
+        callback.msiExit("-1101000", "Invalid JSON provided")
         return
 
-    # TODO How to handle validation? When to validate
+    # Retrieve a JSON-schema if any is set
+    ret_val = callback.getJsonSchemaFromObject(object_name, object_type, json_root, "")
+    schema = ret_val['arguments'][3]
 
-    # check if validation is required
-    validation_required = False
+    # Perform validation if required
+    if schema != "false":
+        try:
+            schema = json.loads(schema)
+        except ValueError:
+            callback.msiExit("-1101000", "Invalid JSON-schema provided")
+            return
 
-    # Find AVUs with a = '$id', and u = json_root. Their value is the JSON-schema URL
-    fields = getFieldsForType(callback, object_type, object_name)
-    fields['WHERE'] = fields['WHERE'] + " AND %s = '$id' AND %s = '%s'" % (fields['a'], fields['u'], json_root)
-    rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
-
-    # We're only expecting one row to be returned if any
-    for row in rows:
-        validation_required = True
-
-    if validation_required:
-        # Get schema
-        schema = ""
-        ret_val = callback.getJsonSchemaFromObject(object_name, object_type, json_root, schema)
-        schema = ret_val['arguments'][3]
-        schema = json.loads(schema)
         try:
             jsonschema.validate(instance=data, schema=schema)
         except jsonschema.exceptions.ValidationError, e:
-            callback.msiExit("-1101000", "JSON Instance could not be validated against JSON-schema : " + str(e.message))
+            callback.msiExit("-1101000", "JSON instance could not be validated against JSON-schema: " + str(e.message))
             return
 
     # Load global variable activelyUpdatingAVUs and set this to true. At this point we are actively updating
@@ -86,7 +72,7 @@ def setJsonToObj(rule_args, callback, rei):
     for i in avu:
         callback.msi_add_avu(object_type, object_name, i["a"], i["v"], i["u"])
 
-    # Set global variable activelyUpdatingAVUsthis to false. At this point we are done updating AVU and want
+    # Set global variable activelyUpdatingAVUs to false. At this point we are done updating AVU and want
     # to enable some of the checks.
     activelyUpdatingAVUs = False
 
@@ -103,7 +89,7 @@ def getJsonFromObj(rule_args, callback, rei):
                         -C for collection
                         -u for user
         Argument 2: The JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
-        Argument 3: The
+        Argument 3: The JSON string
     :param callback:
     :param rei:
     :return: JSON string is returned in rule_args[3]
@@ -240,11 +226,11 @@ def getJsonSchemaFromObject(rule_args, callback, rei):
                         -C for collection
                         -u for user
         Argument 2: The JSON root according to https://github.com/MaastrichtUniversity/irods_avu_json.
+        Argument 3: The JSON-schema or "false" when no schema is set
     :param callback:
     :param rei:
-    :return: json formatted Schema
+    :return: JSON-schema or "false". Also set in rule_args[3]
     """
-
     object_name = rule_args[0]
     object_type = rule_args[1]
     json_root = rule_args[2]
@@ -255,86 +241,75 @@ def getJsonSchemaFromObject(rule_args, callback, rei):
     rows = genquery.row_iterator([fields['a'], fields['v'], fields['u']], fields['WHERE'], genquery.AS_DICT, callback)
 
     # We're only expecting one row to be returned if any
-    json_schema_url = ""
+    json_schema_url = None
     for row in rows:
         json_schema_url = row[fields['v']]
 
+    # If no JSON-schema is known, the object is not under validation for this JSON-root
+    if json_schema_url is None:
+        rule_args[3] = "false"
+        return "false"
+
+    # Fetch the schema from
+    schema = ""
     if json_schema_url.startswith("i:"):
-        # schema is stored as an iRODS file
+        # Schema is stored as an iRODS file
         json_schema_url_irods = json_schema_url[2:]
-        schema = getJsonSchemaFromiRODSFile(json_schema_url_irods, callback)
+        schema = getJsonSchemaFromiRODSObject(json_schema_url_irods, callback)
+
     elif json_schema_url.startswith("http://") or json_schema_url.startswith("https://"):
-        # schema is stored as an web object
+        # Schema is stored as an web object
+
+        # Use requests-cache to prevent fetching the JSON-schema too often
+        requests_cache.install_cache('/tmp/irods_avu_json-ruleset-cache', backend='sqlite', expire_after=60 * 60 * 24)
+
         try:
             r = requests.get(json_schema_url)
         except requests.exceptions.RequestException as e:  # This is the correct syntax
             callback.msiExit("-1101000", "JSON schema could not be downloaded : " + str(e.message))
-        schema = json.dumps(r.json())
+            return
+        schema = r.text
     else:
-        # schema is stored as an unkown object
-        callback.msiExit("-1101000", "Unkown protocol for schema")
+        # Schema is stored as an unknown object
+        callback.msiExit("-1101000", "Unknown protocol or method for retrieving the JSON-schema")
+
     rule_args[3] = schema
+
     return schema
 
 
-def getJsonSchemaFromiRODSFile(path, callback):
+def getJsonSchemaFromiRODSObject(path, callback):
     """
         This rule gets a JSON schema stored as an iRODS object
 
         :param path: Full path of the json file (/nlmumc/home/rods/weight.json)
         :param callback:
-        :return: json formatted Schema
+        :return: JSON formatted schema
         """
 
-    ret_val = callback.msiGetObjType(path, 'dummy_str')
+    ret_val = callback.msiGetObjType(path, "")
     type_file = ret_val['arguments'][1]
 
     if type_file != '-d':
-        callback.msiExit("-1101000", "Only files in iRODS can be used for json storage")
-    else:
-        # We need the resource for the file
-        # First we split the path
-        ret_val = callback.msiSplitPath(path, "", "")
-        object_name = ret_val['arguments'][2]
-        collection = ret_val['arguments'][1]
-        # Then we query for resource of the file
-        rows = genquery.row_iterator(["RESC_NAME"],
-                                     "COLL_NAME = \'" + collection + "\' and DATA_NAME = \'" + object_name + "\'",
-                                     genquery.AS_DICT, callback)
-        for row in rows:
-            resource = row['RESC_NAME']
+        callback.msiExit("-1101000", "Only files in iRODS can be used for JSON storage")
+        return
 
-        # Get the size of the file
-        rows = genquery.row_iterator(["DATA_SIZE"],
-                                     "COLL_NAME = \'" + collection + "\' and DATA_NAME = \'" + object_name + "\'",
-                                     genquery.AS_DICT, callback)
-        for row in rows:
-            size = row['DATA_SIZE']
+    # Open iRODS file
+    ret_val = callback.msiDataObjOpen("objPath=" + path, 0)
+    file_desc = ret_val['arguments'][1]
 
-        # create settings, open, read, close the file
-        length = size
-        replNum = 0
-        openFlags = 'O_RDONLY'
-        objPath = path
-        rescName = resource
+    # Read iRODS file
+    ret_val = callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
+    read_buf = ret_val['arguments'][2]
 
-        oflags = "objPath=" + objPath + "++++" + "rescName=" + rescName + "++++" + "replNum=" + str(
-            replNum) + "++++" + "openFlags=" + openFlags
+    # Convert BytesBuffer to string
+    ret_val = callback.msiBytesBufToStr(read_buf, "")
+    output_json = ret_val['arguments'][1]
 
-        ret_val = callback.msiDataObjOpen(oflags, 0)
-        file_desc = ret_val['arguments'][1]
+    # Close iRODS file
+    callback.msiDataObjClose(file_desc, 0)
 
-        ret_val = callback.msiDataObjRead(file_desc, length, irods_types.BytesBuf())
-        read_buf = ret_val['arguments'][2]
-
-        # Convert BytesBuffer to string
-        json = ""
-        ret_val = callback.msiBytesBufToStr(read_buf, json)
-        output_json = ret_val['arguments'][1]
-
-        callback.msiDataObjClose(file_desc, 0)
-
-        return output_json
+    return output_json
 
 
 def allowAvuChange(object_name, object_type, unit, callback):

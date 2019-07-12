@@ -24,6 +24,7 @@ IRULE_detailsProject(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
+    getProjectCost(*project, *projectCost, *collections)
 
     if ( *principalInvestigator == "" ) {
         *principalInvestigatorStr = "no-principalInvestigator-AVU-set";
@@ -37,8 +38,7 @@ IRULE_detailsProject(*project, *inherited, *result) {
         *respCostCenterStr = *respCostCenter;
     }
 
-    *details = '{"project":"*project", "resource": "*resource", "viewers": *viewers,"contributors": *contributors, "managers": *managers, "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr"}';
-
+    *details = '{"project":"*project","projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resource", "viewers": *viewers,"contributors": *contributors, "managers": *managers, "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr"}';
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);

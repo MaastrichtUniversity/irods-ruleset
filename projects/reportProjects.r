@@ -35,8 +35,9 @@ IRULE_reportProjects(*result) {
         getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
         getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
         getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
-        getCollectionAVU("/nlmumc/projects/*project","NCIT:C88193",*pricePerGBPerYear,"","true");
+        getCollectionAVU("/nlmumc/projects/*project","NCIT:C88193",*pricePerGBPerYear,"","false");
         getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
+        getProjectCost(*project, *projectCost, *collections)
 
         # Retrieve the project manager(s) and viewers
         listProjectManagers(*project,*managers);
@@ -90,7 +91,7 @@ IRULE_reportProjects(*result) {
         }
 
         # Outcome contains the results from this iteration
-        *outcome = '{"project":"*project", "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGBPerYear": "*pricePerGBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+        *outcome = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGBPerYear": "*pricePerGBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
         # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
         msiString2KeyValPair("", *titleKvp);

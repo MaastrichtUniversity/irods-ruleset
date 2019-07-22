@@ -67,12 +67,17 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
         }
 
         # Collect the values for this iteration and add it to the json array
-        *jsonStr = '{"resourceID": "*resc", "dataSize": "*roundedSize"}';
-        msi_json_arrayops(*rescSizeArray, *jsonStr, "add", 0);
+        *jsonArr = '{"resourceID": "*resc", "dataSize": "*roundedSize"}';
+        msi_json_arrayops(*rescSizeArray, *jsonArr, "add", 0);
     }
 
-    # Return the full json array as result
-    *result = *rescSizeArray;
+    # Return the full json object as result
+    *jsonStr = '';
+    msiString2KeyValPair("", *kvp);
+    msiAddKeyVal(*kvp, 'sizePerResc', *rescSizeArray);
+    msi_json_objops(*jsonStr, *kvp, "set");
+
+    *result = *jsonStr;
 }
 
 INPUT *collection="",*unit="",*round=""

@@ -12,11 +12,11 @@
 # *round='floor' returns integer rounded down 
 
 irule_dummy() {
-    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result);
+    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultKVP);
     writeLine("stdout", *result);
 }
 
-IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result) {
+IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultKVP) {
     *resources = list();
 
     # Determine all resources used in this project
@@ -25,10 +25,13 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
     }
 
     *rescSizeArray = '[]';
+    msiString2KeyValPair("", *rescSizeKVP);
+    *i = 0;
 
     # Loop over resources list
     foreach ( *resc in *resources) {
         *sizeBytes = 0;
+        *i = *i + 1;
 
         # Loop over and sum the size of all distinct files in this collection-resource combination
         foreach ( *Row in SELECT DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *resc) {
@@ -69,6 +72,10 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
         # Collect the values for this iteration and add it to the json array
         *jsonArr = '{"resourceID": "*resc", "dataSize": "*roundedSize"}';
         msi_json_arrayops(*rescSizeArray, *jsonArr, "add", 0);
+
+        # Add the same values to KVP object
+        msiAddKeyVal(*rescSizeKVP, 'rescID_*i', *resc);
+        msiAddKeyVal(*rescSizeKVP, 'rescSize_*i', *roundedSize);
     }
 
     # Return the full json object as result
@@ -76,8 +83,10 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
     msiString2KeyValPair("", *kvp);
     msiAddKeyVal(*kvp, 'sizePerResc', *rescSizeArray);
     msi_json_objops(*jsonStr, *kvp, "set");
-
     *result = *jsonStr;
+
+    # Also return as KVP (for easy usage in rule language)
+    *resultKVP = *rescSizeKVP;
 }
 
 INPUT *collection="",*unit="",*round=""

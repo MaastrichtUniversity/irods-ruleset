@@ -9,10 +9,13 @@ irule_dummy() {
 }
 
 IRULE_calcCollectionFiles(*collection, *result) {
-    *count = "0";
+    *count = 0;
 
-    foreach ( *Row in SELECT COUNT(COLL_NAME) WHERE COLL_NAME like "*collection%" AND DATA_REPL_NUM ="0") {
-        *count = *Row.COLL_NAME;
+    # Loop over all distinct files in collection and count the total outside of SQL
+    # CAUTION: using count(DATA_ID) inside SQL takes all replicas into consideration, which is not what we want here
+    foreach ( *Row in SELECT DATA_ID WHERE COLL_NAME like "*collection%") {
+        # not doing anything with the SQL result, just counting the number of iterations in the loop
+        *count = *count + 1;
     }
     *result = *count;
 

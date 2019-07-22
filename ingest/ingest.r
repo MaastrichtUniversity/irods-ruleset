@@ -35,6 +35,13 @@ ingest {
     msiAddKeyVal(*stateKV, "state", "in-queue-for-validation");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
+    # Remove validateState. Required due to parallel execution of irods queue
+    getCollectionAVU(*srcColl,"validateState",*validateState,"","false");
+    if ( *validateState != "" ) {
+        msiAddKeyVal(*validateStateKV, "validateState", *validateState );
+        msiRemoveKeyValuePairsFromObj(*validateStateKV, *srcColl, "-C");
+    }
+    
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
         # Validate metadata
         *mirthValidationURL = "";

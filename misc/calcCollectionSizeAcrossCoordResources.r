@@ -1,0 +1,79 @@
+# This rule will calculate the size of a collection distributed over (multiple) coordinating resources
+# E.g. 100 GiB on replRescUM01, 50 GiB on replRescUMCeph01
+# WARNING: This can become very compute expensive!
+#
+# Call with
+#
+# irule -F calcCollectionSizeAcrossCoordResources.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
+# 
+# Rounding options
+# *round='none' returns float with decimals
+# *round='ceiling' returns integer rounded up 
+# *round='floor' returns integer rounded down 
+
+irule_dummy() {
+    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result);
+    writeLine("stdout", *result);
+}
+
+IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result) {
+    *resources = list();
+
+    # Determine all resources used in this project
+    foreach ( *Row in SELECT RESC_PARENT WHERE COLL_NAME like "*collection%") {
+        *resources = cons(*Row.RESC_PARENT, *resources);
+    }
+
+    *rescSizeArray = '[]';
+
+    # Loop over resources list
+    foreach ( *resc in *resources) {
+        *sizeBytes = 0;
+
+        # Loop over and sum the size of all distinct files in this collection-resource combination
+        foreach ( *Row in SELECT DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *resc) {
+            *sizeBytes = *sizeBytes + double(*Row.DATA_SIZE);
+        }
+
+        # Convert to different unit
+        if ( *unit == "B" ) {
+            *size = *sizeBytes;
+        } else if ( *unit == "KiB" ) {
+            *size = *sizeBytes/1024;
+        } else if ( *unit == "MiB" ) {
+            *size = *sizeBytes/1024/1024;
+        } else if ( *unit == "GiB" ) {
+            *size = *sizeBytes/1024/1024/1024;
+        } else if ( *unit == "TiB" ) {
+            *size = *sizeBytes/1024/1024/1024/1024;
+        } else {
+            failmsg(-1, "Invalid input for 'unit'. Options are: B | KiB | MiB | GiB | TiB");
+        }
+
+        # Do the rounding
+        if ( *unit == "B" ) {
+            *roundedSize = str(*sizeBytes);
+        } else {
+            if ( *round == "none") {
+                *size = *size;
+            } else if ( *round == "floor") {
+                *size = floor(*size);
+            } else if ( *round == "ceiling") {
+                *size = ceiling(*size);
+            } else {
+                failmsg(-1, "Invalid input for 'round'. Options are: none | floor | ceiling");
+            }
+            *roundedSize = str(*size);
+        }
+
+        # Collect the values for this iteration and add it to the json array
+        *jsonStr = '{"resourceID": "*resc", "dataSize": "*roundedSize"}';
+        msi_json_arrayops(*rescSizeArray, *jsonStr, "add", 0);
+    }
+
+    # Return the full json array as result
+    *result = *rescSizeArray;
+}
+
+INPUT *collection="",*unit="",*round=""
+OUTPUT ruleExecOut

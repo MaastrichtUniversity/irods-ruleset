@@ -12,11 +12,11 @@
 # *round='floor' returns integer rounded down 
 
 irule_dummy() {
-    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultKVP);
+    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);
     writeLine("stdout", *result);
 }
 
-IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultKVP) {
+IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList) {
     *resources = list();
 
     # Determine all resources used in this project
@@ -25,13 +25,12 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
     }
 
     *rescSizeArray = '[]';
-    msiString2KeyValPair("", *rescSizeKVP);
-    *i = 0;
+    *rescIdList = list();
+    *rescSizeList = list();
 
     # Loop over resources list
     foreach ( *resc in *resources) {
         *sizeBytes = 0;
-        *i = *i + 1;
 
         # Loop over and sum the size of all distinct files in this collection-resource combination
         foreach ( *Row in SELECT DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *resc) {
@@ -73,9 +72,9 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
         *jsonArr = '{"resourceID": "*resc", "dataSize": "*roundedSize"}';
         msi_json_arrayops(*rescSizeArray, *jsonArr, "add", 0);
 
-        # Add the same values to KVP object
-        msiAddKeyVal(*rescSizeKVP, 'rescID_*i', *resc);
-        msiAddKeyVal(*rescSizeKVP, 'rescSize_*i', *roundedSize);
+        # Add the same values to the list object
+        *rescIdList = cons(*resc, *rescIdList);
+        *rescSizeList = cons(*roundedSize, *rescSizeList);
     }
 
     # Return the full json object as result
@@ -85,8 +84,10 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
     msi_json_objops(*jsonStr, *kvp, "set");
     *result = *jsonStr;
 
-    # Also return as KVP (for easy usage in rule language)
-    *resultKVP = *rescSizeKVP;
+    # Also return as lists (for easy usage in rule language)
+    *resultIdList = *rescIdList;
+    *resultSizeList = *rescSizeList;
+
 }
 
 INPUT *collection="",*unit="",*round=""

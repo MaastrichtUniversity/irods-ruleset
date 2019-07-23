@@ -1,4 +1,4 @@
-# This rule will (re)calculate and set the total size of a collection (folder) in iRODS
+# This rule will (re)calculate and set the total size and numFiles of a collection (folder) in iRODS
 # This is useful in cases where the size of a collection has changed due to deletion or addition of files.
 #
 # Call with
@@ -32,11 +32,32 @@ IRULE_setCollectionSize(*project, *projectCollection) {
         calcCollectionSize(*dstColl, "B", "ceiling", *size);
         calcCollectionFiles(*dstColl, *numFiles);
 
-        # Add multiple AVUs to ProjectCollection
-        #msiWriteRodsLog("DEBUG: Setting 'dcat:byteSize' to *size", 0);
-        #msiWriteRodsLog("DEBUG: Setting 'numFiles' to *numFiles", 0);
+        # Collect information in multiple key-values
+        ### Simple KVs ###
         msiAddKeyVal(*metaKV, "dcat:byteSize", str(*size));
         msiAddKeyVal(*metaKV, "numFiles", str(*numFiles));
+
+        ### Block for byteSizes and numFiles across resources ###
+        # Calculate the number of files and total size across all resources in this ProjectCollection
+        calcCollectionSizeAcrossCoordResources(*dstColl, "B", "ceiling", *rescSizeArray, *rescIdsSize, *rescSizings);
+        calcCollectionFilesAcrossCoordResources(*dstColl, *rescNumFilesArray, *rescIdsNumFiles, *rescNumFiles);
+
+        # Retrieve the byteSizes and numFiles for each resource
+        # iRODS rule language doesn't have a proper for-loop. Implemented this using 'while'
+        *i = 0;
+        while (*i <= size(*rescIdsSize)-1) {
+            msiAddKeyVal(*metaKV, "dcat:byteSize_resc_" ++ elem(*rescIdsSize, *i), str(elem(*rescSizings, *i)));
+            *i = *i + 1;
+        }
+
+        *j = 0;
+        while (*j <= size(*rescIdsNumFiles)-1) {
+            msiAddKeyVal(*metaKV, "numFiles_resc_" ++ elem(*rescIdsNumFiles, *j), str(elem(*rescNumFiles, *j)));
+            *j = *j + 1;
+        }
+        ### End of block ###
+
+        # Set all key-values as AVUs to ProjectCollection
         msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
         # Close collection by making all access read only

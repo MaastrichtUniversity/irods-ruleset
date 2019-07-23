@@ -19,7 +19,7 @@ irule_dummy() {
 IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList) {
     *resources = list();
 
-    # Determine all resources used in this project
+    # Determine all resources used in this collection
     foreach ( *Row in SELECT RESC_PARENT WHERE COLL_NAME like "*collection%") {
         *resources = cons(*Row.RESC_PARENT, *resources);
     }
@@ -29,7 +29,7 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
     *rescSizeList = list();
 
     # Loop over resources list
-    foreach ( *resc in *resources) {
+    foreach ( *resc in *resources ) {
         *sizeBytes = 0;
 
         # Loop over and sum the size of all distinct files in this collection-resource combination
@@ -84,7 +84,7 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
     msi_json_objops(*jsonStr, *kvp, "set");
     *result = *jsonStr;
 
-    # Also return as lists (for easy usage in rule language)
+    # Also return as lists (for easy usage in other rules)
     *resultIdList = *rescIdList;
     *resultSizeList = *rescSizeList;
 

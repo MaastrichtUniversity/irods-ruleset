@@ -59,37 +59,16 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiWriteRodsLog("*srcColl : Sync took *difference seconds", 0);
     msiWriteRodsLog("*srcColl : AVG speed was *avgSpeed MiB/s", 0);
 
-    # Collect information in multiple key-values
-    ### Simple KVs ###
+    # Set simple AVUs
     msiWriteRodsLog("*srcColl : Setting AVUs to *dstColl", 0);
     msiAddKeyVal(*metaKV, "creator", *user);
-    msiAddKeyVal(*metaKV, "dcat:byteSize", str(*size));
-    msiAddKeyVal(*metaKV, "numFiles", str(*numFiles));
-
-    ### Block for byteSizes and numFiles across resources ###
-    # Calculate the number of files and total size across all resources in this ProjectCollection
-    calcCollectionSizeAcrossCoordResources(*dstColl, "B", "ceiling", *rescSizeArray, *rescIdsSize, *rescSizings);
-    calcCollectionFilesAcrossCoordResources(*dstColl, *rescNumFilesArray, *rescIdsNumFiles, *rescNumFiles);
-
-    # Retrieve the byteSizes and numFiles for each resource
-    # iRODS rule language doesn't have a proper for-loop. Implemented this using 'while'
-    *i = 0;
-    while (*i <= size(*rescIdsSize)-1) {
-        msiAddKeyVal(*metaKV, "dcat:byteSize_resc_" ++ elem(*rescIdsSize, *i), str(elem(*rescSizings, *i)));
-        *i = *i + 1;
-    }
-
-    *j = 0;
-    while (*j <= size(*rescIdsNumFiles)-1) {
-        msiAddKeyVal(*metaKV, "numFiles_resc_" ++ elem(*rescIdsNumFiles, *j), str(elem(*rescNumFiles, *j)));
-        *j = *j + 1;
-    }
-    ### End of block ###
-
-    # Set all key-values as AVUs to ProjectCollection
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
+    # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open
+    setCollectionSize(*project, *projectCollection, "false", "false");
+
     # Send metadata
+    # Please note that this step also sets the PID AVU via MirthConnect
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
     if ( *error < 0 ) {

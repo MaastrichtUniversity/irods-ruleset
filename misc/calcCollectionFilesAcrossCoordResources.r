@@ -3,6 +3,9 @@
 # Call with
 #
 # irule -F calcCollectionFilesAcrossCoordResources.r "*collection='/nlmumc/projects/P000000001/C000000001'"
+#
+# Output:
+# This rule outputs the same information both in json and iRODS list format
 
 irule_dummy() {
     IRULE_calcCollectionFilesAcrossCoordResources(*collection, *result, *resultIdList, *resultNumFilesList);

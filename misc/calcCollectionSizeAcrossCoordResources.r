@@ -9,7 +9,10 @@
 # Rounding options
 # *round='none' returns float with decimals
 # *round='ceiling' returns integer rounded up 
-# *round='floor' returns integer rounded down 
+# *round='floor' returns integer rounded down
+#
+# Output:
+# This rule outputs the same information both in json and iRODS list format
 
 irule_dummy() {
     IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);

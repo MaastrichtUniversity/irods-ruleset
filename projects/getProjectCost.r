@@ -75,7 +75,7 @@ IRULE_getProjectCost(*project, *result, *collections) {
         }
         # Error out if no byteSize_resc attribute is present for this collection
         if ( *resourceId == "" ) {
-            failmsg(-1, "*projectCollection: no attribute 'dcat:byteSize_resc_<RescID>' found");
+            msiWriteRodsLog("WARNING: *projectCollection: no attribute 'dcat:byteSize_resc_<RescID>' found. Using default value of '*collectionCost'",0);
         }
 
         # Add the results for this collection to the Json

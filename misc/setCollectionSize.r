@@ -3,14 +3,14 @@
 #
 # Call with
 #
-# irule -F setCollectionSize.r "*project='P000000001'" "*projectCollection='C000000001'"
+# irule -F setCollectionSize.r "*project='P000000001'" "*projectCollection='C000000001'" "*closePC='true'"
 
 
 irule_dummy() {
-    IRULE_setCollectionSize(*project, *projectCollection);
+    IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC);
 }
 
-IRULE_setCollectionSize(*project, *projectCollection) {
+IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
     *size = "0";
     *numFiles = "0";
     *dstColl = "/nlmumc/projects/*project/*projectCollection"
@@ -26,7 +26,10 @@ IRULE_setCollectionSize(*project, *projectCollection) {
         msiWriteRodsLog("Start operation 'setCollectionSize' for *dstColl", 0);
 
         # Open Collection
-        openProjectCollection(*project, *projectCollection, 'rods' , 'own');
+        if ( *openPC == "true" ) {
+            msiWriteRodsLog("setCollectionSize: Opening *dstColl", 0);
+            openProjectCollection(*project, *projectCollection, 'rods' , 'own');
+        }
 
         # Calculate the number of files and total size of the ProjectCollection
         calcCollectionSize(*dstColl, "B", "ceiling", *size);
@@ -61,15 +64,18 @@ IRULE_setCollectionSize(*project, *projectCollection) {
         msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
         # Close collection by making all access read only
-        closeProjectCollection(*project, *projectCollection);
+        if ( *closePC == "true" ) {
+            msiWriteRodsLog("setCollectionSize: Closing *dstColl", 0);
+            closeProjectCollection(*project, *projectCollection);
+        }
 
-        msiWriteRodsLog("Finished operation 'setCollectionSize' for *dstColl", 0);
+        msiWriteRodsLog("setCollectionSize: Finished for for *dstColl", 0);
 
     } else {
-        failmsg(-1, "Error when setting CollectionSize: projectCollection *dstColl does not exist");
+        failmsg(-1, "Error in setCollectionSize: projectCollection *dstColl does not exist");
     }
 
 }
 
-INPUT *project="",*projectCollection=""
+INPUT *project="",*projectCollection="",*openPC="true",*closePC="true"
 OUTPUT ruleExecOut

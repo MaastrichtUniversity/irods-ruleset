@@ -5,6 +5,11 @@
 # Role inheritance
 # *inherited='true' cumulates authorizations to designate the role. i.e. A contributor has OWN or WRITE access
 # *inherited='false' only shows explicit contributors. i.e. A contributor only has WRITE access
+#
+# Please note the different usage of size units:
+# - bytes are used for the purpose of storing values in iCAT
+# - GB is used for the purpose of calculating and displaying costs
+# - GiB is used for the purpose of diplaying the size to end-user
 
 
 irule_dummy() {
@@ -67,7 +72,7 @@ IRULE_detailsProject(*project, *inherited, *result) {
         *storageQuotaGiBStr = *storageQuotaGiB;
     }
 
-    # Calculate the size of this project
+    # Calculate the total size of this project in GiB (for displaying)
     *projSize = double(0);
     foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
         *projectCollection = *Row.COLL_NAME;

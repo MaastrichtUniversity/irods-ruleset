@@ -5,6 +5,12 @@
 #
 # Call with:
 # irule -F reportProjects.r
+#
+# Please note the different usage of size units:
+# - bytes are used for the purpose of storing values in iCAT
+# - GB is used for the purpose of calculating and displaying costs
+# - GiB is used for the purpose of diplaying the size to end-user
+
 
 irule_dummy() {
     IRULE_reportProjects(*result);
@@ -15,6 +21,7 @@ irule_dummy() {
 IRULE_reportProjects(*result) {
     *jsonStr = '[]';
 
+    # Looping over projects
     foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = "/nlmumc/projects" ) {
         # Declare variables
         *project = "";

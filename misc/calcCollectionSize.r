@@ -42,7 +42,7 @@ IRULE_calcCollectionSize(*collection, *unit, *round, *result) {
 
     # Do the rounding
     if ( *unit == "B" ) {
-        *result = str(*sizeBytes);
+        *result = trimr(str(*size), "."); # Because typecasting to int leads to incorrect value , we use trimr to get rid of the decimal places.
     } else {
         if ( *round == "none") {
             *size = *size;

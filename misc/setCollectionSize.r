@@ -23,7 +23,7 @@ IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
 
     # If the collection exists, we can calculate and set the collection size. Otherwise, we fail with error message
     if ( strlen(*collName) > 0 ) {
-        msiWriteRodsLog("Start operation 'setCollectionSize' for *dstColl", 0);
+        msiWriteRodsLog("setCollectionSize: Starting for *dstColl", 0);
 
         # Open Collection
         if ( *openPC == "true" ) {
@@ -41,6 +41,32 @@ IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
         msiAddKeyVal(*metaKV, "numFiles", str(*numFiles));
 
         ### Block for byteSizes and numFiles across resources ###
+        # Remove all pre-existing resource related AVUs from collection. We don't want to leave artefact AVUs for resources that are not in use anymore.
+        *execDel = 0;
+        foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*dstColl" ) {
+            # Check for pre-existing AVUs and collect them in a Key-Value construct
+            if ( *av.META_COLL_ATTR_NAME like regex "dcat:byteSize_resc_([0-9])+" ) {
+                *attribute = *av.META_COLL_ATTR_NAME;
+                *value = *av.META_COLL_ATTR_VALUE;
+                #  Remove this AVU from collection
+                msiWriteRodsLog("setCollectionSize: Removing pre-existing AVU *attribute", 0);
+                msiAddKeyVal(*delKV, *attribute, *value );
+                *execDel = *execDel + 1;
+            }
+            if ( *av.META_COLL_ATTR_NAME like regex "numFiles_resc_([0-9])+" ) {
+                *attribute = *av.META_COLL_ATTR_NAME;
+                *value = *av.META_COLL_ATTR_VALUE;
+                #  Remove this AVU from collection
+                msiWriteRodsLog("setCollectionSize: Removing pre-existing AVU *attribute", 0);
+                msiAddKeyVal(*delKV, *attribute, *value );
+                *execDel = *execDel + 1;
+            }
+        }
+        # Batch removal of the collected AVUs
+        if (*execDel > 0) {
+            msiRemoveKeyValuePairsFromObj(*delKV, *dstColl, "-C");
+        }
+
         # Calculate the number of files and total size across all resources in this ProjectCollection
         calcCollectionSizeAcrossCoordResources(*dstColl, "B", "ceiling", *rescSizeArray, *rescIdsSize, *rescSizings);
         calcCollectionFilesAcrossCoordResources(*dstColl, *rescNumFilesArray, *rescIdsNumFiles, *rescNumFiles);
@@ -69,7 +95,7 @@ IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
             closeProjectCollection(*project, *projectCollection);
         }
 
-        msiWriteRodsLog("setCollectionSize: Finished for for *dstColl", 0);
+        msiWriteRodsLog("setCollectionSize: Finished for *dstColl", 0);
 
     } else {
         failmsg(-1, "Error in setCollectionSize: projectCollection *dstColl does not exist");

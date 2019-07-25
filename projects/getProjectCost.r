@@ -45,7 +45,7 @@ IRULE_getProjectCost(*project, *result, *collections) {
 
         # Looping over resource-AVUs
         foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*projectCollection" ) {
-            # Check dcat:byteSize AVU for each resource
+            # Check dcat:byteSize_resc_* AVU for each resource
             if ( *av.META_COLL_ATTR_NAME like regex "dcat:byteSize_resc_([0-9])+" ) {
                 *value = *av.META_COLL_ATTR_VALUE;
                 *name = *av.META_COLL_ATTR_NAME;

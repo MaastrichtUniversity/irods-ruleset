@@ -36,7 +36,7 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
         *sizeBytes = 0;
 
         # Loop over and sum the size of all distinct files in this collection-resource combination
-        foreach ( *Row in SELECT DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *resc) {
+        foreach ( *Row in SELECT DATA_ID, DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *resc) {
             *sizeBytes = *sizeBytes + double(*Row.DATA_SIZE);
         }
 
@@ -57,7 +57,7 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
 
         # Do the rounding
         if ( *unit == "B" ) {
-            *roundedSize = str(*sizeBytes);
+            *roundedSize = trimr(str(*size), "."); # Because typecasting to int leads to incorrect value , we use trimr to get rid of the decimal places.
         } else {
             if ( *round == "none") {
                 *size = *size;

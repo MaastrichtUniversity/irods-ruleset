@@ -29,8 +29,6 @@ IRULE_detailsProject(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
-    # TODO: This attribute is deprecated and should be deleted
-    getCollectionAVU("/nlmumc/projects/*project","NCIT:C88193",*pricePerGBPerYear,"","false");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
     getProjectCost(*project, *projectCost, *collections)
 
@@ -59,13 +57,6 @@ IRULE_detailsProject(*project, *inherited, *result) {
         *respCostCenterStr = *respCostCenter;
     }
 
-    # TODO: This attribute is deprecated and should be deleted
-    if ( *pricePerGBPerYear == "" ) {
-        *pricePerGBPerYearStr = "no-pricePerGBPerYear-AVU-set";
-    } else {
-        *pricePerGBPerYearStr = *pricePerGBPerYear;
-    }
-
     if ( *storageQuotaGiB == "" ) {
         *storageQuotaGiBStr = "storageQuotaGiB-AVU-set";
     } else {
@@ -81,7 +72,7 @@ IRULE_detailsProject(*project, *inherited, *result) {
     }
     *projSize = ceiling(*projSize);
 
-    *details = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "pricePerGBPerYear": "*pricePerGBPerYearStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+    *details = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);

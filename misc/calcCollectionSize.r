@@ -21,7 +21,7 @@ IRULE_calcCollectionSize(*collection, *unit, *round, *result) {
 
     # Loop over all distinct files in collection and sum the size outside of SQL
     # CAUTION: using SUM(DATA_SIZE) inside SQL sums the size of all replicas, which is not what we want here
-    foreach ( *Row in SELECT DATA_SIZE WHERE COLL_NAME like "*collection%") {
+    foreach ( *Row in SELECT DATA_ID, DATA_SIZE WHERE COLL_NAME like "*collection%") {
         *sizeBytes = *sizeBytes + double(*Row.DATA_SIZE);
     }
 

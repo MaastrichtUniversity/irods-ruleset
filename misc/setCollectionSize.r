@@ -3,7 +3,7 @@
 #
 # Call with
 #
-# irule -F setCollectionSize.r "*project='P000000001'" "*projectCollection='C000000001'" "*closePC='true'"
+# irule -F setCollectionSize.r "*project='P000000001'" "*projectCollection='C000000001'" "*openPC='true'" "*closePC='true'"
 
 
 irule_dummy() {

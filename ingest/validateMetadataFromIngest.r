@@ -50,7 +50,7 @@ validateMetadataFromIngest(*token,*mirthURL) {
        msiWriteRodsLog("Removed existing AVU from *srcColl", 0);
     }
     
-    msiWriteRodsLog("send ingest data url *mirthURL", 0);
+    msiWriteRodsLog("DEBUG: mirthValidationURL from msi_getenv is '*mirthURL'", 0);
     *error = errorcode(msi_http_send_file("*mirthURL/?token=*token", "/nlmumc/ingest/zones/*token/metadata.xml"));
 
     if ( *error < 0 ) {

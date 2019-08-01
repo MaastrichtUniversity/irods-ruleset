@@ -11,31 +11,46 @@ irule_dummy() {
 # Creates projects in the form P000000001
 IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter,*pricePerGBPerYear) {
 
-    *max = 0;
+    *retry = 0;
+    *error = -1;
 
-    # Find out the current max project number
-    foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects' ) {
-        uuChopPath(*Row.COLL_NAME, *path, *c);
+    # Try to create the dstColl. Exit the loop on success (error = 0) or after too many retries.
+    # The while loop adds compatibility for usage in parallellized runs of the delayed rule engine.
+    while ( *error < 0 && *retry < 10) {
 
-        *i = int(substr(*c, 1, 10));
+        *max = 0;
 
-        if ( *i > *max ) {
-            *max = *i;
+        # Find out the current max project number
+        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects' ) {
+            uuChopPath(*Row.COLL_NAME, *path, *c);
+
+            *i = int(substr(*c, 1, 10));
+
+            if ( *i > *max ) {
+                *max = *i;
+            }
         }
+
+        *project = str(*max + 1);
+
+        # Prepend padding zeros to the name
+        while ( strlen(*project) < 9 ) {
+            *project = "0" ++ *project;
+        }
+
+        *project = "P" ++ *project;
+
+        *dstColl = "/nlmumc/projects/*project";
+
+        *retry = *retry + 1;
+        *error = errorcode(msiCollCreate(*dstColl, 0, *status));
+
     }
 
-    *project = str(*max + 1);
-
-    # Prepend padding zeros to the name
-    while ( strlen(*project) < 9 ) {
-        *project = "0" ++ *project;
+    # Make the rule fail if it doesn't succeed in creating the project
+    if ( *error < 0 && *retry >= 10 ) {
+        failmsg(*error, "Collection '*title' attempt no. *retry : Unable to create *dstColl");
     }
-
-    *project = "P" ++ *project;
-
-    *dstColl = "/nlmumc/projects/*project";
-
-    msiCollCreate(*dstColl, 0, *status);
 
     # TODO: Determine whether setting defaults here is a good place
     msiAddKeyVal(*metaKV, "authorizationPeriodEndDate", *authorizationPeriodEndDate);
@@ -55,7 +70,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("default", "read", "service-disqover", *dstColl);
     msiSetACL("recursive", "inherit", "", *dstColl);
-    
+
 }
 
 INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *respCostCenter="", *pricePerGBPerYear=""

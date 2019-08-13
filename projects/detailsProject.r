@@ -30,7 +30,21 @@ IRULE_detailsProject(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
-    getProjectCost(*project, *projectCost, *collections)
+
+    *projectCost  = double(0);
+    *collections = "{}";
+    *projSize = double(0);
+    if ($userNameClient == *principalInvestigator || $userNameClient == "rods"  ){
+        getProjectCost(*project, *projectCost, *collections, *projSize);
+    }
+    else{
+        # Calculate the total size of this project in GiB (for displaying)
+        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
+            *projectCollection = *Row.COLL_NAME;
+            getCollectionSize(*projectCollection, "GiB", "none", *collSize) # *collSize is the result variable that will be created by this rule
+            *projSize = *projSize + double(*collSize);
+        }
+    }
 
     # Validate the contents of the retrieved AVUs
     if ( *resource == "" ) {
@@ -61,14 +75,6 @@ IRULE_detailsProject(*project, *inherited, *result) {
         *storageQuotaGiBStr = "storageQuotaGiB-AVU-set";
     } else {
         *storageQuotaGiBStr = *storageQuotaGiB;
-    }
-
-    # Calculate the total size of this project in GiB (for displaying)
-    *projSize = double(0);
-    foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
-        *projectCollection = *Row.COLL_NAME;
-        getCollectionSize(*projectCollection, "GiB", "none", *collSize) # *collSize is the result variable that will be created by this rule
-        *projSize = *projSize + double(*collSize);
     }
 
     *details = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';

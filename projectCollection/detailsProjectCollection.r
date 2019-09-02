@@ -21,17 +21,27 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project/*collection","numFiles",*numFiles,"N/A","false");
     getCollectionAVU("/nlmumc/projects/*project/*collection","PID",*PID,"no-PID-set","false");
     getCollectionSize("/nlmumc/projects/*project/*collection", "B", "none", *byteSize);
+    getCollectionAVU("/nlmumc/projects/*project/*collection","exporterState",*exporterState,"no-state-set","false");
 
     listProjectManagers(*project, *managers);
     listProjectContributors(*project, *inherited, *contributors);
     listProjectViewers(*project, *inherited, *viewers);
-    
-    *details = '{"project": "*project", "collection": "*collection", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+
+    *details = '{"project": "*project", "collection": "*collection", "exporterState": "*exporterState", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);
     msi_json_objops(*details, *titleKvp, "add");
+
+    getAVU("/nlmumc/projects/*project/*collection", 'externalPID', '', 'false', *externals);
+    if ( *externals == "" ) {
+        msiString2KeyValPair("externals=no-externalPID-set", *ext);
+        msi_json_objops(*details, *ext, "add");
+    } else {
+        msiString2KeyValPair("externals=*externals", *ext);
+        msi_json_objops(*details, *ext, "add");
+    }
 
     *result = *details;
 }

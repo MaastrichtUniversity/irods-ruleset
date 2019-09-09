@@ -28,7 +28,8 @@ IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
         # Open Collection
         if ( *openPC == "true" ) {
             msiWriteRodsLog("setCollectionSize: Opening *dstColl", 0);
-            openProjectCollection(*project, *projectCollection, 'rods' , 'own');
+            # We only need to open the collection, and not all the files in it. So use msiSetACL directly instead of openProjectCollection rule
+            msiSetACL("default", "admin:own", "rods", "/nlmumc/projects/*project/*projectCollection");
         }
 
         # Calculate the number of files and total size of the ProjectCollection
@@ -92,7 +93,8 @@ IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
         # Close collection by making all access read only
         if ( *closePC == "true" ) {
             msiWriteRodsLog("setCollectionSize: Closing *dstColl", 0);
-            closeProjectCollection(*project, *projectCollection);
+            # We only need to close the collection in a non-recursive fashion, so use msiSetACL directly
+            msiSetACL("default", "read", "rods", "/nlmumc/projects/*project/*projectCollection");
         }
 
         msiWriteRodsLog("setCollectionSize: Finished for *dstColl", 0);

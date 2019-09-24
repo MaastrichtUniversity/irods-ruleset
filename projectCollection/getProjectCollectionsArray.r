@@ -1,8 +1,9 @@
 # Call with
 #
-# irule -F detailsCollectionsPage.r "*project='P000000001'" "*inherited='false'"
+# irule -F getProjectCollectionsArray.r "*project='P000000001'" "*inherited='false'"
 #
-# Optimized version of detailsProject.r to render the project web page
+# This is an optimized and combined version of 'detailsProject.r' and 'detailsProjectCollection.r'.
+# It is specifically optimized for the pacman portal to render the listing of collections in a project.
 #
 # Role inheritance
 # *inherited='true' cumulates authorizations to designate the role. i.e. A contributor has OWN or WRITE access
@@ -15,12 +16,12 @@
 
 
 irule_dummy() {
-    IRULE_detailsCollectionsPage(*project, *inherited, *result);
+    IRULE_getProjectCollectionsArray(*project, *inherited, *result);
 
     writeLine("stdout", *result);
 }
 
-IRULE_detailsCollectionsPage(*project, *inherited, *result) {
+IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     *details = "";
 
     listProjectContributors(*project, *inherited, *contributors);

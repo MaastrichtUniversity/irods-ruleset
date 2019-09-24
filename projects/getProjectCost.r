@@ -41,6 +41,8 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
     *collectionCost = 0;
 
     # Prepare and execute query
+    # INFO: The order of elements in *param will influence the alphabetical sorting of the result set.
+    # Here, all results from the same COLL_NAME group together (1st level sort), then ascending on META_COLL_ATTR_NAME (2nd level sort), etc.
     *param = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE";
     *cond = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' and COLL_PARENT_NAME = '/nlmumc/projects/*project'";
     msiMakeGenQuery(*param, *cond, *Query);
@@ -54,7 +56,11 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
             *projectCollection = *Row.COLL_NAME;
             *resourceId = triml(*Row.META_COLL_ATTR_NAME, "dcat:byteSize_resc_");
 
-             # When the current *Row has a different COLL_NAME than the previous iteration
+            # We're looping over byteSize_resc_* AVUs for an entire project at once. If files in 1 collection are stored over multiple resources,
+            # there will be multiple rows for that collection in *QOut. We need to keep track of the collection that we're processing
+            # and compare that to the collection of the previous iteration of the loop.
+            # When the current *Row has a different COLL_NAME than the previous iteration, we sum the size and costs, finalize the json
+            # for the previous collection and reset everything before continuing the loop.
             if (*previousCollection != *projectCollection){
                 # Get the total size of this collection in GiB (for displaying)
                 getCollectionSize(*previousCollection, "GiB", "none", *collSize);
@@ -76,6 +82,7 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
             # Lookup the price for this resource
             *pricePerGBPerYearStr = "";
             *queryForPriceOnResource = true;
+            # Use the cached KVP *resources object before even querying iCAT
             foreach(*ID in *resources){
                 if ( *ID == *resourceId){
                     *pricePerGBPerYearStr = *resources.*ID;

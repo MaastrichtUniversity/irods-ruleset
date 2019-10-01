@@ -24,6 +24,9 @@ irule_dummy() {
 IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     *details = "";
 
+    #####################################################
+    ### Get metadata and permissions on PROJECT level ###
+    #####################################################
     listProjectContributors(*project, *inherited, *contributors);
     listProjectManagers(*project,*managers);
     listProjectViewers(*project, *inherited, *viewers);
@@ -34,6 +37,9 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
 
+    ########################################
+    ### Get metadata on COLLECTION level ###
+    ########################################
     # JSON object for each collection
     *collection = '{}';
     # JSON array to store all the collections of the input project
@@ -51,6 +57,8 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     *validation."numFiles" = "";
 
     # Prepare and execute query
+    # INFO: The order of elements in *param will influence the alphabetical sorting of the result set.
+    # Here, all results from the same COLL_NAME group together (1st level sort), then ascending on META_COLL_ATTR_NAME (2nd level sort), etc.
     *param = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE";
     *cond = "COLL_PARENT_NAME = '/nlmumc/projects/*project'";
     msiMakeGenQuery(*param, *cond, *Query);
@@ -65,7 +73,10 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
             *attr = *Row.META_COLL_ATTR_NAME;
             *value = *Row.META_COLL_ATTR_VALUE;
 
-            # When the current *Row has a different COLL_NAME than the previous iteration
+            # We're looping over all AVUs for all projectCollections at once. We need to keep track of the collection that we're processing
+            # and compare that to the collection of the previous iteration of the loop.
+            # When the current *Row has a different COLL_NAME than the previous iteration, we sum finalize the json
+            # for the previous collection and reset everything before continuing the loop.
             if (*previousCollection != *projectCollection){
                 # Check for missing attribute and put the default value
                 foreach(*attribute in *validation) {
@@ -97,7 +108,7 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
                 # Set *previousCollection to current *Row.COLL_NAME
                 *previousCollection = *projectCollection;
             }
-            # Update KpV *validation with the current pair of AV
+            # Update KVP *validation with the current pair of AV
             *validation."*attr" = *value;
 
             # Append each metadata key pair value in *collection
@@ -132,7 +143,9 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
         msi_json_arrayops(*collectionsArray, *collection, "add", *collectionsArraySize);
     }
 
-    # Validate the contents of the retrieved AVUs
+    #######################################
+    ### Validate PROJECT level metadata ###
+    #######################################
     if ( *resource == "" ) {
         *resourceStr = "no-resource-AVU-set";
     } else {
@@ -163,6 +176,9 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
         *storageQuotaGiBStr = *storageQuotaGiB;
     }
 
+    ##################################
+    ### Construct final json array ###
+    ##################################
     *details = '{"project":"*project", "collections": *collectionsArray, "resource": "*resourceStr", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);

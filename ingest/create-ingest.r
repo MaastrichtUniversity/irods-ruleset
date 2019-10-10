@@ -8,7 +8,8 @@ createIngest {
     *hasDropZonepermission = "";
     checkDropZoneACL(*user, *hasDropZonepermission);
     if (*hasDropZonepermission == "false") {
-        failmsg(-1, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
+        # -818000 CAT_NO_ACCESS_PERMISSION
+        failmsg(-818000, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
     }
 
     *tokenColl = "/nlmumc/ingest/zones/*token";

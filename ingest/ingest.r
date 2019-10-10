@@ -22,6 +22,18 @@ ingest {
         }
     }
 
+    # Check for project's ingest resource status to start ingestion
+    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
+    *disableIngest = "false"
+    foreach (*r in select META_RESC_ATTR_VALUE where RESC_NAME = *ingestResource AND META_RESC_ATTR_NAME = "disableIngest" ) {
+        *disableIngest = *r.META_RESC_ATTR_VALUE;
+    }
+
+    if ( *disableIngest == "true" ) {
+        # -831000 CAT_INVALID_RESOURCE
+        failmsg(-831000, "Ingest disabled for this resource.");
+    }
+
     # Check for valid state to start ingestion
     if ( *state != "open" && *state != "warning-validation-incorrect" ) {
         failmsg(-1, "Invalid state to start ingestion.");

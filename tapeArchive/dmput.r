@@ -1,3 +1,5 @@
+# Force a collection offline
+
 dmput(){
     *resc = "arcRescSURF01";
     foreach(

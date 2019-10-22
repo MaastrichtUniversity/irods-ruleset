@@ -1,8 +1,11 @@
 # Call with
 # irule -F prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001'"
 
+irule_dummy() {
+    IRULE_prepareTapeUnArchive(*archColl);
+}
 
-prepareTapeUnArchive {
+IRULE_prepareTapeUnArchive(*archColl) {
     *aclChange="service-surfarchive";        #a rodsadmin group/user running the rule
     *stateAttrName = "archiveState";
 
@@ -88,7 +91,9 @@ prepareTapeUnArchive {
         # Call dmget to stage data back to cache
         dmget(*offlineList, *svr)
         writeLine("serverLog", "Stage back to cache: *offlineList");
-        prepare_unarch();
+
+        # Recursive call to check un-migrating status
+        prepareTapeUnArchive(*archColl);
     }
 
     # UnMigrating Check
@@ -100,7 +105,7 @@ prepareTapeUnArchive {
         # Delay & recursive call
         delay("<PLUSET>30s</PLUSET>"){
             writeLine("serverLog", "SURFSara Archive - delay 30s, before retry");
-            prepare_unarch();
+            prepareTapeUnArchive(*archColl);
         }
     }
     else{

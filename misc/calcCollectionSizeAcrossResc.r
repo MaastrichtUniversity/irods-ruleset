@@ -4,7 +4,7 @@
 #
 # Call with
 #
-# irule -F calcCollectionSizeAcrossCoordResources.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
+# irule -F calcCollectionSizeAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
 # 
 # Rounding options
 # *round='none' returns float with decimals
@@ -14,16 +14,15 @@
 # Output:
 # This rule outputs the same information both in json and iRODS list format
 
-# TODO: Rename this rule, as it now supports all resources (coordinating + orphans)
 # TODO: Rename the calcCollectionFilesAcross... rule, as it now supports all resources (coordinating + orphans)
 # TODO: Put the resource type determination in a separate rule, that will be called from here and the calcCollectionFiles
 
 irule_dummy() {
-    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);
+    IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);
     writeLine("stdout", *result);
 }
 
-IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList) {
+IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultIdList, *resultSizeList) {
     # Initialize variables
     *resources; # Key pair Value object to store resource type for each resource. key -> resource ID; value ->  "parent" or "orphan"
     *rescSizeArray = '[]';

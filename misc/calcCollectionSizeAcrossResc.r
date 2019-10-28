@@ -14,8 +14,6 @@
 # Output:
 # This rule outputs the same information both in json and iRODS list format
 
-# TODO: Rename the calcCollectionFilesAcross... rule, as it now supports all resources (coordinating + orphans)
-
 irule_dummy() {
     IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);
     writeLine("stdout", *result);

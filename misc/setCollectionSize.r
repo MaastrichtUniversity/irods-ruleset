@@ -70,7 +70,7 @@ IRULE_setCollectionSize(*project, *projectCollection, *openPC, *closePC) {
 
         # Calculate the number of files and total size across all resources in this ProjectCollection
         calcCollectionSizeAcrossResc(*dstColl, "B", "ceiling", *rescSizeArray, *rescIdsSize, *rescSizings);
-        calcCollectionFilesAcrossCoordResources(*dstColl, *rescNumFilesArray, *rescIdsNumFiles, *rescNumFiles);
+        calcCollectionFilesAcrossResc(*dstColl, *rescNumFilesArray, *rescIdsNumFiles, *rescNumFiles);
 
         # Retrieve the byteSizes and numFiles for each resource
         # iRODS rule language doesn't have a proper for-loop. Implemented this using 'while'

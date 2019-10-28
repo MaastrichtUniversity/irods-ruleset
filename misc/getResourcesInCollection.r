@@ -1,8 +1,11 @@
-# This rule will retrieve the total size of a collection (folder) in iRODS from an iCAT AVU
+# This rule will return a KVP object containing all storage resources used in this collection and their respective type.
+#
 # Call with
 #
 # irule -F getResourcesInCollection.r "*collection='/nlmumc/projects/P000000001/C000000001'"
 #
+# Example output:
+# KeyValue[3]:10002=parent;60742=orphan;83598=orphan;
 
 irule_dummy() {
     IRULE_getResourcesInCollection(*collection, *result);
@@ -38,8 +41,6 @@ IRULE_getResourcesInCollection(*collection, *result) {
         *resources.*id = *type;
     }
 
-    # Example result
-    # KeyValue[3]:10002=parent;60742=orphan;83598=orphan;
     *result = *resources;
 }
 

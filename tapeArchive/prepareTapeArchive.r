@@ -25,7 +25,7 @@ prepareTapeArchive {
     # Get project's id and collection's id
     uuChopPath(*archColl, *dir, *projectCollection);
     uuChopPath(*dir, *dir2, *project);
-    # Open collection to modify state AVU &
+    # Open collection to modify state AVU
     openProjectCollection(*project, *projectCollection, *aclChange, 'own');
 
     *dataPerResources = "";
@@ -92,7 +92,7 @@ prepareTapeArchive {
         *counter=*counter+1;
 	}
     writeLine("serverLog","surfArchiveScanner found "++str(*counter)++" files.");
-    *value = "Number of files to be put offline: *counter";
+    *value = "Number of files found: *counter";
     setCollectionAVU(*archColl, "archiveState", *value)
 
     # Delay before replication

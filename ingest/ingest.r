@@ -49,7 +49,7 @@ ingest {
         validateMetadataFromIngest(*token,*mirthValidationURL);
     }
 
-    # Continue ingest and send to Solr
+    # Continue ingest and create PID in Mirth
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl);
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {

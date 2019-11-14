@@ -49,10 +49,13 @@ IRULE_changeProjectPermissions(*project, *users){
     delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF>") {
         foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
             *projectCollection = *Row.COLL_NAME;
+
             # Reset user list to original input value
             *delay_users = *input_users;
+
             # Open the collection to be able to modify the collection ACL
             msiSetACL("recursive", "admin:own", "rods", "*projectCollection");
+
             # Change collection ACL recursively
             uuChop(*delay_users, *head, *tail, " ", true);
             *collection_rights = "read";
@@ -71,8 +74,7 @@ IRULE_changeProjectPermissions(*project, *users){
                 msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
             }
             *delay_users = *tail;
-            # Infinite loop safe-guard
-            *count = 25;
+
             while ( *head != ""){
                 uuChop(*delay_users, *head, *tail, " ", true);
                 if (*head != ""){
@@ -92,9 +94,9 @@ IRULE_changeProjectPermissions(*project, *users){
                     msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
                 }
                 *delay_users = *tail;
-                *count = *count-1;
             }
-            #Close
+
+            # Close collection
             msiSetACL("recursive", "read", "rods", "*projectCollection");
         }
     }

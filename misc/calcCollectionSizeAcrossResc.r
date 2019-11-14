@@ -1,10 +1,10 @@
-# This rule will calculate the size of a collection distributed over (multiple) coordinating resources
+# This rule will calculate the size of a collection distributed over (multiple) resources
 # E.g. 100 GiB on replRescUM01, 50 GiB on replRescUMCeph01
 # WARNING: This can become very compute expensive!
 #
 # Call with
 #
-# irule -F calcCollectionSizeAcrossCoordResources.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
+# irule -F calcCollectionSizeAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
 # 
 # Rounding options
 # *round='none' returns float with decimals
@@ -15,29 +15,35 @@
 # This rule outputs the same information both in json and iRODS list format
 
 irule_dummy() {
-    IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);
+    IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultIdList, *resultSizeList);
     writeLine("stdout", *result);
 }
 
-IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result, *resultIdList, *resultSizeList) {
-    *resources = list();
-
-    # Determine all resources used in this collection
-    foreach ( *Row in SELECT RESC_PARENT WHERE COLL_NAME like "*collection%") {
-        *resources = cons(*Row.RESC_PARENT, *resources);
-    }
-
+IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultIdList, *resultSizeList) {
+    # Initialize variables
+    *resources; # Key pair Value object to store resource type for each resource. key -> resource ID; value ->  "parent" or "orphan"
     *rescSizeArray = '[]';
     *rescIdList = list();
     *rescSizeList = list();
 
-    # Loop over resources list
-    foreach ( *resc in *resources ) {
+    # Determine all this collection's resources and their parent/orphan type
+    getResourcesInCollection(*collection, *resources);
+
+    # Loop over the resources key-value object
+    foreach ( *rescId in *resources ) {
         *sizeBytes = 0;
 
         # Loop over and sum the size of all distinct files in this collection-resource combination
-        foreach ( *Row in SELECT DATA_ID, DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *resc) {
-            *sizeBytes = *sizeBytes + double(*Row.DATA_SIZE);
+        if ( *resources.*rescId == "parent" ) { # if the value of *rescId equals parent
+            foreach ( *Row in SELECT DATA_ID, DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_PARENT = *rescId) {
+                *sizeBytes = *sizeBytes + double(*Row.DATA_SIZE);
+            }
+        } else if ( *resources.*rescId == "orphan" ) { # if the value of *rescId equals orphan
+            foreach ( *Row in SELECT DATA_ID, DATA_SIZE WHERE COLL_NAME like "*collection%" and RESC_ID = *rescId) {
+                *sizeBytes = *sizeBytes + double(*Row.DATA_SIZE);
+            }
+        } else {
+            failmsg(-1, "Error with determining storage resource type");
         }
 
         # Convert to different unit
@@ -72,11 +78,11 @@ IRULE_calcCollectionSizeAcrossCoordResources(*collection, *unit, *round, *result
         }
 
         # Collect the values for this iteration and add it to the json array
-        *jsonArr = '{"resourceID": "*resc", "dataSize": "*roundedSize"}';
+        *jsonArr = '{"resourceID": "*rescId", "dataSize": "*roundedSize"}';
         msi_json_arrayops(*rescSizeArray, *jsonArr, "add", 0);
 
         # Add the same values to the list object
-        *rescIdList = cons(*resc, *rescIdList);
+        *rescIdList = cons(*rescId, *rescIdList);
         *rescSizeList = cons(*roundedSize, *rescSizeList);
     }
 

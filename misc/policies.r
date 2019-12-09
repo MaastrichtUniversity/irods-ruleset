@@ -112,6 +112,7 @@ acSetNumThreads {
     # Session variables $rescName and $KVPairs are not present
     # Only occurs for one ressource during the replication
     # Doesn't affect the outcome of the replication
+
     # WARNING: ERROR suppressed from the logs
 
     *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));

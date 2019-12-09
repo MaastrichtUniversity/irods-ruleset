@@ -109,11 +109,10 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 # 2) maxNumThr      - the maximum number of threads to use (default: 4).
 # 3) windowSize     - the tcp window size in Bytes for the parallel transfer (default: 1048576).
 acSetNumThreads {
-    # Session variables $rescName and $KVPairs are not present
-    # Only occurs for one ressource during the replication
-    # Doesn't affect the outcome of the replication
-
-    # WARNING: ERROR suppressed from the logs
+    # Session variables $rescName and $KVPairs are not always present and their existence needs to be checked first.
+    # For instance, during replication it only exists for one of the two resources.
+    # It errors, but doesn't affect the outcome of the replication.
+    # Note: The ERROR is catched below and thus suppressed from the rodsLog
 
     *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));
 

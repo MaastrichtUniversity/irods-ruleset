@@ -109,9 +109,18 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 # 2) maxNumThr      - the maximum number of threads to use (default: 4).
 # 3) windowSize     - the tcp window size in Bytes for the parallel transfer (default: 1048576).
 acSetNumThreads {
-    if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
-        msiSetNumThreads("default","0","default");
-    } else {
-        msiSetNumThreads("default","16","default");
+    # Session variables $rescName and $KVPairs are not present
+    # Only occurs for one ressource during the replication
+    # Doesn't affect the outcome of the replication
+    # WARNING: ERROR suppressed from the logs
+
+    *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));
+
+    if ( *error == 0 ) {
+        if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
+            msiSetNumThreads("default","0","default");
+        } else {
+            msiSetNumThreads("default","16","default");
+        }
     }
 }

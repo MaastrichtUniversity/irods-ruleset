@@ -22,15 +22,21 @@ IRULE_changeProjectPermissions(*project, *users){
 
         uuChop(*users, *head, *tail, " ", true);
         if (*head != ""){
+            # Still multiple users to parse
             uuChop(*head, *account, *rights, ":", true);
             msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
+
+            *users = *tail;
         }
         else{
+            # Final user
             uuChop(*tail, *account, *rights, ":", true);
             msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
+
+            # Signal end of loop
+            *users = ""
         }
 
-        *users = *tail;
         *count = *count-1;
 
         if ( *count == 0 ) {
@@ -51,7 +57,9 @@ IRULE_changeProjectPermissions(*project, *users){
             # Change ACL on the projectCollection level by chopping up the input array on space, and looping over it
             while (*delay_users != "") {
                 uuChop(*delay_users, *head, *tail, " ", true);
+
                 if (*head != ""){
+                    # Still multiple users to parse
                     uuChop(*head, *account, *rights, ":", true);
 
                     # Always set rights to read, unless they are removed
@@ -60,8 +68,11 @@ IRULE_changeProjectPermissions(*project, *users){
                         *collection_rights = "null";
                     }
                     msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
+
+                    *delay_users = *tail;
                 }
                 else {
+                    # Final user
                     uuChop(*tail, *account, *rights, ":", true);
 
                     # Always set rights to read, unless they are removed
@@ -71,9 +82,11 @@ IRULE_changeProjectPermissions(*project, *users){
                     }
 
                     msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
+
+                    # Signal end of loop
+                    *delay_users = "";
                 }
 
-                *delay_users = *tail;
                 *count = *count - 1;
 
                 if ( *count == 0 ) {

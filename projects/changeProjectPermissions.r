@@ -18,7 +18,8 @@ IRULE_changeProjectPermissions(*project, *users){
     *count = 100;
 
     # Change ACL on the project level by chopping up the input array on space, and looping over it
-    while ( *users != "" && *count != 0){
+    while ( *users != "" ){
+
         uuChop(*users, *head, *tail, " ", true);
         if (*head != ""){
             uuChop(*head, *account, *rights, ":", true);
@@ -28,8 +29,13 @@ IRULE_changeProjectPermissions(*project, *users){
             uuChop(*tail, *account, *rights, ":", true);
             msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
         }
+
         *users = *tail;
         *count = *count-1;
+
+        if ( *count == 0 ) {
+            failmsg(-1, "Malformed input of the permission string of changeProjectPermission. Stopped execution. Permission string: *input_users");
+        }
     }
 
     delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF>") {
@@ -66,7 +72,13 @@ IRULE_changeProjectPermissions(*project, *users){
 
                     msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
                 }
+
                 *delay_users = *tail;
+                *count = *count - 1;
+
+                if ( *count == 0 ) {
+                    failmsg(-1, "Malformed input of the permission string of changeProjectPermission. Stopped execution. Permission string: *input_users");
+                }
             }
 
             # Close collection

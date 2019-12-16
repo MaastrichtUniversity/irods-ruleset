@@ -24,18 +24,19 @@ IRULE_changeProjectPermissions(*project, *users){
         if (*head != ""){
             # Still multiple users to parse
             uuChop(*head, *account, *rights, ":", true);
-            msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
 
+            # Process rest users following iteration
             *users = *tail;
         }
         else{
             # Final user
             uuChop(*tail, *account, *rights, ":", true);
-            msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
 
             # Signal end of loop
             *users = ""
         }
+
+        msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
 
         *count = *count-1;
 
@@ -62,30 +63,25 @@ IRULE_changeProjectPermissions(*project, *users){
                     # Still multiple users to parse
                     uuChop(*head, *account, *rights, ":", true);
 
-                    # Always set rights to read, unless they are removed
-                    *collection_rights = "read";
-                    if (*rights == "null"){
-                        *collection_rights = "null";
-                    }
-                    msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
-
+                    # Process rest users following iteration
                     *delay_users = *tail;
                 }
                 else {
                     # Final user
                     uuChop(*tail, *account, *rights, ":", true);
 
-                    # Always set rights to read, unless they are removed
-                    *collection_rights = "read";
-                    if (*rights == "null"){
-                        *collection_rights = "null";
-                    }
-
-                    msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
-
                     # Signal end of loop
                     *delay_users = "";
                 }
+
+                # Always set rights to read, unless they are removed
+                if (*rights == "null"){
+                    *collection_rights = "null";
+                } else {
+                    *collection_rights = "read";
+                }
+
+                msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
 
                 *count = *count - 1;
 

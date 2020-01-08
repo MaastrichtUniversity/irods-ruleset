@@ -22,11 +22,14 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project/*collection","PID",*PID,"no-PID-set","false");
     getCollectionSize("/nlmumc/projects/*project/*collection", "B", "none", *byteSize);
 
+    getCollectionAVU("/nlmumc/projects/*project","enableSurfSaraArchive",*enableSurfSaraArchive,"false","false");
+    getCollectionAVU("/nlmumc/projects/*project","enableOpenAccessExport",*enableOpenAccessExport,"false","false");
+
     listProjectManagers(*project, *managers);
     listProjectContributors(*project, *inherited, *contributors);
     listProjectViewers(*project, *inherited, *viewers);
-    
-    *details = '{"project": "*project", "collection": "*collection", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+
+    *details = '{"project": "*project", "collection": "*collection", "enableOpenAccessExport": "*enableOpenAccessExport", "enableSurfSaraArchive": "*enableSurfSaraArchive", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);

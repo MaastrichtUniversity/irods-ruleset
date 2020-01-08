@@ -65,7 +65,6 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
 
     # Set recursive permissions
-    msiSetACL("default", "read", "service-dwh", *dstColl);
     msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("default", "read", "service-disqover", *dstColl);
     msiSetACL("recursive", "inherit", "", *dstColl);

@@ -6,6 +6,7 @@ ingest {
     *srcColl = "/nlmumc/ingest/zones/*token";
 
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
+        # CAT_UNKNOWN_COLLECTION
         failmsg(-814000, "Unknown ingest zone *token");
     }
 
@@ -23,13 +24,14 @@ ingest {
     }
 
     # Check for project's ingest resource status to start ingestion
-    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
-    *disableIngest = "false"
-    foreach (*r in select META_RESC_ATTR_VALUE where RESC_NAME = *ingestResource AND META_RESC_ATTR_NAME = "disableIngest" ) {
-        *disableIngest = *r.META_RESC_ATTR_VALUE;
+    getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+    *rescStatus = ""
+    foreach (*r in select RESC_STATUS where RESC_NAME = *resource ) {
+        *rescStatus = *r.RESC_STATUS;
     }
 
-    if ( *disableIngest == "true" ) {
+    # Only down is a real status. Anything but "down" means up
+    if ( *rescStatus == "down" ) {
         # -831000 CAT_INVALID_RESOURCE
         failmsg(-831000, "Ingest disabled for this resource.");
     }

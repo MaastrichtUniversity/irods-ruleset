@@ -5,6 +5,13 @@
 ingest {
     *srcColl = "/nlmumc/ingest/zones/*token";
 
+    *hasDropZonepermission = "";
+    checkDropZoneACL(*user, *hasDropZonepermission);
+    if (*hasDropZonepermission == "false") {
+        # -818000 CAT_NO_ACCESS_PERMISSION
+        failmsg(-818000, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
+    }
+
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
         # CAT_UNKNOWN_COLLECTION
         failmsg(-814000, "Unknown ingest zone *token");

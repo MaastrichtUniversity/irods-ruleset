@@ -9,10 +9,10 @@ irule_dummy() {
 
 IRULE_listActiveDropZones(*report, *result) {
     *hasDropZonepermission = "";
-    checkDropZoneACL(*user, *hasDropZonepermission);
+    checkDropZoneACL($userNameClient, *hasDropZonepermission);
     if (*hasDropZonepermission == "false") {
         # -818000 CAT_NO_ACCESS_PERMISSION
-        failmsg(-818000, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
+        failmsg(-818000, "User '$userNameClient' has insufficient DropZone permissions on /nlmumc/ingest/zones");
     }
 
     *json_str = '[]';

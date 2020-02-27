@@ -3,8 +3,15 @@
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within prepareTapeArchive.r rule
 
 tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescParentsName){
-    *stateAttrName = "archiveState";
-    *archiveResc="arcRescSURF01";
+     *stateAttrName = "archiveState";
+
+     # split the *archColl into *project and *projectCollection
+     uuChopPath(*archColl, *dir, *projectCollection);
+     uuChopPath(*dir, *dir2, *project);
+
+     # Get the destination archive resource from the project
+     getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+
     # Count how many file have been archived
     *isMoved=0;
 

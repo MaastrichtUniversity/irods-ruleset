@@ -3,12 +3,14 @@
 
 
 prepareTapeArchive {
-    # resource name destination
-    *archiveResc="arcRescSURF01";
+
+    # Get the destination archive resource from the project
+    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
     # The minimum file size criteria (in bytes)
     *minimumSize=262144000;
     # rodsadmin user running the rule
-    *aclChange="service-surfarchive";
+    # get this from avu set on archive
+    getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
     # state AVU attribute name -> to report progress
     *stateAttrName = "archiveState";
 

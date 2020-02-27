@@ -6,7 +6,16 @@ irule_dummy() {
 }
 
 IRULE_prepareTapeUnArchive(*archColl) {
-    *aclChange="service-surfarchive";        #a rodsadmin group/user running the rule
+
+    # split the *archColl into *project and *projectCollection
+    uuChopPath(*archColl, *dir, *projectCollection);
+    uuChopPath(*dir, *dir2, *project);
+
+    # Get the destination archive resource from the project
+    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+    # rodsadmin user running the rule
+    # get this from avu set on archive
+    getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
     *stateAttrName = "archiveState";
 
     # Retrieve archiveState
@@ -21,7 +30,8 @@ IRULE_prepareTapeUnArchive(*archColl) {
         failmsg(-1, "Invalid state(*archiveState) to start process.");
     }
 
-    *resc = "arcRescSURF01";
+    # Get the destination archive resource from the project
+    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*resc,"N/A","true");
     *dmfs_attr;
     *count;
 

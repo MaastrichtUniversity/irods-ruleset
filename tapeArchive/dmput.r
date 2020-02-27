@@ -1,6 +1,7 @@
 # Force a collection offline
 
 dmput(){
+    # TODO Change to parameter
     *resc = "arcRescSURF01";
     foreach(
         *r in SELECT

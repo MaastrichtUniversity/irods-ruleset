@@ -5,9 +5,19 @@ tapeUnArchive(*count, *archColl){
     #2019
     #This version is for 4.2
 
-    *archiveResc="arcRescSURF01";  #The Archive connected resource
+     # split the *archColl into *project and *projectCollection
+     uuChopPath(*archColl, *dir, *projectCollection);
+     uuChopPath(*dir, *dir2, *project);
+
+     # Get the destination archive resource from the project
+     getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+
     *minimumSize=262144000;        #The minimum file size (in bytes)
-    *aclChange="service-surfarchive";        #a rodsadmin group/user running the rule
+
+    # rodsadmin user running the rule
+    # get this from avu set on archive
+    getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
+
     *isMoved=0;                 #Number of files moved counter
     *stateAttrName = "archiveState";
 

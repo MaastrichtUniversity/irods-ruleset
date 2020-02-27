@@ -12,7 +12,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
     uuChopPath(*dir, *dir2, *project);
 
     # Get the destination archive resource from the project
-    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
     # rodsadmin user running the rule
     # get this from avu set on archive
     getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
@@ -31,7 +31,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
     }
 
     # Get the destination archive resource from the project
-    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*resc,"N/A","true");
+    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*resc,"N/A","true");
     *dmfs_attr;
     *count;
 

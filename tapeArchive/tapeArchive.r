@@ -10,7 +10,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
      uuChopPath(*dir, *dir2, *project);
 
      # Get the destination archive resource from the project
-     getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+     getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
 
     # Count how many file have been archived
     *isMoved=0;

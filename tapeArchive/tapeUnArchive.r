@@ -10,7 +10,7 @@ tapeUnArchive(*count, *archColl){
      uuChopPath(*dir, *dir2, *project);
 
      # Get the destination archive resource from the project
-     getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+     getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
 
     *minimumSize=262144000;        #The minimum file size (in bytes)
 

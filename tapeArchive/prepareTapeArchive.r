@@ -5,7 +5,7 @@
 prepareTapeArchive {
 
     # Get the destination archive resource from the project
-    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
     # The minimum file size criteria (in bytes)
     *minimumSize=262144000;
     # rodsadmin user running the rule

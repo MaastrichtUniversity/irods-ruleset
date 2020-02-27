@@ -9,7 +9,7 @@ IRULE_estimateProjectCollection(*project, *collection, *resultSize, *resultNumFi
 
     *archColl = "/nlmumc/projects/*project/*collection"
     # Get the destination archive resource from the project
-    getCollectionAVU("/nlmumc/projects/*project","ArchiveDestinationResource",*archiveResc,"N/A","true");
+    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
     *sizeBytes = 0;
     *minimumSize=262144000;        #The minimum file size (in bytes)
     *numFiles = 0;

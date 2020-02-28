@@ -5,12 +5,21 @@ tapeUnArchive(*count, *archColl){
     #2019
     #This version is for 4.2
 
-     # split the *archColl into *project and *projectCollection
-     uuChopPath(*archColl, *dir, *projectCollection);
-     uuChopPath(*dir, *dir2, *project);
+     # TODO Improve regex path sanity check
+     if (*archColl like regex '/nlmumc/projects/P.*/C.*'){
+         # split the *archColl into *project and *projectCollection
+         *splitPath =  split(*archColl, "/");
+         *project = elem(*splitPath,2);
+         *projectPath =  "/nlmumc/projects/*project";
+         *projectCollection = elem(*splitPath,3);
+         *projectCollectionPath = "/nlmumc/projects/*project/*projectCollection";
+     }
+     else{
+         failmsg(-1, "Invalid input path: *archColl");
+     }
 
      # Get the destination archive resource from the project
-     getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
+     getCollectionAVU(*projectPath,"archiveDestinationResource",*archiveResc,"N/A","true");
 
     *minimumSize=262144000;        #The minimum file size (in bytes)
 
@@ -27,13 +36,9 @@ tapeUnArchive(*count, *archColl){
         *archColl = *dir;
     }
 
-    # Get project's id and collection's id
-    uuChopPath(*archColl, *dir, *projectCollection);
-    uuChopPath(*dir, *dir2, *project);
-
     # Get projectResource AVU - replicate destination resource name
     *projectResource = "";
-    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*dir" AND META_COLL_ATTR_NAME == "resource") {
+    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*projectPath" AND META_COLL_ATTR_NAME == "resource") {
         *projectResource = *av.META_COLL_ATTR_VALUE;
     }
 
@@ -61,7 +66,7 @@ tapeUnArchive(*count, *archColl){
                 *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
                 *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-                setCollectionAVU(*archColl, "archiveState",*value);
+                setCollectionAVU(*projectCollectionPath, "archiveState",*value);
 
                 msiDataObjChksum(*ipath,"verifyChksum=",*chksum);
                 writeLine("serverLog", "surfArchiveScanner archived file "++*ipath);
@@ -103,7 +108,7 @@ tapeUnArchive(*count, *archColl){
                 *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
                 *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-                setCollectionAVU(*archColl, "archiveState",*value);
+                setCollectionAVU(*projectCollectionPath, "archiveState",*value);
 
                 msiDataObjChksum(*ipath,"verifyChksum=",*chksum);
                 writeLine("serverLog", "surfArchiveScanner archived file "++*ipath);
@@ -131,12 +136,12 @@ tapeUnArchive(*count, *archColl){
     }
     # Update state AVU to done
     *value = "unarchive-done";
-    setCollectionAVU(*archColl, "archiveState",*value)
+    setCollectionAVU(*projectCollectionPath, "archiveState",*value)
     writeLine("serverLog", "surfArchiveScanner found "++str(*isMoved)++" files.");
 
     # Delete status AVU
     msiAddKeyVal(*delKV, *stateAttrName, *value);
-    msiRemoveKeyValuePairsFromObj(*delKV,*archColl, "-C");
+    msiRemoveKeyValuePairsFromObj(*delKV,*projectCollectionPath, "-C");
 
     # Re-calculate new values for dcat:byteSize and numFiles
     setCollectionSize(*project, *projectCollection, 'false', 'false');

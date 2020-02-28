@@ -7,15 +7,24 @@ irule_dummy() {
 
 IRULE_prepareTapeUnArchive(*archColl) {
 
-    # split the *archColl into *project and *projectCollection
-    uuChopPath(*archColl, *dir, *projectCollection);
-    uuChopPath(*dir, *dir2, *project);
+    # TODO Improve regex path sanity check
+    if (*archColl like regex '/nlmumc/projects/P.*/C.*'){
+        # split the *archColl into *project and *projectCollection
+        *splitPath =  split(*archColl, "/");
+        *project = elem(*splitPath,2);
+        *projectPath =  "/nlmumc/projects/*project";
+        *projectCollection = elem(*splitPath,3);
+        *projectCollectionPath = "/nlmumc/projects/*project/*projectCollection";
+    }
+    else{
+         failmsg(-1, "Invalid input path: *archColl");
+    }
 
     # Get the destination archive resource from the project
-    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
+    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*resc,"N/A","true");
     # rodsadmin user running the rule
     # get this from avu set on archive
-    getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
+    getResourceAVU(*resc,"service-account",*aclChange,"N/A","true");
     *stateAttrName = "archiveState";
 
     # Retrieve archiveState
@@ -30,8 +39,6 @@ IRULE_prepareTapeUnArchive(*archColl) {
         failmsg(-1, "Invalid state(*archiveState) to start process.");
     }
 
-    # Get the destination archive resource from the project
-    getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*resc,"N/A","true");
     *dmfs_attr;
     *count;
 
@@ -51,9 +58,6 @@ IRULE_prepareTapeUnArchive(*archColl) {
         *count = checkTapeCollection(*resc, *svr, *archColl, *dmfs_attr, *dataPathList);
     }
 
-    uuChopPath(*archColl, *dir, *projectCollection);
-    uuChopPath(*dir, *dir2, *project);
-
     # Open collection to update status AVU *archiveState
     openProjectCollection(*project, *projectCollection, *aclChange, 'own');
 
@@ -65,7 +69,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
     # Check if data list is not empty -> if true some data can be un-archived
     if (*dataPathList !=  ""){
         *value = "Number of files offline: *count";
-        setCollectionAVU(*archColl, *stateAttrName, *value)
+        setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
 
         # Loop into the result key pair value: path -> status
         foreach(*path in *dmfs_attr){
@@ -111,7 +115,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
     if (*unMigratingList != ""){
         writeLine("serverLog", "Un-migrating to cache: *unMigratingList");
         *value = "Caching files countdown: *unMigratingCounter";
-        setCollectionAVU(*archColl, *stateAttrName, *value)
+        setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
 
         # Delay & recursive call
         delay("<PLUSET>30s</PLUSET>"){
@@ -123,7 +127,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
         # UnArchive Check
         if (*unArchivingList != ""){
             *value = "start-transfer";
-            setCollectionAVU(*archColl, *stateAttrName, *value)
+            setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
             writeLine("serverLog", "Start replication back to UM for: *unArchivingList ");
             delay("<PLUSET>1s</PLUSET>") {
                 tapeUnArchive(*count, *archColl);

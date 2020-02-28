@@ -1,8 +1,15 @@
 # Call with
 # irule -F prepareTapeArchive.r "*archColl='/nlmumc/projects/P000000001/C000000097'"
 
+irule_dummy() {
+    IRULE_prepareTapeArchive(*archColl);
+}
 
-prepareTapeArchive {
+IRULE_prepareTapeArchive(*archColl) {
+
+    # split the *archColl into *project and *projectCollection
+    uuChopPath(*archColl, *dir, *projectCollection);
+    uuChopPath(*dir, *dir2, *project);
 
     # Get the destination archive resource from the project
     getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");

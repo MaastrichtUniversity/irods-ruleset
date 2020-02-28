@@ -57,9 +57,6 @@ IRULE_prepareTapeUnArchive(*archColl) {
     # Open collection to update status AVU *archiveState
     openProjectCollection(*project, *projectCollection, *aclChange, 'own');
 
-    *value = "Number of files offline: *count";
-    setCollectionAVU(*archColl, *stateAttrName, *value)
-
     *unMigratingCounter = 0;
     *offlineList = "";
     *unMigratingList  = "";
@@ -67,6 +64,9 @@ IRULE_prepareTapeUnArchive(*archColl) {
 
     # Check if data list is not empty -> if true some data can be un-archived
     if (*dataPathList !=  ""){
+        *value = "Number of files offline: *count";
+        setCollectionAVU(*archColl, *stateAttrName, *value)
+
         # Loop into the result key pair value: path -> status
         foreach(*path in *dmfs_attr){
              # Check if data are offline

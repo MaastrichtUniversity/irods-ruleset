@@ -8,7 +8,9 @@ irule_dummy() {
 }
 
 IRULE_sendMetadata(*mirthURL , *project, *collection) {
-    msi_http_send_file("*mirthURL/?project=*project&collection=*collection", "/nlmumc/projects/*project/*collection/metadata.xml");
+    msiWriteRodsLog("DEBUG: mirthMetaDataUrl from msi_getenv is '*mirthURL'", 0);
+    *postFields."data" = ""
+    msiCurlPost("http://*mirthURL/?project=*project&collection=*collection", *postFields, *response);
 }
 
 INPUT *project='',*collection=''

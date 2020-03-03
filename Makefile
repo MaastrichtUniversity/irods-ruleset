@@ -4,7 +4,7 @@
 #
 
 # The rule dirs to be processed
-RULEDIRS = ingest misc projects projectCollection
+RULEDIRS = ingest misc projects projectCollection tapeArchive
 
 # The make target
 all: $(RULEDIRS)

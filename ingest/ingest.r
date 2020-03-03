@@ -5,7 +5,15 @@
 ingest {
     *srcColl = "/nlmumc/ingest/zones/*token";
 
+    *hasDropZonepermission = "";
+    checkDropZoneACL(*user, *hasDropZonepermission);
+    if (*hasDropZonepermission == "false") {
+        # -818000 CAT_NO_ACCESS_PERMISSION
+        failmsg(-818000, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
+    }
+
     if (errorcode(msiObjStat(*srcColl,*out)) < 0) {
+        # CAT_UNKNOWN_COLLECTION
         failmsg(-814000, "Unknown ingest zone *token");
     }
 
@@ -20,6 +28,19 @@ ingest {
         if ( *av.META_COLL_ATTR_NAME == "state" ) {
             *state = *av.META_COLL_ATTR_VALUE;
         }
+    }
+
+    # Check for project's ingest resource status to start ingestion
+    getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+    *rescStatus = ""
+    foreach (*r in select RESC_STATUS where RESC_NAME = *resource ) {
+        *rescStatus = *r.RESC_STATUS;
+    }
+
+    # Only down is a real status. Anything but "down" means up
+    if ( *rescStatus == "down" ) {
+        # -831000 CAT_INVALID_RESOURCE
+        failmsg(-831000, "Ingest disabled for this resource.");
     }
 
     # Check for valid state to start ingestion
@@ -49,7 +70,7 @@ ingest {
         validateMetadataFromIngest(*token,*mirthValidationURL);
     }
 
-    # Continue ingest and send to Solr
+    # Continue ingest and create PID in Mirth
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl);
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {

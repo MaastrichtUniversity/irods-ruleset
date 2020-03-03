@@ -59,13 +59,16 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiWriteRodsLog("*srcColl : Sync took *difference seconds", 0);
     msiWriteRodsLog("*srcColl : AVG speed was *avgSpeed MiB/s", 0);
 
-    # Add multiple AVUs to ProjectCollection
-    msiAddKeyVal(*metaKV, "dcat:byteSize", str(*size));
-    msiAddKeyVal(*metaKV, "numFiles", str(*numFiles));
+    # Set simple AVUs
+    msiWriteRodsLog("*srcColl : Setting AVUs to *dstColl", 0);
     msiAddKeyVal(*metaKV, "creator", *user);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
+    # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open
+    setCollectionSize(*project, *projectCollection, "false", "false");
+
     # Send metadata
+    # Please note that this step also sets the PID AVU via MirthConnect
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
     if ( *error < 0 ) {

@@ -1,5 +1,9 @@
-# Call with
+# This rule handles two input variables: a collection absolute path or data object absolute path
+# e.g Bring back an entire collection online
 # irule -F prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001'"
+#
+# e.g Bring back a single data object online
+# irule -F prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'"
 
 irule_dummy() {
     IRULE_prepareTapeUnArchive(*archColl);
@@ -7,8 +11,8 @@ irule_dummy() {
 
 IRULE_prepareTapeUnArchive(*archColl) {
 
-    # TODO Improve regex path sanity check
-    if (*archColl like regex '/nlmumc/projects/P.*/C.*'){
+    # Check the input absolute path and initialize the required variables for this rule
+    if (*archColl like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}.*"){
         # split the *archColl into *project and *projectCollection
         *splitPath =  split(*archColl, "/");
         *project = elem(*splitPath,2);

@@ -27,6 +27,11 @@ IRULE_prepareTapeUnArchive(*archColl) {
     getResourceAVU(*resc,"service-account",*aclChange,"N/A","true");
     *stateAttrName = "archiveState";
 
+     # Log statements
+     msiWriteRodsLog("INFO: UnArchival worklow started for *archColl", 0);
+     msiWriteRodsLog("DEBUG: Data will be moved from resource *resc", 0);
+     msiWriteRodsLog("DEBUG: Service account used is *aclChange", 0);
+
     # Retrieve archiveState
     *archiveState = "";
     foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*archColl" AND META_COLL_ATTR_NAME == "archiveState") {
@@ -46,15 +51,15 @@ IRULE_prepareTapeUnArchive(*archColl) {
     foreach(*r in SELECT RESC_LOC WHERE RESC_NAME = *resc){
         *svr=*r.RESC_LOC;
     }
-    writeLine("serverLog", "\nConnecting on *resc - *svr");
+    msiWriteRodsLog("DEBUG: Connecting on *resc - *svr", 0);
 
     msiGetObjType(*archColl, *inputType);
     if (*inputType like '-d'){
-         writeLine("serverLog", "Checking data status: *archColl");
+        msiWriteRodsLog("DEBUG: Checking data status: *archColl", 0);
         *count = checkTapeFile(*resc, *svr, *archColl, *dmfs_attr, *dataPathList);
     }
     if (*inputType like '-c'){
-        writeLine("serverLog", "Checking collection status: *archColl");
+        msiWriteRodsLog("DEBUG: Checking collection status: *archColl", 0);
         *count = checkTapeCollection(*resc, *svr, *archColl, *dmfs_attr, *dataPathList);
     }
 
@@ -105,7 +110,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
     if (*offlineList != ""){
         # Call dmget to stage data back to cache
         dmget(*offlineList, *svr)
-        writeLine("serverLog", "Stage back to cache: *offlineList");
+        msiWriteRodsLog("DEBUG: Stage back to cache: *offlineList", 0);
 
         # Recursive call to check un-migrating status
         prepareTapeUnArchive(*archColl);
@@ -113,13 +118,13 @@ IRULE_prepareTapeUnArchive(*archColl) {
 
     # UnMigrating Check
     if (*unMigratingList != ""){
-        writeLine("serverLog", "Un-migrating to cache: *unMigratingList");
+        msiWriteRodsLog("DEBUG: Un-migrating to cache: *unMigratingList", 0);
         *value = "Caching files countdown: *unMigratingCounter";
         setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
 
         # Delay & recursive call
         delay("<PLUSET>30s</PLUSET>"){
-            writeLine("serverLog", "SURFSara Archive - delay 30s, before retry");
+            msiWriteRodsLog("DEBUG: SURFSara Archive - delay 30s, before retry", 0);
             prepareTapeUnArchive(*archColl);
         }
     }
@@ -128,13 +133,13 @@ IRULE_prepareTapeUnArchive(*archColl) {
         if (*unArchivingList != ""){
             *value = "start-transfer";
             setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
-            writeLine("serverLog", "Start replication back to UM for: *unArchivingList ");
+            msiWriteRodsLog("DEBUG: Start replication back to UM for: *unArchivingList", 0);
             delay("<PLUSET>1s</PLUSET>") {
                 tapeUnArchive(*count, *archColl);
             }
         }
         else{
-            writeLine("serverLog", "Nothing to un-archive");
+            msiWriteRodsLog("DEBUG: Nothing to un-archive", 0);
         }
     }
 }

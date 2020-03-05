@@ -15,7 +15,7 @@ checkTapeFile(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
     ){
         *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
         *dataPathList = *row.DATA_PATH;
-        writeLine("serverLog", "\tdataPath *dataPathList");
+        msiWriteRodsLog("DEBUG: dataPath *dataPathList", 0);
         dmattr(*dataPathList, *svr, *ipath, *count, *dmfs_attr);
     }
     # Return *count

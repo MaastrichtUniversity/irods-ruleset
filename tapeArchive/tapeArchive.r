@@ -39,7 +39,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     # Get the data's path by its index in *dataArray
                     *dataPath = "";
                     msi_json_arrayops(*dataArray, *dataPath, "get", *index)
-                    writeLine("serverLog","*dataPath");
+                    msiWriteRodsLog("DEBUG: *dataPath", 0);
 
                     # Update state AVU with progress
                     # Collection have been opened in prepareTapeArchive
@@ -66,17 +66,17 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     *isMoved=*isMoved+1;
 
                     # Report logs
-                    writeLine("serverLog","\t\tchksum done "++str(*chksum));
-                    writeLine("serverLog","\t\trepl moveStat done "++str(*moveStatus));
-                    writeLine("serverLog","\t\ttrim stat done "++str(*trimStatus));
-                    writeLine("serverLog","\t\tReplicate from "++*coordResourceName++" to "++*archiveResc);
+                    msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+                    msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
+                    msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
+                    msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
                 }
             }
         }
     }
     # Update state AVU to done
     setCollectionAVU(*archColl, *stateAttrName, "archive-done")
-    writeLine("serverLog","surfArchiveScanner archived "++str(*isMoved)++" files.");
+    msiWriteRodsLog("DEBUG: surfArchiveScanner archived *isMoved files ", 0);
 
     # Delete state AVU
     msiAddKeyVal(*delKV, *stateAttrName, "archive-done");
@@ -88,7 +88,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
 
     # Re-calculate new values for dcat:byteSize and numFiles
     setCollectionSize(*project, *projectCollection, 'false', 'false');
-    writeLine("stdout","dcat:byteSize and numFiles have been re-calculated and adjusted");
+    msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0);
 
     # Close collection by making all access read only
     closeProjectCollection(*project, *projectCollection);

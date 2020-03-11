@@ -9,7 +9,7 @@ tapeUnArchiveFile(*ScanColl, *archiveResc, *projectResource, *resourceLocation, 
         setCollectionAVU(*archColl, "archiveState",*value);
 
         msiDataObjChksum(*ipath,"verifyChksum=",*chksum);
-        writeLine("serverLog", "surfArchiveScanner archived file "++*ipath);
+        msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
 
         msiDataObjRepl(*ipath, "destRescName=*projectResource++++verifyChksum=", *moveStatus);
         if ( *moveStatus != 0 ) {
@@ -23,11 +23,11 @@ tapeUnArchiveFile(*ScanColl, *archiveResc, *projectResource, *resourceLocation, 
 
         *isMoved=*isMoved+1;
         # Debug
-        writeLine("serverLog", "\t\tiCAT checksum "++str(*ScanColl.DATA_CHECKSUM));
-        writeLine("serverLog", "\t\tchksum done "++str(*chksum));
-        writeLine("serverLog", "\t\trepl moveStat done "++str(*moveStatus));
-        writeLine("serverLog", "\t\ttrim stat done "++str(*trimStatus));
-        writeLine("serverLog", "\t\tsurfArchiveScanner found "++str(*ipath));
-        writeLine("serverLog", "\t\tReplicate from "++*archiveResc++" to "++*projectResource);
+        msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
+        msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+        msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
+        msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
+        msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
+        msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
     }
 }

@@ -11,8 +11,8 @@ dmput(){
     ){
         *svr=*r.RESC_LOC;
     }
-    writeLine("stdout",*archColl );
-    writeLine("stdout","*svr");          #Whitespace for display
+    msiWriteRodsLog("DEBUG: *archColl", 0);
+    msiWriteRodsLog("DEBUG: *svr", 0);  #Whitespace for display
     *dataPathList = "";
     foreach(
         *row in
@@ -32,16 +32,15 @@ dmput(){
         else{
             *dataPathList = *dataPathList++" "++*dataPath;
         }
-#
     }
 
-    writeLine("stdout", *dataPathList);
+    msiWriteRodsLog("DEBUG: *dataPathList", 0);
 
     msiExecCmd("dmput", *dataPathList, "*svr", "", "", *dmRes);
     msiGetStdoutInExecCmdOut(*dmRes,*Out);
 
     *Out=trimr(*Out,'\n');
-    writeLine("stdout", *Out);
+    msiWriteRodsLog("DEBUG: *Out", 0);
 }
 INPUT *archColl=""
 OUTPUT ruleExecOut

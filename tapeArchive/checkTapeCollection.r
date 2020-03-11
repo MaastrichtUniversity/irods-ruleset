@@ -15,7 +15,7 @@ checkTapeCollection(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
     ){
         *ipath=*row.COLL_NAME++"/"++*row.DATA_NAME;
         *dataPath = *row.DATA_PATH;
-        writeLine("serverLog", "\tdataPath *dataPath");
+        msiWriteRodsLog("DEBUG: dataPath *dataPath", 0);
         if ( *dataPathList == ""){
             *dataPathList = *dataPath;
         }

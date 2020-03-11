@@ -21,6 +21,11 @@ IRULE_prepareTapeArchive(*archColl) {
     # state AVU attribute name -> to report progress
     *stateAttrName = "archiveState";
 
+    # Log statements
+    msiWriteRodsLog("INFO: Archival worklow started for *archColl", 0);
+    msiWriteRodsLog("DEBUG: Data will be moved to resource *archiveResc", 0);
+    msiWriteRodsLog("DEBUG: Service account used is *aclChange", 0);
+
     # Query *stateAttrName value
     *stateValue = "";
     foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*archColl" AND META_COLL_ATTR_NAME == *stateAttrName) {
@@ -100,7 +105,7 @@ IRULE_prepareTapeArchive(*archColl) {
 
         *counter=*counter+1;
 	}
-    writeLine("serverLog","surfArchiveScanner found "++str(*counter)++" files.");
+	msiWriteRodsLog("INFO: surfArchiveScanner found *counter files", 0);
     *value = "Number of files found: *counter";
     setCollectionAVU(*archColl, "archiveState", *value)
 

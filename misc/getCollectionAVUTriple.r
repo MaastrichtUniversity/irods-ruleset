@@ -1,5 +1,5 @@
 # Call with
-# irule -F getAVU.r "*collName='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
+# irule -F getCollectionAVUTriple.r "*collName='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
 #
 # Return a JSON array with a triplet Attribute Value Unit for each matching input attribute to the collection
 #
@@ -10,12 +10,12 @@
 
 
 irule_dummy() {
-    IRULE_getAVU(*path, *attribute, *overrideValue, *fatal, *result)
+    IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result)
     writeLine("stdout", *result );
 }
 
 
-IRULE_getAVU(*path, *attribute, *overrideValue, *fatal, *result) {
+IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result) {
     *value = "";
     *arrayops = '[]';
     *arraySize = 0;

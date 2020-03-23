@@ -37,7 +37,7 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     msiAddKeyVal(*titleKvp, "title", *title);
     msi_json_objops(*details, *titleKvp, "add");
 
-    getAVU("/nlmumc/projects/*project/*collection", 'externalPID', '', 'false', *externals);
+    getCollectionAVUTriple("/nlmumc/projects/*project/*collection", 'externalPID', '', 'false', *externals);
     if ( *externals == "" ) {
         msiString2KeyValPair("externals=no-externalPID-set", *ext);
         msi_json_objops(*details, *ext, "add");

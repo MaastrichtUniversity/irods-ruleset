@@ -1,5 +1,5 @@
 # Call with
-# irule -F getCollectionAVUTriple.r "*collName='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
+# irule -F getCollectionAVUTriple.r "*path='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
 #
 # Return a JSON array with a triplet Attribute Value Unit for each matching input attribute to the collection
 #
@@ -31,7 +31,7 @@ IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result)
     *result = *arrayops;
     if (*arraySize == 0) {
         if (*fatal == "true") {
-            failmsg(-1, "ERROR: The attribute '*attribute' of collection '*collName' has no value in iCAT");
+            failmsg(-1, "ERROR: The attribute '*attribute' of collection '*path' has no value in iCAT");
         } else {
             *result = *overrideValue;
             msiWriteRodsLog("WARNING: The attribute '*attribute' of collection '*path' has no value in iCAT. Using overrideValue '*overrideValue' instead",0);

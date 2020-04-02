@@ -16,10 +16,10 @@ checkTapeCollection(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
         *dataPath = *row.DATA_PATH;
         msiWriteRodsLog("DEBUG: dataPath *dataPath", 0);
         if ( *dataPathList == ""){
-            *dataPathList = *dataPath;
+            *dataPathList = '"*dataPath"';
         }
         else{
-            *dataPathList = *dataPathList++" "++*dataPath;
+            *dataPathList = *dataPathList++" "++'"*dataPath"';
         }
         *count = *count + 1;
     }

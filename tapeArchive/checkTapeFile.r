@@ -14,7 +14,8 @@ checkTapeFile(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
                 AND COLL_NAME  = '*dir'
                 AND DATA_NAME  = '*dataName'
     ){
-        *dataPathList = *row.DATA_PATH;
+        *dataPath = *row.DATA_PATH;
+        *dataPathList = '"*dataPath"';
         *count = *count + 1;
     }
 

@@ -10,7 +10,7 @@ dmattr(*data, *svr, *count, *dmfs_attr){
     for ( *i=0; *i < *count ; *i = *i +1){
         uuChop(*Out, *firstResult, *nextResult, "\n", true);
         *Out = *nextResult;
-        uuChop(*pathList, *firstPath, *nextPath, " ", true);
+        uuChop(*pathList, *firstPath, *nextPath, '" ', true);
         *pathList = *nextPath;
 
         *result = *firstResult;

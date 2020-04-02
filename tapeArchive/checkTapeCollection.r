@@ -13,7 +13,6 @@ checkTapeCollection(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
                 DATA_RESC_NAME = '*resc'
             AND COLL_NAME like '*archColl%'
     ){
-        *ipath=*row.COLL_NAME++"/"++*row.DATA_NAME;
         *dataPath = *row.DATA_PATH;
         msiWriteRodsLog("DEBUG: dataPath *dataPath", 0);
         if ( *dataPathList == ""){
@@ -25,7 +24,7 @@ checkTapeCollection(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
         *count = *count + 1;
     }
     if (*dataPathList !=  ""){
-        dmattr(*dataPathList, *svr, *ipath, *count, *dmfs_attr);
+        dmattr(*dataPathList, *svr, *count, *dmfs_attr);
     }
     else{
         *dmfs_attr."result" = "null";

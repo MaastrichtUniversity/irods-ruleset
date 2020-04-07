@@ -1,6 +1,5 @@
 # Call with
 #
-# irule -F getGroups.r "*showSpecialGroups='true'"
 # irule -F getGroupMemberships.r "*user='name'" (where name is like name@maastrichtuniversity.nl
 
 irule_dummy() {

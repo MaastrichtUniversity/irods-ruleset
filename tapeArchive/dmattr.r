@@ -5,6 +5,7 @@ dmattr(*data, *svr, *count, *dmfs_attr){
 
     # Our *Out variable looks something like this "109834fjksjv09sdrf+DUL+0+2014"
     # The + is a separator, and the order of the 4 values are BFID, DMF status, size of data on disk, total size of data.
+    # If *Out contains multiple files, one line = one file
     *pathList = *data;
     msiWriteRodsLog("DEBUG: Result:", 0);
     for ( *i=0; *i < *count ; *i = *i +1){

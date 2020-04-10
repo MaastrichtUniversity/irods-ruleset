@@ -1,7 +1,8 @@
 
 checkTapeFile(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
+    *dataPathList = "";
     uuChopPath(*archColl, *dir, *dataName);
-    *count = 1 ;
+    *count = 0;
     foreach(
         *row in
             SELECT
@@ -13,11 +14,19 @@ checkTapeFile(*resc, *svr, *archColl, *dmfs_attr, *dataPathList){
                 AND COLL_NAME  = '*dir'
                 AND DATA_NAME  = '*dataName'
     ){
-        *ipath = *row.COLL_NAME++"/"++*row.DATA_NAME;
-        *dataPathList = *row.DATA_PATH;
-        msiWriteRodsLog("DEBUG: dataPath *dataPathList", 0);
-        dmattr(*dataPathList, *svr, *ipath, *count, *dmfs_attr);
+        *dataPath = *row.DATA_PATH;
+        *dataPathList = '"*dataPath"';
+        *count = *count + 1;
     }
+
+    if (*dataPathList !=  ""){
+        msiWriteRodsLog("DEBUG: dataPath *dataPathList", 0);
+        dmattr(*dataPathList, *svr, *count, *dmfs_attr);
+    }
+    else{
+       *dmfs_attr."result" = "null";
+    }
+
     # Return *count
     "*count"
 }

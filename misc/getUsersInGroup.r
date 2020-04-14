@@ -12,7 +12,7 @@ IRULE_getUsersInGroup(*group, *result) {
 	
 	*users = "[]";
         *usersSize = 0;
-        foreach ( *row in select USER_NAME where USER_TYPE = 'rodsuser' and USER_GROUP_NAME = *group ) {
+        foreach ( *row in select order(USER_NAME) where USER_TYPE = 'rodsuser' and USER_GROUP_NAME = *group ) {
            msiGetValByKey(*row,"USER_NAME",*user);
            msi_json_arrayops(*users, *user, "add", *usersSize);
 	}

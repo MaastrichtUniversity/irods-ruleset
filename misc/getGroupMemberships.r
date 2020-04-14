@@ -4,6 +4,7 @@
 
 irule_dummy() {
     IRULE_getGroupMemberships(*user, *result);
+    writeLine("stdout", *result);
 }
 
 IRULE_getGroupMemberships(*user, *result) {

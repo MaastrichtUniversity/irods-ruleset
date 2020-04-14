@@ -4,23 +4,21 @@
 
 irule_dummy() {
     IRULE_getUsersInGroup(*group, *result);
+    writeLine("stdout", *result);
 }
 
 IRULE_getUsersInGroup(*group, *result) {
-#	groupNameToGroupId(*group, *groupId);
         writeLine("serverLog", "searching users in group: *group");
 	
-	*users = "";
+	*users = "[]";
+        *usersSize = 0;
         foreach ( *row in select USER_NAME where USER_TYPE = 'rodsuser' and USER_GROUP_NAME = *group ) {
            msiGetValByKey(*row,"USER_NAME",*user);
-           *users = "*users:*user";
+           msi_json_arrayops(*users, *user, "add", *usersSize);
 	}
-	*users = triml(*users,":");
-	*userList = split(*users, ":");
+        *result = *users;
 
-	writeLine("serverLog", "found users: *userList");
-
-        *result = *userList;
+	writeLine("serverLog", "found users: *result");
 }
 
 

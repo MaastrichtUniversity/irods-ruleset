@@ -16,7 +16,7 @@ IRULE_getGroupMemberships(*user, *result) {
 	foreach (*row in SELECT order(USER_GROUP_NAME), USER_GROUP_ID
         WHERE USER_ID = '*userId' ) {
         if ( *row.USER_GROUP_NAME != "public" &&  *row.USER_GROUP_NAME != "rodsadmin" && *row.USER_GROUP_NAME != "DH-ingest" && *row.USER_GROUP_NAME != "DH-project-admins" ) {
-            msiGetValByKey(*row,"USER_GROUP_NAME",*group);
+            *group = *row.USER_GROUP_NAME;
             # workasround needed: iRODS returns username also as a group !!
             if (*group != *user) {
                 msi_json_arrayops(*groups, *group, "add", *groupsSize);

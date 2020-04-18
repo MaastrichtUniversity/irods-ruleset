@@ -20,6 +20,9 @@ IRULE_listProjectContributors(*project, *inherited, *result) {
     *users = '[]';
     *userSize = 0;
 
+    *groupName2Ids = '[]';
+    *groupName2IdsSize = 0;
+
     if ( *inherited == "true" ) {
         *criteria = "'own', 'modify object'"
     } else {
@@ -43,7 +46,9 @@ IRULE_listProjectContributors(*project, *inherited, *result) {
         }
 
         if ( *objectType == "rodsgroup" ) {
-            msi_json_arrayops(*groups, *objectName, "add", *groupSize);
+            msi_json_arrayops( *groups, *objectName, "add", *groupSize);
+            *groupName2Id = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
+            msi_json_arrayops( *groupName2Ids, *groupName2Id, "add", *groupName2IdsSize );
         }
 
         if ( *objectType == "rodsuser" ) {
@@ -53,7 +58,7 @@ IRULE_listProjectContributors(*project, *inherited, *result) {
         # All other cases of objectType, such as "" or "rodsadmin", are skipped
     }
 
-    *result = '{"users": *users, "groups": *groups }';
+    *result = '{"users": *users, "groups": *groups, "groupName2Ids": *groupName2Ids }';
 }
 
 INPUT *project=$"P00000001", *inherited=""

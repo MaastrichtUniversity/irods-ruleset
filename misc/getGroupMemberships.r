@@ -7,24 +7,24 @@ irule_dummy() {
     writeLine("stdout", *result);
 }
 
-IRULE_getGroupMemberships(*user, *result) {
+IRULE_getGroupMemberships(*userName, *result) {
     *userId = "";
-	userNameToUserId(*user, *userId);
-	writeLine("serverLog", "getting groupMemberships for userName: *user, userId: *userId" );
-	*groups = '[]';
-    *groupsSize = 0;
-	foreach (*row in SELECT order(USER_GROUP_NAME), USER_GROUP_ID
-        WHERE USER_ID = '*userId' ) {
-        if ( *row.USER_GROUP_NAME != "public" &&  *row.USER_GROUP_NAME != "rodsadmin" && *row.USER_GROUP_NAME != "DH-ingest" && *row.USER_GROUP_NAME != "DH-project-admins" ) {
-            *group = *row.USER_GROUP_NAME;
-            # workasround needed: iRODS returns username also as a group !!
-            if (*group != *user) {
-                msi_json_arrayops(*groups, *group, "add", *groupsSize);
-            }
-        }
-	}
-    *result = *groups;
-	writeLine("serverLog", "user is member of: *result");
+    userNameToUserId(*userName, *userId);
+    #writeLine("serverLog", "getting groupMemberships for userName: *user, userId: *userId" );
+    *result = '[]';
+    *resultSize = 0;
+    foreach (*row in SELECT order(USER_GROUP_NAME), USER_GROUP_ID
+                     WHERE USER_ID = '*userId' ) {
+       if ( *row.USER_GROUP_NAME != "public" &&  *row.USER_GROUP_NAME != "rodsadmin" && *row.USER_GROUP_NAME != "DH-ingest" && *row.USER_GROUP_NAME != "DH-project-admins" ) {
+          *groupName = *row.USER_GROUP_NAME;
+          *groupId = *row.USER_GROUP_ID;
+          # workasround needed: iRODS returns username also as a group !!
+          if (*groupName != *userName) {
+             *groupJSON = '{ "groupId": "*groupId", "name" : "*groupName" }';
+              msi_json_arrayops( *result, *groupJSON, "add", *resultSize);
+          }
+       }
+    }
 }
 
 INPUT *user='rods'

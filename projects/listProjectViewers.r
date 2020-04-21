@@ -20,8 +20,8 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
     *users = '[]';
     *userSize = 0;
 
-    *groupName2Ids = '[]';
-    *groupName2IdsSize = 0;
+    *groupObjects = '[]';
+    *groupObjectsSize = 0;
 
     if ( *inherited == "true" ) {
         *criteria = "'own', 'modify object', 'read object'"
@@ -47,8 +47,8 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
 
         if ( *objectType == "rodsgroup" ) {
             msi_json_arrayops(*groups, *objectName, "add", *groupSize);
-            *groupName2Id = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
-            msi_json_arrayops( *groupName2Ids, *groupName2Id, "add", *groupName2IdsSize );
+            *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
+            msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
         }
 
         if ( *objectType == "rodsuser" ) {
@@ -58,7 +58,7 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
         # All other cases of objectType, such as "" or "rodsadmin", are skipped
     }
 
-    *result = '{"users": *users, "groups": *groups, "groupName2Ids": *groupName2Ids }';
+    *result = '{"users": *users, "groups": *groups, "groupObjects": *groupObjects }';
 }
 
 INPUT *project=$"P000000001",*inherited=""

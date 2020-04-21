@@ -15,6 +15,9 @@ IRULE_listProjectManagers(*project, *result) {
     *users = '[]';
     *userSize = 0;
 
+    *groupName2Ids = '[]';
+    *groupName2IdsSize = 0;
+
     foreach ( *Row in select COLL_ACCESS_USER_ID where COLL_ACCESS_NAME = 'own' and COLL_NAME = '/nlmumc/projects/*project' ) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
 
@@ -29,7 +32,9 @@ IRULE_listProjectManagers(*project, *result) {
         }
 
         if ( *objectType == "rodsgroup" ) {
-            msi_json_arrayops(*groups, *objectName, "add", *groupSize);
+            msi_json_arrayops( *groups, *objectName, "add", *groupSize);
+            *groupName2Id = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
+            msi_json_arrayops( *groupName2Ids, *groupName2Id, "add", *groupName2IdsSize );
         }
 
         if ( *objectType == "rodsuser" ) {
@@ -39,7 +44,7 @@ IRULE_listProjectManagers(*project, *result) {
         # All other cases of objectType, such as "" or "rodsadmin", are skipped
     }
 
-    *result = '{"users": *users, "groups": *groups }';
+    *result = '{"users": *users, "groups": *groups, "groupName2Ids": *groupName2Ids }';
 }
 
 INPUT *project=$"P000000001"

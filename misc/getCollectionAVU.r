@@ -25,7 +25,6 @@ IRULE_getCollectionAVU(*collName, *attribute, *value, *overrideValue, *fatal) {
             failmsg(-1, "ERROR: The attribute '*attribute' of collection '*collName' has no value in iCAT");
         } else {
             *value = *overrideValue;
-            msiWriteRodsLog("WARNING: The attribute '*attribute' of collection '*collName' has no value in iCAT. Using overrideValue '*overrideValue' instead",0);
         }
     }
 }

@@ -30,6 +30,7 @@ IRULE_detailsProject(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
+    getCollectionAVU("/nlmumc/projects/*project","dataSteward",*dataSteward,"","true");
 
     *projectCost  = double(0);
     *collections = "{}";
@@ -76,8 +77,14 @@ IRULE_detailsProject(*project, *inherited, *result) {
     } else {
         *storageQuotaGiBStr = *storageQuotaGiB;
     }
+    
+     if ( *dataSteward == "" ) {
+        *dataStewardStr = "no-dataSteward-AVU-set";
+    } else {
+        *dataStewardStr = *dataSteward;
+    }
 
-    *details = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+    *details = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "dataSteward": "*dataStewardStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);

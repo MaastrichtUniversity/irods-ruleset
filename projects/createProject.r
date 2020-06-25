@@ -3,13 +3,13 @@
 # irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'"
 
 irule_dummy() {
-    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter);
+    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter);
     writeLine("stdout", *result);
 }
 
 
 # Creates projects in the form P000000001
-IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*respCostCenter) {
+IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter) {
 
     *retry = 0;
     *error = -1;
@@ -60,6 +60,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "storageQuotaGb", *storageQuotaGb);
     msiAddKeyVal(*metaKV, "title", *title);
     msiAddKeyVal(*metaKV, "OBI:0000103", *principalInvestigator);
+    msiAddKeyVal(*metaKV, "dataSteward", *dataSteward);
     msiAddKeyVal(*metaKV, "responsibleCostCenter", *respCostCenter);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
@@ -71,5 +72,5 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
 }
 
-INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *respCostCenter=""
+INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *dataSteward="",*respCostCenter=""
 OUTPUT ruleExecOut

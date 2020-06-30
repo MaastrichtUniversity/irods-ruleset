@@ -31,6 +31,8 @@ IRULE_detailsProject(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
     getCollectionAVU("/nlmumc/projects/*project","dataSteward",*dataSteward,"","true");
+    getDisplayNameForUserEmail(*dataSteward,*dataSteward)
+
 
     *projectCost  = double(0);
     *collections = "{}";

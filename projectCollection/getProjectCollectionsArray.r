@@ -35,6 +35,7 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
     getCollectionAVU("/nlmumc/projects/*project","dataSteward",*dataSteward,"","true");
+    getDisplayNameForUserEmail(*dataSteward,*dataSteward)
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
     getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");

@@ -13,8 +13,10 @@ IRULE_getUsers(*showServiceAccounts,*result) {
 
     foreach ( *Row in select USER_NAME where USER_TYPE = 'rodsuser') {
          if ( str(*showServiceAccounts) == "false" ) {
-               if ( substr(*Row.USER_NAME, 0, 8) != "service-" ) {
-                      msi_json_arrayops(*users, *Row.USER_NAME, "add", *usersSize);
+               if ( strlen(*Row.USER_NAME) < 8 ) {
+                    msi_json_arrayops(*users, *Row.USER_NAME, "add", *usersSize);
+               } else if ( substr(*Row.USER_NAME, 0, 8) != "service-" ) {
+                    msi_json_arrayops(*users, *Row.USER_NAME, "add", *usersSize);
                }
          }
          else{

@@ -8,22 +8,21 @@ irule_dummy() {
 }
 
 IRULE_getDisplayNameForAccount(*account,*result) {
-    *userName = ""
+    *userID = ""
     *userDisplayName = ""
 
-     foreach (*Row in SELECT USER_NAME WHERE USER_NAME == "*account"  ) {
-                *userName = *Row.USER_NAME
+     # Get the display name given the username
+     foreach (*Row in SELECT META_USER_ATTR_VALUE, USER_ID WHERE USER_NAME == "*account" AND META_USER_ATTR_NAME == "displayName" ) {
+            *userDisplayName = *Row.META_USER_ATTR_VALUE
+            *userID =  *Row.USER_ID
      }
-     # If username is empty the user cannot be found in the system
-     if (*userName == "") {
-             failmsg(-1, "ERROR: The user '*account' was not found!");
+     # If the userID is empty for this account, write rodsLog warning for missing irods account
+     # The value returned for this function is this the account name
+     if (*userID == "") {
+         msiWriteRodsLog("Warning: getting displayName for unknown account: *account", 0);
      }
 
-     # Get the display name given the username
-     foreach (*Row in SELECT META_USER_ATTR_VALUE WHERE USER_NAME == "*account" AND META_USER_ATTR_NAME == "displayName" ) {
-            *userDisplayName = *Row.META_USER_ATTR_VALUE
-     }
-     # If the Display name is missing revert to the account
+     # If the Display name is missing revert to the account name
      if (*userDisplayName == "") {
            *userDisplayName = *account
      }

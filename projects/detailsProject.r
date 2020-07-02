@@ -32,7 +32,9 @@ IRULE_detailsProject(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
     getCollectionAVU("/nlmumc/projects/*project","dataSteward",*dataSteward,"","true");
     # Get the display Name for the dataSteward
-    getDisplayNameForAccount(*dataSteward,*dataSteward)
+    # TODO: Fix the strange iRODS bug where *title cannot be added by msi_json_objops when you add both the *dataSteward and *dataStewardDisplayName to the json string at line 92
+    # Therefore the line below is commented out for now
+    # getDisplayNameForAccount(*dataSteward,*dataStewardDisplayName)
 
 
     *projectCost  = double(0);

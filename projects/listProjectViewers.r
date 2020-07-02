@@ -38,32 +38,34 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
     foreach ( *Row in *QOut ) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
 
-        *O = select USER_NAME, USER_TYPE, META_USER_ATTR_NAME, META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser";
+        *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
 
         foreach (*R in *O) {
-           *objectName = *R.USER_NAME;
-           *objectType = *R.USER_TYPE;
+            *objectName = *R.USER_NAME;
+            *objectType = *R.USER_TYPE;
 
-           if ( *R.META_USER_ATTR_NAME == "displayName") {
-               *value = *R.META_USER_ATTR_VALUE;
-               msi_json_arrayops(*users, *objectName, "add", *userSize);
-               *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*value" }';
-               msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
-           }
-        }
+            *displayName = ""
+            foreach( *U in select META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser" and META_USER_ATTR_NAME == "displayName" ) {
+                *displayName = *U.META_USER_ATTR_VALUE
+            }
 
-        *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID' AND USER_TYPE = "rodsgroup";
+            if (*displayName == "") {
+                *displayName = *objectName
+            }
 
-        foreach (*R in *O) {
-           *objectName = *R.USER_NAME;
-           *objectType = *R.USER_TYPE;
+            if ( *objectType == "rodsgroup" ) {
+                msi_json_arrayops( *groups, *objectName, "add", *groupSize);
+                *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
+                msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
+            }
 
-           msi_json_arrayops( *groups, *objectName, "add", *groupSize);
-           *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
-           msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
-        }
-
-        # All other cases of objectType, such as "" or "rodsadmin", are skipped
+            if ( *objectType == "rodsuser" ) {
+                msi_json_arrayops(*users, *objectName, "add", *userSize);
+                *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
+                msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
+            }
+            # All other cases of objectType, such as "" or "rodsadmin", are skipped
+       }
     }
 
     *result = '{"users": *users, "groups": *groups, "groupObjects": *groupObjects, "userObjects": *userObjects}';

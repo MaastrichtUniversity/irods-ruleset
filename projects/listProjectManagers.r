@@ -24,6 +24,7 @@ IRULE_listProjectManagers(*project, *result) {
     foreach ( *Row in select COLL_ACCESS_USER_ID where COLL_ACCESS_NAME = 'own' and COLL_NAME = '/nlmumc/projects/*project' ) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
 
+
         *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
 
         foreach (*R in *O) {

@@ -38,11 +38,14 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
     foreach ( *Row in *QOut ) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
 
+
         *O = select USER_NAME, USER_TYPE where USER_ID = '*objectID';
 
         foreach (*R in *O) {
             *objectName = *R.USER_NAME;
             *objectType = *R.USER_TYPE;
+
+
 
             *displayName = ""
             foreach( *U in select META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser" and META_USER_ATTR_NAME == "displayName" ) {

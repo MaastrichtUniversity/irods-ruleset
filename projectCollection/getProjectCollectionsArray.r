@@ -34,6 +34,9 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
+    getCollectionAVU("/nlmumc/projects/*project","dataSteward",*dataSteward,"","true");
+    # Get the display Name for the dataSteward
+    getDisplayNameForAccount(*dataSteward,*dataStewardDisplayName)
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
     getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
@@ -174,15 +177,23 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     }
 
     if ( *storageQuotaGiB == "" ) {
-        *storageQuotaGiBStr = "storageQuotaGiB-AVU-set";
+        *storageQuotaGiBStr = "no-storageQuotaGiB-AVU-set";
     } else {
         *storageQuotaGiBStr = *storageQuotaGiB;
+    }
+
+    if ( *dataSteward == "" ) {
+        *dataStewardStr = "no-dataSteward-AVU-set";
+        *dataStewardDisplayNameStr = "no-dataSteward-AVU-set";
+    } else {
+        *dataStewardStr = *dataSteward;
+        *dataStewardDisplayNameStr = *dataStewardDisplayName;
     }
 
     ##################################
     ### Construct final json array ###
     ##################################
-    *details = '{"project":"*project", "collections": *collectionsArray, "enableOpenAccessExport": "*enableOpenAccessExport", "enableArchive": "*enableArchive", "resource": "*resourceStr", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+    *details = '{"project":"*project", "collections": *collectionsArray, "enableOpenAccessExport": "*enableOpenAccessExport", "enableArchive": "*enableArchive", "resource": "*resourceStr", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr" , "dataSteward": "*dataStewardStr", "dataStewardDisplayName": "*dataStewardDisplayNameStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);

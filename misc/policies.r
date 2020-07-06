@@ -61,7 +61,9 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 
-        if( $userNameClient == *pi || $userNameClient == "rods") {
+        getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
+
+        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
             # Do nothing and resume normal operation
         }else{
             # Disallow setting the AVU

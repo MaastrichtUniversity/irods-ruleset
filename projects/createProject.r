@@ -1,15 +1,15 @@
 # Call with
 #
-# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'"
+# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'" "*openAccess='false'" "*tapeArchive='true'"
 
 irule_dummy() {
-    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter);
+    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter,*openAccess,*tapeArchive);
     writeLine("stdout", *result);
 }
 
 
 # Creates projects in the form P000000001
-IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter) {
+IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter,*openAccess,*tapeArchive) {
 
     *retry = 0;
     *error = -1;
@@ -62,6 +62,11 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "OBI:0000103", *principalInvestigator);
     msiAddKeyVal(*metaKV, "dataSteward", *dataSteward);
     msiAddKeyVal(*metaKV, "responsibleCostCenter", *respCostCenter);
+    msiAddKeyVal(*metaKV, "enableOpenAccessExport", *openAccess);
+    msiAddKeyVal(*metaKV, "enableArchive", *tapeArchive);
+    if ( *tapeArchive == "true" ){
+        msiAddKeyVal(*metaKV, "archiveDestinationResource", "arcRescSURF01");
+    }
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
 
@@ -72,5 +77,5 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
 }
 
-INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *dataSteward="",*respCostCenter=""
+INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *dataSteward="", *respCostCenter="", *openAccess="", *tapeArchive=""
 OUTPUT ruleExecOut

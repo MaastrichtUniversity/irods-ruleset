@@ -64,8 +64,17 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "responsibleCostCenter", *respCostCenter);
     msiAddKeyVal(*metaKV, "enableOpenAccessExport", *openAccess);
     msiAddKeyVal(*metaKV, "enableArchive", *tapeArchive);
+    # TODO Make it compatible with multiple archive resources.
     if ( *tapeArchive == "true" ){
-        msiAddKeyVal(*metaKV, "archiveDestinationResource", "arcRescSURF01");
+        *archiveDestResc = "";
+        # Look-up for the resource set as the archive destination resource
+        foreach (*av in SELECT RESC_NAME WHERE META_RESC_ATTR_NAME="archiveDestResc" AND META_RESC_ATTR_VALUE="true") {
+            *archiveDestResc = *av.RESC_NAME;
+        }
+        if (*archiveDestResc == "") {
+            failmsg(-1, "ERROR: The attribute 'archiveDestResc' has no value in iCAT");
+        }
+        msiAddKeyVal(*metaKV, "archiveDestinationResource", *archiveDestResc);
     }
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 

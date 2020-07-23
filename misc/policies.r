@@ -56,8 +56,8 @@ acPreprocForCollCreate {
 acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) {
 #    msiWriteRodsLog("DEBUG: ADD, SET, RM option kicked off", *status);
 
-    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
-    if(*AName == "responsibleCostCenter") {
+    ### Policy to prevent setting 'responsibleCostCenter', 'enableTapeArchive' & 'enableOpenAccessExport' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter" || *AName == "enableTapeArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 
@@ -81,12 +81,14 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit) {
 #    msiWriteRodsLog("DEBUG: MOD option kicked off", *status);
 
-    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
-    if(*AName == "responsibleCostCenter") {
+    ### Policy to prevent setting 'responsibleCostCenter', 'enableTapeArchive' & 'enableOpenAccessExport' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter" || *AName == "enableTapeArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 
-        if( $userNameClient == *pi || $userNameClient == "rods") {
+        getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
+
+        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
             # Do nothing and resume normal operation
         }else{
             # Disallow setting the AVU

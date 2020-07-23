@@ -56,8 +56,8 @@ acPreprocForCollCreate {
 acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) {
 #    msiWriteRodsLog("DEBUG: ADD, SET, RM option kicked off", *status);
 
-    ### Policy to prevent setting 'responsibleCostCenter', 'enableTapeArchive' & 'enableOpenAccessExport' AVU by unauthorized users
-    if(*AName == "responsibleCostCenter" || *AName == "enableTapeArchive" || *AName == "enableOpenAccessExport") {
+    ### Policy to prevent setting 'responsibleCostCenter', 'enableArchive' & 'enableOpenAccessExport' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 
@@ -82,8 +82,8 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit) {
 #    msiWriteRodsLog("DEBUG: MOD option kicked off", *status);
 
-    ### Policy to prevent setting 'responsibleCostCenter', 'enableTapeArchive' & 'enableOpenAccessExport' AVU by unauthorized users
-    if(*AName == "responsibleCostCenter" || *AName == "enableTapeArchive" || *AName == "enableOpenAccessExport") {
+    ### Policy to prevent setting 'responsibleCostCenter', 'enableArchive' & 'enableOpenAccessExport' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 

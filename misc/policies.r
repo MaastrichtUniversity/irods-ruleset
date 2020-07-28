@@ -65,10 +65,10 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 
         if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
             # Do nothing and resume normal operation
-            msiWriteRodsLog("INFO: User $userNameClient sets *AName AVU to *AValue for *ItemName", *status);
+            msiWriteRodsLog("INFO: [AUDIT_TRAIL] *ItemName: User $userNameClient sets '*AName' to '*AValue'", *status);
         }else{
             # Disallow setting the AVU
-            msiWriteRodsLog("ERROR: User $userNameClient is not allowed to set *AName AVU for *ItemName", *status);
+            msiWriteRodsLog("ERROR: [AUDIT_TRAIL] *ItemName: User $userNameClient is not allowed to set '*AName'", *status);
             cut;
             msiOprDisallowed;
         }
@@ -91,10 +91,10 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit,
 
         if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
             # Do nothing and resume normal operation
-            msiWriteRodsLog("INFO: User $userNameClient sets *AName AVU to *AValue for *ItemName", *status);
+            msiWriteRodsLog("INFO: [AUDIT_TRAIL] *ItemName: User $userNameClient sets '*AName' to '*AValue'", *status);
         }else{
             # Disallow setting the AVU
-            msiWriteRodsLog("ERROR: User $userNameClient is not allowed to set *AName AVU for *ItemName", *status);
+            msiWriteRodsLog("ERROR: [AUDIT_TRAIL] *ItemName: User $userNameClient is not allowed to set '*AName'", *status);
             cut;
             msiOprDisallowed;
         }

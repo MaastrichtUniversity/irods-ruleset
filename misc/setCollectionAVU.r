@@ -10,7 +10,7 @@ irule_dummy() {
 IRULE_setCollectionAVU(*collection, *attribute, *value) {
      msiAddKeyVal(*metaKV,  *attribute, *value);
      msiSetKeyValuePairsToObj(*metaKV, *collection, "-C");
-     msiWriteRodsLog("Setting '*attribute' for *collection to *value", 0);
+     msiWriteRodsLog("INFO: *collection: Setting '*attribute' to '*value'", 0);
 }
 
 INPUT *collection='', *attribute='', *value=''

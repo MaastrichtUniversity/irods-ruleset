@@ -56,8 +56,8 @@ acPreprocForCollCreate {
 acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit) {
 #    msiWriteRodsLog("DEBUG: ADD, SET, RM option kicked off", *status);
 
-    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
-    if(*AName == "responsibleCostCenter") {
+    ### Policy to prevent setting 'responsibleCostCenter', 'enableArchive' & 'enableOpenAccessExport' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 
@@ -65,9 +65,10 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 
         if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
             # Do nothing and resume normal operation
+            msiWriteRodsLog("INFO: [AUDIT_TRAIL] *ItemName: User $userNameClient sets '*AName' to '*AValue'", *status);
         }else{
             # Disallow setting the AVU
-            msiWriteRodsLog("ERROR: User $userNameClient is not allowed to set *AName AVU", *status);
+            msiWriteRodsLog("ERROR: [AUDIT_TRAIL] *ItemName: User $userNameClient is not allowed to set '*AName'", *status);
             cut;
             msiOprDisallowed;
         }
@@ -81,16 +82,19 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit, *NAName, *NAValue, *NAUnit) {
 #    msiWriteRodsLog("DEBUG: MOD option kicked off", *status);
 
-    ### Policy to prevent setting 'responsibleCostCenter' AVU by unauthorized users
-    if(*AName == "responsibleCostCenter") {
+    ### Policy to prevent setting 'responsibleCostCenter', 'enableArchive' & 'enableOpenAccessExport' AVU by unauthorized users
+    if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
 
-        if( $userNameClient == *pi || $userNameClient == "rods") {
+        getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
+
+        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
             # Do nothing and resume normal operation
+            msiWriteRodsLog("INFO: [AUDIT_TRAIL] *ItemName: User $userNameClient sets '*AName' to '*AValue'", *status);
         }else{
             # Disallow setting the AVU
-            msiWriteRodsLog("ERROR: User $userNameClient is not allowed to set *AName AVU", *status);
+            msiWriteRodsLog("ERROR: [AUDIT_TRAIL] *ItemName: User $userNameClient is not allowed to set '*AName'", *status);
             cut;
             msiOprDisallowed;
         }

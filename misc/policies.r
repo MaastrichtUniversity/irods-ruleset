@@ -109,24 +109,18 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
     # This policy is currently not doing anything
 }
 
-# Enforce single threaded iRODS data connections when using Ceph S3 resources
 # The arguments for msiSetNumThreads are:
 # 1) sizePerThrInMb - integer value in MBytes to calculate the number of threads (default: 32)
 # 2) maxNumThr      - the maximum number of threads to use (default: 4).
 # 3) windowSize     - the tcp window size in Bytes for the parallel transfer (default: 1048576).
 acSetNumThreads {
-    # Session variables $rescName and $KVPairs are not always present and their existence needs to be checked first.
-    # For instance, during replication it only exists for one of the two resources.
-    # It errors, but doesn't affect the outcome of the replication.
-    # Note: The ERROR is catched below and thus suppressed from the rodsLog
+    # This policy used to have a conditional based on $KVPairs.rescName to set the number of threads based on
+    # the resource that is in use. That conditional turned out not to be entirely save, because $KVPairs.rescName
+    # is not always set in all calls leading up to a resource being used. Causing iRODS to be confused in the number
+    # of threads being used. Be wary when trying to reimplement that.
 
-    *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));
-
-    if ( *error == 0 ) {
-        if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
-            msiSetNumThreads("default","0","default");
-        } else {
-            msiSetNumThreads("default","16","default");
-        }
-    }
+    # The number of 4 threads is based on experience with GridFTP, where the number of parallel transfers has a
+    # diminishing return effect above 4. Because our file size can wildly vary, this also keeps the overhead from
+    # starting the multiple threads to a minimum.
+    msiSetNumThreads("default", "4", "default");
 }

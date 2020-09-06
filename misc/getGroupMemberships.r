@@ -25,7 +25,6 @@ IRULE_getGroupMemberships(*showSpecialGroups, *userName, *result) {
           if (*groupName != *userName) {
              #get AVU-values
              foreach (*av in SELECT META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME where USER_TYPE = 'rodsgroup' and USER_GROUP_ID = *groupId ) {
-                writeLine("serverLog", "DATA: *av.META_USER_ATTR_VALUE, *av.META_USER_ATTR_NAME" );
                 if( "displayName" == *av.META_USER_ATTR_NAME ) {
                    *groupDisplayName = *av.META_USER_ATTR_VALUE
                 }

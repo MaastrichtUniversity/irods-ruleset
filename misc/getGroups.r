@@ -14,17 +14,19 @@ IRULE_getGroups(*showSpecialGroups, *result) {
     foreach ( *Row in select USER_NAME, USER_ID where USER_TYPE = 'rodsgroup') {
         *objectName = *Row.USER_NAME;
         *objectID = *Row.USER_ID;
-        *displayName = ""
+        *displayName = *objectName;
+        *description = "";
 
-        foreach( *U in select META_USER_ATTR_VALUE where USER_NAME = "*objectName" and META_USER_ATTR_NAME == "displayName" ) {
-          *displayName = *U.META_USER_ATTR_VALUE
+        foreach (*av in SELECT META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME where USER_TYPE = 'rodsgroup' and USER_GROUP_ID = *objectID ) {
+           if( "displayName" == *av.META_USER_ATTR_NAME ) {
+              *displayName = *av.META_USER_ATTR_VALUE;
+           }
+           else if( "description" == *av.META_USER_ATTR_NAME ) {
+              *description = *av.META_USER_ATTR_VALUE;
+           } 
         }
 
-        if (*displayName == "") {
-          *displayName = *objectName
-        }
-
-        *groupObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
+        *groupObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName", "description" : "*description" }';
 
         if ( str(*showSpecialGroups) == "false" ) {
             if ( *Row.USER_NAME != "public" &&  *Row.USER_NAME != "rodsadmin" && *Row.USER_NAME != "DH-ingest" && *Row.USER_NAME != "DH-project-admins" ) {

@@ -34,6 +34,8 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");
     getCollectionAVU("/nlmumc/projects/*project","OBI:0000103",*principalInvestigator,"","true");
+    # Get the display Name for the principal investigator
+    getDisplayNameForAccount(*principalInvestigator,*principalInvestigatorDisplayName)
     getCollectionAVU("/nlmumc/projects/*project","dataSteward",*dataSteward,"","true");
     # Get the display Name for the dataSteward
     getDisplayNameForAccount(*dataSteward,*dataStewardDisplayName)
@@ -94,6 +96,16 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
                         msiWriteRodsLog("WARNING: The attribute *attribute of *projectCollection has no value in iCAT. Using default value 'N/A'",0);
                     }
                 }
+                # Get creator displayName
+                *creator = *validation."creator"
+                *creatorDisplayName = "no-creator-AVU-set";
+                if (*creator != "N/A"){
+                    getDisplayNameForAccount(*creator, *creatorDisplayName);
+                }
+                msiString2KeyValPair("", *kvp);
+                msiAddKeyVal(*kvp, "creatorDisplayName", *creatorDisplayName);
+                msi_json_objops(*collection, *kvp, "add");
+
                 # Add collectionID to *collection
                 uuChopPath(*previousCollection, *dir, *collectionId);
                 msiString2KeyValPair("", *kvp);
@@ -142,10 +154,21 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
             msiWriteRodsLog("WARNING: The attribute *attribute of *projectCollection has no value in iCAT. Using default value 'N/A'",0);
           }
         }
+        # Add creator displayName
+        *creator = *validation."creator"
+        *creatorDisplayName = "no-creator-AVU-set";
+        if (*creator != "N/A"){
+        getDisplayNameForAccount(*creator, *creatorDisplayName);
+        }
+        msiString2KeyValPair("", *kvp);
+        msiAddKeyVal(*kvp, "creatorDisplayName", *creatorDisplayName);
+        # Add collectionID to *collection
+        msi_json_objops(*collection, *kvp, "add");
         uuChopPath(*previousCollection, *dir, *collectionId);
         msiString2KeyValPair("", *kvp);
         msiAddKeyVal(*kvp, "collection", *collectionId);
         msi_json_objops(*collection, *kvp, "add");
+        # Append *collection in *collectionsArray
         msi_json_arrayops(*collectionsArray, *collection, "add", *collectionsArraySize);
     }
 
@@ -166,8 +189,10 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
 
     if ( *principalInvestigator == "" ) {
         *principalInvestigatorStr = "no-principalInvestigator-AVU-set";
+        *principalInvestigatorDisplayNameStr = "no-principalInvestigator-AVU-set";
     } else {
         *principalInvestigatorStr = *principalInvestigator;
+        *principalInvestigatorDisplayNameStr = *principalInvestigatorDisplayName;
     }
 
     if ( *respCostCenter == "" ) {
@@ -193,7 +218,7 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     ##################################
     ### Construct final json array ###
     ##################################
-    *details = '{"project":"*project", "collections": *collectionsArray, "enableOpenAccessExport": "*enableOpenAccessExport", "enableArchive": "*enableArchive", "resource": "*resourceStr", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr" , "dataSteward": "*dataStewardStr", "dataStewardDisplayName": "*dataStewardDisplayNameStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+    *details = '{"project":"*project", "collections": *collectionsArray, "enableOpenAccessExport": "*enableOpenAccessExport", "enableArchive": "*enableArchive", "resource": "*resourceStr", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "principalInvestigator": "*principalInvestigatorStr", "principalInvestigatorDisplayName": "*principalInvestigatorDisplayNameStr" , "dataSteward": "*dataStewardStr", "dataStewardDisplayName": "*dataStewardDisplayNameStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);

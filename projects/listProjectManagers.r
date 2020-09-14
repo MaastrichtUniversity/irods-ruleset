@@ -30,23 +30,27 @@ IRULE_listProjectManagers(*project, *result) {
         foreach (*R in *O) {
             *objectName = *R.USER_NAME;
             *objectType = *R.USER_TYPE;
+            *displayName = *objectName;
+            *description = "";
 
-            *displayName = ""
-            foreach( *U in select META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser" and META_USER_ATTR_NAME == "displayName" ) {
-                 *displayName = *U.META_USER_ATTR_VALUE
-            }
-
-            if (*displayName == "") {
-                *displayName = *objectName
-            }
-
-            if ( *objectType == "rodsgroup" ) {
+            if ( *objectType == "rodsgroup" ) {                
+                foreach (*av in SELECT META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME where USER_TYPE = 'rodsgroup' and USER_GROUP_ID = *objectID ) {
+                  if( "displayName" == *av.META_USER_ATTR_NAME ) {
+                     *displayName = *av.META_USER_ATTR_VALUE;
+                  }
+                  else if( "description" == *av.META_USER_ATTR_NAME ) {
+                     *description = *av.META_USER_ATTR_VALUE
+                  } 
+                }
                 msi_json_arrayops( *groups, *objectName, "add", *groupSize);
-                *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID" }';
+                *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID", "displayName" : "*displayName", "description" : "*description" }';
                 msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
             }
 
             if ( *objectType == "rodsuser" ) {
+                foreach( *U in select META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser" and META_USER_ATTR_NAME == "displayName" ) {
+                   *displayName = *U.META_USER_ATTR_VALUE;
+                }
                 msi_json_arrayops(*users, *objectName, "add", *userSize);
                 *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
                 msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );

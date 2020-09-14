@@ -19,9 +19,21 @@ IRULE_getGroupMemberships(*showSpecialGroups, *userName, *result) {
     ) {
           *groupName = *row.USER_GROUP_NAME;
           *groupId = *row.USER_GROUP_ID;
-          # workasround needed: iRODS returns username also as a group !!
+          *groupDisplayName = *groupName
+          *groupDescription = ""
+          # workaround needed: iRODS returns username also as a group !!
           if (*groupName != *userName) {
-             *groupJSON = '{ "groupId": "*groupId", "name" : "*groupName" }';
+             #get AVU-values
+             foreach (*av in SELECT META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME where USER_TYPE = 'rodsgroup' and USER_GROUP_ID = *groupId ) {
+                if( "displayName" == *av.META_USER_ATTR_NAME ) {
+                   *groupDisplayName = *av.META_USER_ATTR_VALUE
+                }
+                else if( "description" == *av.META_USER_ATTR_NAME ) {
+                   *groupDescription = *av.META_USER_ATTR_VALUE
+                } 
+             }
+     
+             *groupJSON = '{ "groupId": "*groupId", "name" : "*groupName", "displayName" : "*groupDisplayName", "description" : "*groupDescription" }';
              if ( str(*showSpecialGroups) == "false" ) {     
                 if ( *row.USER_GROUP_NAME != "public" &&  *row.USER_GROUP_NAME != "rodsadmin" && *row.USER_GROUP_NAME != "DH-ingest" && *row.USER_GROUP_NAME != "DH-project-admins" ) {
                    msi_json_arrayops( *result, *groupJSON, "add", *resultSize);

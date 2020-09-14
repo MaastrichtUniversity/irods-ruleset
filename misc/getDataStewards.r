@@ -23,15 +23,17 @@ IRULE_getDataStewards(*result) {
             *users = *users ++ ", '" ++ *userID ++ "'";
         }
     }
-       
-    msiMakeGenQuery("USER_NAME, USER_ID, META_USER_ATTR_VALUE", "USER_ID in (*users) AND META_USER_ATTR_NAME = 'displayName'", *Query);
+    msiMakeGenQuery("USER_NAME, USER_ID, META_USER_ATTR_VALUE", "USER_ID in (*users)", *Query);
     msiExecGenQuery(*Query, *QOut);
     foreach ( *O in *QOut ) {
         *userName = *O.USER_NAME;
-        *value = *O.META_USER_ATTR_VALUE;
         *userID = *O.USER_ID;
 
-        *userObject = '{ "userName" : "*userName", "userId" : "*userID", "displayName" : "*value" }';
+        *displayName = *userName;
+        foreach (*Row in SELECT META_USER_ATTR_VALUE WHERE USER_NAME == "*userName" AND META_USER_ATTR_NAME == "displayName") {
+            *displayName = *Row.META_USER_ATTR_VALUE;
+        }
+        *userObject = '{ "userName" : "*userName", "userId" : "*userID", "displayName" : "*displayName" }';
         msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
 	}
     *result = *userObjects;

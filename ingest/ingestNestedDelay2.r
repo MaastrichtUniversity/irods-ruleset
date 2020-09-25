@@ -33,7 +33,8 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     remote(*ingestResourceHost,"") {
         # You can enter any string for the *resc argument in 'msiput_dataobj_or_coll'. Policy will ensure that data will be copied to proper resource.
         # Note: do not enter the value 'null' for *resc. That will cause the microservice to error out.
-        *error = errorcode(msiput_dataobj_or_coll("/mnt/ingest/zones/*token", "dummy_resource", "numThreads=10++++forceFlag=", *dstColl, *real_path));
+        # Note: the number of threads used here, as been made to match the acSetNumThreads{} policy. See comment there for detials
+        *error = errorcode(msiput_dataobj_or_coll("/mnt/ingest/zones/*token", "dummy_resource", "numThreads=4++++forceFlag=", *dstColl, *real_path));
     }  
     msiWriteRodsLog("DEBUG: Done remote", 0);
 

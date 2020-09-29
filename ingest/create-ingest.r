@@ -5,6 +5,15 @@
 # irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'"
 
 createIngest {
+    # Retrieve the domain username
+    *voPersonExternalID = "";
+    foreach( *U in select META_USER_ATTR_VALUE where USER_NAME = "*user" and META_USER_ATTR_NAME == "voPersonExternalID" ) {
+        *voPersonExternalID = *U.META_USER_ATTR_VALUE;
+    }
+    if (*voPersonExternalID == "") {
+        failmsg(-1, "User '*user' has no 'voPersonExternalID' value");
+    }
+
     *hasDropZonepermission = "";
     checkDropZoneACL(*user, *hasDropZonepermission);
     if (*hasDropZonepermission == "false") {
@@ -39,7 +48,7 @@ createIngest {
     # Enabling the ingest zone needs to be done on the remote server
     remote(*ingestResourceHost,"") {
         *phyDir = "/mnt/ingest/zones/" ++ *token;
-        msiExecCmd("enable-ingest-zone.sh", *user ++ " " ++ *phyDir, "null", "null", "null", *status);
+        msiExecCmd("enable-ingest-zone.sh", *voPersonExternalID ++ " " ++ *phyDir, "null", "null", "null", *status);
 
         # Get the value for ingestResource again, in order to prevent SYS_HEADER_READ_LEN errors with msiPyPathReg
         getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");

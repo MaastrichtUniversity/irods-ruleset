@@ -69,7 +69,7 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     # Send metadata
     # Please note that this step also sets the PID AVU via MirthConnect
-#     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
+    *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");

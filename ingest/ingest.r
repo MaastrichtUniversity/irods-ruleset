@@ -2,7 +2,8 @@
 #
 # irule -F ingest.r "*user='username@domain.com'" "*token='creepy-click'"
 
-ingest {
+ingest(*user,*token) {
+# ingest {
     *srcColl = "/nlmumc/ingest/zones/*token";
 
     *hasDropZonepermission = "";
@@ -57,24 +58,25 @@ ingest {
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
     # Remove validateState. Required due to parallel execution of irods queue
-    getCollectionAVU(*srcColl,"validateState",*validateState,"","false");
-    if ( *validateState != "" ) {
-        msiAddKeyVal(*validateStateKV, "validateState", *validateState );
-        msiRemoveKeyValuePairsFromObj(*validateStateKV, *srcColl, "-C");
-    }
+#     getCollectionAVU(*srcColl,"validateState",*validateState,"","false");
+#     if ( *validateState != "" ) {
+#         msiAddKeyVal(*validateStateKV, "validateState", *validateState );
+#         msiRemoveKeyValuePairsFromObj(*validateStateKV, *srcColl, "-C");
+#     }
     
-    delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
-        # Validate metadata
-        *mirthValidationURL = "";
-        msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
-        validateMetadataFromIngest(*token,*mirthValidationURL);
-    }
+#     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
+#         # Validate metadata
+#         *mirthValidationURL = "";
+#         msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
+#         validateMetadataFromIngest(*token,*mirthValidationURL);
+#     }
 
     # Continue ingest and create PID in Mirth
     msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl);
 
     delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
-        ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token);
+#         ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token);
+        ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token);
     }
 }
 

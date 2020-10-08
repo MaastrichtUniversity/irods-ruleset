@@ -4,7 +4,8 @@
 #
 # irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'"
 
-createIngest {
+createIngest(*user,*token,*project,*title) {
+# createIngest {
     # Retrieve the domain username
     *voPersonExternalID = "";
     foreach( *U in select META_USER_ATTR_VALUE where USER_NAME = "*user" and META_USER_ATTR_NAME == "voPersonExternalID" ) {

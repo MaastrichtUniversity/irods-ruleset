@@ -51,6 +51,7 @@ IRULE_changeProjectPermissions(*project, *users){
 
             # Reset user list to original input value
             *delay_users = *input_users;
+            *count = 100;    
 
             # Open the collection to be able to modify the collection ACL
             msiSetACL("recursive", "admin:own", "rods", "*projectCollection");

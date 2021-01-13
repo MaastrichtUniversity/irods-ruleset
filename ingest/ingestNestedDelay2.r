@@ -61,7 +61,11 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     # Set simple AVUs
     msiWriteRodsLog("*srcColl : Setting AVUs to *dstColl", 0);
-    msiAddKeyVal(*metaKV, "creator", *user);
+    *email = *user;
+    foreach( *U in select META_USER_ATTR_VALUE where USER_NAME = "*user" and META_USER_ATTR_NAME == "email" ) {
+        *email = *U.META_USER_ATTR_VALUE
+    }
+    msiAddKeyVal(*metaKV, "creator", *email);
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
     # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open

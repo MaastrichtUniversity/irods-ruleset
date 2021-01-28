@@ -1,6 +1,7 @@
+cryptography
 enum34==1.1.10
 Jinja2==2.10.1
-requests==2.21.0
+requests==2.25.1
 pyrsistent==0.16.1
 jsonschema==3.0.2
 pathvalidate==0.29.1

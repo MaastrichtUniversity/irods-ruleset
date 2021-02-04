@@ -4,7 +4,7 @@
 #
 
 # The rule dirs to be processed
-RULEDIRS = ingest misc projects projectCollection tapeArchive
+RULEDIRS = ingest misc projects projectCollection tapeArchive python
 
 # The make target
 all: $(RULEDIRS)

@@ -6,6 +6,8 @@
 # Input files.
 
 RULE_FILES = $(wildcard *.py)
+# Filter out core.py to be able to position it first during the concatenation
+FILTER := $(filter-out core.py,$(RULE_FILES))
 
 # Output files.
 
@@ -17,6 +19,8 @@ RULESET_FILE := $(RULES_DEST)/$(RULESET_NAME)
 
 all: $(RULESET_FILE)
 
-$(RULESET_FILE): $(RULE_FILES)
-	cat $(RULE_FILES) > $(RULESET_FILE)
+
+$(RULESET_FILE): $(FILTER)
+    # Concatenate all *.py with core.py on the first position
+	cat core.py $(FILTER) > $(RULESET_FILE)
 

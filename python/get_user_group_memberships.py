@@ -60,4 +60,3 @@ def get_user_group_memberships(ctx, show_special_groups, username):
                 output.append(group_object)
 
     return output
-

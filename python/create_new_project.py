@@ -3,6 +3,34 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
                        ingest_resource, resource, storage_quota_gb, title,
                        principal_investigator, data_steward,
                        resp_cost_center, open_access, tape_archive):
+    """
+    Create a new iRODS project
+
+    Parameters
+    ----------
+    authorization_period_end_date : str
+        The username
+    data_retention_period_end_date : str
+        The username
+    ingest_resource : str
+        The ingest resource to use during the ingestion
+    resource : str
+        The destination resource to store future collection
+    storage_quota_gb  : str
+        The storage quota in Gb
+    title : str
+        The project title
+    principal_investigator : str
+        The principal investigator(OBI:0000103) for the project
+    data_steward : str
+        The data steward for the project
+    resp_cost_center : str
+        The budget number
+    open_access : str
+        'true'/'false' excepted values
+    tape_archive : str
+        'true'/'false' excepted values
+    """
 
     retry = 0
     error = -1
@@ -26,24 +54,19 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
             if project_number > last_id:
                 last_id = project_number
 
-        ctx.callback.writeLine("stdout", str(last_id))
-
         project = str(last_id + 1)
         while len(project) < 9:
             project = "0" + str(project)
         project = "P" + project
-        ctx.callback.writeLine("stdout", str(project))
 
         new_project_path = "/nlmumc/projects/" + project
 
         retry = retry + 1
         result = ctx.callback.msiCollCreate(new_project_path, 0, 0)
         status = str(result["arguments"][2])
-        ctx.callback.writeLine("stdout", status)
 
         result = ctx.callback.errorcode(status)
         error_code = str(result["arguments"][0])
-        ctx.callback.writeLine("stdout", error_code)
         error = error_code
 
     # Make the rule fail if it doesn't succeed in creating the project
@@ -69,7 +92,6 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
                                AS_LIST,
                                ctx.callback):
         archive_dest_resc = result[0]
-        ctx.callback.writeLine("stdout", archive_dest_resc)
     if archive_dest_resc == "":
         ctx.callback.failmsg(-1, "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
 

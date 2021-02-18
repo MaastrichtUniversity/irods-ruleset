@@ -15,18 +15,63 @@ def list_projects(ctx):
             a json list of projects objects
         """
 
-    # TODO: do not call reportProjects, but reconstruct the required business logic using smaller rules.
-    # value = ""
-    # for result in row_iterator("META_USER_ATTR_VALUE",
-    #                            "USER_NAME = '{}' AND META_USER_ATTR_NAME = '{}'".format(username, attribute),
-    #                            AS_LIST,
-    #                            ctx.callback):
-    #     value = result[0]
+    # Initialize projects list
+    # projects_list = []
+
+    # Loop over all projects
+    for result in row_iterator("COLL_NAME",
+                               "COLL_PARENT_NAME = '/nlmumc/projects'",
+                               AS_LIST,
+                               ctx.callback):
+
+        # Reset the project dictionary
+        project = {}
+
+        #project["path"] = result[0]
+        project["path"] = "/nlmumc/projects/P000000013"
+        project["id"] = project["path"].split("/")[3]
+
+        # List Contributors
+
+        # List Managers
+
+        # List Viewers
+
+        # Get project metadata
+        # Note: Retrieving the rule outcome is done with '["arguments"][2]'
+        project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]
+        project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(project["path"], "enableOpenAccessExport", "", "", "true")["arguments"][2]
+        project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "", "true")["arguments"][2]
+        # TODO: Convert into displayname
+        project["principalInvestigatorDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
+        project["dataStewardDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]
+        project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", "true")["arguments"][2]
+        project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", "true")["arguments"][2]
 
 
 
-    # Note 1: When calling a rule without input arguments you need to provide a (empty or nonsense) string.
-    # Note 2: Retrieving the rule outcome is done with '["arguments"][0]'
-    value = ctx.callback.reportProjects("")["arguments"][0]
+        # Get cost (only for PI... TODO: in DHS-1143, probably in another rule and DTO)
+        # Calculate size for entire project
+        proj_size = ""
+        for proj_coll in row_iterator("COLL_NAME",
+                                   "COLL_PARENT_NAME = '" + project["path"] + "'",
+                                   AS_LIST,
+                                   ctx.callback):
 
-    return {"value": value}
+            # TODO: Rewrite this function in the python rule engine
+            coll_size = ctx.callback.getCollectionSize(proj_coll[0], "GiB", "none", "")["arguments"][3]
+            # TODO: Type casting string to float
+            # proj_size = proj_size + coll_size
+            proj_size = coll_size
+            ctx.callback.writeLine("stdout", proj_coll[0])
+
+
+
+        project["dataSizeGiB"] = proj_size
+
+        # Append this project to the list
+        # projects_list.append(project)
+
+    # return {"value": project }
+    return project
+    # return projects_list

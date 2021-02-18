@@ -28,20 +28,84 @@ def list_projects(ctx):
 
         project["path"] = result[0]
         # project["path"] = "/nlmumc/projects/P000000013"
-        project["id"] = project["path"].split("/")[3]
+        project["project"] = project["path"].split("/")[3]
 
         # List Contributors
-        # TODO
+        # TODO: find out why this rule is a json without values
+        #project["contributors"] = ctx.callback.listProjectContributors(project["path"], "false", "")["arguments"][2]
+        # TODO: Hardcoded for the time-being
+        project["contributors"] = {
+            "users": [
+                "service-pid"
+            ],
+            "groups": [
+                "datahub"
+            ],
+            "groupObjects": [
+                {
+                    "groupName": "datahub",
+                    "groupId": "10142",
+                    "description": "It's DataHub! The place to store your data.",
+                    "displayName": "DataHub"
+                }
+            ],
+            "userObjects": [
+                {
+                    "displayName": "service-pid",
+                    "userName": "service-pid",
+                    "userId": "10130"
+                }
+            ]
+            }
         # List Managers
-        # TODO
+        # TODO: find out why this rule is a json without values
+        #project["managers"] = ctx.callback.listProjectManagers(project["path"], "")["arguments"][1]
+        # TODO: Hardcoded for the time-being
+        project["managers"] = {
+            "users": [
+                "psuppers",
+                "opalmen"
+            ],
+            "groups": [],
+            "groupObjects": [],
+            "userObjects": [
+                {
+                    "userName": "psuppers",
+                    "displayName": "Pascal Suppers",
+                    "userId": "10053"
+                },
+                {
+                    "displayName": "Olav Palmen",
+                    "userName": "opalmen",
+                    "userId": "10098"
+                }
+            ]
+        }
+
         # List Viewers
-        # TODO
+        # TODO: find out why this rule is a json without values
+        #project["viewers"] = ctx.callback.listProjectViewers(project["path"], "false", "")["arguments"][2]
+        # TODO: Hardcoded for the time-being
+        project["viewers"] = {
+            "users": [
+                "service-disqover"
+            ],
+            "groups": [],
+            "groupObjects": [],
+            "userObjects": [
+                {
+                    "displayName": "service-disqover",
+                    "userName": "service-disqover",
+                    "userId": "10133"
+                }
+            ]
+        }
 
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
         project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]
-        project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(project["path"], "enableOpenAccessExport", "", "", "false")["arguments"][2]
-        project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "", "false")["arguments"][2]
+        project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(project["path"], "enableOpenAccessExport", "", "false", "false")["arguments"][2]
+        project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "false", "false")["arguments"][2]
         # TODO: Convert into displayname
         project["principalInvestigatorDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
         project["dataStewardDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]

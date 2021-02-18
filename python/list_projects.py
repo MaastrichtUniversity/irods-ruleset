@@ -10,13 +10,12 @@ def list_projects(ctx):
 
         Returns
         -------
-        TODO: Update documentation. Will it really return a list?
         list
             a json list of projects objects
         """
 
-    # Initialize projects list
-    # projects_list = []
+    # Initialize the projects listing
+    output = []
 
     # Loop over all projects
     for result in row_iterator("COLL_NAME",
@@ -27,21 +26,22 @@ def list_projects(ctx):
         # Reset the project dictionary
         project = {}
 
-        #project["path"] = result[0]
-        project["path"] = "/nlmumc/projects/P000000013"
+        project["path"] = result[0]
+        # project["path"] = "/nlmumc/projects/P000000013"
         project["id"] = project["path"].split("/")[3]
 
         # List Contributors
-
+        # TODO
         # List Managers
-
+        # TODO
         # List Viewers
+        # TODO
 
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
         project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]
-        project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(project["path"], "enableOpenAccessExport", "", "", "true")["arguments"][2]
-        project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "", "true")["arguments"][2]
+        project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(project["path"], "enableOpenAccessExport", "", "", "false")["arguments"][2]
+        project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "", "false")["arguments"][2]
         # TODO: Convert into displayname
         project["principalInvestigatorDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
         project["dataStewardDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]
@@ -65,8 +65,7 @@ def list_projects(ctx):
         project["dataSizeGiB"] = proj_size
 
         # Append this project to the list
-        # projects_list.append(project)
+        output.append(project)
 
-    # return {"value": project }
-    return project
-    # return projects_list
+    # return projects listing
+    return output

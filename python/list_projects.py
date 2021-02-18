@@ -51,21 +51,16 @@ def list_projects(ctx):
 
 
         # Get cost (only for PI... TODO: in DHS-1143, probably in another rule and DTO)
+
         # Calculate size for entire project
-        proj_size = ""
+        proj_size = float(0)
         for proj_coll in row_iterator("COLL_NAME",
                                    "COLL_PARENT_NAME = '" + project["path"] + "'",
                                    AS_LIST,
                                    ctx.callback):
 
-            # TODO: Rewrite this function in the python rule engine
-            coll_size = ctx.callback.getCollectionSize(proj_coll[0], "GiB", "none", "")["arguments"][3]
-            # TODO: Type casting string to float
-            # proj_size = proj_size + coll_size
-            proj_size = coll_size
-            ctx.callback.writeLine("stdout", proj_coll[0])
-
-
+            coll_size = float(ctx.callback.get_collection_size(proj_coll[0], "GiB", "none", "")["arguments"][3])
+            proj_size = proj_size + coll_size
 
         project["dataSizeGiB"] = proj_size
 

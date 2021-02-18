@@ -4,7 +4,7 @@
 
 def main(rule_args, callback, rei):
 
-    # Python-iRODS: When calling a rule without input arguments you need to provide a (empty or nonsense) string.
+    # Python-iRODS: When calling a rule without input arguments you need to provide a (empty or nonsense) string, which will contain the output.
     output = callback.list_projects("")
 
     # Retrieving the rule outcome is done with '["arguments"][0]'

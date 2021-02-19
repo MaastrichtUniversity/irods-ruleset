@@ -2,3 +2,4 @@
 # Build rulesets
 *.re
 test.r
+venv/

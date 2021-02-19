@@ -13,8 +13,16 @@ def get_project_details(ctx, project_path):
     list
         a json list of projects objects
     """
-        
-    # Reset the project dictionary
+    # Get the client username
+    username = ''
+    var_map = session_vars.get_map(ctx.rei)
+    user_type = 'client_user'
+    userrec = var_map.get(user_type, '')
+    if userrec:
+        username = userrec.get('user_name', '')
+
+    has_financial_view_access = False
+    # Initialize the project dictionary
     project = {}
     
     project["path"] = project_path
@@ -40,17 +48,24 @@ def get_project_details(ctx, project_path):
     project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", "true")["arguments"][2]
     project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", "true")["arguments"][2]
     
-    # Get the display name value for PI and data steward
     ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
+    if ret == username:
+        has_financial_view_access = True
+    # Get the display name value for the PI
     for user in project["managers"]['userObjects']:
         if user['userName'] == ret:
             project["principalInvestigatorDisplayName"] = user['displayName']
-    
+
     ret = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]
+    if ret == username:
+        has_financial_view_access = True
+    # Get the display name value for the data steward
     for user in project["managers"]['userObjects']:
         if user['userName'] == ret:
             project["dataStewardDisplayName"] = user['displayName']
-    
+
+    project["has_financial_view_access"] = has_financial_view_access
+
     # Calculate size for entire project
     proj_size = float(0)
     for proj_coll in row_iterator("COLL_NAME",
@@ -61,5 +76,5 @@ def get_project_details(ctx, project_path):
         proj_size = proj_size + coll_size
     
     project["dataSizeGiB"] = proj_size
-    
+
     return project

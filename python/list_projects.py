@@ -1,18 +1,18 @@
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def list_projects(ctx):
     """
-        Get a listing of all (authorized) projects
+    Get a listing of all (authorized) projects
 
-        Parameters
-        ----------
-        ctx : Context
-            Combined type of a callback and rei struct.
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of a callback and rei struct.
 
-        Returns
-        -------
-        list
-            a json list of projects objects
-        """
+    Returns
+    -------
+    list
+        a json list of projects objects
+    """
 
     # Initialize the projects listing
     output = []
@@ -49,9 +49,16 @@ def list_projects(ctx):
         project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", "true")["arguments"][2]
         project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", "true")["arguments"][2]
 
-        # TODO: Convert into displayname
-        project["principalInvestigatorDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
-        project["dataStewardDisplayName"] = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]
+        # Get the display name value for PI and data steward
+        ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
+        for user in project["managers"]['userObjects']:
+            if user['userName'] == ret:
+                project["principalInvestigatorDisplayName"] = user['displayName']
+
+        ret = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]
+        for user in project["managers"]['userObjects']:
+            if user['userName'] == ret:
+                project["dataStewardDisplayName"] = user['displayName']
 
         # Calculate size for entire project
         proj_size = float(0)

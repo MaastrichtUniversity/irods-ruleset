@@ -1,6 +1,7 @@
 from math import floor
 from math import ceil
 
+
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def get_collection_size(ctx, collection, unit, round):
 

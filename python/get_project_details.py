@@ -68,4 +68,8 @@ def get_project_details(ctx, project_path):
 
     project["has_financial_view_access"] = has_financial_view_access
 
+    # Calculate the project's size
+    ret = ctx.callback.get_project_size(project["path"], '')["arguments"][1]
+    project["dataSizeGiB"] = json.loads(ret)
+
     return project

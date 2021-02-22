@@ -28,10 +28,6 @@ def list_projects(ctx):
         ret = ctx.callback.get_project_details(result[0], '')["arguments"][1]
         project = json.loads(ret)
 
-        # Calculate the project's size
-        ret = ctx.callback.get_project_size(result[0], '')["arguments"][1]
-        project["dataSizeGiB"] = json.loads(ret)
-
         # Check if the client user has at least financial view access for one project
         if not output["has_financial_view_access"] and project["has_financial_view_access"]:
             output = {"has_financial_view_access": project["has_financial_view_access"]}

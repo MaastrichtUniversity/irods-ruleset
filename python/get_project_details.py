@@ -1,7 +1,7 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_project_details(ctx, project_path):
     """
-    Get a listing of all (authorized) projects
+    Get the all the project's AVU
 
     Parameters
     ----------
@@ -67,16 +67,5 @@ def get_project_details(ctx, project_path):
             project["dataStewardDisplayName"] = user['displayName']
 
     project["has_financial_view_access"] = has_financial_view_access
-
-    # Calculate size for entire project
-    proj_size = float(0)
-    for proj_coll in row_iterator("COLL_NAME",
-                                  "COLL_PARENT_NAME = '" + project["path"] + "'",
-                                  AS_LIST,
-                                  ctx.callback):
-        coll_size = float(ctx.callback.get_collection_size(proj_coll[0], "GiB", "none", "")["arguments"][3])
-        proj_size = proj_size + coll_size
-    
-    project["dataSizeGiB"] = proj_size
 
     return project

@@ -13,32 +13,10 @@ def list_projects(ctx):
     list
         a json list of projects objects
     """
-    # Get the client username
-    username = ''
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
-
-    condition = "COLL_PARENT_NAME = '/nlmumc/projects' AND META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}'"
-
-    has_financial_view_access = False
-    # Check if the  the user is the principal investigator for one project
-    for result in row_iterator("COLL_NAME", condition.format('OBI:0000103', username), AS_LIST, ctx.callback):
-        has_financial_view_access = True
-        break
-
-    # Only check for data steward if the user is not a PI for any projects
-    if not has_financial_view_access:
-        # Get all the projects where the user is the data steward
-        for result in row_iterator("COLL_NAME", condition.format('dataSteward', username), AS_LIST, ctx.callback):
-            has_financial_view_access = True
-            break
-    output = {"has_financial_view_access": has_financial_view_access}
 
     # Initialize the projects listing
     projects = []
+    output = {"has_financial_view_access": False}
 
     # Loop over all projects
     for result in row_iterator("COLL_NAME",
@@ -48,6 +26,10 @@ def list_projects(ctx):
 
         ret = ctx.callback.get_project_details(result[0], '')["arguments"][1]
         project = json.loads(ret)
+
+        # Check if the client user has at least financial view access for one project
+        if not output["has_financial_view_access"] and project["has_financial_view_access"]:
+            output = {"has_financial_view_access": project["has_financial_view_access"]}
 
         # Append this project to the list
         projects.append(project)

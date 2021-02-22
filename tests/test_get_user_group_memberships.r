@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_get_user_group_memberships.r "*show_special_groups='true'" "*username='jmelius'"
+# irule -r irods_rule_engine_plugin-python-instance -F test_get_user_group_memberships.r "*show_special_groups='true'" "*username='jmelius'" | python -m json.tool
 
 def main(rule_args, callback, rei):
     show_special_groups = global_vars["*show_special_groups"][1:-1]

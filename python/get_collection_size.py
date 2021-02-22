@@ -4,6 +4,25 @@ from math import ceil
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def get_collection_size(ctx, collection, unit, round):
+    """
+    Get the collection's size. The returned value can formatted by unit and rounded.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of a callback and rei struct.
+    collection: str
+        Collection absolute path
+    unit: str
+        Format the size to the correct unit: B, KiB, GiB, TiB
+    round: str
+        none, floor, ceiling
+
+    Returns
+    -------
+    float
+        The collection's size
+    """
 
     size_bytes = float(ctx.callback.getCollectionAVU(collection, "dcat:byteSize", "", "0", "false")["arguments"][2])
 

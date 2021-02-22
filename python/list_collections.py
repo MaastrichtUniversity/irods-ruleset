@@ -7,13 +7,13 @@ def list_collections(ctx, project_path):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    project_path:
+    project_path: str
         Project absolute path
 
     Returns
     -------
     list
-        a json list of projects objects
+        a json list of collections objects
     """
     # Initialize the collections dictionary
     collections = []

@@ -7,7 +7,7 @@ def get_project_size(ctx, project_path):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    project_path:
+    project_path: str
         Project absolute path
 
     Returns

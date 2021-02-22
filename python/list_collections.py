@@ -87,6 +87,8 @@ def list_collections(ctx, project_path):
         # Initialize the collections dictionary
         collection = {}
 
+        collection["id"] = proj_coll[0].split("/")[4]
+
         # Get AVUs
         collection["size"] = coll_size
         collection["title"] = ctx.callback.getCollectionAVU(proj_coll[0], "title", "", "", "false")["arguments"][2]

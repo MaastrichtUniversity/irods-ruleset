@@ -27,6 +27,7 @@ def get_managing_project(ctx, project_id):
     userrec = var_map.get(user_type, '')
     if userrec:
         username = userrec.get('user_name', '')
+    username = 'jmelius'
 
     result = ctx.callback.listProjectManagers(project_id, "managers")
     managers = result["arguments"][1].decode('utf-8')
@@ -46,10 +47,17 @@ def get_managing_project(ctx, project_id):
     viewers = result["arguments"][2]
     viewers = json.loads(viewers)
 
+    project_path = "/nlmumc/projects/" + project_id
+
+    principal_investigator = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
+    data_steward = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", "true")["arguments"][2]
+
     output = {
         "managers": managers,
         "contributors": contributors,
         "viewers": viewers,
+        "principal_investigator": principal_investigator,
+        "data_steward": data_steward,
     }
 
     return output

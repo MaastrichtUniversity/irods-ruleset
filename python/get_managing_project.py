@@ -27,7 +27,6 @@ def get_managing_project(ctx, project_id):
     userrec = var_map.get(user_type, '')
     if userrec:
         username = userrec.get('user_name', '')
-    username = 'jmelius'
 
     result = ctx.callback.listProjectManagers(project_id, "managers")
     managers = result["arguments"][1].decode('utf-8')

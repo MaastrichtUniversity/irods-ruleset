@@ -30,7 +30,7 @@ def generate_token(ctx):
         existing_tokens.append(row[0][21:])
 
     token = random_token(adjectives, nouns, existing_tokens)
-    return token
+    return '\"' + token + '\"'
 
 def random_token(adjectives, nouns, existing_tokens):
     chosen_adjective = adjectives[randrange(0, len(adjectives) - 1)]

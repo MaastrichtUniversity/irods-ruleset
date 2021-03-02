@@ -17,14 +17,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
     dict
         The attribute values
     """
-    # Get the client username
-    username = ''
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
-
+    username = ctx.callback.get_client_username('')["arguments"][0]
     dropzone_path = "/nlmumc/ingest/zones/"+token
 
     # Check if the user has right access at /nlmumc/ingest/zones
@@ -77,8 +70,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
 
     if check_ingest_resource_status == "true":
         # Query project resource avu
-        ret = ctx.callback.getCollectionAVU(project_path, "resource", "*resource", "", "true")
-        resource = ret["arguments"][2]
+        resource = ctx.callback.getCollectionAVU(project_path, "resource", "*resource", "", "true")["arguments"][2]
         # Query the resource status
         for resc_result in row_iterator("RESC_STATUS",
                                            "RESC_NAME = '{}'".format(resource),

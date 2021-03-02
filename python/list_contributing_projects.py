@@ -16,14 +16,7 @@ def list_contributing_project(ctx):
     """
     projects = []
     groups = ""
-    username = ''
-
-    # Get the client username
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
+    username = ctx.callback.get_client_username('')["arguments"][0]
 
     ret = ctx.callback.userNameToUserId(username, "*userId")
     user_id = ret["arguments"][1]

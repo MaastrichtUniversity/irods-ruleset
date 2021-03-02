@@ -15,9 +15,11 @@ from enum import Enum
 # Global vars
 activelyUpdatingAVUs = False
 
-#https://github.com/UtrechtUniversity/irods-ruleset-uu/blob/development/util/rule.py
-#__copyright__ = 'Copyright (c) 2019, Utrecht University'
-#__license__   = 'GPLv3, see LICENSE'
+# https://github.com/UtrechtUniversity/irods-ruleset-uu/blob/development/util/rule.py
+# __copyright__ = 'Copyright (c) 2019, Utrecht University'
+# __license__   = 'GPLv3, see LICENSE'
+
+
 class Context(object):
     """Combined type of a callback and rei struct.
     `Context` can be treated as a rule engine callback for all intents and purposes.
@@ -109,6 +111,18 @@ def make(inputs=None, outputs=None, transform=lambda x: x, handler=Output.STORE)
                     callback.writeString('stdout', encode_val(x))
         return r
     return deco
+
+
+@make(inputs=[], outputs=[0], handler=Output.STORE)
+def get_client_username(ctx):
+    # Get the client username
+    username = ''
+    var_map = session_vars.get_map(ctx.rei)
+    user_type = 'client_user'
+    userrec = var_map.get(user_type, '')
+    if userrec:
+        username = userrec.get('user_name', '')
+    return username
 
 
 def setJsonToObj(rule_args, callback, rei):

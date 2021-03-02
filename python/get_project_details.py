@@ -15,13 +15,7 @@ def get_project_details(ctx, project_path):
     list
         a json list of projects objects
     """
-    # Get the client username
-    username = ''
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
+    username = ctx.callback.get_client_username('')["arguments"][0]
 
     has_financial_view_access = False
     # Initialize the project dictionary

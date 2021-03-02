@@ -19,14 +19,7 @@ def get_managing_project(ctx, project_id):
         The list of usernames for managers, contributors and viewers.
         Returns an empty list if the user is not a manager.
     """
-
-    # Get the client username
-    username = ''
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
+    username = ctx.callback.get_client_username('')["arguments"][0]
 
     result = ctx.callback.listProjectManagers(project_id, "managers")
     managers = result["arguments"][1].decode('utf-8')

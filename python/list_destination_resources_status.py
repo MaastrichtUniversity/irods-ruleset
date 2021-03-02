@@ -19,7 +19,7 @@ def list_destination_resources_status(ctx):
                                   "RESC_LOC = 'EMPTY_RESC_HOST' AND RESC_NAME != 'rootResc'",
                                   AS_LIST,
                                   ctx.callback):
-        result = {'resc_name': row[0], 'available': row[1] != 'down', 'comment': row[2]}
+        result = {'name': row[0], 'available': row[1] != 'down', 'comment': row[2]}
         resources.append(result)
 
     return resources

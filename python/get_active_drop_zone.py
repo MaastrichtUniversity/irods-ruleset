@@ -45,6 +45,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         "project": "",
         "projectTitle": "",
         "date": "",
+        "token": token,
         "resourceStatus": ""
     }
     # Query the dropzone metadata

@@ -55,6 +55,7 @@ def list_contributing_project(ctx):
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
         project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
+        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")["arguments"][2]
 
         projects.append(project)
 

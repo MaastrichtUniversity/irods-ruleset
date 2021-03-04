@@ -17,8 +17,8 @@ def generate_token(ctx):
     string
         The requested new DZ-token
     """
-    adjectives_file = open('/rules/python/assets/adjectives.txt', 'r')
-    nouns_file = open('/rules/python/assets/nouns.txt', 'r')
+    adjectives_file = open('/etc/irods/assets/adjectives.txt', 'r')
+    nouns_file = open('/etc/irods/assets/nouns.txt', 'r')
     adjectives = adjectives_file.read().split('\n')
     nouns = nouns_file.read().split('\n')
 

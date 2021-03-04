@@ -1,5 +1,5 @@
-@make(inputs=[0], outputs=[1], handler=Output.STORE)
-def get_project_details(ctx, project_path):
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def get_project_details(ctx, project_path, show_service_accounts):
     """
     Get the all the project's AVU
 
@@ -9,6 +9,8 @@ def get_project_details(ctx, project_path):
         Combined type of a callback and rei struct.
     project_path: str
         Project absolute path
+    show_service_accounts: str
+        'true'/'false' expected; If true, hide the service accounts in the result
 
     Returns
     -------
@@ -35,7 +37,35 @@ def get_project_details(ctx, project_path):
     # List Viewers
     ret = ctx.callback.listProjectViewers(project["project"], "false", "")["arguments"][2]
     project["viewers"] = json.loads(ret)
-    
+
+
+    # TODO
+    # Rewrite listProjectViewers, listProjectViewers, listProjectContributors
+    # to add a new parameter show_service_accounts
+    # Filtering out the service accounts here, might cause to slow down the query performance
+    if show_service_accounts == "false":
+        for viewer in project["viewers"]['userObjects']:
+            if "service-" in viewer['userName']:
+                project["viewers"]['userObjects'].remove(viewer)
+
+        for viewer in project["viewers"]['users']:
+            if "service-" in viewer:
+                project["viewers"]['users'].remove(viewer)
+
+        for contributor in project["contributors"]['userObjects']:
+            if "service-" in contributor['userName']:
+                project["contributors"]['userObjects'].remove(contributor)
+        for contributor in project["contributors"]['users']:
+            if "service-" in contributor:
+                project["contributors"]['users'].remove(contributor)
+
+        for manager in project["managers"]['userObjects']:
+            if "service-" in manager['userName']:
+                project["managers"]['userObjects'].remove(manager)
+        for manager in project["managers"]['users']:
+            if "service-" in manager:
+                project["managers"]['users'].remove(manager)
+
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'
     project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]

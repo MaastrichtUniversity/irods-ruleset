@@ -1,8 +1,5 @@
-import unicodedata
-
-
-@make(inputs=[0], outputs=[1], handler=Output.STORE)
-def get_managing_project(ctx, project_id):
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def get_managing_project(ctx, project_id, show_service_accounts):
     """
     Query the list of ACL for a project for the client user
 
@@ -12,6 +9,8 @@ def get_managing_project(ctx, project_id):
         Combined type of a callback and rei struct.
     project_id : str
         The project's id; eg.g P000000010
+    show_service_accounts: str
+        'true'/'false' expected; If true, hide the service accounts in the result
 
     Returns
     -------
@@ -20,11 +19,9 @@ def get_managing_project(ctx, project_id):
         Returns an empty list if the user is not a manager.
     """
     username = ctx.callback.get_client_username('')["arguments"][0]
+    username = "psuppers"
 
-    result = ctx.callback.listProjectManagers(project_id, "managers")
-    managers = result["arguments"][1].decode('utf-8')
-    # Remove unicode 'u' from the string result
-    managers = "".join(ch for ch in managers if unicodedata.category(ch)[0] != "C")
+    managers = ctx.callback.list_project_managers(project_id, show_service_accounts, "managers")["arguments"][2]
     managers = json.loads(managers)
 
     # if the user is not part of the managers, return an empty list

@@ -1,5 +1,5 @@
-@make(inputs=[], outputs=[0], handler=Output.STORE)
-def list_contributing_project(ctx):
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def list_contributing_project(ctx, show_service_accounts):
     """
     Query the list of ACL for a project for the client user
 
@@ -7,6 +7,8 @@ def list_contributing_project(ctx):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
+    show_service_accounts: str
+        'true'/'false' expected; If true, hide the service accounts in the result
 
     Returns
     -------
@@ -45,7 +47,7 @@ def list_contributing_project(ctx):
         project["contributors"] = json.loads(ret)
 
         # List Managers
-        ret = ctx.callback.listProjectManagers(project["id"], "")["arguments"][1]
+        ret = ctx.callback.list_project_managers(project["id"], show_service_accounts, "")["arguments"][2]
         project["managers"] = json.loads(ret)
 
         # List Viewers

@@ -43,7 +43,7 @@ def list_contributing_project(ctx, show_service_accounts):
         project = {"id": collection_result[0].split("/")[3]}
 
         # List Contributors
-        ret = ctx.callback.listProjectContributors(project["id"], "false", "")["arguments"][2]
+        ret = ctx.callback.list_project_contributors(project["id"], "false", show_service_accounts, "")["arguments"][3]
         project["contributors"] = json.loads(ret)
 
         # List Managers

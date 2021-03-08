@@ -27,7 +27,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["project"] = project["path"].split("/")[3]
     
     # List Contributors
-    ret = ctx.callback.listProjectContributors(project["project"], "false", "")["arguments"][2]
+    ret = ctx.callback.list_project_contributors(project["project"], "false", show_service_accounts, "")["arguments"][3]
     project["contributors"] = json.loads(ret)
     
     # List Managers
@@ -51,13 +51,6 @@ def get_project_details(ctx, project_path, show_service_accounts):
         for viewer in project["viewers"]['users']:
             if "service-" in viewer:
                 project["viewers"]['users'].remove(viewer)
-
-        for contributor in project["contributors"]['userObjects']:
-            if "service-" in contributor['userName']:
-                project["contributors"]['userObjects'].remove(contributor)
-        for contributor in project["contributors"]['users']:
-            if "service-" in contributor:
-                project["contributors"]['users'].remove(contributor)
 
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'

@@ -28,8 +28,7 @@ def get_managing_project(ctx, project_id, show_service_accounts):
     if username not in managers['users']:
         return []
 
-    result = ctx.callback.listProjectContributors(project_id, 'false', "contributors")
-    contributors = result["arguments"][2]
+    contributors = ctx.callback.list_project_contributors(project_id, "false", show_service_accounts, "")["arguments"][3]
     contributors = json.loads(contributors)
 
     result = ctx.callback.listProjectViewers(project_id, 'false', "viewers")

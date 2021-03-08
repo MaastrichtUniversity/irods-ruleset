@@ -38,20 +38,6 @@ def get_project_details(ctx, project_path, show_service_accounts):
     ret = ctx.callback.list_project_viewers(project["project"], "false", show_service_accounts, "")["arguments"][3]
     project["viewers"] = json.loads(ret)
 
-
-    # TODO
-    # Rewrite listProjectViewers, listProjectViewers, listProjectContributors
-    # to add a new parameter show_service_accounts
-    # Filtering out the service accounts here, might cause to slow down the query performance
-    if show_service_accounts == "false":
-        for viewer in project["viewers"]['userObjects']:
-            if "service-" in viewer['userName']:
-                project["viewers"]['userObjects'].remove(viewer)
-
-        for viewer in project["viewers"]['users']:
-            if "service-" in viewer:
-                project["viewers"]['users'].remove(viewer)
-
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'
     project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]

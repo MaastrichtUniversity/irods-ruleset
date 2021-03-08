@@ -35,7 +35,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["managers"] = json.loads(ret)
     
     # List Viewers
-    ret = ctx.callback.listProjectViewers(project["project"], "false", "")["arguments"][2]
+    ret = ctx.callback.list_project_viewers(project["project"], "false", show_service_accounts, "")["arguments"][3]
     project["viewers"] = json.loads(ret)
 
 

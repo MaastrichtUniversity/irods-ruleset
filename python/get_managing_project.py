@@ -19,7 +19,6 @@ def get_managing_project(ctx, project_id, show_service_accounts):
         Returns an empty list if the user is not a manager.
     """
     username = ctx.callback.get_client_username('')["arguments"][0]
-    username = "psuppers"
 
     managers = ctx.callback.list_project_managers(project_id, show_service_accounts, "managers")["arguments"][2]
     managers = json.loads(managers)
@@ -31,8 +30,7 @@ def get_managing_project(ctx, project_id, show_service_accounts):
     contributors = ctx.callback.list_project_contributors(project_id, "false", show_service_accounts, "")["arguments"][3]
     contributors = json.loads(contributors)
 
-    result = ctx.callback.listProjectViewers(project_id, 'false', "viewers")
-    viewers = result["arguments"][2]
+    viewers = ctx.callback.list_project_viewers(project_id, 'false', show_service_accounts, "viewers")["arguments"][3]
     viewers = json.loads(viewers)
 
     project_path = "/nlmumc/projects/" + project_id

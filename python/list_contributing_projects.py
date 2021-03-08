@@ -51,7 +51,7 @@ def list_contributing_project(ctx, show_service_accounts):
         project["managers"] = json.loads(ret)
 
         # List Viewers
-        ret = ctx.callback.listProjectViewers(project["id"], "false", "")["arguments"][2]
+        ret = ctx.callback.list_project_viewers(project["id"], "false", show_service_accounts, "")["arguments"][3]
         project["viewers"] = json.loads(ret)
 
         # Get project metadata

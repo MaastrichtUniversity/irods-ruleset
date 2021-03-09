@@ -55,7 +55,6 @@ curious
 cute
 dangerous
 dark
-dead
 defeated
 defiant
 delightful

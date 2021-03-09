@@ -1,5 +1,5 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
-def list_contributing_project(ctx, show_service_accounts):
+def list_contributing_projects(ctx, show_service_accounts):
     """
     Query the list of ACL for a project for the client user
 
@@ -13,8 +13,10 @@ def list_contributing_project(ctx, show_service_accounts):
     Returns
     -------
     dict
-        The list of usernames for managers, contributors and viewers.
-        Returns an empty list if the user is not a contributor.
+        All projects for which the user is a contributor. Per project, it displays:
+          - project ID
+          - project metadata (from AVUs)
+          - project ACL (managers, contributors, viewers);
     """
     projects = []
     groups = ""

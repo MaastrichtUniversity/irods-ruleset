@@ -1,5 +1,5 @@
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
-def get_managing_project(ctx, project_id, show_service_accounts):
+def get_managing_projects(ctx, project_id, show_service_accounts):
     """
     Query the list of ACL for a project for the client user
 

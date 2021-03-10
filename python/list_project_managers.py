@@ -65,7 +65,7 @@ def list_project_managers(ctx, project_id, show_service_accounts):
                     continue
 
                 for user_result in row_iterator("META_USER_ATTR_VALUE",
-                                           "USER_TYPE = 'rodsuser' AND META_USER_ATTR_NAME = 'displayName'",
+                                           "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(account_name),
                                            AS_LIST,
                                            ctx.callback):
 

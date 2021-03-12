@@ -49,9 +49,8 @@ def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
             description = ""
 
             if account_type == "rodsgroup":
-                for group_result in row_iterator("META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
-                                         "USER_TYPE = 'rodsgroup' AND"
-                                         "USER_GROUP_ID = '{}'".format(account_id),
+                for group_result in row_iterator("META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
+                                         "USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{}'".format(account_id),
                                          AS_LIST,
                                          ctx.callback):
 

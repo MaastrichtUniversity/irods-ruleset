@@ -1,5 +1,5 @@
-@make(inputs=[0], outputs=[1], handler=Output.STORE)
-def get_project_details(ctx, project_path):
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def get_project_details(ctx, project_path, show_service_accounts):
     """
     Get the all the project's AVU
 
@@ -9,19 +9,15 @@ def get_project_details(ctx, project_path):
         Combined type of a callback and rei struct.
     project_path: str
         Project absolute path
+    show_service_accounts: str
+        'true'/'false' expected; If true, hide the service accounts in the result
 
     Returns
     -------
     list
         a json list of projects objects
     """
-    # Get the client username
-    username = ''
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
+    username = ctx.callback.get_client_username('')["arguments"][0]
 
     has_financial_view_access = False
     # Initialize the project dictionary
@@ -31,17 +27,17 @@ def get_project_details(ctx, project_path):
     project["project"] = project["path"].split("/")[3]
     
     # List Contributors
-    ret = ctx.callback.listProjectContributors(project["project"], "false", "")["arguments"][2]
+    ret = ctx.callback.list_project_contributors(project["project"], "false", show_service_accounts, "")["arguments"][3]
     project["contributors"] = json.loads(ret)
     
     # List Managers
-    ret = ctx.callback.listProjectManagers(project["project"], "")["arguments"][1]
+    ret = ctx.callback.list_project_managers(project["project"], show_service_accounts, "")["arguments"][2]
     project["managers"] = json.loads(ret)
     
     # List Viewers
-    ret = ctx.callback.listProjectViewers(project["project"], "false", "")["arguments"][2]
+    ret = ctx.callback.list_project_viewers(project["project"], "false", show_service_accounts, "")["arguments"][3]
     project["viewers"] = json.loads(ret)
-    
+
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'
     project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]

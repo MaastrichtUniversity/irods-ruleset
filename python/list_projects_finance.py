@@ -13,14 +13,7 @@ def get_projects_finance(ctx):
     dict
         The list of the projects financial information
     """
-
-    # Get the client username
-    username = ''
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        username = userrec.get('user_name', '')
+    username = ctx.callback.get_client_username('')["arguments"][0]
     
     condition = "COLL_PARENT_NAME = '/nlmumc/projects' AND META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}'"
 

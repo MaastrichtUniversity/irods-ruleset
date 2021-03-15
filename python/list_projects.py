@@ -1,5 +1,5 @@
-@make(inputs=[], outputs=[0], handler=Output.STORE)
-def list_projects(ctx):
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def list_projects(ctx, show_service_accounts):
     """
     Get a listing of all (authorized) projects
 
@@ -7,6 +7,8 @@ def list_projects(ctx):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
+    show_service_accounts: str
+        'true'/'false' expected; If true, hide the service accounts in the result
 
     Returns
     -------
@@ -25,7 +27,7 @@ def list_projects(ctx):
                                ctx.callback):
 
         # Get all the project's avu
-        ret = ctx.callback.get_project_details(result[0], '')["arguments"][1]
+        ret = ctx.callback.get_project_details(result[0], show_service_accounts, '')["arguments"][2]
         project = json.loads(ret)
 
         # Check if the client user has at least financial view access for one project

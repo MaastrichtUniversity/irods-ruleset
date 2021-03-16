@@ -62,17 +62,17 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
         new_project_path = "/nlmumc/projects/" + project
 
         retry = retry + 1
-        result = ctx.callback.msiCollCreate(new_project_path, 0, 0)
-        status = str(result["arguments"][2])
-
-        result = ctx.callback.errorcode(status)
-        error_code = str(result["arguments"][0])
-        error = error_code
+        try:
+            ctx.callback.msiCollCreate(new_project_path, 0, 0)
+        except RuntimeError:
+            error = -1
+        else:
+            error = 0
 
     # Make the rule fail if it doesn't succeed in creating the project
     if error < 0 and retry >= 10:
         msg = "ERROR: Collection '{}' attempt no. {} : Unable to create {}".format(title, retry, new_project_path)
-        ctx.callback.failmsg(error, msg)
+        ctx.callback.msiExit(str(error), msg)
 
     ctx.callback.setCollectionAVU(new_project_path, "authorizationPeriodEndDate", authorization_period_end_date)
     ctx.callback.setCollectionAVU(new_project_path, "dataRetentionPeriodEndDate", data_retention_period_end_date)
@@ -93,7 +93,7 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
                                ctx.callback):
         archive_dest_resc = result[0]
     if archive_dest_resc == "":
-        ctx.callback.failmsg(-1, "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
+        ctx.callback.msiExit("-1", "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
 
     ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
 

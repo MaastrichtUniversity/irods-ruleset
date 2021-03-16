@@ -37,7 +37,7 @@ def get_collection_size(ctx, collection, unit, round):
     elif unit == "TiB":
         size = size_bytes / 1024 / 1024 / 1024
     else:
-        ctx.callback.failmsg(-1, "Invalid input for 'unit'. Options are: B | KiB | MiB | GiB | TiB")
+        ctx.callback.msiExit("-1", "Invalid input for 'unit'. Options are: B | KiB | MiB | GiB | TiB")
 
     # Do the rounding
     if round == "none":
@@ -47,6 +47,6 @@ def get_collection_size(ctx, collection, unit, round):
     elif round == "ceiling":
         size = ceil(size)
     else:
-        ctx.callback.failmsg(-1, "Invalid input for 'round'. Options are: none | floor | ceiling")
+        ctx.callback.msiExit("-1", "Invalid input for 'round'. Options are: none | floor | ceiling")
 
     return size

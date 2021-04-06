@@ -7,7 +7,7 @@
 
 RULE_FILES = $(wildcard *.py)
 # Filter out core.py to be able to position it first during the concatenation
-FILTER := $(filter-out core.py dependency.py,$(RULE_FILES))
+FILTER := $(filter-out core.py,$(RULE_FILES))
 ASSETS_SRC = assets/
 
 # Output files.
@@ -24,7 +24,7 @@ all: $(RULESET_FILE) $(ASSETS_DST)
 
 $(RULESET_FILE): $(FILTER)
     # Concatenate all *.py with core.py on the first position
-	cat dependency.py core.py $(FILTER) > $(RULESET_FILE)
+	cat core.py $(FILTER) > $(RULESET_FILE)
 
 $(ASSETS_DST):
  	# Copy assets files

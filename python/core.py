@@ -1,3 +1,5 @@
+# /etc/irods/venv_dependency.py is created in bootstrap.sh
+import venv_dependency
 import json
 import jsonavu
 import genquery

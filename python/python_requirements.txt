@@ -1,11 +1,6 @@
 cryptography
-enum34==1.1.10
-Jinja2==2.10.1
-requests==2.25.1
-pyrsistent==0.16.1
 jsonschema==3.0.2
-pathvalidate==0.29.1
-xmltodict==0.12.0
-lxml==4.6.2
-requests_cache==0.5.2
+pyrsistent==0.16.1
 irods-avu-json==2.2.0
+requests==2.25.1
+requests_cache==0.5.2

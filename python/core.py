@@ -231,7 +231,7 @@ def getJsonFromObj(rule_args, callback, rei):
     rule_args[3] = result
 
 
-def safeCondition(field_name, value):
+def safeCondition(callback, field_name, value):
     """
     This is a workaround for an issue with the string "select" in genquery
     https://github.com/irods/irods/issues/4697
@@ -276,28 +276,29 @@ def getFieldsForType(callback, object_type, object_name):
         object_name = ret_val['arguments'][2]
         collection = ret_val['arguments'][1]
 
-        fields['WHERE'] = safeCondition("COLL_NAME", collection) + " AND " + safeCondition("DATA_NAME", object_name)
+        fields['WHERE'] = safeCondition(callback, "COLL_NAME", collection) +
+                          " AND " + safeCondition(callback, "DATA_NAME", object_name)
 
     elif object_type.lower() == '-c':
         fields['a'] = "META_COLL_ATTR_NAME"
         fields['v'] = "META_COLL_ATTR_VALUE"
         fields['u'] = "META_COLL_ATTR_UNITS"
 
-        fields['WHERE'] = safeCondition("COLL_NAME", object_name)
+        fields['WHERE'] = safeCondition(callback, "COLL_NAME", object_name)
 
     elif object_type.lower() == '-r':
         fields['a'] = "META_RESC_ATTR_NAME"
         fields['v'] = "META_RESC_ATTR_VALUE"
         fields['u'] = "META_RESC_ATTR_UNITS"
 
-        fields['WHERE'] = safeCondition("RESC_NAME", object_name)
+        fields['WHERE'] = safeCondition(callback, "RESC_NAME", object_name)
 
     elif object_type.lower() == '-u':
         fields['a'] = "META_USER_ATTR_NAME"
         fields['v'] = "META_USER_ATTR_VALUE"
         fields['u'] = "META_USER_ATTR_UNITS"
 
-        fields['WHERE'] = safeCondition("USER_NAME", object_name)
+        fields['WHERE'] = safeCondition(callback, "USER_NAME", object_name)
     else:
         callback.msiExit("-1101000", "Object type should be -d, -C, -R or -u")
 

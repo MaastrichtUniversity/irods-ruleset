@@ -276,7 +276,7 @@ def getFieldsForType(callback, object_type, object_name):
         object_name = ret_val['arguments'][2]
         collection = ret_val['arguments'][1]
 
-        fields['WHERE'] = safeCondition(callback, "COLL_NAME", collection) +
+        fields['WHERE'] = safeCondition(callback, "COLL_NAME", collection) +\
                           " AND " + safeCondition(callback, "DATA_NAME", object_name)
 
     elif object_type.lower() == '-c':
@@ -637,4 +637,3 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
                 callback.msiOprDisallowed()
 
     # TODO: Do more copy cases need to be covered?
-

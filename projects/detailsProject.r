@@ -40,7 +40,7 @@ IRULE_detailsProject(*project, *inherited, *result) {
     *projectCost  = double(0);
     *collections = "{}";
     *projSize = double(0);
-    if ($userNameClient == *principalInvestigator || $userNameClient == "rods"  ){
+    if ($userNameClient == *principalInvestigator || $userNameClient == *dataSteward || $userNameClient == "rods"  ){
         getProjectCost(*project, *projectCost, *collections, *projSize);
     }
     else{

@@ -48,12 +48,33 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     setCollectionAVU(*archColl,*stateAttrName,*value);
 
                     # Calculate data checksum
-                    msiDataObjChksum(*dataPath,"verifyChksum=",*chksum);
+                    # We do not pass any options, this way we get the existing checksum, or a new is calculated.
+                    # If a failure occurs, the replication is stopped, no trimming happens and we can manually verify
+                    # any other replicas
+                    msiDataObjChksum(*dataPath,"",*chksum);
 
                     # Replicate data from *coordResourceName to *archiveResc
-                    msiDataObjRepl(*dataPath, "destRescName=*archiveResc++++verifyChksum=", *moveStatus);
+                    # We do NOT verify checksum during the replication. This is done manually below.
+                    # Too often we have had failures in this command, and were left doubting whether it's the replication
+                    # or the checksum that failed.
+                    msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus);
                     if ( *moveStatus != 0 ) {
                        failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                    }
+
+                    # Query the repl number for the newly replicated file
+                    uuChopPath(*dataPath, *collName, *dataName);
+                    foreach (*av in select DATA_REPL_NUM WHERE COLL_NAME = "*collName" AND DATA_NAME = "*dataName" AND DATA_RESC_NAME = "*archiveResc") {
+                        *replNum = *av.DATA_REPL_NUM;
+                    }
+
+                    # Run the checksum on the *archiveResc side
+                    # TODO: We're unsure if this command fails if the checksum doesnot match with *chksum
+                    msiDataObjChksum(*dataPath,"replNum=*replNum",*chksum_repl);
+
+                    # Manually check the checksum
+                    if ( *chksum != *chksum_repl ) {
+                        failmsg(-1, "Replicated checksum does not match original checksum FAILED.");
                     }
 
                     # Trim data from *coordResourceName
@@ -67,6 +88,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
 
                     # Report logs
                     msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+                    msiWriteRodsLog("DEBUG: \t\tchksum_repl done *chksum_repl", 0);
                     msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
                     msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                     msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);

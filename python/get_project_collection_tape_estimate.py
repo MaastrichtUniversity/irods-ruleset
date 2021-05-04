@@ -20,7 +20,7 @@ def get_project_collection_tape_estimate(ctx, project, collection):
     project_path = "/nlmumc/projects/{}".format(project)
     collection_path = "/nlmumc/projects/{}/{}".format(project, collection)
     # Get the destination archive resource from the project
-    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "N/A", "true")
+    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", "false")
     archive_resource = ret["arguments"][2]
 
     minimum_size = 262144000  # The minimum file size (in bytes)

@@ -231,6 +231,26 @@ def getJsonFromObj(rule_args, callback, rei):
     rule_args[3] = result
 
 
+def safeCondition(callback, field_name, value):
+    """
+    This is a workaround for an issue with the string "select" in genquery
+    https://github.com/irods/irods/issues/4697
+
+    This may be fixed in 4.2.9 or in 4.3.0
+
+    It should also remind us that we're doing very little SQL injection protection here. But this is very difficult in
+    genquery, because it does not support proper character escaping anyway. But because genquery is readonly, and still
+    subject to your own data, it's not too much of an issue.
+    """
+    if "select" in value:
+        callback.writeLine("serverLog", "safeCondition: Hit safeCondition in genquery. Replacing select in query")
+        value = value.replace("select", "se%ect")
+
+        return "%s LIKE '%s'" % (field_name, value)
+    else:
+        return "%s = '%s'" % (field_name, value)
+
+
 def getFieldsForType(callback, object_type, object_name):
     """
     Helper function to convert iRODS object type to the corresponding field names in GenQuery
@@ -256,28 +276,29 @@ def getFieldsForType(callback, object_type, object_name):
         object_name = ret_val['arguments'][2]
         collection = ret_val['arguments'][1]
 
-        fields['WHERE'] = "COLL_NAME = '" + collection + "' AND DATA_NAME = '" + object_name + "'"
+        fields['WHERE'] = safeCondition(callback, "COLL_NAME", collection) +\
+                          " AND " + safeCondition(callback, "DATA_NAME", object_name)
 
     elif object_type.lower() == '-c':
         fields['a'] = "META_COLL_ATTR_NAME"
         fields['v'] = "META_COLL_ATTR_VALUE"
         fields['u'] = "META_COLL_ATTR_UNITS"
 
-        fields['WHERE'] = "COLL_NAME = '" + object_name + "'"
+        fields['WHERE'] = safeCondition(callback, "COLL_NAME", object_name)
 
     elif object_type.lower() == '-r':
         fields['a'] = "META_RESC_ATTR_NAME"
         fields['v'] = "META_RESC_ATTR_VALUE"
         fields['u'] = "META_RESC_ATTR_UNITS"
 
-        fields['WHERE'] = "RESC_NAME = '" + object_name + "'"
+        fields['WHERE'] = safeCondition(callback, "RESC_NAME", object_name)
 
     elif object_type.lower() == '-u':
         fields['a'] = "META_USER_ATTR_NAME"
         fields['v'] = "META_USER_ATTR_VALUE"
         fields['u'] = "META_USER_ATTR_UNITS"
 
-        fields['WHERE'] = "USER_NAME = '" + object_name + "'"
+        fields['WHERE'] = safeCondition(callback, "USER_NAME", object_name)
     else:
         callback.msiExit("-1101000", "Object type should be -d, -C, -R or -u")
 
@@ -616,4 +637,3 @@ def pep_database_copy_avu_metadata_pre(rule_args, callback, rei):
                 callback.msiOprDisallowed()
 
     # TODO: Do more copy cases need to be covered?
-

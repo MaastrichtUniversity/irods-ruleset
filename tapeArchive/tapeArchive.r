@@ -12,6 +12,10 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
      # Get the destination archive resource from the project
      getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
 
+     foreach (*r in select RESC_LOC where RESC_NAME = '*archiveResc'){
+        *archiveHostLocation = *r.RESC_LOC;
+     }
+
     # Count how many file have been archived
     *isMoved=0;
 
@@ -29,12 +33,9 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
         *size = 0;
         msi_json_arrayops(*dataArray , "", "size", *size);
 
-        # Get the resource host location
-        *resourceHostLocation= *rescParentsLocation.*srcResourceId;
-
         if ( *size > 0 ){
-            # Do a remote execution on *resourceHostLocation
-            remote(*resourceHostLocation,"") {
+            # Do a remote execution on *archiveHostLocation
+            remote(*archiveHostLocation,"") {
                 for (*index=0; *index < *size; *index = *index + 1) {
                     # Get the data's path by its index in *dataArray
                     *dataPath = "";
@@ -48,33 +49,17 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     setCollectionAVU(*archColl,*stateAttrName,*value);
 
                     # Calculate data checksum
-                    # We do not pass any options, this way we get the existing checksum, or a new is calculated.
+                    # We do not pass any options, this way we get the existing checksum, or a new one is calculated.
                     # If a failure occurs, the replication is stopped, no trimming happens and we can manually verify
                     # any other replicas
                     msiDataObjChksum(*dataPath,"",*chksum);
 
                     # Replicate data from *coordResourceName to *archiveResc
-                    # We do NOT verify checksum during the replication. This is done manually below.
-                    # Too often we have had failures in this command, and were left doubting whether it's the replication
-                    # or the checksum that failed.
+                    # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
+                    # will automatically also include a checksum check on the destination
                     msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus);
                     if ( *moveStatus != 0 ) {
                        failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
-                    }
-
-                    # Query the repl number for the newly replicated file
-                    uuChopPath(*dataPath, *collName, *dataName);
-                    foreach (*av in select DATA_REPL_NUM WHERE COLL_NAME = "*collName" AND DATA_NAME = "*dataName" AND DATA_RESC_NAME = "*archiveResc") {
-                        *replNum = *av.DATA_REPL_NUM;
-                    }
-
-                    # Run the checksum on the *archiveResc side
-                    # TODO: We're unsure if this command fails if the checksum doesnot match with *chksum
-                    msiDataObjChksum(*dataPath,"replNum=*replNum",*chksum_repl);
-
-                    # Manually check the checksum
-                    if ( *chksum != *chksum_repl ) {
-                        failmsg(-1, "Replicated checksum does not match original checksum FAILED.");
                     }
 
                     # Trim data from *coordResourceName

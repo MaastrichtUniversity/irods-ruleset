@@ -33,6 +33,9 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
         *size = 0;
         msi_json_arrayops(*dataArray , "", "size", *size);
 
+        # Get the resource host location
+        *resourceHostLocation= *rescParentsLocation.*srcResourceId;
+
         if ( *size > 0 ){
             # Do a remote execution on *archiveHostLocation
             remote(*archiveHostLocation,"") {
@@ -62,21 +65,22 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                        failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
                     }
 
-                    # Trim data from *coordResourceName
-                    msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
-                    if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                    remote(*resourceHostLocation,"") {
+                        # Trim data from *coordResourceName
+                        msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
+                        if ( *trimStatus != 1 ) {
+                           failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                        }
+
+                        # Update counter
+                        *isMoved=*isMoved+1;
+
+                        # Report logs
+                        msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+                        msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
+                        msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
+                        msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
                     }
-
-                    # Update counter
-                    *isMoved=*isMoved+1;
-
-                    # Report logs
-                    msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                    msiWriteRodsLog("DEBUG: \t\tchksum_repl done *chksum_repl", 0);
-                    msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
-                    msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
-                    msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
                 }
             }
         }

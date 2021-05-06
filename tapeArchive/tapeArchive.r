@@ -38,7 +38,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
 
         if ( *size > 0 ){
             # Do a remote execution on *archiveHostLocation
-            remote(*archiveHostLocation,"") {
+            # remote(*archiveHostLocation,"") {
                 for (*index=0; *index < *size; *index = *index + 1) {
                     # Get the data's path by its index in *dataArray
                     *dataPath = "";
@@ -65,7 +65,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                        failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
                     }
 
-                    remote(*resourceHostLocation,"") {
+                    # remote(*resourceHostLocation,"") {
                         # Trim data from *coordResourceName
                         msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
                         if ( *trimStatus != 1 ) {
@@ -80,8 +80,8 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                         msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
                         msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                         msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
-                    }
-                }
+                   # }
+                #}
             }
         }
     }

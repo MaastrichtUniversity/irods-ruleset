@@ -116,7 +116,7 @@ tapeUnArchive(*count, *archColl){
 
                 # We do not pass any options, this way we get the existing checksum, which should always exist for
                 # archived files. If a failure occurs, the replication is stopped, no trimming happens
-                msiDataObjChksum(*ipath,"=",*chksum);
+                msiDataObjChksum(*ipath,"",*chksum);
                 msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
 
                 # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl

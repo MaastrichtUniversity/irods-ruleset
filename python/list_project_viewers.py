@@ -8,7 +8,7 @@ def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
     ctx : Context
         Combined type of a callback and rei struct.
     project_id : str
-        The project's id; eg.g P000000010
+        The project's id; e.g P000000010
     inherited : str
         Role inheritance
         * inherited='true' cumulates authorizations to designate the role. i.e. A viewer has OWN, WRITE or READ access

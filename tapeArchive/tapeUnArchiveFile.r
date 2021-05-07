@@ -8,10 +8,14 @@ tapeUnArchiveFile(*ScanColl, *archiveResc, *projectResource, *resourceLocation, 
         *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
         setCollectionAVU(*archColl, "archiveState",*value);
 
-        msiDataObjChksum(*ipath,"verifyChksum=",*chksum);
+        # We do not pass any options, this way we get the existing checksum, which should always exist for
+        # archived files. If a failure occurs, the replication is stopped, no trimming happens
+        msiDataObjChksum(*ipath,"",*chksum);
         msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
 
-        msiDataObjRepl(*ipath, "destRescName=*projectResource++++verifyChksum=", *moveStatus);
+        # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
+        # will automatically also include a checksum check on the destination
+        msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
         if ( *moveStatus != 0 ) {
                failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
         }

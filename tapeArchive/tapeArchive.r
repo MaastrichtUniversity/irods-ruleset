@@ -12,10 +12,6 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
      # Get the destination archive resource from the project
      getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
 
-     foreach (*r in select RESC_LOC where RESC_NAME = '*archiveResc'){
-        *archiveHostLocation = *r.RESC_LOC;
-     }
-
     # Count how many file have been archived
     *isMoved=0;
 
@@ -37,8 +33,10 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
         *resourceHostLocation= *rescParentsLocation.*srcResourceId;
 
         if ( *size > 0 ){
-            # Do a remote execution on *archiveHostLocation
-            # remote(*archiveHostLocation,"") {
+            # Do a remote execution on *resourceHostLocation
+            # This is done on this location, because the trim'ing of the source file breaks with the S3 resource plugin
+            # when executed from the icat. This bug may be fixed in the future with iRODS 4.2.9 or the S3 streaming plugin
+            remote(*resourceHostLocation,"") {
                 for (*index=0; *index < *size; *index = *index + 1) {
                     # Get the data's path by its index in *dataArray
                     *dataPath = "";
@@ -65,23 +63,21 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                        failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
                     }
 
-                    # remote(*resourceHostLocation,"") {
-                        # Trim data from *coordResourceName
-                        msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
-                        if ( *trimStatus != 1 ) {
-                           failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
-                        }
+                    # Trim data from *coordResourceName
+                    msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
+                    if ( *trimStatus != 1 ) {
+                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                    }
 
-                        # Update counter
-                        *isMoved=*isMoved+1;
+                    # Update counter
+                    *isMoved=*isMoved+1;
 
-                        # Report logs
-                        msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                        msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
-                        msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
-                        msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
-                   # }
-                #}
+                    # Report logs
+                    msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+                    msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
+                    msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
+                    msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
+                }
             }
         }
     }

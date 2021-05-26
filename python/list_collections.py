@@ -24,7 +24,7 @@ def list_collections(ctx, project_path):
                                   AS_LIST,
                                   ctx.callback):
         # Calculate size for entire project
-        coll_size = float(ctx.callback.get_collection_size(proj_coll[0], "GiB", "none", "")["arguments"][3])
+        coll_size = float(ctx.callback.get_collection_size(proj_coll[0], "B", "none", "")["arguments"][3])
         proj_size = proj_size + coll_size
 
         # Initialize the collections dictionary

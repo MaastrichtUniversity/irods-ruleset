@@ -17,6 +17,7 @@ def main(rule_args, callback, rei):
 
     previous_project_flag = ""
 
+
     for result in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME",
                                "COLL_PARENT_NAME = '/nlmumc/projects'",
                                AS_LIST,
@@ -37,6 +38,7 @@ def main(rule_args, callback, rei):
 
         previous_project_flag = result[0]
 
+    callback.writeLine("stdout", str(len(users_name)))
     callback.writeLine("stdout", str(output))
 
 

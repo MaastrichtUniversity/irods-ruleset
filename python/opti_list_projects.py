@@ -32,8 +32,9 @@ def opti(ctx):
                                ctx.callback):
         if previous_project_flag == result[0]:
             project[result[1]] = result[2]
-            account = query_account_info(ctx, result[3], users_name)
-            add_account_to_project_acl(ctx, project, result[4], account)
+
+            if result[3] not in ['10003', '10117', '10120', '10123']:
+                add_access_id_to_project(result[3], result[4], project)
         else:
             project = reset_project_dict()
             project["path"] = result[0]
@@ -46,6 +47,12 @@ def opti(ctx):
         previous_project_flag = result[0]
 
     return output
+
+
+def add_access_id_to_project(access_id, access_name, project):
+    role = map_acl_to_role(access_name)
+    if access_id not in project[role]:
+        project[role].append(access_id)
 
 
 def query_account_info(ctx, account_id, users_name, count):
@@ -165,23 +172,8 @@ def add_user(project, access, account):
 
 def reset_project_dict():
     project = {
-        "managers": {
-            "groupObjects": [],
-            "groups": [],
-            "userObjects": [],
-            "users": []
-        },
-        "contributors": {
-            "groupObjects": [],
-            "groups": [],
-            "userObjects": [],
-            "users": []
-        },
-        "viewers": {
-            "groupObjects": [],
-            "groups": [],
-            "userObjects": [],
-            "users": []
-        }
+        "managers":  [],
+        "contributors": [],
+        "viewers":  [],
     }
     return project

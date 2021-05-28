@@ -33,11 +33,12 @@ def opti(ctx):
         if previous_project_flag == result[0]:
             project[result[1]] = result[2]
 
-            if result[3] not in ['10003', '10117', '10120', '10123']:
+            if result[3] not in ['10003', '10053', '10117', '10120', '10123']:
                 add_access_id_to_project(result[3], result[4], project)
         else:
             project = reset_project_dict()
             project["path"] = result[0]
+            project["path"] = project["path"].split("/")[3]
 
             # Calculate the project's size
             ret = ctx.callback.get_project_size(project["path"], '')["arguments"][1]

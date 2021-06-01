@@ -1,16 +1,14 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_or_group_by_id(ctx, account_id):
     """
-    Get the project's users with 'own' access right
+    Get user or group AVUs from its id
 
     Parameters
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    project_id : str
-        The project's id; eg.g P000000010
-    show_service_accounts: str
-        'true'/'false' expected; If true, hide the service accounts in the result
+    account_id : str
+        The account's id; eg.g '10132'
 
     Returns
     -------
@@ -18,7 +16,6 @@ def get_user_or_group_by_id(ctx, account_id):
         a json with the lists of groups and users
     """
 
-    # output = {"result": None}
     output = ""
 
     for account in row_iterator("USER_NAME, USER_TYPE",

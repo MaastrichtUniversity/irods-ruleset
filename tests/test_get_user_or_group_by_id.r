@@ -1,10 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_get_user_or_group_by_id.r "*id='10123'" | python -m json.tool
-#        "10123",
-#            "10132"
-
-# irule -r irods_rule_engine_plugin-python-instance -F tests/test_list_projects.r | python -m json.tool
+# irule -r irods_rule_engine_plugin-python-instance -F test_get_user_or_group_by_id.r "*id='10132'" | python -m json.tool
 
 
 from genquery import *

@@ -1,7 +1,7 @@
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_service_accounts_id(ctx):
     """
-    Query the hard-coded list of rods and service accounts ids
+    Query the ids of rods and service accounts
 
     Parameters
     ----------
@@ -15,10 +15,15 @@ def get_service_accounts_id(ctx):
     """
 
     output = []
-    names = "'rods', 'service-dropzones', 'service-mdl', 'service-pid', 'service-disqover', 'service-surfarchive'"
 
     for account in row_iterator("USER_ID",
-                                "USER_NAME in ({})".format(names),
+                                "USER_NAME = 'rods'",
+                                AS_LIST,
+                                ctx.callback):
+        output.append(account[0])
+
+    for account in row_iterator("USER_ID",
+                                "USER_NAME like 'service-%'",
                                 AS_LIST,
                                 ctx.callback):
         output.append(account[0])

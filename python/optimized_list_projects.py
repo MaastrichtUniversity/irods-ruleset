@@ -32,6 +32,12 @@ def optimized_list_projects(ctx):
     ret = ctx.callback.get_service_accounts_id("")["arguments"][0]
     filter = json.loads(ret)
 
+    # Query all the current existing users id.
+    # This is needed because of phantom COLL_ACCESS_USER_ID
+    # => when deleted users appear in the ACL
+    ret = ctx.callback.get_all_users_id("")["arguments"][0]
+    users_id = json.loads(ret)
+
     for result in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME",
                                "COLL_PARENT_NAME = '/nlmumc/projects'",
                                AS_LIST,
@@ -44,7 +50,7 @@ def optimized_list_projects(ctx):
         if previous_project_flag == project_path:
             project[attribute_name] = attribute_value
 
-            if access_user_id not in filter:
+            if access_user_id not in filter and access_user_id in users_id:
                 add_access_id_to_project(access_user_id, access_level_name, project)
         else:
             project = reset_project_dict()

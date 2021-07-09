@@ -17,36 +17,27 @@ def get_project_collection_tape_estimate(ctx, project, collection):
     dict
         The project collection tape status, above_threshold and archivable
     """
-    project_path = "/nlmumc/projects/{}".format(project)
     collection_path = "/nlmumc/projects/{}/{}".format(project, collection)
-    # Get the destination archive resource from the project
-    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", "false")
-    archive_resource = ret["arguments"][2]
-
     minimum_size = 262144000  # The minimum file size (in bytes)
 
-    number_files = 0
-    bytes_size = 0
-    condition = "COLL_NAME = '{}' || like '{}/%' AND DATA_SIZE  >= '{}'".format(collection_path, collection_path,
-                                                                                minimum_size)
-    for data in row_iterator("DATA_NAME, DATA_SIZE", condition, AS_LIST, ctx.callback):
-        number_files += 1
-        bytes_size += int(data[1])
+    above_threshold_number_files = 0
+    above_threshold_bytes_size = 0
+    archivable_number_files = 0
+    archivable_bytes_size = 0
 
-    above_threshold = {"number_files": number_files, "bytes_size": bytes_size}
+    condition = "COLL_NAME like '{}%' AND DATA_SIZE  >= '{}'".format(collection_path, minimum_size)
+    for data in row_iterator("DATA_SIZE, RESC_PARENT, COLL_NAME", condition, AS_LIST, ctx.callback):
+        # TODO Find a better solution
+        # Current workaround, we determine is the data is on the 'archiveDestinationResource', if RESC_PARENT is an
+        # empty string. Because only arcRescSURF01 doesn't have a resource parent
+        if data[1] != "":
+            archivable_number_files += 1
+            archivable_bytes_size += int(data[0])
+        above_threshold_number_files += 1
+        above_threshold_bytes_size += int(data[0])
 
-    number_files = 0
-    bytes_size = 0
-    for data in row_iterator("DATA_NAME, DATA_SIZE",
-                             "COLL_NAME = '{}' || like '{}/%' ".format(collection_path, collection_path) +
-                             " AND DATA_RESC_NAME != '{}' ".format(archive_resource) +
-                             " AND DATA_SIZE >= '{}'".format(minimum_size),
-                             AS_LIST,
-                             ctx.callback):
-        number_files += 1
-        bytes_size += int(data[1])
-
-    archivable = {"number_files": number_files, "bytes_size": bytes_size}
+    above_threshold = {"number_files": above_threshold_number_files, "bytes_size": above_threshold_bytes_size}
+    archivable = {"number_files": archivable_number_files, "bytes_size": archivable_bytes_size}
 
     status = ""
     if above_threshold["number_files"] == archivable["number_files"]:

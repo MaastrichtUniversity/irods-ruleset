@@ -17,7 +17,12 @@ def get_project_collection_tape_estimate(ctx, project, collection):
     dict
         The project collection tape status, above_threshold and archivable
     """
+    project_path = "/nlmumc/projects/{}".format(project)
     collection_path = "/nlmumc/projects/{}/{}".format(project, collection)
+    # Get the destination archive resource from the project
+    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", "false")
+    archive_resource = ret["arguments"][2]
+
     minimum_size = 262144000  # The minimum file size (in bytes)
 
     above_threshold_number_files = 0
@@ -26,15 +31,18 @@ def get_project_collection_tape_estimate(ctx, project, collection):
     archivable_bytes_size = 0
 
     condition = "COLL_NAME like '{}%' AND DATA_SIZE  >= '{}'".format(collection_path, minimum_size)
-    for data in row_iterator("DATA_SIZE, RESC_PARENT, COLL_NAME", condition, AS_LIST, ctx.callback):
-        # TODO Find a better solution
-        # Current workaround, we determine is the data is on the 'archiveDestinationResource', if RESC_PARENT is an
-        # empty string. Because only arcRescSURF01 doesn't have a resource parent
-        if data[1] != "":
-            archivable_number_files += 1
-            archivable_bytes_size += int(data[0])
-        above_threshold_number_files += 1
-        above_threshold_bytes_size += int(data[0])
+    for data in row_iterator("COUNT(DATA_PATH), SUM(DATA_SIZE), RESC_NAME", condition, AS_LIST, ctx.callback):
+        count_number_files = int(data[0])
+        sum_data_size = int(data[1])
+        resource_name = data[2]
+        if resource_name != archive_resource and "-repl" not in resource_name:
+            archivable_number_files += count_number_files
+            archivable_bytes_size += sum_data_size
+            above_threshold_number_files += count_number_files
+            above_threshold_bytes_size += sum_data_size
+        elif resource_name == archive_resource and "-repl" not in resource_name:
+            above_threshold_number_files += count_number_files
+            above_threshold_bytes_size += sum_data_size
 
     above_threshold = {"number_files": above_threshold_number_files, "bytes_size": above_threshold_bytes_size}
     archivable = {"number_files": archivable_number_files, "bytes_size": archivable_bytes_size}

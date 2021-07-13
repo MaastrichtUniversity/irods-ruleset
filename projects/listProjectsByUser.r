@@ -2,9 +2,13 @@
 #
 # irule -F listProjectsByUser.r
 
+irule_dummy() {
+    IRULE_listProjectsByUser(*result);
+    writeLine("stdout", *result);
+}
 
-listProjectsByUser{
-     msiString2KeyValPair("", *titleKvp);
+IRULE_listProjectsByUser(*result) {
+    msiString2KeyValPair("", *titleKvp);
     *json_str2 = '[]';
     *size2 = 0;
     foreach ( *Row in SELECT USER_NAME WHERE USER_TYPE ='rodsuser') {
@@ -13,7 +17,6 @@ listProjectsByUser{
        *size = 0;
        *username = *Row.USER_NAME;
        userNameToUserId(*username, *userId);
-       #writeLine("stdout", "User:   *username" );
        #User rodsadmin crashes rest of scripts
        if (*userId != '9001') {
             # Create a list of group-IDs (the user-ID is also a "group-ID")
@@ -34,13 +37,9 @@ listProjectsByUser{
             }
             *details = '{ "Username": " *username", "Projects": *json_str}';
             msi_json_arrayops(*json_str2,  *details, "add", *size2);
-            #writeLine("stdout", "User:   *json_str2" );
         }
     }
-
-   writeLine("stdout", *json_str2);
-
-
+    *result = *json_str2;
 }
 
 userNameToUserId(*userName, *userId) {

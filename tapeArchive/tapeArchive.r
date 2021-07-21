@@ -34,6 +34,8 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
 
         if ( *size > 0 ){
             # Do a remote execution on *resourceHostLocation
+            # This is done on this location, because the trim'ing of the source file breaks with the S3 resource plugin
+            # when executed from the icat. This bug may be fixed in the future with iRODS 4.2.9 or the S3 streaming plugin
             remote(*resourceHostLocation,"") {
                 for (*index=0; *index < *size; *index = *index + 1) {
                     # Get the data's path by its index in *dataArray
@@ -48,10 +50,15 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     setCollectionAVU(*archColl,*stateAttrName,*value);
 
                     # Calculate data checksum
-                    msiDataObjChksum(*dataPath,"verifyChksum=",*chksum);
+                    # We do not pass any options, this way we get the existing checksum, or a new one is calculated.
+                    # If a failure occurs, the replication is stopped, no trimming happens and we can manually verify
+                    # any other replicas
+                    msiDataObjChksum(*dataPath,"",*chksum);
 
                     # Replicate data from *coordResourceName to *archiveResc
-                    msiDataObjRepl(*dataPath, "destRescName=*archiveResc++++verifyChksum=", *moveStatus);
+                    # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
+                    # will automatically also include a checksum check on the destination
+                    msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus);
                     if ( *moveStatus != 0 ) {
                        failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
                     }

@@ -22,23 +22,25 @@ def get_project_migration_status(ctx, project_path):
                                   "COLL_PARENT_NAME = '{}'".format(project_path),
                                   AS_LIST,
                                   ctx.callback):
-        card = {}
         collection = proj_coll[0]
+        card = {
+            "collection": collection.split("/")[4],
+            "title": ctx.callback.getCollectionAVU(collection, "title", "", "", "true")["arguments"][2]
+        }
 
-        card["collection"] = collection.split("/")[4]
-        card["title"] = ctx.callback.getCollectionAVU(collection, "title", "", "", "true")["arguments"][2]
+        archive = ctx.callback.getCollectionAVU(collection, "archiveState", "", "", "false")["arguments"][2]
+        if archive != '':
+            new_card = card.copy()
+            new_card["repository"] = "SURFSara Tape"
+            new_card["status"] = archive
+            cards.append(new_card)
 
-        ret = ctx.callback.getCollectionAVU(collection, "archiveState", "", "", "false")["arguments"][2]
-        if ret != '':
-            card["repository"] = "SURFSara Tape"
-            card["status"] = ret
-            cards.append(card)
-
-        ret = ctx.callback.getCollectionAVU(collection, "exporterState", "", "", "false")["arguments"][2]
-        if ret != '':
-            status_split = ret.split(':')
-            card["repository"] = status_split[0]
-            card["status"] = status_split[1]
-            cards.append(card)
+        exporter = ctx.callback.getCollectionAVU(collection, "exporterState", "", "", "false")["arguments"][2]
+        if exporter != '':
+            new_card = card.copy()
+            status_split = exporter.split(':')
+            new_card["repository"] = status_split[0]
+            new_card["status"] = status_split[1]
+            cards.append(new_card)
 
     return cards

@@ -19,7 +19,7 @@ def list_collections(ctx, project_path):
     collections = []
 
     proj_size = float(0)
-    for proj_coll in row_iterator("COLL_NAME",
+    for proj_coll in row_iterator("COLL_NAME,COLL_CREATE_TIME",
                                   "COLL_PARENT_NAME = '" + project_path + "'",
                                   AS_LIST,
                                   ctx.callback):
@@ -31,6 +31,7 @@ def list_collections(ctx, project_path):
         collection = {}
 
         collection["id"] = proj_coll[0].split("/")[4]
+        collection["creationTimestamp"] = proj_coll[1]
 
         # Get AVUs
         collection["size"] = coll_size

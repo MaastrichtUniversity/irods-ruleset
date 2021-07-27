@@ -46,7 +46,9 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         "projectTitle": "",
         "date": "",
         "token": token,
-        "resourceStatus": ""
+        "resourceStatus": "",
+        "numFiles": "0",
+        "destination": "",
     }
     # Query the dropzone metadata
     for result in row_iterator("COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",

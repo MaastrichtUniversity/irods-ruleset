@@ -74,6 +74,9 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open
     setCollectionSize(*project, *projectCollection, "false", "false");
 
+    # Remove the temporary filesIngested AVU at *dstColl
+    remove_files_ingested_avu(*dstColl);
+
     # Send metadata
     # Please note that this step also sets the PID AVU via MirthConnect
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));

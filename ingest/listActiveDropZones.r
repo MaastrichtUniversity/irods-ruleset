@@ -28,6 +28,7 @@ IRULE_listActiveDropZones(*report, *result) {
         *project = "";
         *projectTitle = "";
         *date = "";
+        *numFiles = "";
         # Get contents of AVU's
         foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/ingest/zones/*token") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {
@@ -51,6 +52,9 @@ IRULE_listActiveDropZones(*report, *result) {
                 }
             }
             *date = *av.COLL_MODIFY_TIME;
+            if( *av.META_COLL_ATTR_NAME == "numFiles" ) {
+                *numFiles = *av.META_COLL_ATTR_VALUE;
+            }
         }
 
         msiString2KeyValPair("", *kvp);
@@ -92,6 +96,12 @@ IRULE_listActiveDropZones(*report, *result) {
         }
 
         msiAddKeyVal(*kvp, 'date', *date);
+
+        if ( *numFiles == "" ) {
+            msiAddKeyVal(*kvp, 'numFiles', "0");
+        } else {
+            msiAddKeyVal(*kvp, 'numFiles', *numFiles);
+        }
 
         # Extract additional info when *report == "true"
         if ( *report == "true" ) {

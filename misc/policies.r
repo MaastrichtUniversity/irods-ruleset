@@ -3,7 +3,7 @@
 acPostProcForPut {
     if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
         *resource = "";
-	*filesIngested = 0;
+        *filesIngested = 0;
         uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
         uuChop(*tail, *project, *tail, "/", true);
         uuChop(*tail, *collection, *tail, "/", true);

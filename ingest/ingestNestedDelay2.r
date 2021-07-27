@@ -16,6 +16,9 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
+    msiAddKeyVal(*destKV, "destination", *projectCollection);
+    msiSetKeyValuePairsToObj(*destKV, *srcColl, "-C");
+
     getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
 
     # Obtain the resource host from the specified ingest resource

@@ -10,6 +10,11 @@ irule_dummy() {
 }
 
 IRULE_prepareExportProjectCollection(*project, *collection, *repository){
+    getCollectionAVU("/nlmumc/projects/*project","enableOpenAccessExport",*enableOpenAccessExport,"false","false");
+    if (*enableOpenAccessExport == "false") {
+        failmsg(-1, "ERROR: The OpenAccessExport feature is not enable for the project '*project'");
+    }
+
     # Open collection to modify state AVU
     openProjectCollection(*project, *collection, 'rods', 'own');
 

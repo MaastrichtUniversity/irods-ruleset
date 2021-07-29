@@ -47,7 +47,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         "date": "",
         "token": token,
         "resourceStatus": "",
-        "numFiles": "0",
+        "totalSize": "0",
         "destination": "",
     }
     # Query the dropzone metadata

@@ -3,19 +3,19 @@
 acPostProcForPut {
     if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
         *resource = "";
-        *filesIngested = 0;
+        *sizeIngested = 0;
         uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
         uuChop(*tail, *project, *tail, "/", true);
         uuChop(*tail, *collection, *tail, "/", true);
         getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
         if( *resource == $rescName ) {
             foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project/*collection") {
-                if ( *av.META_COLL_ATTR_NAME == "filesIngested" ) {
-                    *filesIngested = int(*av.META_COLL_ATTR_VALUE);
+                if ( *av.META_COLL_ATTR_NAME == "sizeIngested" ) {
+                    *sizeIngested = int(*av.META_COLL_ATTR_VALUE);
                 }
             }
-            *filesIngested = *filesIngested + 1;
-            msiAddKeyVal(*metaKV,  'filesIngested', str(*filesIngested));
+            *sizeIngested = *sizeIngested + int($dataSize);
+            msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
             msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C");
         }
     }

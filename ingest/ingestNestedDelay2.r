@@ -74,9 +74,6 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open
     setCollectionSize(*project, *projectCollection, "false", "false");
 
-    # Remove the temporary filesIngested AVU at *dstColl
-    remove_files_ingested_avu(*dstColl);
-
     # Send metadata
     # Please note that this step also sets the PID AVU via MirthConnect
     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
@@ -85,13 +82,16 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
     }
 
-    # Close collection by making all access read only
-    closeProjectCollection(*project, *projectCollection);
-
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
     msiAddKeyVal(*stateKV, "state", "ingested");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
+
+    # Remove the temporary filesIngested AVU at *dstColl
+    remove_files_ingested_avu(*dstColl);
+
+    # Close collection by making all access read only
+    closeProjectCollection(*project, *projectCollection);
 
     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
     # This is because of a bug in the unmount. This is kept in memory for

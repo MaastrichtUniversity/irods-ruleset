@@ -24,6 +24,7 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project/*collection","exporterState",*exporterState,"no-state-set","false");
 
     getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
+    getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,"false","false");
     getCollectionAVU("/nlmumc/projects/*project","enableOpenAccessExport",*enableOpenAccessExport,"false","false");
 
     listProjectManagers(*project, *managers);

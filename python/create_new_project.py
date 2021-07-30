@@ -1,8 +1,8 @@
-@make(inputs=range(11), outputs=[11], handler=Output.STORE)
+@make(inputs=range(12), outputs=[12], handler=Output.STORE)
 def create_new_project(ctx, authorization_period_end_date, data_retention_period_end_date,
                        ingest_resource, resource, storage_quota_gb, title,
                        principal_investigator, data_steward,
-                       resp_cost_center, open_access, tape_archive):
+                       resp_cost_center, open_access, tape_archive, tape_unarchive):
     """
     Create a new iRODS project
 
@@ -29,6 +29,8 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     open_access : str
         'true'/'false' excepted values
     tape_archive : str
+        'true'/'false' excepted values
+    tape_unarchive : str
         'true'/'false' excepted values
     """
 
@@ -85,6 +87,7 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.setCollectionAVU(new_project_path, "responsibleCostCenter", resp_cost_center)
     ctx.callback.setCollectionAVU(new_project_path, "enableOpenAccessExport", open_access)
     ctx.callback.setCollectionAVU(new_project_path, "enableArchive", tape_archive)
+    ctx.callback.setCollectionAVU(new_project_path, "enableUnarchive", tape_unarchive)
 
     archive_dest_resc = ""
     for result in row_iterator("RESC_NAME",

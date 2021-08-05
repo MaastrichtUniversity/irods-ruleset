@@ -11,10 +11,10 @@ acPostProcForPut {
         if( *resource == $rescName ) {
             foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project/*collection") {
                 if ( *av.META_COLL_ATTR_NAME == "sizeIngested" ) {
-                    *sizeIngested = int(*av.META_COLL_ATTR_VALUE);
+                    *sizeIngested = double(*av.META_COLL_ATTR_VALUE);
                 }
             }
-            *sizeIngested = *sizeIngested + int($dataSize);
+            *sizeIngested = *sizeIngested + double($dataSize);
             msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
             msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C");
         }

@@ -1,5 +1,5 @@
 @make(inputs=[0], outputs=[], handler=Output.STORE)
-def remove_files_ingested_avu(ctx, path):
+def remove_size_ingested_avu(ctx, path):
     """
     Set the ACL of a given collection
 
@@ -16,7 +16,7 @@ def remove_files_ingested_avu(ctx, path):
     path : str
         The absolute path of the collection
     """
-    attribute = "filesIngested"
+    attribute = "sizeIngested"
     output = ctx.get_collection_attribute_value(path, attribute, "result")["arguments"][2]
     value = json.loads(output)["value"]
 

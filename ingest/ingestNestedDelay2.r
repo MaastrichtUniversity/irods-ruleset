@@ -87,8 +87,8 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     msiAddKeyVal(*stateKV, "state", "ingested");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
 
-    # Remove the temporary filesIngested AVU at *dstColl
-    remove_files_ingested_avu(*dstColl);
+    # Remove the temporary sizeIngested AVU at *dstColl
+    remove_size_ingested_avu(*dstColl);
 
     # Close collection by making all access read only
     closeProjectCollection(*project, *projectCollection);

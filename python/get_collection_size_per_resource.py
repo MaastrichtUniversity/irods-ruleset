@@ -41,8 +41,6 @@ def get_collection_size_per_resource(ctx, project):
     # append resources (names) to output based on attributes (IDs)
     for i in range(len(output)):
         output[i]["resource"] = values[output[i]["resourceAttr"]]
-        # convert bytes to GiB and round to 2 decimals
-        output[i]["size"] = round(float(output[i]["size"]) / 1024 / 1024 / 1024, 2)
 
     return output
 

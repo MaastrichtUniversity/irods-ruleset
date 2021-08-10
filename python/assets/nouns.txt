@@ -289,7 +289,6 @@ turkey
 turtle
 unicorn
 vendace
-vicuña
 vole
 vulture
 wallaby

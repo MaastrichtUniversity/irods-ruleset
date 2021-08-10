@@ -18,7 +18,6 @@ bad
 beautiful
 better
 bewildered
-black
 bloody
 blue
 blue-eyed
@@ -89,7 +88,6 @@ famous
 fancy
 fantastic
 fierce
-filthy
 fine
 foolish
 fragile
@@ -117,7 +115,6 @@ helpless
 hilarious
 homeless
 homely
-horrible
 hungry
 hurt
 ill
@@ -222,7 +219,6 @@ witty
 worrisome
 worried
 wrong
-xenophobic
 xanthous
 xerothermic
 yawning

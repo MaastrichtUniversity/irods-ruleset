@@ -24,7 +24,8 @@ IRULE_prepareTapeUnArchive(*archColl) {
          failmsg(-1, "Invalid input path: *archColl");
     }
 
-    getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,"false","false");
+    getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
+    getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,*enableArchive,"false");
     if (*enableUnarchive != 'true') {
          failmsg(-1, "Unarchiving is now allowed for this project.");
     }

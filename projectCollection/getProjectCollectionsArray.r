@@ -42,7 +42,7 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","responsibleCostCenter",*respCostCenter,"","true");
     getCollectionAVU("/nlmumc/projects/*project","storageQuotaGb",*storageQuotaGiB,"","true");
     getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
-    getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,"false","false");
+    getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,*enableArchive,"false");
     getCollectionAVU("/nlmumc/projects/*project","enableOpenAccessExport",*enableOpenAccessExport,"false","false");
 
 

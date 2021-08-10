@@ -1,5 +1,26 @@
 # Policies
 
+acPostProcForPut {
+    if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
+        *resource = "";
+        *sizeIngested = 0;
+        uuChop($objPath, *head, *tail, "/nlmumc/projects/", true);
+        uuChop(*tail, *project, *tail, "/", true);
+        uuChop(*tail, *collection, *tail, "/", true);
+        getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
+        if( *resource == $rescName ) {
+            foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/projects/*project/*collection") {
+                if ( *av.META_COLL_ATTR_NAME == "sizeIngested" ) {
+                    *sizeIngested = double(*av.META_COLL_ATTR_VALUE);
+                }
+            }
+            *sizeIngested = *sizeIngested + double($dataSize);
+            msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
+            msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C");
+        }
+    }
+}
+
 acSetRescSchemeForCreate {
     ### Policy to set proper storage resource & prevent file creation directly in P-folder ###
     # Since 'acPreProcForCreate' does not fire in iRODS 4.1.x, we made 'acSetRescSchemeForCreate' a combined policy

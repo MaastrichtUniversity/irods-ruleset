@@ -18,6 +18,9 @@ modifyIngestReSize() {
     msiWriteRodsLog("Prevent SYS_HEADER_READ_LENGTH and SYS_HEADER_WRITE_LEN_ERR at approximately 16kB ruleset", 0);
     msiWriteRodsLog("Prevent SYS_HEADER_READ_LENGTH and SYS_HEADER_WRITE_LEN_ERR at approximately 16kB ruleset", 0);
     msiWriteRodsLog("Prevent SYS_HEADER_READ_LENGTH and SYS_HEADER_WRITE_LEN_ERR at approximately 16kB ruleset", 0);
+    msiWriteRodsLog("Prevent SYS_HEADER_READ_LENGTH and SYS_HEADER_WRITE_LEN_ERR at approximately 16kB ruleset", 0);
+    msiWriteRodsLog("Prevent SYS_HEADER_READ_LENGTH and SYS_HEADER_WRITE_LEN_ERR at approximately 16kB ruleset", 0);
+    msiWriteRodsLog("Prevent SYS_HEADER_READ_LENGTH and SYS_HEADER_WRITE_LEN_ERR at approximately 16kB ruleset", 0);
 }
 
 INPUT null

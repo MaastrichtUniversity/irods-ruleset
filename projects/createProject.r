@@ -1,15 +1,15 @@
 # Call with
 #
-# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'" "*openAccess='false'" "*tapeArchive='true'"
+# irule -F createProject.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'" "*openAccess='false'" "*tapeArchive='true'" "*tapeUnarchive='true'"
 
 irule_dummy() {
-    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter,*openAccess,*tapeArchive);
+    IRULE_createProject(*result,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter,*openAccess,*tapeArchive,*tapeUnarchive);
     writeLine("stdout", *result);
 }
 
 
 # Creates projects in the form P000000001
-IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter,*openAccess,*tapeArchive) {
+IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEndDate,*ingestResource,*resource,*storageQuotaGb,*title,*principalInvestigator,*dataSteward,*respCostCenter,*openAccess,*tapeArchive,*tapeUnarchive) {
 
     *retry = 0;
     *error = -1;
@@ -64,6 +64,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "responsibleCostCenter", *respCostCenter);
     msiAddKeyVal(*metaKV, "enableOpenAccessExport", *openAccess);
     msiAddKeyVal(*metaKV, "enableArchive", *tapeArchive);
+    msiAddKeyVal(*metaKV, "enableUnarchive", *tapeUnarchive);
     # TODO Make it compatible with multiple archive resources.
     *archiveDestResc = "";
     # Look-up for the resource set as the archive destination resource
@@ -85,5 +86,5 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
 }
 
-INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *dataSteward="", *respCostCenter="", *openAccess="", *tapeArchive=""
+INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *dataSteward="", *respCostCenter="", *openAccess="", *tapeArchive="", *tapeUnarchive=""
 OUTPUT ruleExecOut

@@ -1,4 +1,5 @@
 import subprocess
+import re
 
 @make(inputs=[0], outputs=[], handler=Output.STORE)
 def set_dropzone_total_size_avu(ctx, token):
@@ -17,6 +18,14 @@ def set_dropzone_total_size_avu(ctx, token):
     dict
         The attribute value
     """
+    # we check drop zone token is valid
+    # TODO: At the moment, this knowledge is distributed across multiple repositories,
+    #       would be nice if it was just in one place. In case for example, we expand
+    #       drop zone names to \w+-\w+.
+    if re.search(r"^[a-z]+-[a-z]+$", token) is None:
+        # -816000 CAT_INVALID_ARGUMENT
+        ctx.callback.msiExit("-816000", "Invalid name for ingest zone")
+
     drop_zone_path = '/nlmumc/ingest/zones/{}'.format(token)
 
     # This call makes sure that the dropzone path exists. If it does not exist,

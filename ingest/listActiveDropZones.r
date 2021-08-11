@@ -28,6 +28,8 @@ IRULE_listActiveDropZones(*report, *result) {
         *project = "";
         *projectTitle = "";
         *date = "";
+        *totalSize = "";
+        *destination = "";
         # Get contents of AVU's
         foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/ingest/zones/*token") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {
@@ -51,6 +53,12 @@ IRULE_listActiveDropZones(*report, *result) {
                 }
             }
             *date = *av.COLL_MODIFY_TIME;
+            if( *av.META_COLL_ATTR_NAME == "totalSize" ) {
+                *totalSize = *av.META_COLL_ATTR_VALUE;
+            }
+            if( *av.META_COLL_ATTR_NAME == "destination" ) {
+                *destination = *av.META_COLL_ATTR_VALUE;
+            }
         }
 
         msiString2KeyValPair("", *kvp);
@@ -92,6 +100,19 @@ IRULE_listActiveDropZones(*report, *result) {
         }
 
         msiAddKeyVal(*kvp, 'date', *date);
+
+        if ( *totalSize == "" ) {
+            msiAddKeyVal(*kvp, 'totalSize', "0");
+        } else {
+            msiAddKeyVal(*kvp, 'totalSize', *totalSize);
+        }
+
+        if ( *destination == "" ) {
+            msiAddKeyVal(*kvp, 'destination', "");
+        } else {
+            msiAddKeyVal(*kvp, 'destination', *destination);
+        }
+
 
         # Extract additional info when *report == "true"
         if ( *report == "true" ) {

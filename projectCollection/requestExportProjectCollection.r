@@ -11,6 +11,11 @@ irule_dummy() {
 }
 
 IRULE_requestExportProjectCollection(*message, *project, *collection, *repository, *amqpHost, *amqpPort, *amqpUser, *amqpPass){
+    getCollectionAVU("/nlmumc/projects/*project","enableOpenAccessExport",*enableOpenAccessExport,"false","false");
+    if (*enableOpenAccessExport == "false") {
+        failmsg(-1, "ERROR: The OpenAccessExport feature is not enable for the project '*project'");
+    }
+
     # Open collection to modify state AVU
     openProjectCollection(*project, *collection, 'rods', 'own');
 

@@ -24,6 +24,12 @@ IRULE_prepareTapeUnArchive(*archColl) {
          failmsg(-1, "Invalid input path: *archColl");
     }
 
+    getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
+    getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,*enableArchive,"false");
+    if (*enableUnarchive != 'true') {
+         failmsg(-1, "ERROR: Unarchiving is not allowed for project '*project'");
+    }
+
     # Get the destination archive resource from the project
     getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*resc,"N/A","true");
     # rodsadmin user running the rule

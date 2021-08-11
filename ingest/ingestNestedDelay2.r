@@ -16,6 +16,9 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
 
     msiWriteRodsLog("Ingesting *srcColl to *dstColl", 0);
 
+    msiAddKeyVal(*destKV, "destination", *projectCollection);
+    msiSetKeyValuePairsToObj(*destKV, *srcColl, "-C");
+
     getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
 
     # Obtain the resource host from the specified ingest resource
@@ -79,13 +82,16 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
     }
 
-    # Close collection by making all access read only
-    closeProjectCollection(*project, *projectCollection);
-
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
     msiAddKeyVal(*stateKV, "state", "ingested");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
+
+    # Remove the temporary sizeIngested AVU at *dstColl
+    remove_size_ingested_avu(*dstColl);
+
+    # Close collection by making all access read only
+    closeProjectCollection(*project, *projectCollection);
 
     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
     # This is because of a bug in the unmount. This is kept in memory for

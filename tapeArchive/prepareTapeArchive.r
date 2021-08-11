@@ -11,6 +11,12 @@ IRULE_prepareTapeArchive(*archColl) {
     uuChopPath(*archColl, *dir, *projectCollection);
     uuChopPath(*dir, *dir2, *project);
 
+    # Check if the TapeArchive feature is enabled of the project
+    getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
+    if (*enableArchive == "false") {
+        failmsg(-1, "ERROR: The TapeArchive feature is not enable for the project '*project'");
+    }
+
     # Get the destination archive resource from the project
     getCollectionAVU("/nlmumc/projects/*project","archiveDestinationResource",*archiveResc,"N/A","true");
     # The minimum file size criteria (in bytes)

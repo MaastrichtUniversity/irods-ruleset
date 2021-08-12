@@ -37,11 +37,17 @@ def set_dropzone_total_size_avu(ctx, token):
         ctx.callback.msiExit("-814000", "Unknown ingest zone")
 
     list_files = subprocess.check_output(["ils", "-lr", drop_zone_path])
-    lines = list_files.splitlines()[1:]
+    lines = list_files.splitlines()
     total_size = 0
     for line in lines:
         split_line = line.split()
-        if len(split_line) >= 6:
-            total_size += int(split_line[3])
+        if len(split_line) > 4:
+            try:
+                # After the size is always a datetime in the output. If that isnt the case, this is a folder
+                # and it should not be calculated and parsed to an int (its subsequent files will)
+                d = datetime.datetime.strptime(split_line[4], "%Y-%m-%d.%H:%M")
+                total_size += int(split_line[3])
+            except ValueError:
+                continue
     kvp = ctx.callback.msiString2KeyValPair('{}={}'.format('totalSize', total_size), irods_types.BytesBuf())["arguments"][1]
     ctx.callback.msiSetKeyValuePairsToObj(kvp, drop_zone_path, "-C")

@@ -40,6 +40,8 @@ def set_dropzone_total_size_avu(ctx, token):
     lines = list_files.splitlines()[1:]
     total_size = 0
     for line in lines:
-        total_size += int(line.split()[3])
+        split_line = line.split()
+        if len(split_line) > 3:
+            total_size += int(split_line[3])
     kvp = ctx.callback.msiString2KeyValPair('{}={}'.format('totalSize', total_size), irods_types.BytesBuf())["arguments"][1]
     ctx.callback.msiSetKeyValuePairsToObj(kvp, drop_zone_path, "-C")

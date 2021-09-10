@@ -17,7 +17,7 @@ IRULE_calcCollectionFiles(*collection, *result) {
         # not doing anything with the SQL result, just counting the number of iterations in the loop
         *count = *count + 1;
     }
-    *result = *count;
+    *result = str(*count);
 
 }
 

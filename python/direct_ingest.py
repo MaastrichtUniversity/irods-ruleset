@@ -77,6 +77,6 @@ def direct_ingest(ctx, username, token):
     ctx.callback.msiSetKeyValuePairsToObj(kvp, source_collection, "-C")
 
     # Call the ingest delay rule
-    ctx.callback.ingest_nested_delay(source_collection, destination_collection)
+    ctx.callback.ingest_nested_delay(source_collection, destination_collection, "")
 
     return ''

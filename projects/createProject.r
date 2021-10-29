@@ -72,8 +72,12 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiSetKeyValuePairsToObj(*maxProjectNumberAVU, "/nlmumc/projects", "-C");
 
     # Set recursive permissions
+    msiSetACL("default", "own", "rods", *dstColl);
     msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("default", "read", "service-disqover", *dstColl);
+    if ($userNameClient != "rods") {
+        msiSetACL("default", "null", $userNameClient, *dstColl);
+    }
     msiSetACL("recursive", "inherit", "", *dstColl);
 
 }

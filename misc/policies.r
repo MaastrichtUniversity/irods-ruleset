@@ -88,10 +88,13 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
     if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
-
+        # Get the value for the Data Steward
         getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
+        # Get if the user is a part of the DH-project-admins group
+        *isAdmin = ""
+        get_user_admin_status($userNameClient, *isAdmin);
 
-        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
+        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods" || *isAdmin == "true") {
             # Do nothing and resume normal operation
             msiWriteRodsLog("INFO: [AUDIT_TRAIL] *ItemName: User $userNameClient sets '*AName' to '*AValue'", *status);
         }else{
@@ -114,10 +117,13 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit,
     if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableOpenAccessExport") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
-
+        # Get the value for the Data Steward
         getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
+        # Get if the user is a part of the DH-project-admins group
+        *isAdmin = ""
+        get_user_admin_status($userNameClient, *isAdmin);
 
-        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods") {
+        if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods" || *isAdmin == "true") {
             # Do nothing and resume normal operation
             msiWriteRodsLog("INFO: [AUDIT_TRAIL] *ItemName: User $userNameClient sets '*AName' to '*AValue'", *status);
         }else{

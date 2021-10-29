@@ -18,20 +18,9 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     # The while loop adds compatibility for usage in parallellized runs of the delayed rule engine.
     while ( *error < 0 && *retry < 10) {
 
-        *max = 0;
-
-        # Find out the current max project number
-        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects' ) {
-            uuChopPath(*Row.COLL_NAME, *path, *c);
-
-            *i = int(substr(*c, 1, 10));
-
-            if ( *i > *max ) {
-                *max = *i;
-            }
-        }
-
-        *project = str(*max + 1);
+        getCollectionAVU("/nlmumc/projects","max_project_number",*max,"","true");
+        *new_max = int(*max) + 1;
+        *project = str(*new_max);
 
         # Prepend padding zeros to the name
         while ( strlen(*project) < 9 ) {
@@ -78,6 +67,9 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
+    # Set the new max_project_number AVU
+    msiAddKeyVal(*maxProjectNumberAVU, "max_project_number", str(*new_max));
+    msiSetKeyValuePairsToObj(*maxProjectNumberAVU, "/nlmumc/projects", "-C");
 
     # Set recursive permissions
     msiSetACL("default", "write", "service-pid", *dstColl);

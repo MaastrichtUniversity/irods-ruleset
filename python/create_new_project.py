@@ -1,5 +1,3 @@
-import session_vars
-
 @make(inputs=range(12), outputs=[12], handler=Output.STORE)
 def create_new_project(ctx, authorization_period_end_date, data_retention_period_end_date,
                        ingest_resource, resource, storage_quota_gb, title,

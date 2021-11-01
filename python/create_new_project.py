@@ -94,13 +94,16 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.setCollectionAVU("/nlmumc/projects", "latest_project_number", str(new_latest))
 
     # Set recursive permissions
-    ctx.callback.msiSetACL("default", "own", "rods", new_project_path)
     ctx.callback.msiSetACL("default", "write", "service-pid", new_project_path)
     ctx.callback.msiSetACL("default", "read", "service-disqover", new_project_path)
     ctx.callback.msiSetACL("recursive", "inherit", "", new_project_path)
 
     current_user = ctx.callback.get_client_username('')["arguments"][0]
+    # If the user calling this function is someone other than 'rods' (so a project admin)
+    # we need to add rods as a owner on this project and remove the person calling this method
+    # from the ACLs
     if current_user != "rods":
+        ctx.callback.msiSetACL("default", "own", "rods", new_project_path)
         ctx.callback.msiSetACL("default", "null", current_user, new_project_path)
 
 

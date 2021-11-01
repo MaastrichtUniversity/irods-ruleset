@@ -1,5 +1,3 @@
-import json
-
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_admin_status(ctx, username):
     """

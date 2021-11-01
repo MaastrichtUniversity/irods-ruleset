@@ -8,7 +8,7 @@ def set_acl(ctx, mode, access, user, path):
     ctx : Context
         Combined type of a callback and rei struct.
     mode : str
-        'default', 'recursive' excepted values
+        'default', 'recursive' expected values
     access : str
         access level: 'own', 'write', 'read'
     user : str

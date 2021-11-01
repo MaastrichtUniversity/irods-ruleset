@@ -18,20 +18,9 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     # The while loop adds compatibility for usage in parallellized runs of the delayed rule engine.
     while ( *error < 0 && *retry < 10) {
 
-        *max = 0;
-
-        # Find out the current max project number
-        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects' ) {
-            uuChopPath(*Row.COLL_NAME, *path, *c);
-
-            *i = int(substr(*c, 1, 10));
-
-            if ( *i > *max ) {
-                *max = *i;
-            }
-        }
-
-        *project = str(*max + 1);
+        getCollectionAVU("/nlmumc/projects","latest_project_number",*latest,"","true");
+        *new_latest = int(*latest) + 1;
+        *project = str(*new_latest);
 
         # Prepend padding zeros to the name
         while ( strlen(*project) < 9 ) {
@@ -78,11 +67,21 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
+    # Set the new latest_project_number AVU
+    msiAddKeyVal(*latestProjectNumberAVU, "latest_project_number", str(*new_latest));
+    msiSetKeyValuePairsToObj(*latestProjectNumberAVU, "/nlmumc/projects", "-C");
 
     # Set recursive permissions
     msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("default", "read", "service-disqover", *dstColl);
     msiSetACL("recursive", "inherit", "", *dstColl);
+    # If the user calling this function is someone other than 'rods' (so a project admin)
+    # we need to add rods as a owner on this project and remove the person calling this method
+    # from the ACLs
+    if ($userNameClient != "rods") {
+        msiSetACL("default", "own", "rods", *dstColl);
+        msiSetACL("default", "null", $userNameClient, *dstColl);
+    }
 
 }
 

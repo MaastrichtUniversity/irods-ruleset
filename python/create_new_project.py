@@ -27,11 +27,11 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     resp_cost_center : str
         The budget number
     open_access : str
-        'true'/'false' excepted values
+        'true'/'false' expected values
     tape_archive : str
-        'true'/'false' excepted values
+        'true'/'false' expected values
     tape_unarchive : str
-        'true'/'false' excepted values
+        'true'/'false' expected values
     """
 
     retry = 0
@@ -42,21 +42,9 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     # Try to create the new_project_path. Exit the loop on success (error = 0) or after too many retries.
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
     while error < 0 and retry < 10:
-        last_id = 0
-        for result in row_iterator("COLL_NAME",
-                                   "COLL_PARENT_NAME = '/nlmumc/projects'",
-                                   AS_LIST,
-                                   ctx.callback):
-
-            project_path = result[0]
-            project_id = project_path.split("/")[3]
-            project_number = project_id.strip("P")
-
-            project_number = int(project_number)
-            if project_number > last_id:
-                last_id = project_number
-
-        project = str(last_id + 1)
+        latest_project_number = ctx.callback.getCollectionAVU("/nlmumc/projects", "latest_project_number", "*latest_project_number", "", "true")["arguments"][2]
+        new_latest = int(latest_project_number) + 1
+        project = str(new_latest)
         while len(project) < 9:
             project = "0" + str(project)
         project = "P" + project
@@ -100,9 +88,20 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
 
     ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
 
-    # # Set recursive permissions
+    # Set the new latest_project_number AVU
+    ctx.callback.setCollectionAVU("/nlmumc/projects", "latest_project_number", str(new_latest))
+
+    # Set recursive permissions
     ctx.callback.msiSetACL("default", "write", "service-pid", new_project_path)
     ctx.callback.msiSetACL("default", "read", "service-disqover", new_project_path)
     ctx.callback.msiSetACL("recursive", "inherit", "", new_project_path)
+
+    current_user = ctx.callback.get_client_username('')["arguments"][0]
+    # If the user calling this function is someone other than 'rods' (so a project admin)
+    # we need to add rods as a owner on this project and remove the person calling this method
+    # from the ACLs
+    if current_user != "rods":
+        ctx.callback.msiSetACL("default", "own", "rods", new_project_path)
+        ctx.callback.msiSetACL("default", "null", current_user, new_project_path)
 
     return {"project_path": new_project_path, "project_id": project}

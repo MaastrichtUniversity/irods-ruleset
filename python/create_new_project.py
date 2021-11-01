@@ -44,9 +44,9 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     # Try to create the new_project_path. Exit the loop on success (error = 0) or after too many retries.
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
     while error < 0 and retry < 10:
-        max_project_number = ctx.callback.getCollectionAVU("/nlmumc/projects", "max_project_number", "*max_project_number", "", "true")["arguments"][2]
-        new_max = int(max_project_number) + 1
-        project = str(new_max)
+        latest_project_number = ctx.callback.getCollectionAVU("/nlmumc/projects", "latest_project_number", "*latest_project_number", "", "true")["arguments"][2]
+        new_latest = int(latest_project_number) + 1
+        project = str(new_latest)
         while len(project) < 9:
             project = "0" + str(project)
         project = "P" + project
@@ -90,8 +90,8 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
 
     ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
 
-    # Set the new max_project_number AVU
-    ctx.callback.setCollectionAVU("/nlmumc/projects", "max_project_number", str(new_max))
+    # Set the new latest_project_number AVU
+    ctx.callback.setCollectionAVU("/nlmumc/projects", "latest_project_number", str(new_latest))
 
     # Set recursive permissions
     ctx.callback.msiSetACL("default", "own", "rods", new_project_path)

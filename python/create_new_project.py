@@ -27,11 +27,11 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     resp_cost_center : str
         The budget number
     open_access : str
-        'true'/'false' excepted values
+        'true'/'false' expected values
     tape_archive : str
-        'true'/'false' excepted values
+        'true'/'false' expected values
     tape_unarchive : str
-        'true'/'false' excepted values
+        'true'/'false' expected values
     """
 
     retry = 0
@@ -104,6 +104,4 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
         ctx.callback.msiSetACL("default", "own", "rods", new_project_path)
         ctx.callback.msiSetACL("default", "null", current_user, new_project_path)
 
-
     return {"project_path": new_project_path, "project_id": project}
-

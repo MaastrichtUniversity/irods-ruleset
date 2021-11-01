@@ -99,15 +99,9 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.msiSetACL("default", "read", "service-disqover", new_project_path)
     ctx.callback.msiSetACL("recursive", "inherit", "", new_project_path)
 
-    # To get the current user calling this rule
-    # https://github.com/irods/irods_rule_engine_plugin_python#session_varspy
-    var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
-    if userrec:
-        current_user = userrec.get('user_name', '')
-        if current_user != "rods":
-            ctx.callback.msiSetACL("default", "none", current_user, new_project_path)
+    current_user = ctx.callback.get_client_username('')["arguments"][0]
+    if current_user != "rods":
+        ctx.callback.msiSetACL("default", "null", current_user, new_project_path)
 
 
     return {"project_path": new_project_path, "project_id": project}

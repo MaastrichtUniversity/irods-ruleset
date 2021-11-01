@@ -1,8 +1,8 @@
-@make(inputs=range(12), outputs=[12], handler=Output.STORE)
+@make(inputs=range(13), outputs=[13], handler=Output.STORE)
 def create_new_project(ctx, authorization_period_end_date, data_retention_period_end_date,
                        ingest_resource, resource, storage_quota_gb, title,
                        principal_investigator, data_steward,
-                       resp_cost_center, open_access, tape_archive, tape_unarchive):
+                       resp_cost_center, open_access, tape_archive, tape_unarchive, metadata_schemas):
     """
     Create a new iRODS project
 
@@ -32,6 +32,8 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
         'true'/'false' expected values
     tape_unarchive : str
         'true'/'false' expected values
+    metadata_schemas : str
+        csv string that contains the list of schema names
     """
 
     retry = 0
@@ -76,6 +78,7 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.setCollectionAVU(new_project_path, "enableOpenAccessExport", open_access)
     ctx.callback.setCollectionAVU(new_project_path, "enableArchive", tape_archive)
     ctx.callback.setCollectionAVU(new_project_path, "enableUnarchive", tape_unarchive)
+    ctx.callback.setCollectionAVU(new_project_path, "collectionMetadataSchemas", metadata_schemas)
 
     archive_dest_resc = ""
     for result in row_iterator("RESC_NAME",

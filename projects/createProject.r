@@ -74,6 +74,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     # Set recursive permissions
     msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("default", "read", "service-disqover", *dstColl);
+    msiSetACL("recursive", "inherit", "", *dstColl);
     # If the user calling this function is someone other than 'rods' (so a project admin)
     # we need to add rods as a owner on this project and remove the person calling this method
     # from the ACLs
@@ -81,7 +82,6 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
         msiSetACL("default", "own", "rods", *dstColl);
         msiSetACL("default", "null", $userNameClient, *dstColl);
     }
-    msiSetACL("recursive", "inherit", "", *dstColl);
 
 }
 

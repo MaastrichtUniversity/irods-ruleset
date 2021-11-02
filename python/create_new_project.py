@@ -64,6 +64,8 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
         msg = "ERROR: Collection '{}' attempt no. {} : Unable to create {}".format(title, retry, new_project_path)
         ctx.callback.msiExit(str(error), msg)
 
+    # Set the new latest_project_number AVU
+    ctx.callback.setCollectionAVU("/nlmumc/projects", "latest_project_number", str(new_latest))
     ctx.callback.setCollectionAVU(new_project_path, "authorizationPeriodEndDate", authorization_period_end_date)
     ctx.callback.setCollectionAVU(new_project_path, "dataRetentionPeriodEndDate", data_retention_period_end_date)
     ctx.callback.setCollectionAVU(new_project_path, "ingestResource", ingest_resource)
@@ -87,9 +89,6 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
         ctx.callback.msiExit("-1", "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
 
     ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
-
-    # Set the new latest_project_number AVU
-    ctx.callback.setCollectionAVU("/nlmumc/projects", "latest_project_number", str(new_latest))
 
     # Set recursive permissions
     ctx.callback.msiSetACL("default", "write", "service-pid", new_project_path)

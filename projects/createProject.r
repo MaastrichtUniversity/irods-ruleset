@@ -41,10 +41,6 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
         failmsg(*error, "Collection '*title' attempt no. *retry : Unable to create *dstColl");
     }
 
-    # Set the new latest_project_number AVU
-    msiAddKeyVal(*latestProjectNumberAVU, "latest_project_number", str(*new_latest));
-    msiSetKeyValuePairsToObj(*latestProjectNumberAVU, "/nlmumc/projects", "-C");
-
     # TODO: Determine whether setting defaults here is a good place
     msiAddKeyVal(*metaKV, "authorizationPeriodEndDate", *authorizationPeriodEndDate);
     msiAddKeyVal(*metaKV, "dataRetentionPeriodEndDate", *dataRetentionPeriodEndDate);

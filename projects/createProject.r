@@ -68,10 +68,6 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
 
     msiSetKeyValuePairsToObj(*metaKV, *dstColl, "-C");
 
-    # Set the new latest_project_number AVU
-    msiAddKeyVal(*latestProjectNumberAVU, "latest_project_number", str(*new_latest));
-    msiSetKeyValuePairsToObj(*latestProjectNumberAVU, "/nlmumc/projects", "-C");
-
     # Set recursive permissions
     msiSetACL("default", "write", "service-pid", *dstColl);
     msiSetACL("default", "read", "service-disqover", *dstColl);

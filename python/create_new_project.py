@@ -91,9 +91,6 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
 
     ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
 
-    # Set the new latest_project_number AVU
-    ctx.callback.setCollectionAVU("/nlmumc/projects", "latest_project_number", str(new_latest))
-
     # Set recursive permissions
     ctx.callback.msiSetACL("default", "write", "service-pid", new_project_path)
     ctx.callback.msiSetACL("default", "read", "service-disqover", new_project_path)

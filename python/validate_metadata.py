@@ -1,5 +1,3 @@
-import jsonschema
-
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def validate_metadata(ctx, source_collection):
     """
@@ -17,6 +15,7 @@ def validate_metadata(ctx, source_collection):
     bool
         True if valid, False if not
     """
+    import jsonschema
     instance = read_data_object_from_irods(ctx, "{}/instance.json".format(source_collection))
     schema = read_data_object_from_irods(ctx, "{}/schema.json".format(source_collection))
 

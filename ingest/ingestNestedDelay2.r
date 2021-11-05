@@ -2,7 +2,7 @@
 #
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingestNestedDelay1.r rule
 
-ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token) {
+ingestNestedDelay2(*srcColl, *project, *title, *user, *token) {
     msiWriteRodsLog("Starting ingestion *srcColl", 0);
     msiAddKeyVal(*stateKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
@@ -74,9 +74,10 @@ ingestNestedDelay2(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token)
     # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open
     setCollectionSize(*project, *projectCollection, "false", "false");
 
-    # Send metadata
-    # Please note that this step also sets the PID AVU via MirthConnect
-    *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
+#     # Send metadata
+#TODO: MAKE SURE PID IS SET
+#     # Please note that this step also sets the PID AVU via MirthConnect
+#     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
 
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");

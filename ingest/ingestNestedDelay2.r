@@ -1,6 +1,6 @@
 # Call with
 #
-# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingestNestedDelay1.r rule
+# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingest.r rule
 
 ingestNestedDelay2(*srcColl, *project, *title, *user, *token) {
     msiWriteRodsLog("Starting ingestion *srcColl", 0);

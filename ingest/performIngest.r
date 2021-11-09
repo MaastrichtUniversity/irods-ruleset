@@ -2,7 +2,7 @@
 #
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingest.r rule
 
-ingestNestedDelay2(*srcColl, *project, *title, *user, *token) {
+performIngest(*srcColl, *project, *title, *user, *token) {
     msiWriteRodsLog("Starting ingestion *srcColl", 0);
     msiAddKeyVal(*stateKV, "state", "ingesting");
     msiSetKeyValuePairsToObj(*stateKV, *srcColl, "-C");
@@ -74,10 +74,19 @@ ingestNestedDelay2(*srcColl, *project, *title, *user, *token) {
     # Calculate and set the byteSize and numFiles AVU. false/false because collection is already open and needs to stay open
     setCollectionSize(*project, *projectCollection, "false", "false");
 
-#     # Send metadata
-#TODO: MAKE SURE PID IS SET
-#     # Please note that this step also sets the PID AVU via MirthConnect
-#     *error = errorcode(sendMetadata(*mirthMetaDataUrl,*project, *projectCollection));
+    # Requesting a PID via epicPID
+    *handlePID = ""
+    get_pid(*project, *projectCollection, *handlePID)
+
+    if (*handlePID == "") {
+        msiWriteRodsLog("Retrieving PID failed for *dstColl, leaving blank", 0)
+    }
+    # Setting the PID as AVU on the project collection
+    msiAddKeyVal(*PIDkv, "PID", *handlePID);
+    msiSetKeyValuePairsToObj(*PIDkv, *dstColl, "-C");
+
+    # Fill the instance.json with the information needed in that instance (ie. handle PID)
+    fill_instance(*project, *projectCollection, *handlePID)
 
     if ( *error < 0 ) {
         setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");

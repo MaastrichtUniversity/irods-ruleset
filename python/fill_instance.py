@@ -26,6 +26,11 @@ def fill_instance(ctx, project, collection, handle):
     instance = read_data_object_from_irods(ctx, instance_location)
     instance_object = json.loads(instance)
 
+    # Python rule engine returns quoted strings, so the handle could be quoted. If it is, we need to strip the quotes
+    # before we insert the value into the instance.json
+    if handle.startswith('"'):
+        handle = handle.replace('"', '')
+
     # Overwriting the current value for identifier
     instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle
 

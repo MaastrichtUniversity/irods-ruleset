@@ -1,8 +1,8 @@
 # Call with
 #
-# irule -F ingest.r "*user='username@domain.com'" "*token='creepy-click'"
+# irule -F startIngest.r "*user='dlinssen'" "*token='creepy-click'"
 
-ingest {
+startIngest {
     *srcColl = "/nlmumc/ingest/zones/*token";
 
     *hasDropZonepermission = "";
@@ -70,7 +70,7 @@ ingest {
         # On a new delay queue, as we do not want to repeat this part after failure as above
         # We also do not want any repeats of this, as this would create a new project collection
         delay("<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>") {
-            ingestNestedDelay2(*srcColl, *project, *title, *user, *token);
+            performIngest(*srcColl, *project, *title, *user, *token);
         }
     }
 }

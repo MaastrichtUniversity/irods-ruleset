@@ -1,6 +1,6 @@
 # Call with
 #
-# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within ingest.r rule
+# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within startIngest.r rule
 
 performIngest(*srcColl, *project, *title, *user, *token) {
     msiWriteRodsLog("Starting ingestion *srcColl", 0);
@@ -81,9 +81,11 @@ performIngest(*srcColl, *project, *title, *user, *token) {
     if (*handlePID == "") {
         msiWriteRodsLog("Retrieving PID failed for *dstColl, leaving blank", 0)
     }
-    # Setting the PID as AVU on the project collection
-    msiAddKeyVal(*PIDkv, "PID", *handlePID);
-    msiSetKeyValuePairsToObj(*PIDkv, *dstColl, "-C");
+    else{
+        # Setting the PID as AVU on the project collection
+        msiAddKeyVal(*PIDkv, "PID", *handlePID);
+        msiSetKeyValuePairsToObj(*PIDkv, *dstColl, "-C");
+    }
 
     # Fill the instance.json with the information needed in that instance (ie. handle PID)
     fill_instance(*project, *projectCollection, *handlePID)

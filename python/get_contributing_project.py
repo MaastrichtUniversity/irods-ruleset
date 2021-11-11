@@ -60,5 +60,6 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
 
         project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
         project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")["arguments"][2]
+        project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(collection_result[0], "collectionMetadataSchemas", "", "", "true")["arguments"][2]
 
     return project

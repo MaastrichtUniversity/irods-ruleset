@@ -60,6 +60,7 @@ def list_contributing_projects(ctx, show_service_accounts):
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
         project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
         project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")["arguments"][2]
+        project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(collection_result[0], "collectionMetadataSchemas", "", "", "true")["arguments"][2]
 
         projects.append(project)
 

@@ -90,10 +90,6 @@ performIngest(*srcColl, *project, *title, *user, *token) {
     # Fill the instance.json with the information needed in that instance (ie. handle PID)
     fill_instance(*project, *projectCollection, *handlePID)
 
-    if ( *error < 0 ) {
-        setErrorAVU(*srcColl,"state", "error-post-ingestion","Error sending metadata for indexing");
-    }
-
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
     msiAddKeyVal(*stateKV, "state", "ingested");

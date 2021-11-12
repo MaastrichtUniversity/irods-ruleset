@@ -20,7 +20,7 @@ def validate_metadata(ctx, source_collection):
         instance = read_data_object_from_irods(ctx, "{}/instance.json".format(source_collection))
         schema = read_data_object_from_irods(ctx, "{}/schema.json".format(source_collection))
     except RuntimeError:
-        ctx.callback.msiWriteRodsLog("Empty json files '{}'".format(source_collection), 0)
+        ctx.callback.msiWriteRodsLog("Empty/Missing json files '{}'".format(source_collection), 0)
         return False
 
     try:

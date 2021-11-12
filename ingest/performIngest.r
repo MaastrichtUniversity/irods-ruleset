@@ -90,6 +90,9 @@ performIngest(*srcColl, *project, *title, *user, *token) {
     # Fill the instance.json with the information needed in that instance (ie. handle PID)
     update_instance(*project, *projectCollection, *handlePID)
 
+    # Set templateSchemaVersion and templateSchemaName AVU to the ingested collection
+    set_schema_avu_to_collection(*project, *projectCollection)
+
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 
     msiAddKeyVal(*stateKV, "state", "ingested");

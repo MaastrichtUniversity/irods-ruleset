@@ -18,6 +18,7 @@ def update_instance(ctx, project, collection, handle):
         The handle to insert into the instance.json (ie. 21.T12996/P000000001C000000195)
     """
     import datetime
+
     project_collection_full_path = "/nlmumc/projects/{}/{}".format(project, collection)
 
     # Setting the PID in the instance.json file
@@ -26,16 +27,17 @@ def update_instance(ctx, project, collection, handle):
     instance = read_data_object_from_irods(ctx, instance_location)
     instance_object = json.loads(instance)
 
-    # Python rule engine returns quoted strings, so the handle could be quoted. If it is, we need to strip the quotes
-    # before we insert the value into the instance.json
-    if handle.startswith('"'):
-        handle = handle.replace('"', '')
-
-    # Overwriting the current value for identifier
+    # Overwriting the current values for identifier
     instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle
+    instance_object["@id"] = handle
 
     # Overwriting the current value for submission date
     instance_object["8_Date"][0]["datasetDate"]["@value"] = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    # Overwriting the schema:isBasedOn with the MDR schema handle URL
+    mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
+    schema_url = "{}{}/{}/schema".format(mdr_handle_url, project, collection)
+    instance_object["schema:isBasedOn"] = schema_url
 
     # Opening the instance file with read/write access
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)

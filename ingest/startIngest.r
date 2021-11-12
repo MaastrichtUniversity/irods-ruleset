@@ -73,6 +73,9 @@ startIngest {
             performIngest(*srcColl, *project, *title, *user, *token);
         }
     }
+    else{
+        setErrorAVU(*srcColl, "state", "warning-validation-incorrect", "Metadata is incorrect")
+    }
 }
 
 INPUT *user="",*token=""

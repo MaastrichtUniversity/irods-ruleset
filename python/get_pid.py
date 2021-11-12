@@ -41,4 +41,4 @@ def get_pid(ctx, project, collection):
     except requests.exceptions.RequestException as e:
         ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
 
-    return handle
+    return str(handle)

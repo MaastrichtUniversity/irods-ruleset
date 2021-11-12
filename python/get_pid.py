@@ -40,5 +40,7 @@ def get_pid(ctx, project, collection):
         handle = response_object["handle"]
     except requests.exceptions.RequestException as e:
         ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
+    except KeyError as e:
+        ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
 
     return str(handle)

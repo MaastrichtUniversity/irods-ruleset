@@ -28,8 +28,9 @@ def update_instance(ctx, project, collection, handle):
     instance_object = json.loads(instance)
 
     # Overwriting the current values for identifier
-    instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle
-    instance_object["@id"] = handle
+    if handle:    
+        instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle
+        instance_object["@id"] = handle
 
     # Overwriting the current value for submission date
     instance_object["8_Date"][0]["datasetDate"]["@value"] = datetime.datetime.now().strftime("%Y-%m-%d")

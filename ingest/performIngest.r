@@ -88,7 +88,7 @@ performIngest(*srcColl, *project, *title, *user, *token) {
     }
 
     # Fill the instance.json with the information needed in that instance (ie. handle PID)
-    fill_instance(*project, *projectCollection, *handlePID)
+    update_instance(*project, *projectCollection, *handlePID)
 
     msiWriteRodsLog("Finished ingesting *srcColl to *dstColl", 0);
 

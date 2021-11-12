@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def fill_instance(ctx, project, collection, handle):
+def update_instance(ctx, project, collection, handle):
     """
     Fill an already ingested 'instance.json' file located on the root
     of a collection with

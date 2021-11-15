@@ -47,6 +47,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["enableContributorEditMetadata"] = ctx.callback.getCollectionAVU(project["path"], "enableContributorEditMetadata", "", "false", "false")["arguments"][2]
     project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", "true")["arguments"][2]
     project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", "true")["arguments"][2]
+    project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(project["path"], "collectionMetadataSchemas", "", "", "true")["arguments"][2]
     
     ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
     if ret == username:

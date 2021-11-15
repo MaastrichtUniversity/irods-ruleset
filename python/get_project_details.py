@@ -44,6 +44,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(project["path"], "enableOpenAccessExport", "", "false", "false")["arguments"][2]
     project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "false", "false")["arguments"][2]
     project["enableUnarchive"] = ctx.callback.getCollectionAVU(project["path"], "enableUnarchive", "", project["enableArchive"], "false")["arguments"][2]
+    project["enableContributorEditMetadata"] = ctx.callback.getCollectionAVU(project["path"], "enableContributorEditMetadata", "", "false", "false")["arguments"][2]
     project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", "true")["arguments"][2]
     project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", "true")["arguments"][2]
     

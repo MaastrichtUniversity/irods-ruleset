@@ -19,6 +19,6 @@ def set_username_attribute_value(ctx, username, attribute, value):
     dict
         The attribute value
     """
-    kvp = ctx.callback.msiString2KeyValPair('{}={}'.format(attribute, value), irods_types.BytesBuf())["arguments"][1]
+    kvp = ctx.callback.msiString2KeyValPair("{}={}".format(attribute, value), irods_types.BytesBuf())["arguments"][1]
     ctx.callback.msiSetKeyValuePairsToObj(kvp, username, "-u")
     ctx.callback.msiWriteRodsLog("INFO: {}: Setting '{}' to '{}'".format(username, attribute, value), 0)

@@ -28,9 +28,14 @@ def update_instance(ctx, project, collection, handle):
     instance_object = json.loads(instance)
 
     # Overwriting the current values for identifier
-    if handle:    
-        instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle
-        instance_object["@id"] = handle
+    if handle:
+        handle_url = "https://hdl.handle.net/" + handle
+        instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle_url
+        instance_object["@id"] = handle_url
+
+    # Set identifier type to "handle"
+    instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"
+    instance_object["1_Identifier"]["datasetIdentifierType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Handle"
 
     # Overwriting the current value for submission date
     instance_object["8_Date"][0]["datasetDate"]["@value"] = datetime.datetime.now().strftime("%Y-%m-%d")

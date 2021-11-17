@@ -32,28 +32,27 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
     else:
         criteria = "'modify object'"
 
-    for result in row_iterator("COLL_ACCESS_USER_ID",
-                               "COLL_ACCESS_NAME in ({}) AND ".format(criteria) +
-                               "COLL_NAME = '/nlmumc/projects/{}'".format(project_id),
-                               AS_LIST,
-                               ctx.callback):
+    for result in row_iterator(
+        "COLL_ACCESS_USER_ID",
+        "COLL_ACCESS_NAME in ({}) AND ".format(criteria) + "COLL_NAME = '/nlmumc/projects/{}'".format(project_id),
+        AS_LIST,
+        ctx.callback,
+    ):
 
         account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE",
-                                   "USER_ID = '{}'".format(account_id),
-                                   AS_LIST,
-                                   ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
             account_name = account[0]
             account_type = account[1]
             display_name = account_name
             description = ""
 
             if account_type == "rodsgroup":
-                for group_result in row_iterator("META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
-                                         "USER_TYPE = 'rodsgroup' AND "
-                                         "USER_GROUP_ID = '{}'".format(account_id),
-                                         AS_LIST,
-                                         ctx.callback):
+                for group_result in row_iterator(
+                    "META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
+                    "USER_TYPE = 'rodsgroup' AND " "USER_GROUP_ID = '{}'".format(account_id),
+                    AS_LIST,
+                    ctx.callback,
+                ):
 
                     if "displayName" == group_result[0]:
                         display_name = group_result[1]
@@ -63,8 +62,10 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
 
                 groups.append(account_name)
                 group_object = {
-                    "groupName": account_name, "groupId": account_id,
-                    "displayName": display_name, "description": description
+                    "groupName": account_name,
+                    "groupId": account_id,
+                    "displayName": display_name,
+                    "description": description,
                 }
                 group_objects.append(group_object)
 
@@ -73,10 +74,12 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
                 if show_service_accounts == "false" and "service-" in account_name:
                     continue
 
-                for user_result in row_iterator("META_USER_ATTR_VALUE",
-                                           "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(account_name),
-                                           AS_LIST,
-                                           ctx.callback):
+                for user_result in row_iterator(
+                    "META_USER_ATTR_VALUE",
+                    "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(account_name),
+                    AS_LIST,
+                    ctx.callback,
+                ):
 
                     display_name = user_result[0]
 

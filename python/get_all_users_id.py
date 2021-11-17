@@ -16,10 +16,7 @@ def get_all_users_id(ctx):
 
     project = {}
 
-    for account in row_iterator("USER_ID",
-                                "",
-                                AS_LIST,
-                                ctx.callback):
+    for account in row_iterator("USER_ID", "", AS_LIST, ctx.callback):
         project[account[0]] = account[0]
 
     return project

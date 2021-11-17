@@ -38,10 +38,12 @@ def optimized_list_projects(ctx):
     ret = ctx.callback.get_all_users_id("")["arguments"][0]
     users_id = json.loads(ret)
 
-    for result in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME",
-                               "COLL_PARENT_NAME = '/nlmumc/projects'",
-                               AS_LIST,
-                               ctx.callback):
+    for result in row_iterator(
+        "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME",
+        "COLL_PARENT_NAME = '/nlmumc/projects'",
+        AS_LIST,
+        ctx.callback,
+    ):
         project_path = result[0]
         attribute_name = result[1]
         attribute_value = result[2]
@@ -89,8 +91,8 @@ def map_access_level_name_to_role(access):
 
 def reset_project_dict():
     project = {
-        "managers":  [],
+        "managers": [],
         "contributors": [],
-        "viewers":  [],
+        "viewers": [],
     }
     return project

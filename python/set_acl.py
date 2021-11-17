@@ -17,4 +17,3 @@ def set_acl(ctx, mode, access, user, path):
         The absolute path of the collection
     """
     ctx.callback.msiSetACL(mode, access, user, path)
-

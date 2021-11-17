@@ -117,3 +117,27 @@ def get_client_username(ctx):
     if userrec:
         username = userrec.get('user_name', '')
     return username
+
+
+def read_data_object_from_irods(ctx, path):
+    """This rule gets a JSON schema stored as an iRODS object
+    :param ctx:  iRODS context
+    :param path: Full path of the file to read (ie: '/nlmumc/ingest/zones/crazy-frog/instance.json')
+    :return: The content of the file to open
+    """
+    # Open iRODS file
+    ret_val = ctx.callback.msiDataObjOpen("objPath=" + path, 0)
+    file_desc = ret_val['arguments'][1]
+
+    # Read iRODS file
+    ret_val = ctx.callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
+    read_buf = ret_val['arguments'][2]
+
+    # Convert BytesBuffer to string
+    ret_val = ctx.callback.msiBytesBufToStr(read_buf, "")
+    output_json = ret_val['arguments'][1]
+
+    # Close iRODS file
+    ctx.callback.msiDataObjClose(file_desc, 0)
+
+    return output_json

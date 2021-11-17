@@ -1,8 +1,8 @@
 # Call with
 #
-# irule -F ingest.r "*user='username@domain.com'" "*token='creepy-click'"
+# irule -F startIngest.r "*user='dlinssen'" "*token='creepy-click'"
 
-ingest {
+startIngest {
     *srcColl = "/nlmumc/ingest/zones/*token";
 
     *hasDropZonepermission = "";
@@ -62,19 +62,19 @@ ingest {
         msiAddKeyVal(*validateStateKV, "validateState", *validateState );
         msiRemoveKeyValuePairsFromObj(*validateStateKV, *srcColl, "-C");
     }
-    
-    delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 10 TIMES</EF>") {
-        # Validate metadata
-        *mirthValidationURL = "";
-        msi_getenv("MIRTH_VALIDATION_CHANNEL", *mirthValidationURL);
-        validateMetadataFromIngest(*token,*mirthValidationURL);
+    msiWriteRodsLog("Starting validation of *srcColl", 0)
+    *validationResult = ""
+    validate_metadata(*srcColl, *validationResult)
+    if (*validationResult == "true") {
+        msiWriteRodsLog("Validation result is OK, starting ingest of *srcColl", 0)
+        # On a new delay queue, as we do not want to repeat this part after failure as above
+        # We also do not want any repeats of this, as this would create a new project collection
+        delay("<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>") {
+            performIngest(*srcColl, *project, *title, *user, *token);
+        }
     }
-
-    # Continue ingest and create PID in Mirth
-    msi_getenv("MIRTH_METADATA_CHANNEL", *mirthMetaDataUrl);
-
-    delay("<PLUSET>1s</PLUSET><EF>30s REPEAT UNTIL SUCCESS OR 20 TIMES</EF>") {
-        ingestNestedDelay1(*srcColl, *project, *title, *mirthMetaDataUrl, *user, *token);
+    else{
+        setErrorAVU(*srcColl, "state", "warning-validation-incorrect", "Metadata is incorrect")
     }
 }
 

@@ -21,13 +21,10 @@ def list_projects(ctx, show_service_accounts):
     output = {"has_financial_view_access": False}
 
     # Loop over all projects
-    for result in row_iterator("COLL_NAME",
-                               "COLL_PARENT_NAME = '/nlmumc/projects'",
-                               AS_LIST,
-                               ctx.callback):
+    for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback):
 
         # Get all the project's avu
-        ret = ctx.callback.get_project_details(result[0], show_service_accounts, '')["arguments"][2]
+        ret = ctx.callback.get_project_details(result[0], show_service_accounts, "")["arguments"][2]
         project = json.loads(ret)
 
         # Check if the client user has at least financial view access for one project

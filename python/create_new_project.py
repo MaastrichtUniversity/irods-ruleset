@@ -1,8 +1,20 @@
 @make(inputs=range(13), outputs=[13], handler=Output.STORE)
-def create_new_project(ctx, authorization_period_end_date, data_retention_period_end_date,
-                       ingest_resource, resource, storage_quota_gb, title,
-                       principal_investigator, data_steward,
-                       resp_cost_center, open_access, tape_archive, tape_unarchive, metadata_schemas):
+def create_new_project(
+    ctx,
+    authorization_period_end_date,
+    data_retention_period_end_date,
+    ingest_resource,
+    resource,
+    storage_quota_gb,
+    title,
+    principal_investigator,
+    data_steward,
+    resp_cost_center,
+    open_access,
+    tape_archive,
+    tape_unarchive,
+    metadata_schemas,
+):
     """
     Create a new iRODS project
 
@@ -44,7 +56,9 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     # Try to create the new_project_path. Exit the loop on success (error = 0) or after too many retries.
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
     while error < 0 and retry < 10:
-        latest_project_number = ctx.callback.getCollectionAVU("/nlmumc/projects", "latest_project_number", "*latest_project_number", "", "true")["arguments"][2]
+        latest_project_number = ctx.callback.getCollectionAVU(
+            "/nlmumc/projects", "latest_project_number", "*latest_project_number", "", "true"
+        )["arguments"][2]
         new_latest = int(latest_project_number) + 1
         project = str(new_latest)
         while len(project) < 9:
@@ -81,10 +95,9 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.setCollectionAVU(new_project_path, "collectionMetadataSchemas", metadata_schemas)
 
     archive_dest_resc = ""
-    for result in row_iterator("RESC_NAME",
-                               "META_RESC_ATTR_NAME = 'archiveDestResc' AND META_RESC_ATTR_VALUE = 'true'",
-                               AS_LIST,
-                               ctx.callback):
+    for result in row_iterator(
+        "RESC_NAME", "META_RESC_ATTR_NAME = 'archiveDestResc' AND META_RESC_ATTR_VALUE = 'true'", AS_LIST, ctx.callback
+    ):
         archive_dest_resc = result[0]
     if archive_dest_resc == "":
         ctx.callback.msiExit("-1", "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
@@ -96,7 +109,7 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.msiSetACL("default", "read", "service-disqover", new_project_path)
     ctx.callback.msiSetACL("recursive", "inherit", "", new_project_path)
 
-    current_user = ctx.callback.get_client_username('')["arguments"][0]
+    current_user = ctx.callback.get_client_username("")["arguments"][0]
     # If the user calling this function is someone other than 'rods' (so a project admin)
     # we need to add rods as a owner on this project and remove the person calling this method
     # from the ACLs

@@ -1,6 +1,7 @@
 from random import randrange
 
-TOKEN_FORMAT = '{}-{}'
+TOKEN_FORMAT = "{}-{}"
+
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def generate_token(ctx):
@@ -17,20 +18,18 @@ def generate_token(ctx):
     string
         The requested new DZ-token
     """
-    adjectives_file = open('/etc/irods/assets/adjectives.txt', 'r')
-    nouns_file = open('/etc/irods/assets/nouns.txt', 'r')
-    adjectives = adjectives_file.read().split('\n')
-    nouns = nouns_file.read().split('\n')
+    adjectives_file = open("/etc/irods/assets/adjectives.txt", "r")
+    nouns_file = open("/etc/irods/assets/nouns.txt", "r")
+    adjectives = adjectives_file.read().split("\n")
+    nouns = nouns_file.read().split("\n")
 
     existing_tokens = []
-    for row in row_iterator("COLL_NAME",
-                                  "COLL_PARENT_NAME = '/nlmumc/ingest/zones'",
-                                  AS_LIST,
-                                  ctx.callback):
+    for row in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/ingest/zones'", AS_LIST, ctx.callback):
         existing_tokens.append(row[0][21:])
 
     token = random_token(adjectives, nouns, existing_tokens)
-    return '\"' + token + '\"'
+    return '"' + token + '"'
+
 
 def random_token(adjectives, nouns, existing_tokens):
     chosen_adjective = adjectives[randrange(0, len(adjectives) - 1)]

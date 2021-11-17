@@ -20,15 +20,12 @@ def list_contributing_projects(ctx, show_service_accounts):
     """
     projects = []
     groups = ""
-    username = ctx.callback.get_client_username('')["arguments"][0]
+    username = ctx.callback.get_client_username("")["arguments"][0]
 
     ret = ctx.callback.userNameToUserId(username, "*userId")
     user_id = ret["arguments"][1]
 
-    for result in row_iterator("USER_GROUP_ID",
-                                  "USER_ID = '{}'".format(user_id),
-                                  AS_LIST,
-                                  ctx.callback):
+    for result in row_iterator("USER_GROUP_ID", "USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback):
         group_id = "'" + result[0] + "'"
         groups = groups + "," + group_id
 
@@ -37,9 +34,11 @@ def list_contributing_projects(ctx, show_service_accounts):
 
     # Get the collection size on each resources
     parameters = "COLL_NAME"
-    conditions = "COLL_ACCESS_NAME in ('own', 'modify object') " \
-                 "and COLL_ACCESS_USER_ID in ({}) " \
-                 "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
+    conditions = (
+        "COLL_ACCESS_NAME in ('own', 'modify object') "
+        "and COLL_ACCESS_USER_ID in ({}) "
+        "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
+    )
 
     for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         project = {"id": collection_result[0].split("/")[3]}
@@ -59,8 +58,12 @@ def list_contributing_projects(ctx, show_service_accounts):
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
         project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
-        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")["arguments"][2]
-        project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(collection_result[0], "collectionMetadataSchemas", "", "", "true")["arguments"][2]
+        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")[
+            "arguments"
+        ][2]
+        project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
+            collection_result[0], "collectionMetadataSchemas", "", "", "true"
+        )["arguments"][2]
 
         projects.append(project)
 

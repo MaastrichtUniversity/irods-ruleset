@@ -27,8 +27,9 @@ def get_project_collection_tape_estimate(ctx, project, collection):
 
     number_files = 0
     bytes_size = 0
-    condition = "COLL_NAME = '{}' || like '{}/%' AND DATA_SIZE  >= '{}'".format(collection_path, collection_path,
-                                                                                minimum_size)
+    condition = "COLL_NAME = '{}' || like '{}/%' AND DATA_SIZE  >= '{}'".format(
+        collection_path, collection_path, minimum_size
+    )
     for data in row_iterator("DATA_NAME, DATA_SIZE", condition, AS_LIST, ctx.callback):
         number_files += 1
         bytes_size += int(data[1])
@@ -37,12 +38,14 @@ def get_project_collection_tape_estimate(ctx, project, collection):
 
     number_files = 0
     bytes_size = 0
-    for data in row_iterator("DATA_NAME, DATA_SIZE",
-                             "COLL_NAME = '{}' || like '{}/%' ".format(collection_path, collection_path) +
-                             " AND DATA_RESC_NAME != '{}' ".format(archive_resource) +
-                             " AND DATA_SIZE >= '{}'".format(minimum_size),
-                             AS_LIST,
-                             ctx.callback):
+    for data in row_iterator(
+        "DATA_NAME, DATA_SIZE",
+        "COLL_NAME = '{}' || like '{}/%' ".format(collection_path, collection_path)
+        + " AND DATA_RESC_NAME != '{}' ".format(archive_resource)
+        + " AND DATA_SIZE >= '{}'".format(minimum_size),
+        AS_LIST,
+        ctx.callback,
+    ):
         number_files += 1
         bytes_size += int(data[1])
 

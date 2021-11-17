@@ -2,6 +2,7 @@ import subprocess
 import re
 import datetime
 
+
 @make(inputs=[0], outputs=[], handler=Output.STORE)
 def set_dropzone_total_size_avu(ctx, token):
     """
@@ -27,7 +28,7 @@ def set_dropzone_total_size_avu(ctx, token):
         # -816000 CAT_INVALID_ARGUMENT
         ctx.callback.msiExit("-816000", "Invalid name for ingest zone")
 
-    drop_zone_path = '/nlmumc/ingest/zones/{}'.format(token)
+    drop_zone_path = "/nlmumc/ingest/zones/{}".format(token)
 
     # This call makes sure that the dropzone path exists. If it does not exist,
     # iRODS will throw an exception and the rule execution will not continue
@@ -50,5 +51,7 @@ def set_dropzone_total_size_avu(ctx, token):
                 total_size += int(split_line[3])
             except ValueError:
                 continue
-    kvp = ctx.callback.msiString2KeyValPair('{}={}'.format('totalSize', total_size), irods_types.BytesBuf())["arguments"][1]
+    kvp = ctx.callback.msiString2KeyValPair("{}={}".format("totalSize", total_size), irods_types.BytesBuf())[
+        "arguments"
+    ][1]
     ctx.callback.msiSetKeyValuePairsToObj(kvp, drop_zone_path, "-C")

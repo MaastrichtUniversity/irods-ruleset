@@ -26,7 +26,7 @@ def main(rule_args, callback, rei):
                                                     collectionMetadataSchemas,
                                                    "result")
 
-    callback.writeLine("stdout", output["arguments"][12])
+    callback.writeLine("stdout", output["arguments"][13])
 
 
 

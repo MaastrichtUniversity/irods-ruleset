@@ -55,6 +55,7 @@ IRULE_createProject(*project,*authorizationPeriodEndDate,*dataRetentionPeriodEnd
     msiAddKeyVal(*metaKV, "enableArchive", *tapeArchive);
     msiAddKeyVal(*metaKV, "enableUnarchive", *tapeUnarchive);
     msiAddKeyVal(*metaKV, "collectionMetadataSchemas", *collectionMetadataSchemas);
+     msiAddKeyVal(*metaKV, "enableContributorEditMetadata", "false");
     # TODO Make it compatible with multiple archive resources.
     *archiveDestResc = "";
     # Look-up for the resource set as the archive destination resource

@@ -79,6 +79,7 @@ def create_new_project(ctx, authorization_period_end_date, data_retention_period
     ctx.callback.setCollectionAVU(new_project_path, "enableArchive", tape_archive)
     ctx.callback.setCollectionAVU(new_project_path, "enableUnarchive", tape_unarchive)
     ctx.callback.setCollectionAVU(new_project_path, "collectionMetadataSchemas", metadata_schemas)
+    ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", "false")
 
     archive_dest_resc = ""
     for result in row_iterator("RESC_NAME",

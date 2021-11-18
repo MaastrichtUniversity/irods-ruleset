@@ -9,7 +9,7 @@ def main(rule_args, callback, rei):
     # Python-iRODS: When calling a rule without input arguments you need to provide a (empty or nonsense) string, which will contain the output.
     output = callback.start_ingest(username, token, '')
 
-    callback.writeLine("stdout", output["arguments"][2])
+    callback.writeLine("stdout", output["arguments"][1])
 
 INPUT *username="", *token=""
 OUTPUT ruleExecOut

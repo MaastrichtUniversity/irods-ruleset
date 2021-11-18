@@ -66,6 +66,7 @@ def perform_ingest(ctx, project_id, title, username, token):
 
     # Calculate the number of files and total size of the ProjectCollection
     size = ctx.callback.calcCollectionSize(destination_collection, "B", "ceiling", "")["arguments"][3]
+    # We need to parse the output of this rule because it returns unicode-output
     num_files = ord(ctx.callback.calcCollectionFiles(destination_collection, "")["arguments"][1])
 
     avg_speed = float(size) / 1024 / 1024 / difference

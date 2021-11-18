@@ -1,4 +1,4 @@
-@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
 def start_ingest(ctx, username, token):
     """
     Start an ingest
@@ -78,5 +78,3 @@ def start_ingest(ctx, username, token):
         )
     else:
         ctx.callback.setErrorAVU(source_collection, "state", "warning-validation-incorrect", "Metadata is incorrect")
-
-    return validation_result

@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_optimized_list_projects.r | python -m json.tool
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_optimized_list_projects.r | python -m json.tool
 
 
 from genquery import *

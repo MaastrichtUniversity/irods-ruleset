@@ -1,7 +1,7 @@
 @make(inputs=[0, 1, 2, 3, 4], outputs=[], handler=Output.STORE)
 def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host):
     """
-    Actions to be perfomed after an ingest is completed
+    Actions to be performed after an ingest is completed
         Setting AVUs
         Removing AVUs
         Requesting a PID

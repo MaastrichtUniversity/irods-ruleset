@@ -39,10 +39,6 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         email = row[0]
     ctx.callback.setCollectionAVU(destination_collection, "creator", email)
 
-    # Calculate and set the byteSize and numFiles AVU. false/false because collection
-    # is already open and needs to stay open
-    ctx.callback.setCollectionSize(project_id, collection_id, "false", "false")
-
     # Requesting a PID via epicPID
     handle_pid = ctx.callback.get_pid(project_id, collection_id, "")["arguments"][2]
     if handle_pid == "":

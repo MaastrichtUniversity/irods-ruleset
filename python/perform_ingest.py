@@ -64,10 +64,11 @@ def perform_ingest(ctx, project_id, title, username, token):
     after = time.time()
     difference = float(after - before) + 1
 
-    # Calculate the number of files and total size of the ProjectCollection
-    size = ctx.callback.calcCollectionSize(destination_collection, "B", "ceiling", "")["arguments"][3]
-    # We need to parse the output of this rule because it returns unicode-output
-    num_files = ord(ctx.callback.calcCollectionFiles(destination_collection, "")["arguments"][1])
+    # Calculate and set the byteSize and numFiles AVU. false/false because collection
+    # is already open and needs to stay open
+    ctx.callback.setCollectionSize(project_id, collection_id, "false", "false")
+    num_files = ctx.callback.getCollectionAVU(destination_collection, "numFiles", "", "", "true")["arguments"][2]
+    size = ctx.callback.getCollectionAVU(destination_collection, "dcat:byteSize", "", "", "true")["arguments"][2]
 
     avg_speed = float(size) / 1024 / 1024 / difference
     size_gib = float(size) / 1024 / 1024 / 1024

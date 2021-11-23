@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_set_acl.r "*mode='default'" "*access_level='own'" "*user='jmelius'" "*path='/nlmumc/projects/P000000010'"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_set_acl.r "*mode='default'" "*access_level='own'" "*user='jmelius'" "*path='/nlmumc/projects/P000000010'"
 
 def main(rule_args, callback, rei):
     mode = global_vars["*mode"][1:-1]

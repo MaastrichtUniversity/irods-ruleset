@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_list_collections.r "*project='/nlmumc/projects/P000000010'" | python -m json.tool
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_list_collections.r "*project='/nlmumc/projects/P000000010'" | python -m json.tool
 
 def main(rule_args, callback, rei):
     project = global_vars["*project"][1:-1]

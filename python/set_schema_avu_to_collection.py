@@ -14,9 +14,9 @@ def set_schema_avu_to_collection(ctx, project, collection):
 
     project_collection_full_path = "/nlmumc/projects/{}/{}".format(project, collection)
     # Setting the PID in the instance.json file
-    instance_location = "{}/schema.json".format(project_collection_full_path)
+    schema_location = "{}/schema.json".format(project_collection_full_path)
     # Reading the schema.json and parsing it
-    schema = read_data_object_from_irods(ctx, instance_location)
+    schema = read_data_object_from_irods(ctx, schema_location)
     schema_object = json.loads(schema)
 
     templateSchemaName = " "

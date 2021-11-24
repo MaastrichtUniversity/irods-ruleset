@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_get_collection_size.r "*collection='/nlmumc/projects/P000000013/C000000001'" "*unit='MiB'" "*round='ceiling'"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_get_collection_size.r "*collection='/nlmumc/projects/P000000013/C000000001'" "*unit='MiB'" "*round='ceiling'"
 
 def main(rule_args, callback, rei):
     collection = global_vars["*collection"][1:-1]

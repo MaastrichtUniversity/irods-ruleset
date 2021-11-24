@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_get_active_drop_zone.r "*token='token'" "*check_ingest_resource_status='false'"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_get_active_drop_zone.r "*token='token'" "*check_ingest_resource_status='false'" | python -m json.tool
 
 def main(rule_args, callback, rei):
     token = global_vars["*token"][1:-1]

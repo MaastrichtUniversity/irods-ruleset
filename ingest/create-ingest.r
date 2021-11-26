@@ -34,8 +34,8 @@ createIngest {
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
     msiAddKeyVal(*metaKV, "title", *title);
-    msiAddKeyVal(*metaKV, "templateSchemaName", *schema_name);
-    msiAddKeyVal(*metaKV, "templateSchemaVersion", *schema_version);
+    msiAddKeyVal(*metaKV, "schemaName", *schema_name);
+    msiAddKeyVal(*metaKV, "schemaVersion", *schema_version);
     #msiAddKeyVal(*metaKV, "author", *user);
     msiAddKeyVal(*metaKV, "state", "open");
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");

@@ -22,7 +22,6 @@ def metadata_edit_allowed(ctx, project_path):
 
     ret = ctx.callback.get_user_group_memberships("false", username, "")["arguments"][2]
     groups = json.loads(ret)
-    print(groups)
 
     # If user is the Principal Investigator he is allowed to edit the metadata
     ret = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
@@ -37,7 +36,6 @@ def metadata_edit_allowed(ctx, project_path):
     # If user is a manager or in one of the managing groups he is allowed to edit the metadata
     ret = ctx.callback.list_project_managers(project, "false", "")["arguments"][2]
     managers = json.loads(ret)
-    print(managers)
     if username in managers["users"]:
         return True
     for group in groups:

@@ -18,6 +18,7 @@ def metadata_edit_allowed(ctx, project_path):
     """
 
     username = ctx.callback.get_client_username("")["arguments"][0]
+    print (username)
     project = project_path.split("/")[3]
 
     ret = ctx.callback.get_user_group_memberships("false", username, "")["arguments"][2]

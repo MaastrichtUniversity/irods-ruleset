@@ -17,11 +17,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     """
     from datetime import datetime
 
-    current_user = ctx.callback.get_client_username("")["arguments"][0]
     collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
-
-    ctx.callback.msiSetACL("recursive", "own", current_user, collection_path)
-
     metadata_folder_path = collection_path + "/.metadata_versions"
     metadata_folder_exist = True
 
@@ -36,7 +32,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
             ctx.callback.msiCollCreate(metadata_folder_path, 0, 0)
             ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
         except RuntimeError:
-            ctx.callback.closeProjectCollection(project_id, collection_id)
             ctx.callback.msiExit("-1", "ERROR: Couldn't create '{}'".format(metadata_folder_path))
 
     source_schema = collection_path + "/schema.json"
@@ -52,7 +47,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         ctx.callback.msiDataObjCopy(source_schema, destination_schema, "", 0)
         ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
     except RuntimeError:
-        ctx.callback.closeProjectCollection(project_id, collection_id)
         ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
 
     # Overwriting the schema:isBasedOn with the MDR schema handle URL
@@ -62,5 +56,4 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     try:
         ctx.callback.update_instance_snapshot(destination_instance, schema_url)
     except RuntimeError:
-        ctx.callback.closeProjectCollection(project_id, collection_id)
         ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))

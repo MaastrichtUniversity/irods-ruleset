@@ -1,5 +1,5 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
-def metadata_edit_allowed(ctx, project_path):
+def check_edit_metadata_permission(ctx, project_path):
     """
     Return boolean if the current user is allowed to edit metadata for a given project
 

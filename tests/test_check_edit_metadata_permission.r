@@ -6,7 +6,7 @@ def main(rule_args, callback, rei):
     project_path = global_vars["*project_path"][1:-1]
 
     # Python-iRODS: When calling a rule without input arguments you need to provide a (empty or nonsense) string, which will contain the output.
-    output = callback.metadata_edit_allowed(project_path, '')
+    output = callback.check_edit_metadata_permission(project_path, '')
 
     # Retrieving the rule outcome is done with '["arguments"][0]'
     callback.writeLine("stdout", output["arguments"][1])

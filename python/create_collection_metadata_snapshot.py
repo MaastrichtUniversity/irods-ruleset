@@ -18,8 +18,14 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     from datetime import datetime
 
     collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
+    project_path = "/nlmumc/projects/{}".format(project_id)
     metadata_folder_path = collection_path + "/.metadata_versions"
     metadata_folder_exist = True
+
+    # Check if user is allowed to edit metadata for this project
+    can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, '')["arguments"][1]
+    if can_edit_metadata == 'false':
+        ctx.callback.msiExit("-1", "ERROR: User has no edit metadata rights for  '{}'".format(project_id))
 
     # Check .metadata_versions folder exists
     try:

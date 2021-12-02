@@ -1,7 +1,3 @@
-from collections import OrderedDict
-import re
-
-
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_collection_size_per_resource(ctx, project):
     """
@@ -15,6 +11,9 @@ def get_collection_size_per_resource(ctx, project):
     Returns
     -------
     """
+    from collections import OrderedDict
+    import re
+
     # create empty output dict
     output = OrderedDict()
 

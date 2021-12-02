@@ -1,5 +1,3 @@
-from random import randrange
-
 TOKEN_FORMAT = "{}-{}"
 
 
@@ -32,6 +30,8 @@ def generate_token(ctx):
 
 
 def random_token(adjectives, nouns, existing_tokens):
+    from random import randrange
+
     chosen_adjective = adjectives[randrange(0, len(adjectives) - 1)]
     chosen_noun = nouns[randrange(0, len(nouns) - 1)]
     new_token = TOKEN_FORMAT.format(chosen_adjective, chosen_noun)

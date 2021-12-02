@@ -11,14 +11,12 @@ def check_edit_metadata_permission(ctx, project_path):
         Project absolute path
     Returns
     -------
-    boolan
+    boolean
        whether current user is allowed to edit metadata for project
     """
 
     username = ctx.callback.get_client_username("")["arguments"][0]
     project = project_path.split("/")[3]
-    ret = ctx.callback.get_user_group_memberships("false", username, "")["arguments"][2]
-    groups = json.loads(ret)
 
     # If user is the Principal Investigator he is allowed to edit the metadata
     # If this query fails, the user has no rights to this project or project does not exist so False should be returned
@@ -39,6 +37,8 @@ def check_edit_metadata_permission(ctx, project_path):
     managers = json.loads(ret)
     if username in managers["users"]:
         return True
+    ret = ctx.callback.get_user_group_memberships("false", username, "")["arguments"][2]
+    groups = json.loads(ret)
     for group in groups:
         if group["name"] in managers["groups"]:
             return True

@@ -22,9 +22,13 @@ def check_edit_metadata_permission(ctx, project_path):
     groups = json.loads(ret)
 
     # If user is the Principal Investigator he is allowed to edit the metadata
-    ret = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
-    if ret == username:
-        return True
+    # If this query fails, the user has no rights to this project or project does not exist so False should be returned
+    try:
+        ret = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
+        if ret == username:
+            return True
+    except RuntimeError:
+        return False
 
     # If user is the Data Steward he is allowed to edit the metadata
     ret = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", "true")["arguments"][2]

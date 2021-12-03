@@ -33,12 +33,14 @@ def update_instance(ctx, project, collection, handle):
         instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle_url
         instance_object["@id"] = handle_url
 
-    # # Set identifier type to "handle"
-    # instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"
-    # instance_object["1_Identifier"]["datasetIdentifierType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Handle"
+    # Set identifier type to "handle"
+    instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"
+    instance_object["1_Identifier"]["datasetIdentifierType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Handle"
 
     # Overwriting the current value for submission date
     instance_object["8_Date"]["datasetDate"]["@value"] = datetime.datetime.now().strftime("%Y-%m-%d")
+    instance_object["8_Date"]["datasetDateType"]["rdfs:label"] = "Submitted"
+    instance_object["8_Date"]["datasetDateType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Submitted"
 
     # Overwriting the schema:isBasedOn with the MDR schema handle URL
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]

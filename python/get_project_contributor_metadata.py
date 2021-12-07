@@ -1,24 +1,28 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_project_contributors_metadata(ctx, project_id):
-    project_path = "/nlmumc/projects/{}".format(project_id)
-    project = {"principalInvestigator": ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")[
-        "arguments"
-    ][2]}
-    ret = ctx.get_username_attribute_value(project["principalInvestigator"], "email", "result")["arguments"][2]
-    project["principalInvestigatorEmail"] = json.loads(ret)["value"]
-    ret = ctx.get_username_attribute_value(project["principalInvestigator"], "displayName", "result")["arguments"][2]
-    project["principalInvestigatorDisplayName"] = json.loads(ret)["value"]
-    pi_split_display_name = project["principalInvestigatorDisplayName"].split(" ")
-    project["principalInvestigatorGivenName"] = pi_split_display_name[0]
-    project["principalInvestigatorFamilyName"] = pi_split_display_name[1]
+    """
+    Get the contributors (PI, data-steward, etc) metadata of the given project.
 
-    project["dataSteward"] = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", "true")["arguments"][2]
-    ret = ctx.get_username_attribute_value(project["dataSteward"], "email", "result")["arguments"][2]
-    project["dataStewardEmail"] = json.loads(ret)["value"]
-    ret = ctx.get_username_attribute_value(project["dataSteward"], "displayName", "result")["arguments"][2]
-    project["dataStewardDisplayName"] = json.loads(ret)["value"]
-    ds_split_display_name = project["dataStewardDisplayName"].split(" ")
-    project["dataStewardGivenName"] = ds_split_display_name[0]
-    project["dataStewardFamilyName"] = ds_split_display_name[1]
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of a callback and rei struct.
+    project_id : str
+        The project's id; eg.g P000000010
+
+    Returns
+    -------
+    dict
+        The contributors (PI, data-steward, etc) metadata
+    """
+    project_path = "/nlmumc/projects/{}".format(project_id)
+
+    pi_username = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
+    pi_dict = json.loads(ctx.get_user_metadata(pi_username, "")["arguments"][1])
+
+    ds_username = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", "true")["arguments"][2]
+    ds_dict = json.loads(ctx.get_user_metadata(ds_username, "")["arguments"][1])
+
+    project = {"principalInvestigator": pi_dict, "dataSteward": ds_dict}
 
     return project

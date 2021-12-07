@@ -1,8 +1,3 @@
-import subprocess
-import re
-import datetime
-
-
 @make(inputs=[0], outputs=[], handler=Output.STORE)
 def set_dropzone_total_size_avu(ctx, token):
     """
@@ -20,6 +15,10 @@ def set_dropzone_total_size_avu(ctx, token):
     dict
         The attribute value
     """
+    import subprocess
+    import re
+    import datetime
+
     # we check drop zone token is valid
     # TODO: At the moment, this knowledge is distributed across multiple repositories,
     #       would be nice if it was just in one place. In case for example, we expand

@@ -50,8 +50,11 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
     # Fill the instance.json with the information needed in that instance (ie. handle PID)
     ctx.callback.update_instance(project_id, collection_id, handle_pid)
 
-    # Set templateSchemaVersion and templateSchemaName AVU to the ingested collection
-    ctx.callback.set_schema_avu_to_collection(project_id, collection_id)
+    # Copy schemaVersion and schemaName AVU from dropzone to the ingested collection
+    schemaName = ctx.callback.getCollectionAVU(source_collection, "schemaName", "", "", "true")["arguments"][2]
+    schemaVersion = ctx.callback.getCollectionAVU(source_collection, "schemaVersion", "", "", "true")["arguments"][2]
+    ctx.callback.setCollectionAVU(destination_collection, "schemaName", schemaName)
+    ctx.callback.setCollectionAVU(destination_collection, "schemaVersion", schemaVersion)
 
     # Setting the State AVU to Ingested
     ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(source_collection, destination_collection), 0)

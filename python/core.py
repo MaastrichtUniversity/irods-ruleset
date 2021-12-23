@@ -146,3 +146,11 @@ def read_data_object_from_irods(ctx, path):
     ctx.callback.msiDataObjClose(file_desc, 0)
 
     return output_json
+
+
+def convert_to_current_timezone(date, date_format="%Y-%m-%d %H:%M:%S"):
+    import pytz
+
+    old_timezone = pytz.timezone("UTC")
+    new_timezone = pytz.timezone("Europe/Amsterdam")
+    return old_timezone.localize(date).astimezone(new_timezone).strftime(date_format)

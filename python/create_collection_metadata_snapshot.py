@@ -23,8 +23,8 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     metadata_folder_exist = True
 
     # Check if user is allowed to edit metadata for this project
-    can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, '')["arguments"][1]
-    if can_edit_metadata == 'false':
+    can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, "")["arguments"][1]
+    if can_edit_metadata == "false":
         ctx.callback.msiExit("-1", "ERROR: User has no edit metadata rights for  '{}'".format(project_id))
 
     # Check .metadata_versions folder exists
@@ -43,7 +43,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     source_schema = collection_path + "/schema.json"
     source_instance = collection_path + "/instance.json"
 
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S-%f')
+    timestamp = convert_to_current_timezone(datetime.utcnow(), "%Y-%m-%d_%H-%M-%S-%f")
 
     destination_schema = metadata_folder_path + "/schema_{}.json".format(timestamp)
     destination_instance = metadata_folder_path + "/instance_{}.json".format(timestamp)

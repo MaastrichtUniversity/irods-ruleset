@@ -18,7 +18,7 @@
 
 #./run_test.sh -r getGroups -a "true" -j
 
-while getopts "s:a::u::jd" opt; do
+while getopts "r:a::u::jd" opt; do
   case $opt in
     r)
       rule=$OPTARG

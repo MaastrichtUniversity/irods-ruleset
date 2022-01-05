@@ -43,6 +43,9 @@ def start_ingest(ctx, username, token):
     project_resource = ctx.callback.getCollectionAVU(
         "/nlmumc/projects/{}".format(project_id), "resource", "", "", "true"
     )["arguments"][2]
+    ingest_resource = ctx.callback.getCollectionAVU(
+        "/nlmumc/projects/{}".format(project_id), "ingestResource", "", "", "true"
+    )["arguments"][2]
 
     # Get resource availability
     resources_available_json = ctx.callback.list_destination_resources_status("")["arguments"][0]
@@ -53,10 +56,23 @@ def start_ingest(ctx, username, token):
             available = irods_resource["available"]
             break
 
-    # Ingest resource is not available, abort ingest
+    # Project resource is not available, abort ingest
     if not available:
         # -831000 CAT_INVALID_RESOURCE
-        ctx.callback.msiExit(-831000, "Ingest disabled for this resource.")
+        ctx.callback.msiExit("-831000", "This resource is disabled '{}'".format(project_resource))
+
+    ingest_resource_status = ""
+    for result in row_iterator(
+        "RESC_STATUS",
+        "RESC_NAME = '{}'".format(ingest_resource),
+        AS_LIST,
+        ctx.callback,
+    ):
+        ingest_resource_status = result[0]
+
+    if ingest_resource_status == "down":
+        # -831000 CAT_INVALID_RESOURCE
+        ctx.callback.msiExit("-831000", "Ingesting is disabled for '{}'".format(ingest_resource))
 
     # Check for valid state to start ingestion
     if state != "open" and state != "warning-validation-incorrect":

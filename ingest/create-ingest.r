@@ -64,5 +64,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*project="",*title=""
+INPUT *user="",*token="",*project="",*title=""*schema_name="",*schema_version=""
 OUTPUT ruleExecOut

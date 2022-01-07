@@ -21,18 +21,11 @@ createIngest {
         failmsg(-818000, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
     }
 
-    # Check if the ingest resource is not down
-    *ingestResource = "";
-    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
-    foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
-        *ingestResourceHost = *r.RESC_LOC;
-    }
-    *ingestResourceStatus = ""
-    foreach (*r in select RESC_STATUS where RESC_NAME = *ingestResource) {
-        *ingestResourceStatus = *r.RESC_STATUS;
-    }
-    if (*ingestResourceStatus == "down") {
-        failmsg(-1, "Ingest resource '*ingestResource' is down! Aborting");
+    # Check if the ingest resource is up
+    *ingestResourceAvailable = ""
+    get_project_resource_availability(*project, "true", "false", "false", *ingestResourceAvailable)
+    if (*ingestResourceAvailable != "true") {
+        failmsg(-1, "Ingest resource is down for project '*project'! Aborting dropzone creation.");
     }
 
     # Create the dropzone
@@ -55,6 +48,12 @@ createIngest {
     msiAddKeyVal(*metaKV, "state", "open");
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
+    *ingestResource = "";
+    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
+    foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
+        *ingestResourceHost = *r.RESC_LOC;
+    }
+
     # Enabling the ingest zone needs to be done on the remote server
     remote(*ingestResourceHost,"") {
         *phyDir = "/mnt/ingest/zones/" ++ *token;
@@ -71,5 +70,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*project="",*title=""*schema_name="",*schema_version=""
+INPUT *user="",*token="",*project="",*title="",*schema_name="",*schema_version=""
 OUTPUT ruleExecOut

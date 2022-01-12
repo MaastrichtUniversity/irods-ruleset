@@ -39,16 +39,30 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         email = row[0]
     ctx.callback.setCollectionAVU(destination_collection, "creator", email)
 
-    # Requesting a PID via epicPID
-    handle_pid = ctx.callback.get_pid(project_id, collection_id, "")["arguments"][2]
+    # Requesting a PID via epicPID for version 0 (root version)
+    handle_pid = ctx.callback.get_versioned_pids(project_id, collection_id, "0", "")["arguments"][3]
     if handle_pid == "":
         ctx.callback.msiWriteRodsLog("Retrieving PID failed for {}, leaving blank".format(destination_collection), 0)
     else:
         # Setting the PID as AVU on the project collection
         ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pid)
 
-    # Fill the instance.json with the information needed in that instance (ie. handle PID)
-    ctx.callback.update_instance(project_id, collection_id, handle_pid)
+    # Fill the instance.json with the information needed in that instance (ie. handle PID) version 1
+    ctx.callback.update_instance(project_id, collection_id, handle_pid, "1")
+
+    # Create metadata_versions and copy schema and instance from root to that folder as version 1
+    ctx.callback.create_ingest_metadata_versions(project_id, collection_id)
+
+    # Requesting PID's for Project Collection version 1 (includes instance and schema)
+    ctx.callback.get_versioned_pids(project_id, collection_id, "1", "")
+
+    # Set latest version number to 1 for metadata latest version
+    ctx.callback.setCollectionAVU(destination_collection, "latest_version_number", "1")
+
+    # Calculate and set the byteSize and numFiles AVU. false/false because collection
+    # is already open and needs to stay open.
+    # Recalculation is required because we copied files and created a folder
+    ctx.callback.setCollectionSize(project_id, collection_id, "false", "false")
 
     # Copy schemaVersion and schemaName AVU from dropzone to the ingested collection
     schemaName = ctx.callback.getCollectionAVU(source_collection, "schemaName", "", "", "true")["arguments"][2]

@@ -1,5 +1,5 @@
-@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def update_instance(ctx, project, collection, handle):
+@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
+def update_instance(ctx, project, collection, handle, version):
     """
     Fill an already ingested 'instance.json' file located on the root
     of a collection with
@@ -30,8 +30,8 @@ def update_instance(ctx, project, collection, handle):
     # Overwriting the current values for identifier
     if handle:
         handle_url = "https://hdl.handle.net/" + handle
-        instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle_url
-        instance_object["@id"] = handle_url
+        instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle_url + "." + version
+        instance_object["@id"] = handle_url + "." + version
 
     # Set identifier type to "handle"
     instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"
@@ -45,7 +45,7 @@ def update_instance(ctx, project, collection, handle):
     # Overwriting the schema:isBasedOn with the MDR schema handle URL
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
     schema_url = "{}{}/{}/schema".format(mdr_handle_url, project, collection)
-    instance_object["schema:isBasedOn"] = schema_url
+    instance_object["schema:isBasedOn"] = schema_url + "." + version
 
     # Opening the instance file with read/write access
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)

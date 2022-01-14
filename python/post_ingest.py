@@ -4,9 +4,12 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
     Actions to be performed after an ingest is completed
         Setting AVUs
         Removing AVUs
-        Requesting a PID
-        Removing the dropzone
+        Requesting PID's for root collection
         Updating the instance.json
+        Create metadata_versions folder with copy of schema and instance
+        Requesting PID's for version 1 of collection,schema and metadata
+        Recalculate collection size
+        Removing the dropzone
         Closing the project collection
 
     Parameters
@@ -40,15 +43,31 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
     ctx.callback.setCollectionAVU(destination_collection, "creator", email)
 
     # Requesting a PID via epicPID for version 0 (root version)
-    handle_pid = ctx.callback.get_versioned_pids(project_id, collection_id, "0", "")["arguments"][3]
-    if handle_pid == "":
-        ctx.callback.msiWriteRodsLog("Retrieving PID failed for {}, leaving blank".format(destination_collection), 0)
+    handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]
+    handle_pids = json.loads(handle_pids)
+
+    if handle_pids == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving multiple PID's failed for {}, leaving blank".format(destination_collection), 0
+        )
+    elif "collection" not in handle_pids or handle_pids["collection"]["handle"] == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving PID for root collection failed for {}, leaving blank".format(destination_collection), 0
+        )
+    elif "schema" not in handle_pids or handle_pids["schema"]["handle"] == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_collection), 0
+        )
+    elif "instance" not in handle_pids or handle_pids["instance"]["handle"] == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_collection), 0
+        )
     else:
         # Setting the PID as AVU on the project collection
-        ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pid)
+        ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pids["collection"]["handle"])
 
     # Fill the instance.json with the information needed in that instance (ie. handle PID) version 1
-    ctx.callback.update_instance(project_id, collection_id, handle_pid, "1")
+    ctx.callback.update_instance(project_id, collection_id, handle_pids["collection"]["handle"], "1")
 
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
     ctx.callback.create_ingest_metadata_versions(project_id, collection_id)

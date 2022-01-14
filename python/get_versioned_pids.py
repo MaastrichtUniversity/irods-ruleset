@@ -19,15 +19,13 @@ def get_versioned_pids(ctx, project, collection, version=None):
 
     # Getting the epicpid url
     epicpid_base = ctx.callback.msi_getenv("EPICPID_URL", "")["arguments"][1]
-    # TODO better solution
-    epicpid_base = epicpid_base.replace("/epic/", "/epic_multiple/")
     ctx.callback.msiWriteRodsLog(
         "Requesting multiple PID's with base url: {} project: {} collection: {} version: {}".format(
             epicpid_base, project, collection, version
         ),
         0,
     )
-    epicpid_url = epicpid_base + project + collection
+    epicpid_url = epicpid_base + "multiple/" + project + collection
 
     # Getting the handle URL to format
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]

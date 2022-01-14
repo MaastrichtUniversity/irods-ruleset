@@ -17,7 +17,7 @@ def get_pid(ctx, project, collection):
     # Getting the epicpid url
     epicpid_base = ctx.callback.msi_getenv("EPICPID_URL", "")["arguments"][1]
     ctx.callback.msiWriteRodsLog("Requesting a PID with url {}".format(epicpid_base), 0)
-    epicpid_url = epicpid_base + project + collection
+    epicpid_url = epicpid_base + "single/" + project + collection
 
     # Getting the handle URL to format
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]

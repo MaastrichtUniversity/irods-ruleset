@@ -15,8 +15,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     collection_id : str
         The collection where the instance.json is to fill (ie. C000000002)
     """
-    from datetime import datetime
-
     collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
     project_path = "/nlmumc/projects/{}".format(project_id)
     metadata_folder_path = collection_path + "/.metadata_versions"
@@ -43,10 +41,20 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     source_schema = collection_path + "/schema.json"
     source_instance = collection_path + "/instance.json"
 
-    timestamp = convert_to_current_timezone(datetime.utcnow(), "%Y-%m-%d_%H-%M-%S-%f")
+    version = ctx.callback.getCollectionAVU(collection_path, "latest_version_number", "", "", "false")["arguments"][2]
+    new_version = 0
+    try:
+        version_number = int(version)
+        new_version = version_number + 1
+    except ValueError:
+        ctx.callback.msiExit(
+            "-1", "ERROR: 'Cannot increment version number '{}' for collection '{}'".format(version, collection_path)
+        )
 
-    destination_schema = metadata_folder_path + "/schema_{}.json".format(timestamp)
-    destination_instance = metadata_folder_path + "/instance_{}.json".format(timestamp)
+    destination_schema = metadata_folder_path + "/schema.{}.json".format(new_version)
+    destination_instance = metadata_folder_path + "/instance.{}.json".format(new_version)
+
+    ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))
 
     # Copy current metadata json files to /.metadata_versions
     try:
@@ -57,7 +65,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
 
     # Overwriting the schema:isBasedOn with the MDR schema handle URL
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
-    schema_url_extension = "{}/{}/schema_{}".format(project_id, collection_id, timestamp)
+    schema_url_extension = "{}/{}/schema.{}".format(project_id, collection_id, new_version)
     schema_url = "{}{}".format(mdr_handle_url, schema_url_extension)
     try:
         ctx.callback.update_instance_snapshot(destination_instance, schema_url)

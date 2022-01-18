@@ -56,13 +56,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
 
     ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))
 
-    # Copy current metadata json files to /.metadata_versions
-    try:
-        ctx.callback.msiDataObjCopy(source_schema, destination_schema, "", 0)
-        ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
-    except RuntimeError:
-        ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
-
     # Request new PIDs
     handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, str(new_version), "")["arguments"][
         3
@@ -77,8 +70,13 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     handle = handle_pids_version["collection"]["handle"].rsplit(".", 1)[0]
     schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", new_version)
     try:
-        ctx.callback.update_instance_snapshot(
-            destination_instance, source_instance, schema_url, handle_pids_version["collection"]["handle"]
-        )
+        ctx.callback.update_instance_snapshot(source_instance, schema_url, handle_pids_version["collection"]["handle"])
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))
+
+    # Copy current metadata json files to /.metadata_versions
+    try:
+        ctx.callback.msiDataObjCopy(source_schema, destination_schema, "", 0)
+        ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
+    except RuntimeError:
+        ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))

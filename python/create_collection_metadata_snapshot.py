@@ -70,7 +70,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     handle = handle_pids_version["collection"]["handle"].rsplit(".", 1)[0]
     schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", new_version)
     try:
-        ctx.callback.update_instance_snapshot(source_instance, schema_url, handle_pids_version["collection"]["handle"])
+        ctx.callback.update_instance_snapshot(collection_path, schema_url, handle_pids_version["collection"]["handle"])
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))
 

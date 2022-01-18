@@ -51,3 +51,16 @@ def update_instance(ctx, project, collection, handle, version):
     opened_file = ret_val["arguments"][1]
     ctx.callback.msiDataObjWrite(opened_file, json.dumps(instance_object, indent=4), 0)
     ctx.callback.msiDataObjClose(opened_file, 0)
+
+    # Setting the PID in the schema.json file
+    schema_location = "{}/schema.json".format(project_collection_full_path)
+    # Reading the instance.json and parsing it
+    schema = read_data_object_from_irods(ctx, schema_location)
+    schema_object = json.loads(schema)
+    schema_object["@id"] = schema_url
+
+    # Opening the schema file with read/write access
+    ret_val = ctx.callback.msiDataObjOpen("objPath=" + schema_location + "++++openFlags=O_RDWR", 0)
+    opened_schema_file = ret_val["arguments"][1]
+    ctx.callback.msiDataObjWrite(opened_schema_file, json.dumps(schema_object, indent=4), 0)
+    ctx.callback.msiDataObjClose(opened_schema_file, 0)

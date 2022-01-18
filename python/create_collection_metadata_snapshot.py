@@ -63,11 +63,23 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
 
+    # Request new PIDs
+    handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, str(new_version), "")["arguments"][
+        3
+    ]
+    handle_pids_version = json.loads(handle_pids_version)
+    if not handle_pids_version:
+        ctx.callback.msiExit(
+            "-1", "Retrieving multiple PID's failed for {} version {}".format(collection_path, new_version)
+        )
+
     # Overwriting the schema:isBasedOn with the MDR schema handle URL
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
     schema_url_extension = "{}/{}/schema.{}".format(project_id, collection_id, new_version)
     schema_url = "{}{}".format(mdr_handle_url, schema_url_extension)
     try:
-        ctx.callback.update_instance_snapshot(destination_instance, schema_url)
+        ctx.callback.update_instance_snapshot(
+            destination_instance, schema_url, handle_pids_version["collection"]["handle"]
+        )
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))

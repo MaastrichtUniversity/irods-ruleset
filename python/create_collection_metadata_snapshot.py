@@ -73,10 +73,9 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
             "-1", "Retrieving multiple PID's failed for {} version {}".format(collection_path, new_version)
         )
 
-    # Overwriting the schema:isBasedOn with the MDR schema handle URL
-    mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
-    schema_url_extension = "{}/{}/schema.{}".format(project_id, collection_id, new_version)
-    schema_url = "{}{}".format(mdr_handle_url, schema_url_extension)
+    # Overwriting the schema:isBasedOn with the PID for schema version
+    handle = handle_pids_version["collection"]["handle"].rsplit(".", 1)[0]
+    schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", new_version)
     try:
         ctx.callback.update_instance_snapshot(
             destination_instance, source_instance, schema_url, handle_pids_version["collection"]["handle"]

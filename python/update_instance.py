@@ -42,10 +42,9 @@ def update_instance(ctx, project, collection, handle, version):
     instance_object["8_Date"]["datasetDateType"]["rdfs:label"] = "Submitted"
     instance_object["8_Date"]["datasetDateType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Submitted"
 
-    # Overwriting the schema:isBasedOn with the MDR schema handle URL
-    mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
-    schema_url = "{}{}/{}/schema".format(mdr_handle_url, project, collection)
-    instance_object["schema:isBasedOn"] = schema_url + "." + version
+    # Overwriting the schema:isBasedOn with the PID for schema version
+    schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", version)
+    instance_object["schema:isBasedOn"] = schema_url
 
     # Opening the instance file with read/write access
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)

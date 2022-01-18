@@ -79,7 +79,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     schema_url = "{}{}".format(mdr_handle_url, schema_url_extension)
     try:
         ctx.callback.update_instance_snapshot(
-            destination_instance, schema_url, handle_pids_version["collection"]["handle"]
+            destination_instance, source_instance, schema_url, handle_pids_version["collection"]["handle"]
         )
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))

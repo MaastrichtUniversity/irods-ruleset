@@ -7,13 +7,14 @@ def update_instance_snapshot(ctx, project_collection_full_path, schema_url, hand
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-   project_collection_full_path : str
+    project_collection_full_path : str
         The absolute path of the collection; e.g: /nlmumc/projects/P000000014/C000000001/
     schema_url : str
         The schema URL to value to replace in the instance; e.g: http://mdr.local.dh.unimaas.nl/hdl/P000000014/C000000001/schema.1
     handle: str
         The (versioned) handle PID for the collection
     """
+
     # Reading the instance.json and parsing it
     instance_location = "{}/instance.json".format(project_collection_full_path)
     instance = read_data_object_from_irods(ctx, instance_location)

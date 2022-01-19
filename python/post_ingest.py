@@ -5,7 +5,7 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         Setting AVUs
         Removing AVUs
         Requesting PID's for root collection
-        Updating the instance.json
+        Updating the instance.json and schema.json
         Create metadata_versions folder with copy of schema and instance
         Requesting PID's for version 1 of collection,schema and metadata
         Recalculate collection size

@@ -3,8 +3,7 @@ def create_ingest_metadata_versions(ctx, project_id, collection_id):
     """
     Create a snapshot of the collection metadata files (schema & instance):
         * Check if the snapshot folder (.metadata_versions) already exists, if not create it
-        * Copy the current metadata files to .metadata_versions and add a timestamp in the filename
-        * Call update_instance_snapshot to update the schema:isBasedOn value
+        * Copy the current metadata files to .metadata_versions and add a version 1 in the filename
 
     Parameters
     ----------

@@ -5,7 +5,6 @@ def get_versioned_pids(ctx, project, collection, version=None):
 
     Parameters
     ----------
-    version
     ctx : Context
         Combined type of a callback and rei struct.
     project : str

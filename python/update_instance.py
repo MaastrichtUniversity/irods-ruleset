@@ -1,10 +1,11 @@
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
 def update_instance(ctx, project, collection, handle, version):
     """
-    Fill an already ingested 'instance.json' file located on the root
+    Fill an already ingested 'instance.json' and 'schema.json' file located on the root
     of a collection with
     - A handle PID as 'identifier'
     - A submission date
+    - @id for schema to PID
 
     Parameters
     ----------
@@ -16,6 +17,8 @@ def update_instance(ctx, project, collection, handle, version):
         The collection where the instance.json is to fill (ie. C000000002)
     handle : str
         The handle to insert into the instance.json (ie. 21.T12996/P000000001C000000195)
+    version: str
+        The version of the
     """
     import datetime
 

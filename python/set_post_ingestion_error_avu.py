@@ -17,10 +17,8 @@ def set_post_ingestion_error_avu(ctx, project_id, collection_id, dropzone, messa
         message to write to rodslog, The reason for the failure. (ie. "Unable to register PID's for root")
     """
 
-    attribute = "state"
     value = "error-post-ingestion"
-    kvp = ctx.callback.msiString2KeyValPair("{}={}".format(attribute, value), irods_types.BytesBuf())["arguments"][1]
-    ctx.callback.msiSetKeyValuePairsToObj(kvp, dropzone, "-C")
+    ctx.callback.setCollectionAVU(dropzone, "state", value)
     ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone, value), 0)
     ctx.callback.msiWriteRodsLog(message, 0)
     ctx.callback.closeProjectCollection(project_id, collection_id)

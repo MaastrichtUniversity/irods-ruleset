@@ -56,7 +56,7 @@ def start_ingest(ctx, username, token):
     # Ingest resource is not available, abort ingest
     if not available:
         # -831000 CAT_INVALID_RESOURCE
-        ctx.callback.msiExit(-831000, "Ingest disabled for this resource.")
+        ctx.callback.msiExit("-831000", "Ingest disabled for this resource.")
 
     # Check for valid state to start ingestion
     if state != "open" and state != "warning-validation-incorrect":

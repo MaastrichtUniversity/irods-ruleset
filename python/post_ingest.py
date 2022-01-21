@@ -70,7 +70,7 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pids["collection"]["handle"])
 
     try:
-        # Fill the instance.json with the information needed in that instance (ie. handle PID) version 1
+        # Fill the instance.json and schema.json with the information needed in that instance (ie. handle PID) and schema version 1
         ctx.callback.update_instance(project_id, collection_id, handle_pids["collection"]["handle"], "1")
     except KeyError:
         ctx.callback.set_post_ingestion_error_avu(

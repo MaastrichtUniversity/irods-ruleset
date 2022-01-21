@@ -18,7 +18,7 @@ def update_instance(ctx, project, collection, handle, version):
     handle : str
         The handle to insert into the instance.json (ie. 21.T12996/P000000001C000000195)
     version: str
-        The version of the
+        The version of the identifiers to use in instance.json and schema.json
     """
     import datetime
 

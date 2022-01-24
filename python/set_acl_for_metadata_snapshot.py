@@ -24,10 +24,10 @@ def set_acl_for_metadata_snapshot(ctx, project_id, collection_id, user, open_acl
         ctx.callback.openProjectCollection(project_id, collection_id, "rods", "own")
         access = "write"
     ctx.callback.msiSetACL("default", access, user, collection_path)
-    ctx.callback.msiSetACL("default", access, user, collection_path+"/schema.json")
-    ctx.callback.msiSetACL("default", access, user, collection_path+"/instance.json")
+    ctx.callback.msiSetACL("default", access, user, collection_path + "/schema.json")
+    ctx.callback.msiSetACL("default", access, user, collection_path + "/instance.json")
 
-    metadata_folder_path = collection_path+"/.metadata_versions"
+    metadata_folder_path = collection_path + "/.metadata_versions"
     try:
         ctx.callback.msiSetACL("default", access, user, metadata_folder_path)
     except RuntimeError:

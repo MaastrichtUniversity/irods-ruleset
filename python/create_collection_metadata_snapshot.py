@@ -15,8 +15,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     collection_id : str
         The collection where the instance.json is to fill (ie. C000000002)
     """
-    from datetime import datetime
-
     collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
     project_path = "/nlmumc/projects/{}".format(project_id)
     metadata_folder_path = collection_path + "/.metadata_versions"
@@ -43,10 +41,38 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     source_schema = collection_path + "/schema.json"
     source_instance = collection_path + "/instance.json"
 
-    timestamp = convert_to_current_timezone(datetime.utcnow(), "%Y-%m-%d_%H-%M-%S-%f")
+    version = ctx.callback.getCollectionAVU(collection_path, "latest_version_number", "", "", "false")["arguments"][2]
+    new_version = 0
+    try:
+        version_number = int(version)
+        new_version = version_number + 1
+    except ValueError:
+        ctx.callback.msiExit(
+            "-1", "ERROR: 'Cannot increment version number '{}' for collection '{}'".format(version, collection_path)
+        )
 
-    destination_schema = metadata_folder_path + "/schema_{}.json".format(timestamp)
-    destination_instance = metadata_folder_path + "/instance_{}.json".format(timestamp)
+    destination_schema = metadata_folder_path + "/schema.{}.json".format(new_version)
+    destination_instance = metadata_folder_path + "/instance.{}.json".format(new_version)
+
+    ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))
+
+    # Request new PIDs
+    handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, str(new_version), "")["arguments"][
+        3
+    ]
+    handle_pids_version = json.loads(handle_pids_version)
+    if not handle_pids_version:
+        ctx.callback.msiExit(
+            "-1", "Retrieving multiple PID's failed for {} version {}".format(collection_path, new_version)
+        )
+
+    # Overwriting the schema:isBasedOn with the PID for schema version
+    handle = handle_pids_version["collection"]["handle"].rsplit(".", 1)[0]
+    schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", new_version)
+    try:
+        ctx.callback.update_instance_snapshot(collection_path, schema_url, handle_pids_version["collection"]["handle"])
+    except RuntimeError:
+        ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))
 
     # Copy current metadata json files to /.metadata_versions
     try:
@@ -54,12 +80,3 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
-
-    # Overwriting the schema:isBasedOn with the MDR schema handle URL
-    mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
-    schema_url_extension = "{}/{}/schema_{}".format(project_id, collection_id, timestamp)
-    schema_url = "{}{}".format(mdr_handle_url, schema_url_extension)
-    try:
-        ctx.callback.update_instance_snapshot(destination_instance, schema_url)
-    except RuntimeError:
-        ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))

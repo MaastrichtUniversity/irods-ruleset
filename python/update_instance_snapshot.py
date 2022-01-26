@@ -24,7 +24,8 @@ def update_instance_snapshot(ctx, project_collection_full_path, schema_url, hand
 
     new_handle = "https://hdl.handle.net/" + handle
     instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = new_handle
-    instance_object["@id"] = new_handle
+    instance_url = schema_url.replace("schema.", "instance.")
+    instance_object["@id"] = instance_url
 
     # Opening the instance file with read/write access
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)

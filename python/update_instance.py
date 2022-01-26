@@ -34,7 +34,7 @@ def update_instance(ctx, project, collection, handle, version):
     if handle:
         handle_url = "https://hdl.handle.net/" + handle
         instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = handle_url + "." + version
-        instance_object["@id"] = handle_url + "." + version
+        instance_object["@id"] = handle_url + "instance." + version
 
     # Set identifier type to "handle"
     instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"

@@ -8,7 +8,7 @@ def get_groups(ctx, show_special_groups):
     ctx : Context
         Combined type of a callback and rei struct.
     show_special_groups: str
-        Project absolute path
+        'true'/'false' expected; If true, hide the special groups in the result
 
     Returns
     -------

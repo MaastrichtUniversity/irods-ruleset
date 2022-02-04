@@ -40,23 +40,15 @@ def start_ingest(ctx, username, token):
 
     title = ctx.callback.getCollectionAVU(source_collection, "title", "", "", "true")["arguments"][2]
     state = ctx.callback.getCollectionAVU(source_collection, "state", "", "", "true")["arguments"][2]
-    project_resource = ctx.callback.getCollectionAVU(
-        "/nlmumc/projects/{}".format(project_id), "resource", "", "", "true"
-    )["arguments"][2]
 
-    # Get resource availability
-    resources_available_json = ctx.callback.list_destination_resources_status("")["arguments"][0]
-    irods_resources_available = json.loads(resources_available_json)
-    available = False
-    for irods_resource in irods_resources_available:
-        if irods_resource["name"] == project_resource:
-            available = irods_resource["available"]
-            break
-
-    # Ingest resource is not available, abort ingest
-    if not available:
+    # Get resource availability -- check ingest & destination resource
+    available = ctx.callback.get_project_resource_availability(project_id, "true", "true", "false", "")["arguments"][4]
+    # Project or ingest resource is not available, abort ingest
+    if available != "true":
         # -831000 CAT_INVALID_RESOURCE
-        ctx.callback.msiExit("-831000", "Ingest disabled for this resource.")
+        ctx.callback.msiExit(
+            "-831000", "The project or ingest resource is disabled for this project '{}'".format(project_id)
+        )
 
     # Check for valid state to start ingestion
     if state != "open" and state != "warning-validation-incorrect":

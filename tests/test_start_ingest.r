@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F test_start_ingest.r "*username='dlinssen'" "*token='crazy-frog'"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_start_ingest.r "*username='dlinssen'" "*token='crazy-frog'"
 
 def main(rule_args, callback, rei):
     username = global_vars["*username"][1:-1]

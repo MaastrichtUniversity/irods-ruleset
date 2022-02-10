@@ -67,7 +67,7 @@ def start_ingest(ctx, username, token):
     ctx.callback.setCollectionAVU(source_collection, "state", "validating")
 
     validation_result = ctx.callback.validate_metadata(source_collection, "")["arguments"][1]
-    if validation_result:
+    if validation_result == "true":
         ctx.callback.msiWriteRodsLog(
             "Validation result OK {}. Setting status to 'in-queue-for-ingestion'".format(source_collection), 0
         )

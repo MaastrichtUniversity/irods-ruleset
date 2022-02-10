@@ -35,29 +35,24 @@ def get_versioned_pids(ctx, project, collection, version=None):
     epicpid_password = ctx.callback.msi_getenv("EPICPID_PASSWORD", "")["arguments"][1]
 
     handle = {}
+
+    request_json = {"URL": handle_url}
     if version:
-        try:
-            response = requests.post(
-                epicpid_url,
-                json={"URL": handle_url, "VERSION": version},
-                auth=(epicpid_user, epicpid_password),
-            )
+        request_json["VERSION"] = version
+
+    try:
+        response = requests.post(
+            epicpid_url,
+            json=request_json,
+            auth=(epicpid_user, epicpid_password),
+        )
+        if response.ok:
             handle = json.loads(response.text)
-        except requests.exceptions.RequestException as e:
-            ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
-        except KeyError as e:
-            ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
-    else:
-        try:
-            response = requests.post(
-                epicpid_url,
-                json={"URL": handle_url},
-                auth=(epicpid_user, epicpid_password),
-            )
-            handle = json.loads(response.text)
-        except requests.exceptions.RequestException as e:
-            ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
-        except KeyError as e:
-            ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
+        else:
+            ctx.callback.msiWriteRodsLog("ERROR: Response EpicPID not HTTP OK: '{}'".format(response.status_code), 0)
+    except requests.exceptions.RequestException as e:
+        ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
+    except KeyError as e:
+        ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
 
     return handle

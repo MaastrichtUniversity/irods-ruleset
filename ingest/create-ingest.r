@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*schema_name='DataHub_general_schema'" "*schema_version='0.0.1'"
+# irule -F /rules/ingest/create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*schema_name='DataHub_general_schema'" "*schema_version='0.0.1'"
 
 createIngest {
     # Retrieve the domain username
@@ -33,10 +33,8 @@ createIngest {
 
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
-    msiAddKeyVal(*metaKV, "title", *title);
     msiAddKeyVal(*metaKV, "schemaName", *schema_name);
     msiAddKeyVal(*metaKV, "schemaVersion", *schema_version);
-    #msiAddKeyVal(*metaKV, "author", *user);
     msiAddKeyVal(*metaKV, "state", "open");
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
@@ -64,5 +62,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*project="",*title=""*schema_name="",*schema_version=""
+INPUT *user="",*token="",*project="",*title="",*schema_name="",*schema_version=""
 OUTPUT ruleExecOut

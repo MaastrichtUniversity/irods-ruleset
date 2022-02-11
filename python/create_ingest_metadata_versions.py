@@ -30,7 +30,9 @@ def create_ingest_metadata_versions(ctx, project_id, collection_id):
             ctx.callback.msiCollCreate(metadata_folder_path, 0, 0)
             ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
         except RuntimeError:
-            ctx.callback.msiExit("-1", "ERROR: Couldn't create '{}'".format(metadata_folder_path))
+            ctx.callback.set_post_ingestion_error_avu(
+                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", ""
+            )
 
     source_schema = collection_path + "/schema.json"
     source_instance = collection_path + "/instance.json"
@@ -43,4 +45,6 @@ def create_ingest_metadata_versions(ctx, project_id, collection_id):
         ctx.callback.msiDataObjCopy(source_schema, destination_schema, "", 0)
         ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
     except RuntimeError:
-        ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", ""
+        )

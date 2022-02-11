@@ -50,24 +50,36 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         ctx.callback.msiWriteRodsLog(
             "Retrieving multiple PID's failed for {}, leaving blank".format(destination_collection), 0
         )
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Unable to register PID's for root", ""
-        )
-    elif "collection" not in handle_pids or handle_pids["collection"]["handle"] == "":
+    if "collection" not in handle_pids or handle_pids["collection"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
             "Retrieving PID for root collection failed for {}, leaving blank".format(destination_collection), 0
         )
-    elif "schema" not in handle_pids or handle_pids["schema"]["handle"] == "":
+    if "schema" not in handle_pids or handle_pids["schema"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
             "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_collection), 0
         )
-    elif "instance" not in handle_pids or handle_pids["instance"]["handle"] == "":
+    if "instance" not in handle_pids or handle_pids["instance"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
             "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_collection), 0
         )
     else:
         # Setting the PID as AVU on the project collection
+        # TODO: Should only be set if schema and/or instance is missing
         ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pids["collection"]["handle"])
+
+
+    # Requesting PID's for Project Collection version 1 (includes instance and schema)
+    handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, "1", "")["arguments"][3]
+    handle_pids_version = json.loads(handle_pids_version)
+
+    if not handle_pids_version:
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving multiple PID's failed for {} version 1, leaving blank".format(destination_collection), 0
+        )
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, source_collection, "Unable to register PID's for version 1", ""
+        )
+
 
     try:
         # Fill the instance.json and schema.json with the information needed in that instance (ie. handle PID) and schema version 1
@@ -81,25 +93,9 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
             project_id, collection_id, source_collection, "Failed to update instance", ""
         )
 
-    try:
-        # Create metadata_versions and copy schema and instance from root to that folder as version 1
-        ctx.callback.create_ingest_metadata_versions(project_id, collection_id)
-    except RuntimeError:
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", ""
-        )
 
-    # Requesting PID's for Project Collection version 1 (includes instance and schema)
-    handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, "1", "")["arguments"][3]
-    handle_pids_version = json.loads(handle_pids_version)
-
-    if not handle_pids_version:
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving multiple PID's failed for {} version 1, leaving blank".format(destination_collection), 0
-        )
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Unable to register PID's for version 1", ""
-        )
+    # Create metadata_versions and copy schema and instance from root to that folder as version 1
+    ctx.callback.create_ingest_metadata_versions(project_id, collection_id)
 
     # Set latest version number to 1 for metadata latest version
     ctx.callback.setCollectionAVU(destination_collection, "latest_version_number", "1")

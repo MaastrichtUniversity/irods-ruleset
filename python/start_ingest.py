@@ -2,6 +2,9 @@
 def start_ingest(ctx, username, token):
     """
     Start an ingest
+       Irods pre-ingest checks
+       Metadata pre-ingest checks
+        If those went well, call perform ingest
 
     Parameters
     ----------
@@ -11,11 +14,6 @@ def start_ingest(ctx, username, token):
         The username, ie 'dlinssen'
     token: str
         The token, ie 'crazy-frog'
-
-    Returns
-    -------
-    list
-        a json list of projects objects
     """
     source_collection = "/nlmumc/ingest/zones/{}".format(token)
 
@@ -63,6 +61,7 @@ def start_ingest(ctx, username, token):
         ctx.callback.msiWriteRodsLog(
             "Validation result OK {}. Setting status to 'in-queue-for-ingestion'".format(source_collection), 0
         )
+        ctx.callback.setCollectionAVU(source_collection, "state", "in-queue-for-ingestion")
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>",
             "perform_ingest('{}', '{}', '{}', '{}')".format(project_id, title, username, token),

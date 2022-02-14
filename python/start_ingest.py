@@ -9,7 +9,7 @@ def start_ingest(ctx, username, token):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     username: str
         The username, ie 'dlinssen'
     token: str
@@ -33,8 +33,13 @@ def start_ingest(ctx, username, token):
 
     # Get dropzone metadata
     project_id = ctx.callback.getCollectionAVU(source_collection, "project", "", "", "true")["arguments"][2]
-    if project_id == "":
-        ctx.callback.msiExit("-1", "No project number on dropzone")
+
+    # Check if project path exists
+    try:
+        ctx.callback.msiObjStat("/nlmumc/projects/{}".format(project_id), irods_types.RodsObjStat())
+    except RuntimeError:
+        # -814000 CAT_UNKNOWN_COLLECTION
+        ctx.callback.msiExit("-814000", "Unknown project: {}".format(project_id))
 
     title = ctx.callback.getCollectionAVU(source_collection, "title", "", "", "true")["arguments"][2]
     state = ctx.callback.getCollectionAVU(source_collection, "state", "", "", "true")["arguments"][2]

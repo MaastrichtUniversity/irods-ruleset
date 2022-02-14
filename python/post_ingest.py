@@ -32,14 +32,14 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
 
     # Set the Creator AVU
     ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(source_collection, destination_collection), 0)
-    email = username
-    for row in row_iterator(
-        "META_USER_ATTR_VALUE",
-        "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'email'".format(username),
-        AS_LIST,
-        ctx.callback,
-    ):
-        email = row[0]
+    # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
+    # This allows to update the state AVU to 'error-post-ingestion'
+    ret = ctx.get_username_attribute_value(username, "email", "false", "result")["arguments"][3]
+    email = json.loads(ret)["value"]
+    if email == "":
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, source_collection, "User '{}' doesn't have an email AVU".format(username)
+        )
     ctx.callback.setCollectionAVU(destination_collection, "creator", email)
 
     # Requesting a PID via epicPID for version 0 (root version)

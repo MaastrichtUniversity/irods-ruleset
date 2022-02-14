@@ -1,5 +1,5 @@
-@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
-def create_ingest_metadata_versions(ctx, project_id, collection_id):
+@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
+def create_ingest_metadata_versions(ctx, project_id, collection_id, source_collection):
     """
     Create a snapshot of the collection metadata files (schema & instance):
         * Check if the snapshot folder (.metadata_versions) already exists, if not create it
@@ -8,11 +8,13 @@ def create_ingest_metadata_versions(ctx, project_id, collection_id):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id : str
-        The project where the instance.json is to fill (ie. P000000010)
+        The project where the instance.json is to fill (e.g: P000000010)
     collection_id : str
-        The collection where the instance.json is to fill (ie. C000000002)
+        The collection where the instance.json is to fill (e.g: C000000002)
+    source_collection: str
+        The drop-zone absolute path (e.g: /nlmumc/ingest/zones/crazy-frog)
     """
 
     collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
@@ -31,7 +33,7 @@ def create_ingest_metadata_versions(ctx, project_id, collection_id):
             ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
         except RuntimeError:
             ctx.callback.set_post_ingestion_error_avu(
-                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", ""
+                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
             )
 
     source_schema = collection_path + "/schema.json"
@@ -46,5 +48,5 @@ def create_ingest_metadata_versions(ctx, project_id, collection_id):
         ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
     except RuntimeError:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", ""
+            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
         )

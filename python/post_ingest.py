@@ -12,6 +12,9 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         Removing the dropzone
         Closing the project collection
 
+    If this rules execution stop prematurely and the drop-zone state AVU is "error-post-ingestion", it is safe
+    to re-run the rule to perform the post-ingest actions.
+
     Parameters
     ----------
     ctx : Context
@@ -69,8 +72,13 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
             project_id, collection_id, source_collection, "Failed to update instance"
         )
 
+    # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
+    state = ctx.callback.getCollectionAVU(source_collection, "state", "", "", "true")["arguments"][2]
+    overwrite_flag = "false"
+    if state == "error-post-ingestion":
+        overwrite_flag = "true"
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
-    ctx.callback.create_ingest_metadata_versions(project_id, collection_id, source_collection)
+    ctx.callback.create_ingest_metadata_versions(project_id, collection_id, source_collection, overwrite_flag)
 
     # Set latest version number to 1 for metadata latest version
     ctx.callback.setCollectionAVU(destination_collection, "latest_version_number", "1")

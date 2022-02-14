@@ -19,7 +19,7 @@ def start_ingest(ctx, username, token):
 
     # Check if ingesting user has dropzone permissions
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, "")["arguments"][1]
-    if has_dropzone_permission != "true" and has_dropzone_permission is not True:
+    if has_dropzone_permission != "true":
         ctx.callback.msiExit(
             "-818000", "User '{}' has insufficient DropZone permissions on /nlmumc/ingest/zones".format(username)
         )

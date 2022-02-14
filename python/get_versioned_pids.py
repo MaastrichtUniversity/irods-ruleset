@@ -55,4 +55,22 @@ def get_versioned_pids(ctx, project, collection, version=None):
     except KeyError as e:
         ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
 
+    destination_collection = "/nlmumc/projects/{}/{}".format(project, collection)
+    if not handle:
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving multiple PID's failed for {}, leaving blank".format(destination_collection), 0
+        )
+    if "collection" not in handle or handle["collection"]["handle"] == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving PID for root collection failed for {}, leaving blank".format(destination_collection), 0
+        )
+    if "schema" not in handle or handle["schema"]["handle"] == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_collection), 0
+        )
+    if "instance" not in handle or handle["instance"]["handle"] == "":
+        ctx.callback.msiWriteRodsLog(
+            "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_collection), 0
+        )
+
     return handle

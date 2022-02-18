@@ -1,12 +1,12 @@
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def update_instance_snapshot(ctx, project_collection_full_path, schema_url, handle):
     """
-    Update an already ingested 'instance.json' file and 'schema.json' file
+    Update an already ingested 'instance.json' and 'schema.json' files on the project collection root level.
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_collection_full_path : str
         The absolute path of the collection; e.g: /nlmumc/projects/P000000014/C000000001/
     schema_url : str
@@ -20,10 +20,16 @@ def update_instance_snapshot(ctx, project_collection_full_path, schema_url, hand
     instance = read_data_object_from_irods(ctx, instance_location)
     instance_object = json.loads(instance)
 
+    # Set instance schema:isBasedOn to the schema version PID
     instance_object["schema:isBasedOn"] = schema_url
 
+    # Set element 1_Identifier values
     new_handle = "https://hdl.handle.net/" + handle
     instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = new_handle
+    instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"
+    instance_object["1_Identifier"]["datasetIdentifierType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Handle"
+
+    # Set instance @id to the instance version PID
     instance_url = schema_url.replace("schema.", "instance.")
     instance_object["@id"] = instance_url
 

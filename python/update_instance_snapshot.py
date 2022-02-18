@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def update_instance_snapshot(ctx, project_collection_full_path, schema_url, handle):
+def update_metadata_during_edit_collection(ctx, project_collection_full_path, schema_url, handle):
     """
     Update an already ingested 'instance.json' and 'schema.json' files on the project collection root level.
 

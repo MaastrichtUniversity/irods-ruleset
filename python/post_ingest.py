@@ -62,7 +62,7 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
 
     try:
         # Fill the instance.json and schema.json with the information needed in that instance (ie. handle PID) and schema version 1
-        ctx.callback.update_instance(project_id, collection_id, handle_pids["collection"]["handle"], "1")
+        ctx.callback.update_metadata_during_ingest(project_id, collection_id, handle_pids["collection"]["handle"], "1")
     except KeyError:
         ctx.callback.set_post_ingestion_error_avu(
             project_id, collection_id, source_collection, "Failed to update instance"

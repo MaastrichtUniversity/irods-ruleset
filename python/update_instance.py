@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
-def update_instance(ctx, project, collection, handle, version):
+def update_metadata_during_ingest(ctx, project, collection, handle, version):
     """
     Fill an already ingested 'instance.json' and 'schema.json' file located on the root
     of a collection with

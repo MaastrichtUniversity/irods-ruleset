@@ -2,26 +2,24 @@
 def start_ingest(ctx, username, token):
     """
     Start an ingest
+       Irods pre-ingest checks
+       Metadata pre-ingest checks
+        If those went well, call perform ingest
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     username: str
         The username, ie 'dlinssen'
     token: str
         The token, ie 'crazy-frog'
-
-    Returns
-    -------
-    list
-        a json list of projects objects
     """
     source_collection = "/nlmumc/ingest/zones/{}".format(token)
 
     # Check if ingesting user has dropzone permissions
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, "")["arguments"][1]
-    if has_dropzone_permission != "true" and has_dropzone_permission is not True:
+    if has_dropzone_permission != "true":
         ctx.callback.msiExit(
             "-818000", "User '{}' has insufficient DropZone permissions on /nlmumc/ingest/zones".format(username)
         )
@@ -35,8 +33,13 @@ def start_ingest(ctx, username, token):
 
     # Get dropzone metadata
     project_id = ctx.callback.getCollectionAVU(source_collection, "project", "", "", "true")["arguments"][2]
-    if project_id == "":
-        ctx.callback.msiExit("-1", "No project number on dropzone")
+
+    # Check if project path exists
+    try:
+        ctx.callback.msiObjStat("/nlmumc/projects/{}".format(project_id), irods_types.RodsObjStat())
+    except RuntimeError:
+        # -814000 CAT_UNKNOWN_COLLECTION
+        ctx.callback.msiExit("-814000", "Unknown project: {}".format(project_id))
 
     title = ctx.callback.getCollectionAVU(source_collection, "title", "", "", "true")["arguments"][2]
     state = ctx.callback.getCollectionAVU(source_collection, "state", "", "", "true")["arguments"][2]
@@ -63,6 +66,7 @@ def start_ingest(ctx, username, token):
         ctx.callback.msiWriteRodsLog(
             "Validation result OK {}. Setting status to 'in-queue-for-ingestion'".format(source_collection), 0
         )
+        ctx.callback.setCollectionAVU(source_collection, "state", "in-queue-for-ingestion")
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>",
             "perform_ingest('{}', '{}', '{}', '{}')".format(project_id, title, username, token),

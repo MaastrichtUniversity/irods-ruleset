@@ -43,10 +43,6 @@ def validate_metadata(ctx, source_collection):
     try:
         # The actual validation occurs here. This can throw two types of exceptions, which we catch below
         jsonschema.validate(instance_object, schema_object)
-        kvp = ctx.callback.msiString2KeyValPair(
-            "{}={}".format("state", "in-queue-for-ingestion"), irods_types.BytesBuf()
-        )["arguments"][1]
-        ctx.callback.msiSetKeyValuePairsToObj(kvp, source_collection, "-C")
         return True
     except jsonschema.exceptions.ValidationError:
         ctx.callback.msiWriteRodsLog("JSONschema validation error occurred for '{}'".format(source_collection), 0)

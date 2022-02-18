@@ -12,10 +12,13 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
         Removing the dropzone
         Closing the project collection
 
+    If this rules execution stop prematurely and the drop-zone state AVU is "error-post-ingestion", it is safe
+    to re-run the rule to perform the post-ingest actions.
+
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     token: str
         The token of the dropzone to be ingested
     project_id: str
@@ -32,74 +35,50 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
 
     # Set the Creator AVU
     ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(source_collection, destination_collection), 0)
-    email = username
-    for row in row_iterator(
-        "META_USER_ATTR_VALUE",
-        "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'email'".format(username),
-        AS_LIST,
-        ctx.callback,
-    ):
-        email = row[0]
+    # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
+    # This allows to update the state AVU to 'error-post-ingestion'
+    ret = ctx.get_username_attribute_value(username, "email", "false", "result")["arguments"][3]
+    email = json.loads(ret)["value"]
+    if email == "":
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, source_collection, "User '{}' doesn't have an email AVU".format(username)
+        )
     ctx.callback.setCollectionAVU(destination_collection, "creator", email)
 
     # Requesting a PID via epicPID for version 0 (root version)
     handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]
     handle_pids = json.loads(handle_pids)
 
-    if not handle_pids:
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving multiple PID's failed for {}, leaving blank".format(destination_collection), 0
-        )
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Unable to register PID's for root", ""
-        )
-    elif "collection" not in handle_pids or handle_pids["collection"]["handle"] == "":
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection failed for {}, leaving blank".format(destination_collection), 0
-        )
-    elif "schema" not in handle_pids or handle_pids["schema"]["handle"] == "":
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_collection), 0
-        )
-    elif "instance" not in handle_pids or handle_pids["instance"]["handle"] == "":
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_collection), 0
-        )
-    else:
+    if "collection" in handle_pids and handle_pids["collection"]["handle"] != "":
         # Setting the PID as AVU on the project collection
         ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pids["collection"]["handle"])
-
-    try:
-        # Fill the instance.json and schema.json with the information needed in that instance (ie. handle PID) and schema version 1
-        ctx.callback.update_instance(project_id, collection_id, handle_pids["collection"]["handle"], "1")
-    except KeyError:
+    else:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to update instance", ""
-        )
-    except RuntimeError:
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to update instance", ""
-        )
-
-    try:
-        # Create metadata_versions and copy schema and instance from root to that folder as version 1
-        ctx.callback.create_ingest_metadata_versions(project_id, collection_id)
-    except RuntimeError:
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", ""
+            project_id, collection_id, source_collection, "Unable to register PID's for root"
         )
 
     # Requesting PID's for Project Collection version 1 (includes instance and schema)
-    handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, "1", "")["arguments"][3]
-    handle_pids_version = json.loads(handle_pids_version)
+    ctx.callback.get_versioned_pids(project_id, collection_id, "1", "")
 
-    if not handle_pids_version:
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving multiple PID's failed for {} version 1, leaving blank".format(destination_collection), 0
-        )
+    try:
+        # Fill the instance.json and schema.json with the information needed in that instance (ie. handle PID) and schema version 1
+        ctx.callback.update_metadata_during_ingest(project_id, collection_id, handle_pids["collection"]["handle"], "1")
+    except KeyError:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Unable to register PID's for version 1", ""
+            project_id, collection_id, source_collection, "Failed to update instance"
         )
+    except RuntimeError:
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, source_collection, "Failed to update instance"
+        )
+
+    # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
+    state = ctx.callback.getCollectionAVU(source_collection, "state", "", "", "true")["arguments"][2]
+    overwrite_flag = "false"
+    if state == "error-post-ingestion":
+        overwrite_flag = "true"
+    # Create metadata_versions and copy schema and instance from root to that folder as version 1
+    ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, source_collection, overwrite_flag)
 
     # Set latest version number to 1 for metadata latest version
     ctx.callback.setCollectionAVU(destination_collection, "latest_version_number", "1")
@@ -110,10 +89,10 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
     ctx.callback.setCollectionSize(project_id, collection_id, "false", "false")
 
     # Copy schemaVersion and schemaName AVU from dropzone to the ingested collection
-    schemaName = ctx.callback.getCollectionAVU(source_collection, "schemaName", "", "", "true")["arguments"][2]
-    schemaVersion = ctx.callback.getCollectionAVU(source_collection, "schemaVersion", "", "", "true")["arguments"][2]
-    ctx.callback.setCollectionAVU(destination_collection, "schemaName", schemaName)
-    ctx.callback.setCollectionAVU(destination_collection, "schemaVersion", schemaVersion)
+    schema_name = ctx.callback.getCollectionAVU(source_collection, "schemaName", "", "", "true")["arguments"][2]
+    schema_version = ctx.callback.getCollectionAVU(source_collection, "schemaVersion", "", "", "true")["arguments"][2]
+    ctx.callback.setCollectionAVU(destination_collection, "schemaName", schema_name)
+    ctx.callback.setCollectionAVU(destination_collection, "schemaVersion", schema_version)
 
     # Setting the State AVU to Ingested
     ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(source_collection, destination_collection), 0)

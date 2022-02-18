@@ -2,14 +2,17 @@
 def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     """
     Create a snapshot of the collection metadata files (schema & instance):
+        * Check user edit metadata permission
         * Check if the snapshot folder (.metadata_versions) already exists, if not create it
-        * Copy the current metadata files to .metadata_versions and add a timestamp in the filename
-        * Call update_instance_snapshot to update the schema:isBasedOn value
+        * Request the new versions handle PIDs
+        * Update instance.json and schema.json properties
+        * Copy the current metadata files to .metadata_versions and add the version number in the filename
+        * Increment the AVU latest_version_number
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id : str
         The project where the instance.json is to fill (ie. P000000010)
     collection_id : str
@@ -54,8 +57,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     destination_schema = metadata_folder_path + "/schema.{}.json".format(new_version)
     destination_instance = metadata_folder_path + "/instance.{}.json".format(new_version)
 
-    ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))
-
     # Request new PIDs
     handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, str(new_version), "")["arguments"][
         3
@@ -80,3 +81,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
+
+    # Only set latest_version_number if everything went fine.
+    ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))

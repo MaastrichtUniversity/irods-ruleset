@@ -78,7 +78,7 @@ def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource
     if state == "error-post-ingestion":
         overwrite_flag = "true"
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
-    ctx.callback.create_ingest_metadata_versions(project_id, collection_id, source_collection, overwrite_flag)
+    ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, source_collection, overwrite_flag)
 
     # Set latest version number to 1 for metadata latest version
     ctx.callback.setCollectionAVU(destination_collection, "latest_version_number", "1")

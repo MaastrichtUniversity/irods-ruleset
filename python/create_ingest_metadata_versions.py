@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
-def create_ingest_metadata_versions(ctx, project_id, collection_id, source_collection, overwrite_flag):
+def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_collection, overwrite_flag):
     """
     Create a snapshot of the collection metadata files (schema & instance):
         * Check if the snapshot folder (.metadata_versions) already exists, if not create it

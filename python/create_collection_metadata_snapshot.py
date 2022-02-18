@@ -67,11 +67,8 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
             "-1", "Retrieving multiple PID's failed for {} version {}".format(collection_path, new_version)
         )
 
-    # Overwriting the schema:isBasedOn with the PID for schema version
-    handle = handle_pids_version["collection"]["handle"].rsplit(".", 1)[0]
-    schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", new_version)
     try:
-        ctx.callback.update_metadata_during_edit_collection(collection_path, schema_url, handle_pids_version["collection"]["handle"])
+        ctx.callback.update_metadata_during_edit_collection(project_id, collection_id, str(new_version))
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))
 

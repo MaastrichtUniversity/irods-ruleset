@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def update_metadata_during_edit_collection(ctx, project_collection_full_path, schema_url, handle):
+def update_metadata_during_edit_collection(ctx, project_id, collection_id, version):
     """
     Update an already ingested 'instance.json' and 'schema.json' files on the project collection root level.
 
@@ -7,13 +7,25 @@ def update_metadata_during_edit_collection(ctx, project_collection_full_path, sc
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    project_collection_full_path : str
-        The absolute path of the collection; e.g: /nlmumc/projects/P000000014/C000000001/
-    schema_url : str
-        The schema URL to value to replace in the instance; e.g: http://mdr.local.dh.unimaas.nl/hdl/P000000014/C000000001/schema.1
-    handle: str
-        The (versioned) handle PID for the collection
+    project_id : str
+        The project where the instance.json is to fill (ie. P000000010)
+    collection_id : str
+        The collection where the instance.json is to fill (ie. C000000002)
+    version: str
+        The version that should be used to create the handles (ie. 3)
     """
+
+    # Getting the epicpid url and prefix
+    epicpid_base = ctx.callback.msi_getenv("EPICPID_URL", "")["arguments"][1]
+    epicpid_prefix = epicpid_base.rsplit("/", 2)[1]
+
+    # Set up project collection path
+    project_collection_full_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
+
+    # Set up all the handles
+    schema_handle = "https://hdl.handle.net/{}/{}{}{}.{}".format(epicpid_prefix, project_id, collection_id, "schema", version)
+    instance_handle = "https://hdl.handle.net/{}/{}{}{}.{}".format(epicpid_prefix, project_id, collection_id, "instance", version)
+    project_collection_handle = "https://hdl.handle.net/{}/{}{}.{}".format(epicpid_prefix, project_id, collection_id, version)
 
     # Reading the instance.json and parsing it
     instance_location = "{}/instance.json".format(project_collection_full_path)
@@ -21,17 +33,15 @@ def update_metadata_during_edit_collection(ctx, project_collection_full_path, sc
     instance_object = json.loads(instance)
 
     # Set instance schema:isBasedOn to the schema version PID
-    instance_object["schema:isBasedOn"] = schema_url
+    instance_object["schema:isBasedOn"] = schema_handle
 
     # Set element 1_Identifier values
-    new_handle = "https://hdl.handle.net/" + handle
-    instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = new_handle
+    instance_object["1_Identifier"]["datasetIdentifier"]["@value"] = project_collection_handle
     instance_object["1_Identifier"]["datasetIdentifierType"]["rdfs:label"] = "Handle"
     instance_object["1_Identifier"]["datasetIdentifierType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Handle"
 
     # Set instance @id to the instance version PID
-    instance_url = schema_url.replace("schema.", "instance.")
-    instance_object["@id"] = instance_url
+    instance_object["@id"] = instance_handle
 
     # Opening the instance file with read/write access
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)
@@ -44,7 +54,7 @@ def update_metadata_during_edit_collection(ctx, project_collection_full_path, sc
     # Reading the instance.json and parsing it
     schema = read_data_object_from_irods(ctx, schema_location)
     schema_object = json.loads(schema)
-    schema_object["@id"] = schema_url
+    schema_object["@id"] = schema_handle
 
     # Opening the schema file with read/write access
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + schema_location + "++++openFlags=O_RDWR", 0)

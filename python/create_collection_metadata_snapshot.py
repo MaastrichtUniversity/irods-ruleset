@@ -1,4 +1,4 @@
-@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     """
     Create a snapshot of the collection metadata files (schema & instance):
@@ -14,14 +14,20 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     ctx : Context
         Combined type of callback and rei struct.
     project_id : str
-        The project where the instance.json is to fill (ie. P000000010)
+        The project where the instance.json is to fill (e.g: P000000010)
     collection_id : str
-        The collection where the instance.json is to fill (ie. C000000002)
+        The collection where the instance.json is to fill (e.g: C000000002)
+
+    Returns
+    -------
+    bool
+        PIDs request status; If true, the handle PIDs were successfully requested.
     """
     collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
     project_path = "/nlmumc/projects/{}".format(project_id)
     metadata_folder_path = collection_path + "/.metadata_versions"
     metadata_folder_exist = True
+    pid_request_status = True
 
     # Check if user is allowed to edit metadata for this project
     can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, "")["arguments"][1]
@@ -62,10 +68,12 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         3
     ]
     handle_pids_version = json.loads(handle_pids_version)
-    if not handle_pids_version:
-        ctx.callback.msiExit(
-            "-1", "Retrieving multiple PID's failed for {} version {}".format(collection_path, new_version)
-        )
+    if (
+            not handle_pids_version
+            or "collection" not in handle_pids_version
+            or handle_pids_version["collection"]["handle"] == ""
+    ):
+        pid_request_status = False
 
     try:
         ctx.callback.update_metadata_during_edit_collection(project_id, collection_id, str(new_version))
@@ -81,3 +89,5 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
 
     # Only set latest_version_number if everything went fine.
     ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))
+
+    return pid_request_status

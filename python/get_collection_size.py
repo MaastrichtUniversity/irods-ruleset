@@ -1,7 +1,3 @@
-from math import floor
-from math import ceil
-
-
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def get_collection_size(ctx, collection, unit, round):
     """
@@ -23,6 +19,8 @@ def get_collection_size(ctx, collection, unit, round):
     float
         The collection's size
     """
+    from math import floor
+    from math import ceil
 
     size_bytes = float(ctx.callback.getCollectionAVU(collection, "dcat:byteSize", "", "0", "false")["arguments"][2])
 

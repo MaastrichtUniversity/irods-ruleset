@@ -23,10 +23,9 @@ def get_user_group_memberships(ctx, show_special_groups, username):
 
     output = []
 
-    for result in row_iterator("order(USER_GROUP_NAME), USER_GROUP_ID",
-                               "USER_ID = '{}'".format(user_id),
-                               AS_LIST,
-                               ctx.callback):
+    for result in row_iterator(
+        "order(USER_GROUP_NAME), USER_GROUP_ID", "USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback
+    ):
 
         group_name = result[0]
         group_id = result[1]
@@ -35,10 +34,11 @@ def get_user_group_memberships(ctx, show_special_groups, username):
 
         if group_name != username:
             for metadata_result in row_iterator(
-                    "META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
-                    "USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{}'".format(group_id),
-                    AS_LIST,
-                    ctx.callback):
+                "META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
+                "USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{}'".format(group_id),
+                AS_LIST,
+                ctx.callback,
+            ):
 
                 if "displayName" == metadata_result[0]:
                     group_display_name = metadata_result[1]
@@ -46,15 +46,20 @@ def get_user_group_memberships(ctx, show_special_groups, username):
                 elif "description" == metadata_result[0]:
                     group_description = metadata_result[1]
 
-            group_object = {"groupId": group_id,
-                            "name": group_name,
-                            "displayName": group_display_name,
-                            "description": group_description
-                            }
+            group_object = {
+                "groupId": group_id,
+                "name": group_name,
+                "displayName": group_display_name,
+                "description": group_description,
+            }
 
             if show_special_groups == "false":
-                if group_name != "public" and group_name != "rodsadmin" \
-                        and group_name != "DH-ingest" and group_name != "DH-project-admins":
+                if (
+                    group_name != "public"
+                    and group_name != "rodsadmin"
+                    and group_name != "DH-ingest"
+                    and group_name != "DH-project-admins"
+                ):
                     output.append(group_object)
             else:
                 output.append(group_object)

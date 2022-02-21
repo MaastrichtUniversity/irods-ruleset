@@ -18,5 +18,5 @@ editIngest {
 
 }
 
-INPUT *user="",*token="",*title="",*project="",
+INPUT *user="",*token="",*title="",*project=""
 OUTPUT ruleExecOut

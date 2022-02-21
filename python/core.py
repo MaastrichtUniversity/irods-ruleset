@@ -19,9 +19,10 @@ class Context(object):
     `Context` can be treated as a rule engine callback for all intents and purposes.
     However @rule and @api functions that need access to the rei, can do so through this object.
     """
+
     def __init__(self, callback, rei):
         self.callback = callback
-        self.rei      = rei
+        self.rei = rei
 
     def __getattr__(self, name):
         """Allow accessing the callback directly."""
@@ -30,8 +31,9 @@ class Context(object):
 
 class Output(Enum):
     """Specifies rule output handlers."""
-    STORE      = 0  # store in output parameters
-    STDOUT     = 1  # write to stdout
+
+    STORE = 0  # store in output parameters
+    STDOUT = 1  # write to stdout
     STDOUT_BIN = 2  # write to stdout, without a trailing newline
 
 
@@ -68,6 +70,7 @@ def make(inputs=None, outputs=None, transform=lambda x: x, handler=Output.STORE)
             callback.writeString('stdout', json.dumps(int(x) + int(y)))
     :returns: Decorator to create a rule from a Python function
     """
+
     def encode_val(v):
         """Encode a value such that it can be safely transported in rule_args, as output."""
         if type(v) is str:
@@ -97,23 +100,57 @@ def make(inputs=None, outputs=None, transform=lambda x: x, handler=Output.STORE)
                         rule_args[i] = encode_val(x)
             elif handler is Output.STDOUT:
                 for x in result:
-                    callback.writeString('stdout', encode_val(x) + '\n')
+                    callback.writeString("stdout", encode_val(x) + "\n")
                     # For debugging:
                     # log.write(callback, 'rule output (DEBUG): ' + encode_val(x))
             elif handler is Output.STDOUT_BIN:
                 for x in result:
-                    callback.writeString('stdout', encode_val(x))
+                    callback.writeString("stdout", encode_val(x))
+
         return r
+
     return deco
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_client_username(ctx):
     # Get the client username
-    username = ''
+    username = ""
     var_map = session_vars.get_map(ctx.rei)
-    user_type = 'client_user'
-    userrec = var_map.get(user_type, '')
+    user_type = "client_user"
+    userrec = var_map.get(user_type, "")
     if userrec:
-        username = userrec.get('user_name', '')
+        username = userrec.get("user_name", "")
     return username
+
+
+def read_data_object_from_irods(ctx, path):
+    """This rule gets a JSON schema stored as an iRODS object
+    :param ctx:  iRODS context
+    :param path: Full path of the file to read (ie: '/nlmumc/ingest/zones/crazy-frog/instance.json')
+    :return: The content of the file to open
+    """
+    # Open iRODS file
+    ret_val = ctx.callback.msiDataObjOpen("objPath=" + path, 0)
+    file_desc = ret_val["arguments"][1]
+
+    # Read iRODS file
+    ret_val = ctx.callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
+    read_buf = ret_val["arguments"][2]
+
+    # Convert BytesBuffer to string
+    ret_val = ctx.callback.msiBytesBufToStr(read_buf, "")
+    output_json = ret_val["arguments"][1]
+
+    # Close iRODS file
+    ctx.callback.msiDataObjClose(file_desc, 0)
+
+    return output_json
+
+
+def convert_to_current_timezone(date, date_format="%Y-%m-%d %H:%M:%S"):
+    import pytz
+
+    old_timezone = pytz.timezone("UTC")
+    new_timezone = pytz.timezone("Europe/Amsterdam")
+    return old_timezone.localize(date).astimezone(new_timezone).strftime(date_format)

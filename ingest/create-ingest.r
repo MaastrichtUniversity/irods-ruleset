@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'"
+# irule -F /rules/ingest/create-ingest.r "*token='bla-token'" "*user='p.vanschayck'" "*project='P000000001'" "*title='bar'" "*schema_name='DataHub_general_schema'" "*schema_version='0.0.1'"
 
 createIngest {
     # Retrieve the domain username
@@ -21,8 +21,15 @@ createIngest {
         failmsg(-818000, "User '*user' has insufficient DropZone permissions on /nlmumc/ingest/zones");
     }
 
-    *tokenColl = "/nlmumc/ingest/zones/*token";
+    # Check if the ingest resource is up
+    *ingestResourceAvailable = ""
+    get_project_resource_availability(*project, "true", "false", "false", *ingestResourceAvailable)
+    if (*ingestResourceAvailable != "true") {
+        failmsg(-1, "Ingest resource is down for project '*project'! Aborting dropzone creation.");
+    }
 
+    # Create the dropzone
+    *tokenColl = "/nlmumc/ingest/zones/*token";
     *code = errorcode(msiCollCreate(*tokenColl, 0, *status));
 
     if ( *code == -809000 ) {
@@ -31,19 +38,19 @@ createIngest {
         fail(*code);
     }
 
+    # Set dropzone AVUs
     msiAddKeyVal(*metaKV, "project", *project);
     msiAddKeyVal(*metaKV, "title", *title);
-    #msiAddKeyVal(*metaKV, "author", *user);
+    msiAddKeyVal(*metaKV, "schemaName", *schema_name);
+    msiAddKeyVal(*metaKV, "schemaVersion", *schema_version);
     msiAddKeyVal(*metaKV, "state", "open");
     msiAssociateKeyValuePairsToObj(*metaKV, *tokenColl, "-C");
 
-    # Obtain the resource host from the specified ingest resource
     *ingestResource = "";
     getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
     foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
         *ingestResourceHost = *r.RESC_LOC;
     }
-
 
     # Enabling the ingest zone needs to be done on the remote server
     remote(*ingestResourceHost,"") {
@@ -61,5 +68,5 @@ createIngest {
 
 }
 
-INPUT *user="",*token="",*project="",*title=""
+INPUT *user="",*token="",*project="",*title="",*schema_name="",*schema_version=""
 OUTPUT ruleExecOut

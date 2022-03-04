@@ -16,16 +16,10 @@ def get_service_accounts_id(ctx):
 
     output = []
 
-    for account in row_iterator("USER_ID",
-                                "USER_NAME = 'rods'",
-                                AS_LIST,
-                                ctx.callback):
+    for account in row_iterator("USER_ID", "USER_NAME = 'rods'", AS_LIST, ctx.callback):
         output.append(account[0])
 
-    for account in row_iterator("USER_ID",
-                                "USER_NAME like 'service-%'",
-                                AS_LIST,
-                                ctx.callback):
+    for account in row_iterator("USER_ID", "USER_NAME like 'service-%'", AS_LIST, ctx.callback):
         output.append(account[0])
 
     return output

@@ -17,8 +17,8 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
     dict
         The attribute values
     """
-    username = ctx.callback.get_client_username('')["arguments"][0]
-    dropzone_path = "/nlmumc/ingest/zones/"+token
+    username = ctx.callback.get_client_username("")["arguments"][0]
+    dropzone_path = "/nlmumc/ingest/zones/" + token
 
     # Check if the user has right access at /nlmumc/ingest/zones
     ret = ctx.callback.checkDropZoneACL(username, "*has_dropzone_permission")
@@ -35,12 +35,12 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         # -814000 CAT_UNKNOWN_COLLECTION
         ctx.callback.msiExit("-814000", "Unknown ingest zone")
 
-    project_path = ''
+    project_path = ""
     # Initialize the output
     avu = {
         "state": "",
         "title": "",
-        "validateState":  "",
+        "validateState": "",
         "validateMsg": "",
         "project": "",
         "projectTitle": "",
@@ -51,23 +51,26 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         "destination": "",
     }
     # Query the dropzone metadata
-    for result in row_iterator("COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
-                               "COLL_NAME = '{}'".format(dropzone_path),
-                               AS_LIST,
-                               ctx.callback):
+    for result in row_iterator(
+        "COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
+        "COLL_NAME = '{}'".format(dropzone_path),
+        AS_LIST,
+        ctx.callback,
+    ):
         attr_name = result[1]
         attr_value = result[2]
 
-        if attr_name == 'project':
+        if attr_name == "project":
             avu[attr_name] = attr_value
-            avu['date'] = result[0]
-            project_path = '/nlmumc/projects/{}'.format(attr_value)
-            for project_result in row_iterator("META_COLL_ATTR_VALUE",
-                                               "META_COLL_ATTR_NAME = 'title' AND "
-                                               "COLL_NAME = '{}'".format(project_path),
-                                               AS_LIST,
-                                               ctx.callback):
-                avu['projectTitle'] = project_result[0]
+            avu["date"] = result[0]
+            project_path = "/nlmumc/projects/{}".format(attr_value)
+            for project_result in row_iterator(
+                "META_COLL_ATTR_VALUE",
+                "META_COLL_ATTR_NAME = 'title' AND " "COLL_NAME = '{}'".format(project_path),
+                AS_LIST,
+                ctx.callback,
+            ):
+                avu["projectTitle"] = project_result[0]
         else:
             avu[attr_name] = attr_value
 
@@ -75,10 +78,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         # Query project resource avu
         resource = ctx.callback.getCollectionAVU(project_path, "resource", "*resource", "", "true")["arguments"][2]
         # Query the resource status
-        for resc_result in row_iterator("RESC_STATUS",
-                                           "RESC_NAME = '{}'".format(resource),
-                                           AS_LIST,
-                                           ctx.callback):
-            avu['resourceStatus'] = resc_result[0]
+        for resc_result in row_iterator("RESC_STATUS", "RESC_NAME = '{}'".format(resource), AS_LIST, ctx.callback):
+            avu["resourceStatus"] = resc_result[0]
 
     return avu

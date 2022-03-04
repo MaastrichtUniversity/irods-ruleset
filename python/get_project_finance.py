@@ -43,11 +43,12 @@ def get_project_finance(ctx, project_path):
 
             # Only query if price_per_gb_per_year(NCIT:C88193) was not found in resources_prices
             if query_resource_price:
-                for resource_result in row_iterator("META_RESC_ATTR_VALUE",
-                                                    "RESC_ID = '{}' and META_RESC_ATTR_NAME = 'NCIT:C88193'".format(
-                                                        resource_id),
-                                                    AS_LIST,
-                                                    ctx.callback):
+                for resource_result in row_iterator(
+                    "META_RESC_ATTR_VALUE",
+                    "RESC_ID = '{}' and META_RESC_ATTR_NAME = 'NCIT:C88193'".format(resource_id),
+                    AS_LIST,
+                    ctx.callback,
+                ):
                     resources_prices[resource_id] = resource_result[0]
             price_per_gb_per_year = float(resources_prices[resource_id])
 
@@ -59,12 +60,12 @@ def get_project_finance(ctx, project_path):
             storage_cost_on_resource = size_on_resource * price_per_gb_per_year
             collection_cost = collection_cost + storage_cost_on_resource
 
-            # Store the collection finance information for each resource 
+            # Store the collection finance information for each resource
             details = {
                 "resource": resource_id,
                 "data_size_gb_on_resource": size_on_resource,
                 "price_per_gb_per_year": price_per_gb_per_year,
-                "storage_cost_on_resource": storage_cost_on_resource
+                "storage_cost_on_resource": storage_cost_on_resource,
             }
             resources_details.append(details)
 
@@ -76,7 +77,7 @@ def get_project_finance(ctx, project_path):
             "collection": collection_path,
             "data_size_gib": collection_size,
             "details_per_resource": resources_details,
-            "collection_storage_cost": collection_cost
+            "collection_storage_cost": collection_cost,
         }
         collections_output.append(collection)
 
@@ -95,7 +96,6 @@ def get_project_finance(ctx, project_path):
         "project_cost_monthly": project_cost_monthly,
         "collections": collections_output,
         "project_size_gib": project_size_gib,
-        "project_size_gb": project_size_gb
-
+        "project_size_gb": project_size_gb,
     }
     return output

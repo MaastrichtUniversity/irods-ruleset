@@ -16,10 +16,12 @@ def get_projects_size(ctx):
 
     project = {}
 
-    for proj_coll in row_iterator("COLL_NAME, META_COLL_ATTR_VALUE",
-                                  "COLL_NAME like '/nlmumc/projects/%/%' AND META_COLL_ATTR_NAME = 'dcat:byteSize'",
-                                  AS_LIST,
-                                  ctx.callback):
+    for proj_coll in row_iterator(
+        "COLL_NAME, META_COLL_ATTR_VALUE",
+        "COLL_NAME like '/nlmumc/projects/%/%' AND META_COLL_ATTR_NAME = 'dcat:byteSize'",
+        AS_LIST,
+        ctx.callback,
+    ):
         # Split path to id
         project_id = proj_coll[0].split("/")[3]
         # Convert bytes to GiB

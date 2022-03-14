@@ -60,13 +60,13 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     # will automatically also include a checksum check on the destination
                     msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus);
                     if ( *moveStatus != 0 ) {
-                       failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                       setTapeErrorAVU(*archColl, *stateAttrName, "archive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                     }
 
                     # Trim data from *coordResourceName
                     msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
                     if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                       setTapeErrorAVU(*archColl, *stateAttrName, "archive-failed", "Trim *ipath from *coordResourceName FAILED.")
                     }
 
                     # Update counter

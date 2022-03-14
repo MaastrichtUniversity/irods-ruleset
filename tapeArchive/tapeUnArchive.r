@@ -77,12 +77,12 @@ tapeUnArchive(*count, *archColl){
                 # will automatically also include a checksum check on the destination
                 msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
                 if ( *moveStatus != 0 ) {
-                       failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                 }
 
                 msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus);
                 if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
                 }
 
                 *isMoved=*isMoved+1;
@@ -123,12 +123,12 @@ tapeUnArchive(*count, *archColl){
                 # will automatically also include a checksum check on the destination
                 msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
                 if ( *moveStatus != 0 ) {
-                       failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                 }
 
                 msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus);
                 if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
                 }
 
                 *isMoved=*isMoved+1;

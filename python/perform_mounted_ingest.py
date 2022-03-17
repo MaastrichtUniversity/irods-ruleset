@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
-def perform_ingest(ctx, project_id, title, username, token):
+def perform_mounted_ingest(ctx, project_id, title, username, token):
     """
     Perform an ingest
 
@@ -78,4 +78,4 @@ def perform_ingest(ctx, project_id, title, username, token):
     ctx.callback.msiWriteRodsLog("{} : AVG speed was {} MiB/s".format(source_collection, avg_speed), 0)
 
     # Handle post ingestion operations
-    ctx.callback.post_ingest(project_id, username, token, collection_id, ingest_resource_host, "")
+    ctx.callback.post_ingest(project_id, username, token, collection_id, ingest_resource_host, "mounted")

@@ -26,7 +26,7 @@ def start_ingest(ctx, username, token, dropzone_type):
             "-1", "Invalid dropzone type, supported 'mounted' and 'direct', got '{}'.".format(dropzone_type)
         )
 
-    pre_ingest_tasks = json.loads(ctx.callback.perform_pre_ingestion_tasks(dropzone_path, username, "")["arguments"][2])
+    pre_ingest_tasks = json.loads(ctx.callback.validate_dropzone(dropzone_path, username, "")["arguments"][2])
     project_id = pre_ingest_tasks["project_id"]
     title = pre_ingest_tasks["title"]
     validation_result = pre_ingest_tasks["validation_result"]

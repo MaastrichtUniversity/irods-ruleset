@@ -1,13 +1,24 @@
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
-def perform_pre_ingestion_tasks(ctx, dropzone_path, username):
+def validate_dropzone(ctx, dropzone_path, username):
     """
+    Validate if the dropzone and depositor are eligible for ingestion by
+
+        - Check if user has dropzone persmissions
+        - Check if depositor is the creator of the dropzone (only in direct ingest)
+        - Check if the dropzone exists
+        - Check if the linked project ID exists
+        - Check if the state is OK
+        - Validate the metadata
+        - Get necessary AVU's and return them
 
     Parameters
     ----------
     ctx : Context
         Combined type of callback and rei struct.
     dropzone_path: str
-        The token, eg '/nlmumc/ingest/direct/crazy-frog' or '/nlmumc/ingest/zones/crazy-frog'
+        The token, e.g. '/nlmumc/ingest/direct/crazy-frog' or '/nlmumc/ingest/zones/crazy-frog'
+    username: str
+        The username of the depositor, e.g. dlinssen
     """
     # Check if ingesting user has dropzone permissions
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, "")["arguments"][1]
@@ -16,6 +27,13 @@ def perform_pre_ingestion_tasks(ctx, dropzone_path, username):
             "-818000", "User '{}' has insufficient DropZone permissions on '{}'".format(username, dropzone_path)
         )
 
+    # Check if dropzone exists
+    try:
+        ctx.callback.msiObjStat(dropzone_path, irods_types.RodsObjStat())
+    except RuntimeError:
+        # -814000 CAT_UNKNOWN_COLLECTION
+        ctx.callback.msiExit("-814000", "Unknown ingest zone")
+
     # If direct ingest: check if user ingesting is the creator
     if "direct" in dropzone_path:
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", "true")["arguments"][2]
@@ -23,13 +41,6 @@ def perform_pre_ingestion_tasks(ctx, dropzone_path, username):
             ctx.callback.msiExit(
                 "-818000", "User '{}' is not the creator of dropzone '{}'".format(username, dropzone_path)
             )
-
-    # Check if dropzone exists
-    try:
-        ctx.callback.msiObjStat(dropzone_path, irods_types.RodsObjStat())
-    except RuntimeError:
-        # -814000 CAT_UNKNOWN_COLLECTION
-        ctx.callback.msiExit("-814000", "Unknown ingest zone")
 
     # Get dropzone metadata
     project_id = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", "true")["arguments"][2]

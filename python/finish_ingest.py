@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
-def post_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host, dropzone_type):
+def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host, dropzone_type):
     """
     Actions to be performed after an ingest is completed
         Setting AVUs

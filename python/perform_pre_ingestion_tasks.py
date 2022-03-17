@@ -13,8 +13,16 @@ def perform_pre_ingestion_tasks(ctx, dropzone_path, username):
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, "")["arguments"][1]
     if has_dropzone_permission != "true":
         ctx.callback.msiExit(
-            "-818000", "User '{}' has insufficient DropZone permissions on '{}'".format(dropzone_path, username)
+            "-818000", "User '{}' has insufficient DropZone permissions on '{}'".format(username, dropzone_path)
         )
+
+    # If direct ingest: check if user ingesting is the creator
+    if "direct" in dropzone_path:
+        creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", "true")["arguments"][2]
+        if creator != username:
+            ctx.callback.msiExit(
+                "-818000", "User '{}' is not the creator of dropzone '{}'".format(username, dropzone_path)
+            )
 
     # Check if dropzone exists
     try:

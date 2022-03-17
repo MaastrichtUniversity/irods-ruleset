@@ -37,14 +37,9 @@ def start_ingest(ctx, username, token, dropzone_type):
         )
         ctx.callback.setCollectionAVU(dropzone_path, "state", "in-queue-for-ingestion")
 
-        if dropzone_type == "mounted":
-            rule = "perform_ingest"
-        elif dropzone_type == "direct":
-            rule = "perform_direct_ingest"
-
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>",
-            "{}('{}', '{}', '{}', '{}')".format(rule, project_id, title, username, token),
+            "perform_{}_ingest('{}', '{}', '{}', '{}')".format(dropzone_type, project_id, title, username, token),
             "",
         )
     else:

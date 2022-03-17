@@ -23,9 +23,15 @@ def update_metadata_during_edit_collection(ctx, project_id, collection_id, versi
     project_collection_full_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
 
     # Set up all the handles
-    schema_handle = "https://hdl.handle.net/{}/{}{}{}.{}".format(epicpid_prefix, project_id, collection_id, "schema", version)
-    instance_handle = "https://hdl.handle.net/{}/{}{}{}.{}".format(epicpid_prefix, project_id, collection_id, "instance", version)
-    project_collection_handle = "https://hdl.handle.net/{}/{}{}.{}".format(epicpid_prefix, project_id, collection_id, version)
+    schema_handle = "https://hdl.handle.net/{}/{}{}{}.{}".format(
+        epicpid_prefix, project_id, collection_id, "schema", version
+    )
+    instance_handle = "https://hdl.handle.net/{}/{}{}{}.{}".format(
+        epicpid_prefix, project_id, collection_id, "instance", version
+    )
+    project_collection_handle = "https://hdl.handle.net/{}/{}{}.{}".format(
+        epicpid_prefix, project_id, collection_id, version
+    )
 
     # Reading the instance.json and parsing it
     instance_location = "{}/instance.json".format(project_collection_full_path)

@@ -54,8 +54,6 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         )
     ctx.callback.setCollectionAVU(destination_collection, "creator", email)
 
-    print(dropzone_path)
-
     # Requesting a PID via epicPID for version 0 (root version)
     handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]
     handle_pids = json.loads(handle_pids)

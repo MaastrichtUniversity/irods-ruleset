@@ -23,7 +23,7 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
         The type of dropzone
     """
     # Check if ingesting user has dropzone permissions
-    has_dropzone_permission = ctx.callback.checkDropZoneACL(username, dropzone_type, "")["arguments"][1]
+    has_dropzone_permission = ctx.callback.checkDropZoneACL(username, dropzone_type, "")["arguments"][2]
     if has_dropzone_permission != "true":
         ctx.callback.msiExit(
             "-818000", "User '{}' has insufficient DropZone permissions on '{}'".format(username, dropzone_path)

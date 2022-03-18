@@ -1,5 +1,5 @@
-@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
-def validate_dropzone(ctx, dropzone_path, username):
+@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
+def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     """
     Validate if the dropzone and depositor are eligible for ingestion by
 
@@ -16,12 +16,14 @@ def validate_dropzone(ctx, dropzone_path, username):
     ctx : Context
         Combined type of callback and rei struct.
     dropzone_path: str
-        The token, e.g. '/nlmumc/ingest/direct/crazy-frog' or '/nlmumc/ingest/zones/crazy-frog'
+        The full dropzone path, e.g. '/nlmumc/ingest/direct/crazy-frog' or '/nlmumc/ingest/zones/crazy-frog'
     username: str
         The username of the depositor, e.g. dlinssen
+    dropzone_type: str
+        The type of dropzone
     """
     # Check if ingesting user has dropzone permissions
-    has_dropzone_permission = ctx.callback.checkDropZoneACL(username, "")["arguments"][1]
+    has_dropzone_permission = ctx.callback.checkDropZoneACL(username, dropzone_type, "")["arguments"][1]
     if has_dropzone_permission != "true":
         ctx.callback.msiExit(
             "-818000", "User '{}' has insufficient DropZone permissions on '{}'".format(username, dropzone_path)
@@ -35,7 +37,7 @@ def validate_dropzone(ctx, dropzone_path, username):
         ctx.callback.msiExit("-814000", "Unknown ingest zone")
 
     # If direct ingest: check if user ingesting is the creator
-    if "direct" in dropzone_path:
+    if dropzone_type == "direct" and username != "rods":
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", "true")["arguments"][2]
         if creator != username:
             ctx.callback.msiExit(

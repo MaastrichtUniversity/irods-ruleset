@@ -3,11 +3,11 @@
 # irule -F checkDropZoneACL.r
 
 irule_dummy() {
-    IRULE_checkDropZoneACL(*user, *result)
+    IRULE_checkDropZoneACL(*user, *dropzoneType, *result)
     #writeLine("stdout", *result);
 }
 
-IRULE_checkDropZoneACL(*user, *result) {
+IRULE_checkDropZoneACL(*user, *dropzoneType, *result) {
     *result = "";
 
     userNameToUserId(*user, *userId);
@@ -22,8 +22,15 @@ IRULE_checkDropZoneACL(*user, *result) {
     # Remove first comma
     *groups=substr(*groups, 1, strlen(*groups));
 
+    *collectionToQuery = '';
+    if ( *dropzoneType == "mounted" ) {
+        *collectionToQuery = 'zones'
+    } else if ( *dropzoneType == "direct" ) {
+        *collectionToQuery = 'direct'
+    }
+
     # Generate and execute SQL query
-    msiMakeGenQuery("count(COLL_NAME)", "COLL_NAME = '/nlmumc/ingest/zones' and COLL_ACCESS_NAME in ('own', 'modify object') and COLL_ACCESS_USER_ID in (*groups)", *Query);
+    msiMakeGenQuery("count(COLL_NAME)", "COLL_NAME = '/nlmumc/ingest/*collectionToQuery' and COLL_ACCESS_NAME in ('own', 'modify object') and COLL_ACCESS_USER_ID in (*groups)", *Query);
     msiExecGenQuery(*Query, *QOut);
 
     # Check if SQL result was not empty and return true
@@ -39,5 +46,5 @@ IRULE_checkDropZoneACL(*user, *result) {
 
 }
 
-INPUT *user='',*result=''
+INPUT *user='',*dropzoneType='',*result=''
 OUTPUT ruleExecOut

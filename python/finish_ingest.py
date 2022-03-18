@@ -100,7 +100,6 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     ctx.callback.setCollectionAVU(destination_collection, "schemaVersion", schema_version)
 
     # Setting the State AVU to Ingested
-    ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_collection), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "state", "ingested")
 
     # Remove the temporary sizeIngested AVU at *dstColl
@@ -120,3 +119,4 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
             ctx.callback.setErrorAVU(dropzone_path, "state", "error-post-ingestion", "Error unmounting")
 
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
+    ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_collection), 0)

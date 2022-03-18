@@ -18,12 +18,10 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     """
     import time
 
-    source_collection = "/nlmumc/ingest/zones/{}".format(token)
-    # dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
-    # ctx.callback.msiWriteRodsLog("source_collection {}".format(source_collection), 0)
+    dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
 
     pre_ingest_results = json.loads(
-        ctx.callback.perform_ingest_pre_hook(project_id, title, source_collection, "")["arguments"][3]
+        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, "")["arguments"][3]
     )
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
@@ -32,12 +30,12 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
 
-    ctx.callback.ingest_collection_data(source_collection, destination_collection, project_id)
+    ctx.callback.ingest_collection_data(dropzone_path, destination_collection, project_id)
 
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(project_id, collection_id, source_collection, str(difference))
+    ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, str(difference))
 
     # # Handle post ingestion operations
-    # ctx.callback.post_ingest(project_id, username, token, collection_id, ingest_resource_host, "")
+    ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, "direct")

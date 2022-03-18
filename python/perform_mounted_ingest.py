@@ -46,7 +46,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, difference)
+    ctx.callback.perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, str(difference))
 
     # Handle post ingestion operations
     ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, "mounted")

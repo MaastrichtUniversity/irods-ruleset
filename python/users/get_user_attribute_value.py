@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def get_username_attribute_value(ctx, username, attribute, fatal):
+def get_user_attribute_value(ctx, username, attribute, fatal):
     """
     Query an attribute value from the user list of AVU
 

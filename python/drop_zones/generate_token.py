@@ -25,6 +25,9 @@ def generate_token(ctx):
     for row in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/ingest/zones'", AS_LIST, ctx.callback):
         existing_tokens.append(row[0][21:])
 
+    for row in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/ingest/direct'", AS_LIST, ctx.callback):
+        existing_tokens.append(row[0][22:])
+
     token = random_token(adjectives, nouns, existing_tokens)
     return '"' + token + '"'
 

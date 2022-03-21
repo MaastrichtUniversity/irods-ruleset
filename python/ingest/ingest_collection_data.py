@@ -48,6 +48,7 @@ def do_ingest_collection_data(ctx, source_collection, destination_collection, in
     rename_status = 0
     replicate_status = 0
     trim_status = 0
+    checksum_status = 0
 
     # TODO remove
     #######################
@@ -88,13 +89,16 @@ def do_ingest_collection_data(ctx, source_collection, destination_collection, in
             continue
         #######################
 
+        # Calculate the checksum value of the current data file
+        checksum_status += calculate_checksum_collection_data(ctx, destination_file_full_path)
+
         # Replicate to the project resource
         replicate_status += replicate_collection_data(ctx, destination_file_full_path, destination_resource)
 
         # Trim original ingest replica
         trim_status += trim_collection_data(ctx, destination_file_full_path, ingest_resource)
 
-    return rename_status + replicate_status + trim_status
+    return rename_status + checksum_status + replicate_status + trim_status
 
 
 def create_destination_collection_sub_folder(ctx, destination_file_base_path, destination_collection):
@@ -108,14 +112,14 @@ def create_destination_collection_sub_folder(ctx, destination_file_base_path, de
 
 
 def rename_collection_data(ctx, source_file_full_path, destination_file_full_path):
-    rename_status = 0
+    rename_status = 1
     try:
         ctx.callback.msiWriteRodsLog(
             "DEBUG: \tRename file '{}' to '{}'".format(source_file_full_path, destination_file_full_path),
             0,
         )
         ret_rename = ctx.callback.msiDataObjRename(source_file_full_path, destination_file_full_path, 0, 0)
-        rename_status = ret_rename["arguments"][3]
+        rename_status = int(ret_rename["arguments"][3])
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("ERROR: \tRename failed for: {}".format(destination_file_full_path), 0)
         rename_status = 1
@@ -125,6 +129,7 @@ def rename_collection_data(ctx, source_file_full_path, destination_file_full_pat
 
 
 def check_collection_replication(ctx, destination_collection, destination_resource):
+    checksum_status = 0
     replicate_status = 0
     replica_counter = {}
     resource_query_iter = row_iterator(
@@ -143,22 +148,22 @@ def check_collection_replication(ctx, destination_collection, destination_resour
 
     for destination_file_full_path in replica_counter:
         if replica_counter[destination_file_full_path] < 2:
+            checksum_status += calculate_checksum_collection_data(ctx, destination_file_full_path)
             replicate_status += replicate_collection_data(ctx, destination_file_full_path, destination_resource)
 
-    return replicate_status
+    return replicate_status + checksum_status
 
 
 def replicate_collection_data(ctx, destination_file_full_path, destination_resource):
-    replication_status = 0
+    replication_status = 1
     try:
         ctx.callback.msiWriteRodsLog("DEBUG: \tStart replication for: {}".format(destination_file_full_path), 0)
-        # destination_resource = "blabla"
         ret_replication = ctx.callback.msiDataObjRepl(
             destination_file_full_path,
             "destRescName={}++++verifyChksum=".format(destination_resource),
             0,
         )
-        replication_status = ret_replication["arguments"][2]
+        replication_status = int(ret_replication["arguments"][2])
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("ERROR: \tReplication failed for: {}".format(destination_file_full_path), 0)
         replication_status = 1
@@ -188,10 +193,24 @@ def trim_collection_data(ctx, destination_file_full_path, ingest_resource):
         ctx.callback.msiWriteRodsLog("DEBUG: \tStart to trim for: {}".format(destination_file_full_path), 0)
         ret_trim = ctx.callback.msiDataObjTrim(destination_file_full_path, ingest_resource, "null", "2", "null", 0)
         # msiDataObjTrim returns 1 if a replica is trimmed, 0 if nothing trimmed
-        trim_status = ret_trim["arguments"][5]
+        trim_status = int(ret_trim["arguments"][5])
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("ERROR: \tTrim failed for: {}".format(destination_file_full_path), 0)
         trim_status = 2
     if trim_status != 1:
+        return 1
+    return 0
+
+
+def calculate_checksum_collection_data(ctx, destination_file_full_path):
+    checksum_status = 1
+    try:
+        ctx.callback.msiWriteRodsLog("DEBUG: \tStart checksum for: {}".format(destination_file_full_path), 0)
+        ret_checksum = ctx.callback.msiDataObjChksum(destination_file_full_path, "verifyChksum=", 0)
+        checksum_status = int(ret_checksum["arguments"][2])
+    except RuntimeError:
+        ctx.callback.msiWriteRodsLog("ERROR: \tReplication failed for: {}".format(destination_file_full_path), 0)
+        checksum_status = 1
+    if checksum_status != 0:
         return 1
     return 0

@@ -1,4 +1,4 @@
-@make(inputs=range(3), outputs=[], handler=Output.STORE)
+@make(inputs=range(3), outputs=[3], handler=Output.STORE)
 def ingest_collection_data(ctx, source_collection, destination_collection, project_id):
     """
     Ingest the input source collection toward the destination collection.
@@ -20,28 +20,42 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
     project_id: str
         The project id, ie P00000010
     """
-    rename_status = 0
-    replicate_status = 0
-    trim_status = 0
     project_path = "/nlmumc/projects/{}".format(project_id)
     destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", "true")["arguments"][2]
 
+    # TODO Change hardcoded ingest_resource value
     ingest_resource = "arcRescSURF01"
-    # resource_query_iter = row_iterator(
-    #     "DATA_RESC_NAME",
-    #     "COLL_NAME = '{}'".format(source_collection),
-    #     AS_LIST,
-    #     ctx.callback,
-    # )
-    # for row in resource_query_iter:
-    #     ingest_resource = row[0]
-    # # TODO add check for ingest_resource
 
     ctx.callback.msiWriteRodsLog(
         "INFO: Start replication from '{}' to '{}'".format(source_collection, destination_collection), 0
     )
-    check_collection_replication(ctx, destination_collection, destination_resource)
-    check_collection_trim(ctx, destination_collection, ingest_resource)
+    replicate_status = check_collection_replication(ctx, destination_collection, destination_resource)
+    trim_status = check_collection_trim(ctx, destination_collection, ingest_resource)
+    source_collection_status = do_ingest_collection_data(
+        ctx, source_collection, destination_collection, ingest_resource, destination_resource
+    )
+    ctx.callback.msiWriteRodsLog("INFO: \t\tRetry replicate_status: {}".format(str(replicate_status)), 0)
+    ctx.callback.msiWriteRodsLog("INFO: \t\tRetry trim_status: {}".format(str(trim_status)), 0)
+    ctx.callback.msiWriteRodsLog("INFO: \t\tsource_collection_status: {}".format(str(source_collection_status)), 0)
+    ctx.callback.msiWriteRodsLog(
+        "INFO: End replication from '{}' to '{}'".format(source_collection, destination_collection), 0
+    )
+
+    return replicate_status + trim_status + source_collection_status
+
+
+def do_ingest_collection_data(ctx, source_collection, destination_collection, ingest_resource, destination_resource):
+    rename_status = 0
+    replicate_status = 0
+    trim_status = 0
+
+    # TODO remove
+    #######################
+    from random import randrange
+
+    rand_status = randrange(4)
+    ctx.callback.msiWriteRodsLog("DEBUG: rand_status '{}'".format(rand_status), 0)
+    #######################
 
     # This query get all the sub-files inside the collection
     query_iter = row_iterator(
@@ -66,8 +80,13 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
         # Move the file to the destination location
         rename_status += rename_collection_data(ctx, source_file_full_path, destination_file_full_path)
 
-        # if source_file_name in ("instance.json", "schema.json"):
-        #     continue
+        # TODO remove
+        #######################
+        if rand_status >= 1 and source_file_name in ("instance.json", "schema.json"):
+            replicate_status += 1
+            trim_status += 1
+            continue
+        #######################
 
         # Replicate to the project resource
         replicate_status += replicate_collection_data(ctx, destination_file_full_path, destination_resource)
@@ -75,9 +94,6 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
         # Trim original ingest replica
         trim_status += trim_collection_data(ctx, destination_file_full_path, ingest_resource)
 
-    ctx.callback.msiWriteRodsLog(
-        "INFO: End replication from '{}' to '{}'".format(source_collection, destination_collection), 0
-    )
     return rename_status + replicate_status + trim_status
 
 
@@ -109,8 +125,8 @@ def rename_collection_data(ctx, source_file_full_path, destination_file_full_pat
 
 
 def check_collection_replication(ctx, destination_collection, destination_resource):
-    counter = {}
-    # ctx.callback.msiWriteRodsLog("destination_collection: {}".format(destination_collection), 0)
+    replicate_status = 0
+    replica_counter = {}
     resource_query_iter = row_iterator(
         "DATA_RESC_HIER, COLL_NAME, DATA_NAME",
         "COLL_NAME like '{}%'".format(destination_collection),
@@ -119,19 +135,17 @@ def check_collection_replication(ctx, destination_collection, destination_resour
     )
     for row in resource_query_iter:
         file_resource_hierarchy = row[0]
-        data_path = row[1] + "/" + row[2]
-        # ctx.callback.msiWriteRodsLog("file_resource_hierarchy: {}".format(file_resource_hierarchy), 0)
-        # ctx.callback.msiWriteRodsLog("data_path: {}".format(data_path), 0)
-        if data_path not in counter:
-            counter[data_path] = 0
+        destination_file_full_path = row[1] + "/" + row[2]
+        if destination_file_full_path not in replica_counter:
+            replica_counter[destination_file_full_path] = 0
         if destination_resource in file_resource_hierarchy:
-            counter[data_path] += 1
-            # ctx.callback.msiWriteRodsLog("count: {}".format(str(counter)), 0)
+            replica_counter[destination_file_full_path] += 1
 
-    for data_path in counter:
-        if counter[data_path] < 2:
-            # ctx.callback.msiWriteRodsLog("data: {}".format(str(data_path)), 0)
-            replicate_collection_data(ctx, data_path, destination_resource)
+    for destination_file_full_path in replica_counter:
+        if replica_counter[destination_file_full_path] < 2:
+            replicate_status += replicate_collection_data(ctx, destination_file_full_path, destination_resource)
+
+    return replicate_status
 
 
 def replicate_collection_data(ctx, destination_file_full_path, destination_resource):
@@ -141,7 +155,7 @@ def replicate_collection_data(ctx, destination_file_full_path, destination_resou
         # destination_resource = "blabla"
         ret_replication = ctx.callback.msiDataObjRepl(
             destination_file_full_path,
-            "destRescName={}++++all=++++verifyChksum=++++numThreads=10".format(destination_resource),
+            "destRescName={}++++verifyChksum=".format(destination_resource),
             0,
         )
         replication_status = ret_replication["arguments"][2]
@@ -154,6 +168,7 @@ def replicate_collection_data(ctx, destination_file_full_path, destination_resou
 
 
 def check_collection_trim(ctx, destination_collection, ingest_resource):
+    trim_status = 0
     resource_query_iter = row_iterator(
         "COLL_NAME, DATA_NAME",
         "COLL_NAME like '{}%' AND DATA_RESC_NAME = '{}'".format(destination_collection, ingest_resource),
@@ -162,14 +177,16 @@ def check_collection_trim(ctx, destination_collection, ingest_resource):
     )
     for row in resource_query_iter:
         data_path = row[0] + "/" + row[1]
-        trim_collection_data(ctx, data_path, ingest_resource)
+        trim_status += trim_collection_data(ctx, data_path, ingest_resource)
+
+    return trim_status
 
 
 def trim_collection_data(ctx, destination_file_full_path, ingest_resource):
     trim_status = 1
     try:
         ctx.callback.msiWriteRodsLog("DEBUG: \tStart to trim for: {}".format(destination_file_full_path), 0)
-        ret_trim = ctx.callback.msiDataObjTrim(destination_file_full_path, ingest_resource, "null", "1", "null", 0)
+        ret_trim = ctx.callback.msiDataObjTrim(destination_file_full_path, ingest_resource, "null", "2", "null", 0)
         # msiDataObjTrim returns 1 if a replica is trimmed, 0 if nothing trimmed
         trim_status = ret_trim["arguments"][5]
     except RuntimeError:

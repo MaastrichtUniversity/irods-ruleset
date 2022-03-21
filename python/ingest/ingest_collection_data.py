@@ -1,24 +1,30 @@
 @make(inputs=range(3), outputs=[3], handler=Output.STORE)
 def ingest_collection_data(ctx, source_collection, destination_collection, project_id):
     """
-    Ingest the input source collection toward the destination collection.
-    Ingest:
-        * Create the destination collection sub-folders, if required
-        * Rename individually each files inside the source collection to the destination collection
-            - Not renaming the whole source collection to preserve the dropzone folder and its AVU (e.g: state, etc ...)
-        * Replicate each files inside the destination collection to the project resource
-        * Trim each files original replica at the input ingest resource
+     Ingest the input source collection toward the destination collection.
+     Ingest:
+         * Check the destination collection replica in case of retry
+         * Create the destination collection sub-folders, if required
+         * Rename individually each files inside the source collection to the destination collection
+             - Not renaming the whole source collection to preserve the dropzone folder and its AVU (e.g:state, etc ...)
+         * Replicate each files inside the destination collection to the project resource
+         * Trim each files original replica at the input ingest resource
 
-    Parameters
-    ----------
-    ctx : Context
-        Combined type of callback and rei struct.
-    source_collection: str
-        The absolute path of the source collection/dropzone
-    destination_collection: str
-        The absolute path of the destination project collection
-    project_id: str
-        The project id, ie P00000010
+     Parameters
+     ----------
+     ctx : Context
+         Combined type of callback and rei struct.
+     source_collection: str
+         The absolute path of the source collection/dropzone
+     destination_collection: str
+         The absolute path of the destination project collection
+     project_id: str
+         The project id, ie P00000010
+
+    Returns
+     -------
+     int
+         The sum of the ingestion status codes. 0 is success.
     """
     project_path = "/nlmumc/projects/{}".format(project_id)
     destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", "true")["arguments"][2]
@@ -45,18 +51,36 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
 
 
 def do_ingest_collection_data(ctx, source_collection, destination_collection, ingest_resource, destination_resource):
+    """
+    Query the source collection to list all the data files and call the following operations for each of them:
+        * create_destination_collection_sub_folder
+        * rename_collection_data
+        * calculate_checksum_collection_data
+        * replicate_collection_data
+        * trim_collection_data
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    source_collection: str
+        The absolute path of the source collection/dropzone.
+    destination_collection: str
+        The absolute path of the destination project collection.
+    ingest_resource: str
+        The resource name where the data are before the ingestion.
+    destination_resource: str
+        The resource name where to replicate the data during the ingestion.
+
+    Returns
+    -------
+    int
+        The sum of the ingestion status codes. 0 is success.
+    """
     rename_status = 0
     replicate_status = 0
     trim_status = 0
     checksum_status = 0
-
-    # TODO remove
-    #######################
-    from random import randrange
-
-    rand_status = randrange(4)
-    ctx.callback.msiWriteRodsLog("DEBUG: rand_status '{}'".format(rand_status), 0)
-    #######################
 
     # This query get all the sub-files inside the collection
     query_iter = row_iterator(
@@ -81,14 +105,6 @@ def do_ingest_collection_data(ctx, source_collection, destination_collection, in
         # Move the file to the destination location
         rename_status += rename_collection_data(ctx, source_file_full_path, destination_file_full_path)
 
-        # TODO remove
-        #######################
-        if rand_status >= 1 and source_file_name in ("instance.json", "schema.json"):
-            replicate_status += 1
-            trim_status += 1
-            continue
-        #######################
-
         # Calculate the checksum value of the current data file
         checksum_status += calculate_checksum_collection_data(ctx, destination_file_full_path)
 
@@ -102,6 +118,18 @@ def do_ingest_collection_data(ctx, source_collection, destination_collection, in
 
 
 def create_destination_collection_sub_folder(ctx, destination_file_base_path, destination_collection):
+    """
+    Check if the destination collection sub-folder exists. If not, create it.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    destination_file_base_path: str
+        The absolute path of the destination collection sub-folder. e.g: /nlmumc/projects/P00000010/C00000001/sub1
+    destination_collection: str
+        The absolute path of the destination project collection. e.g: /nlmumc/projects/P00000010/C00000001
+    """
     if destination_file_base_path != destination_collection + "/":
         try:
             # Check if the sub-folder exists
@@ -112,6 +140,23 @@ def create_destination_collection_sub_folder(ctx, destination_file_base_path, de
 
 
 def rename_collection_data(ctx, source_file_full_path, destination_file_full_path):
+    """
+    Rename the collection data file from the 'ingest zone' to the 'project zone'.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    source_file_full_path: str
+        The absolute path of the source data file. e.g: /nlmumc/ingest/direct/crazy-frog/sub1/foobar.txt
+    destination_file_full_path: str
+        The absolute path of the destination data file.  e.g: /nlmumc/projects/P00000010/C00000001/sub1/foobar.txt
+
+    Returns
+    -------
+    int
+        The status code of the rename operation. 0 is success.
+    """
     rename_status = 1
     try:
         ctx.callback.msiWriteRodsLog(
@@ -129,6 +174,25 @@ def rename_collection_data(ctx, source_file_full_path, destination_file_full_pat
 
 
 def check_collection_replication(ctx, destination_collection, destination_resource):
+    """
+    In case of retry, query the destination collection and check if each data files has:
+        * a checksum value
+        * two replica
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    destination_collection: str
+        The absolute path of the destination project collection. e.g: /nlmumc/projects/P00000010/C00000001
+    destination_resource: str
+        The resource name where to replicate the data during the ingestion.
+
+    Returns
+    -------
+    int
+        The sum of the checksum and replication status codes. 0 is success.
+    """
     checksum_status = 0
     replicate_status = 0
     replica_counter = {}
@@ -155,6 +219,23 @@ def check_collection_replication(ctx, destination_collection, destination_resour
 
 
 def replicate_collection_data(ctx, destination_file_full_path, destination_resource):
+    """
+    Replicate the input data file to the input resource.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    destination_file_full_path: str
+        The absolute path of the destination data file.  e.g: /nlmumc/projects/P00000010/C00000001/sub1/foobar.txt
+    destination_resource: str
+        The resource name where to replicate the data during the ingestion.
+
+    Returns
+    -------
+    int
+        The replication status code. 0 is success.
+    """
     replication_status = 1
     try:
         ctx.callback.msiWriteRodsLog("DEBUG: \tStart replication for: {}".format(destination_file_full_path), 0)
@@ -173,6 +254,24 @@ def replicate_collection_data(ctx, destination_file_full_path, destination_resou
 
 
 def check_collection_trim(ctx, destination_collection, ingest_resource):
+    """
+    In case of retry, query the destination collection and check if each data files has still a replica at
+    the ingestion resource.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    destination_collection: str
+        The absolute path of the destination project collection. e.g: /nlmumc/projects/P00000010/C00000001
+    ingest_resource: str
+        The resource name where the data are before the ingestion.
+
+    Returns
+    -------
+    int
+        The trim status code. 0 is success.
+    """
     trim_status = 0
     resource_query_iter = row_iterator(
         "COLL_NAME, DATA_NAME",
@@ -188,6 +287,23 @@ def check_collection_trim(ctx, destination_collection, ingest_resource):
 
 
 def trim_collection_data(ctx, destination_file_full_path, ingest_resource):
+    """
+    Trim the input data file of the input resource.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    destination_file_full_path: str
+        The absolute path of the destination data file.  e.g: /nlmumc/projects/P00000010/C00000001/sub1/foobar.txt
+    ingest_resource: str
+        The resource name where the data are before the ingestion.
+
+    Returns
+    -------
+    int
+        The trim status code. 0 is success.
+    """
     trim_status = 1
     try:
         ctx.callback.msiWriteRodsLog("DEBUG: \tStart to trim for: {}".format(destination_file_full_path), 0)
@@ -203,6 +319,21 @@ def trim_collection_data(ctx, destination_file_full_path, ingest_resource):
 
 
 def calculate_checksum_collection_data(ctx, destination_file_full_path):
+    """
+    Run the checksum calculation for the input data file.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    destination_file_full_path: str
+        The absolute path of the destination data file.  e.g: /nlmumc/projects/P00000010/C00000001/sub1/foobar.txt
+
+    Returns
+    -------
+    int
+        The checksum calculation status code. 0 is success.
+    """
     checksum_status = 1
     try:
         ctx.callback.msiWriteRodsLog("DEBUG: \tStart checksum for: {}".format(destination_file_full_path), 0)

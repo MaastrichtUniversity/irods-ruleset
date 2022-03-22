@@ -64,9 +64,21 @@ acSetRescSchemeForCreate {
         # We are not in a projectfolder at all
         msiSetDefaultResc("rootResc","null");
     }
+
+    ### Policy to prevent file creation directly in direct ingest folder ###
+    if($objPath like regex "/nlmumc/ingest/direct/.*") {
+        uuChopPath($objPath, *path, *c);
+        if (*path == "/nlmumc/ingest/direct"){
+            msiWriteRodsLog("DEBUG: No creating of files in root of /nlmumc/ingest/direct allowed. Path = $objPath by '$userNameClient'", *status);
+            cut;
+            msiOprDisallowed;
+        }
+    }
+
 }
 
 acPreprocForCollCreate {
+    # msiGetSessionVarValue("all", "server")
     ### Policy to regulate folder creation within projects ###
     if($collName like regex "/nlmumc/projects/P[0-9]{9}/.*") {
         if( ! ($collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}" || $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*")) {
@@ -76,6 +88,20 @@ acPreprocForCollCreate {
             msiOprDisallowed;
         }
     }
+
+    ### Policy to regulate folder creation within direct ingest ###
+    if($collParentName == "/nlmumc/ingest/direct") {
+        # Allow rods-admin to create folders
+        if (! ($userNameClient == "rods")){
+            # Allow the creation of folder trough python-irodsclient (MDR)
+            if ( !($connectOption == "python-irodsclient")){
+                    msiWriteRodsLog("DEBUG: Folder '$collName' was not allowed to be created in /nlmumc/ingest/direct/ by '$userNameClient'", *status);
+                    cut;
+                    msiOprDisallowed;
+            }
+        }
+    }
+
 }
 
 acPostProcForCollCreate {

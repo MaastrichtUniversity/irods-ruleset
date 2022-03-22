@@ -29,8 +29,8 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
     project_path = "/nlmumc/projects/{}".format(project_id)
     destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", "true")["arguments"][2]
 
-    # TODO Change hardcoded ingest_resource value
-    ingest_resource = "arcRescSURF01"
+    # TODO Change to query instead of hardcoded ingest_resource value?
+    ingest_resource = "stagingResc01"
 
     ctx.callback.msiWriteRodsLog(
         "INFO: Start replication from '{}' to '{}'".format(source_collection, destination_collection), 0

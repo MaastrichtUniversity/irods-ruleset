@@ -53,7 +53,9 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
         # -818000 CAT_NO_ACCESS_PERMISSION
         ctx.callback.msiExit(
             "-818000",
-            "User '{}' has insufficient DropZone permissions on /nlmumc/ingest/{}".format(dropzone_type, username),
+            "User '{}' has insufficient DropZone permissions on for a dropzone of type '{}'".format(
+                username, dropzone_type
+            ),
         )
 
     # Check if the ingest resource is up

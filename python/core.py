@@ -154,3 +154,15 @@ def convert_to_current_timezone(date, date_format="%Y-%m-%d %H:%M:%S"):
     old_timezone = pytz.timezone("UTC")
     new_timezone = pytz.timezone("Europe/Amsterdam")
     return old_timezone.localize(date).astimezone(new_timezone).strftime(date_format)
+
+
+def format_dropzone_path(ctx, token, dropzone_type):
+    if dropzone_type == "mounted":
+        dropzone_path = "/nlmumc/ingest/zones/{}".format(token)
+    elif dropzone_type == "direct":
+        dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
+    else:
+        ctx.callback.msiExit(
+            "-1", "Invalid dropzone type, supported 'mounted' and 'direct', got '{}'.".format(dropzone_type)
+        )
+    return dropzone_path

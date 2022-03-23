@@ -18,7 +18,7 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     """
     import time
 
-    dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
+    dropzone_path = format_dropzone_path(ctx, token, "direct")
 
     pre_ingest_results = json.loads(
         ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, "")["arguments"][3]

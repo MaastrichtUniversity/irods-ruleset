@@ -32,14 +32,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     dropzone_type: str
         The type of dropzone, 'mounted' or 'direct'
     """
-    if dropzone_type == "mounted":
-        dropzone_path = "/nlmumc/ingest/zones/{}".format(token)
-    elif dropzone_type == "direct":
-        dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
-    else:
-        ctx.callback.msiExit(
-            "-1", "Invalid dropzone type, supported 'mounted' and 'direct', got '{}'.".format(dropzone_type)
-        )
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     destination_collection = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
     # Set the Creator AVU

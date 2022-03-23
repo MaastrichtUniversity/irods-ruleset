@@ -27,7 +27,7 @@ def set_dropzone_total_size_avu(ctx, token):
         # -816000 CAT_INVALID_ARGUMENT
         ctx.callback.msiExit("-816000", "Invalid name for ingest zone")
 
-    drop_zone_path = "/nlmumc/ingest/zones/{}".format(token)
+    drop_zone_path = format_dropzone_path(ctx, token, "mounted")
 
     # This call makes sure that the dropzone path exists. If it does not exist,
     # iRODS will throw an exception and the rule execution will not continue

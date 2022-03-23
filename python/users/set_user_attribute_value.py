@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def set_username_attribute_value(ctx, username, attribute, value):
+def set_user_attribute_value(ctx, username, attribute, value):
     """
     Set an attribute value to the input user
 

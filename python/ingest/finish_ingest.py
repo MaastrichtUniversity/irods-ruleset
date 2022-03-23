@@ -46,7 +46,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_collection), 0)
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
-    ret = ctx.get_username_attribute_value(username, "email", "false", "result")["arguments"][3]
+    ret = ctx.get_user_attribute_value(username, "email", "false", "result")["arguments"][3]
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(

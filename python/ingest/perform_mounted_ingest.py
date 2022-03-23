@@ -21,7 +21,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     source_collection = "/nlmumc/ingest/zones/{}".format(token)
 
     pre_ingest_results = json.loads(
-        ctx.callback.perform_ingest_pre_hook(ctx, project_id, title, source_collection, "")["arguments"][3]
+        ctx.callback.perform_ingest_pre_hook(project_id, title, source_collection, "")["arguments"][3]
     )
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
@@ -46,7 +46,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, str(difference))
+    ctx.callback.perform_ingest_post_hook(project_id, collection_id, source_collection, str(difference))
 
     # Handle post ingestion operations
     ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, "mounted")

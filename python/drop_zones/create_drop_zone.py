@@ -33,19 +33,12 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     token_stripped = json.loads(token)
 
     # Format the path based on the dropzone type
-    dropzone_path = ""
+    dropzone_path = format_dropzone_path(ctx, token_stripped, dropzone_type)
     if dropzone_type == "mounted":
-        dropzone_path = "/nlmumc/ingest/zones/{}".format(token_stripped)
         vo_person_external_id = ctx.callback.get_user_attribute_value(username, "voPersonExternalID", "true", "")[
             "arguments"
         ][3]
         vo_person_external_id = json.loads(vo_person_external_id)["value"]
-    elif dropzone_type == "direct":
-        dropzone_path = "/nlmumc/ingest/direct/{}".format(token_stripped)
-    else:
-        ctx.callback.msiExit(
-            "-1", "Invalid dropzone type, supported 'mounted' and 'direct', got '{}'.".format(dropzone_type)
-        )
 
     # Check if user has permissions to create dropzone
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, dropzone_type, "")["arguments"][2]

@@ -1,9 +1,8 @@
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     """
-    Validate if the dropzone and depositor are eligible for ingestion by
-
-        - Check if user has dropzone persmissions
+    Validate if the dropzone and depositor are eligible for ingestion by:
+        - Check if user has dropzone permissions
         - Check if depositor is the creator of the dropzone (only in direct ingest)
         - Check if the dropzone exists
         - Check if the linked project ID exists

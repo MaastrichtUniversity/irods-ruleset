@@ -18,10 +18,10 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     """
     import time
 
-    source_collection = "/nlmumc/ingest/zones/{}".format(token)
+    dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
     pre_ingest_results = json.loads(
-        ctx.callback.perform_ingest_pre_hook(ctx, project_id, title, source_collection, "")["arguments"][3]
+        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, "")["arguments"][3]
     )
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
@@ -41,12 +41,12 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
             "",
         )
     except RuntimeError:
-        ctx.callback.setErrorAVU(source_collection, "state", "error-ingestion", "Error copying ingest zone")
+        ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error copying ingest zone")
 
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, str(difference))
+    ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, str(difference))
 
     # Handle post ingestion operations
     ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, "mounted")

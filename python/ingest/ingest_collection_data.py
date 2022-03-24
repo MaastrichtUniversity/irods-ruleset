@@ -340,7 +340,7 @@ def calculate_checksum_collection_data(ctx, destination_file_full_path):
         ret_checksum = ctx.callback.msiDataObjChksum(destination_file_full_path, "verifyChksum=", 0)
         checksum_status = int(ret_checksum["arguments"][2])
     except RuntimeError:
-        ctx.callback.msiWriteRodsLog("ERROR: \tReplication failed for: {}".format(destination_file_full_path), 0)
+        ctx.callback.msiWriteRodsLog("ERROR: \tChecksum failed for: {}".format(destination_file_full_path), 0)
         checksum_status = 1
     if checksum_status != 0:
         return 1

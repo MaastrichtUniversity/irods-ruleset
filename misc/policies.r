@@ -67,7 +67,7 @@ acSetRescSchemeForCreate {
             msiOprDisallowed;
         }
     } else {
-        # We are not in a projectfolder at all
+        # We are not in a project folder at all
         msiSetDefaultResc("rootResc","null");
     }
 
@@ -87,7 +87,6 @@ acSetRescSchemeForCreate {
 }
 
 acPreprocForCollCreate {
-    # msiGetSessionVarValue("all", "server")
     ### Policy to regulate folder creation within projects ###
     if($collName like regex "/nlmumc/projects/P[0-9]{9}/.*") {
         if( ! ($collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}" || $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*")) {

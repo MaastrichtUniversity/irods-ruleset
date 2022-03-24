@@ -1,10 +1,10 @@
 # This rule checks if a user has sufficient permissions to (create and) delete dropzones, based on iRODS ACL's on the dropzones parent-collection
 #
-# irule -F checkDropZoneACL.r
+# irule -F /rules/ingest/checkDropZoneACL.r "*user='dlinssen'" "*dropzoneType='direct'"
 
 irule_dummy() {
     IRULE_checkDropZoneACL(*user, *dropzoneType, *result)
-    #writeLine("stdout", *result);
+    writeLine("stdout", *result);
 }
 
 IRULE_checkDropZoneACL(*user, *dropzoneType, *result) {
@@ -37,10 +37,8 @@ IRULE_checkDropZoneACL(*user, *dropzoneType, *result) {
     foreach ( *Row in *QOut ) {
         if ( int(*Row.COLL_NAME) > 0 ) {
             *result= "true";
-            #writeLine("stdout", "true");
         } else {
             *result= "false";
-            #writeLine("stdout", "false");
         }
     }
 

@@ -1,3 +1,4 @@
+# Gets fired after file creation
 acPostProcForPut {
     # Policy to increment the size of the ingested files for the progress bar
     if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {

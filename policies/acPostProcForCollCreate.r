@@ -1,3 +1,4 @@
+# Gets fired after collection creation
 acPostProcForCollCreate {
     ### Policy to increment the value of the 'latest_project_number' AVU on /nlmumc/projects ###
     if ($collName like regex "/nlmumc/projects/P[0-9]{9}") {

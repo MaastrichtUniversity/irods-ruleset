@@ -1,4 +1,6 @@
+# Gets fired before collection creation
 acPreprocForCollCreate {
+    msiWriteRodsLog("this fires", 0)
     ### Policy to regulate folder creation within projects ###
     if($collName like regex "/nlmumc/projects/P[0-9]{9}/.*") {
         if( ! ($collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}" || $collName like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*")) {

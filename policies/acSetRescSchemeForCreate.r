@@ -1,3 +1,4 @@
+# Fires before file creation
 acSetRescSchemeForCreate {
     ### Policy to set proper storage resource & prevent file creation directly in P-folder ###
     # Since 'acPreProcForCreate' does not fire in iRODS 4.1.x, we made 'acSetRescSchemeForCreate' a combined policy

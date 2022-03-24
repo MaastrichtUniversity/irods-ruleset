@@ -37,6 +37,8 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
     )
     replicate_status = check_collection_replication(ctx, destination_collection, destination_resource)
     trim_status = check_collection_trim(ctx, destination_collection, ingest_resource)
+
+    create_destination_collection_sub_folders(ctx, source_collection, destination_collection)
     source_collection_status = do_ingest_collection_data(
         ctx, source_collection, destination_collection, ingest_resource, destination_resource
     )
@@ -53,7 +55,6 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
 def do_ingest_collection_data(ctx, source_collection, destination_collection, ingest_resource, destination_resource):
     """
     Query the source collection to list all the data files and call the following operations for each of them:
-        * create_destination_collection_sub_folder
         * rename_collection_data
         * calculate_checksum_collection_data
         * replicate_collection_data
@@ -99,9 +100,6 @@ def do_ingest_collection_data(ctx, source_collection, destination_collection, in
         destination_file_base_path = destination_collection + sub_folder_path
         destination_file_full_path = destination_file_base_path + "/" + source_file_name
 
-        # If the destination collection sub-folder doesn't exist, create it.
-        create_destination_collection_sub_folder(ctx, destination_file_base_path, destination_collection)
-
         # Move the file to the destination location
         rename_status += rename_collection_data(ctx, source_file_full_path, destination_file_full_path)
 
@@ -117,26 +115,34 @@ def do_ingest_collection_data(ctx, source_collection, destination_collection, in
     return rename_status + checksum_status + replicate_status + trim_status
 
 
-def create_destination_collection_sub_folder(ctx, destination_file_base_path, destination_collection):
+def create_destination_collection_sub_folders(ctx, source_collection, destination_collection):
     """
-    Check if the destination collection sub-folder exists. If not, create it.
+    Check if the destination collection sub-folders exist. If not, create them.
 
     Parameters
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    destination_file_base_path: str
-        The absolute path of the destination collection sub-folder. e.g: /nlmumc/projects/P00000010/C00000001/sub1
+    source_collection: str
+        The absolute path of the source collection/dropzone.
     destination_collection: str
         The absolute path of the destination project collection. e.g: /nlmumc/projects/P00000010/C00000001
     """
-    if destination_file_base_path != destination_collection + "/":
-        try:
-            # Check if the sub-folder exists
-            ctx.callback.msiObjStat(destination_file_base_path, irods_types.RodsObjStat())
-        except RuntimeError:
-            ctx.callback.msiWriteRodsLog("DEBUG: \tCreate sub-folder: {}".format(destination_file_base_path), 0)
-            ctx.callback.msiCollCreate(destination_file_base_path, 1, 0)
+    query_iter = row_iterator("COLL_NAME", "COLL_NAME like '{}%'".format(source_collection), AS_LIST, ctx.callback)
+    for row in query_iter:
+        collection_sub_folder_path = row[0]
+        sub_folder_path = collection_sub_folder_path.replace(source_collection, "")
+        collection_sub_folder = destination_collection + sub_folder_path
+
+        ctx.callback.msiWriteRodsLog("DEBUG: \tcollection_sub_folder: {}".format(collection_sub_folder), 0)
+
+        if collection_sub_folder != destination_collection + "/":
+            try:
+                # Check if the sub-folder exists
+                ctx.callback.msiObjStat(collection_sub_folder, irods_types.RodsObjStat())
+            except RuntimeError:
+                ctx.callback.msiWriteRodsLog("DEBUG: \tCreate sub-folder: {}".format(collection_sub_folder), 0)
+                ctx.callback.msiCollCreate(collection_sub_folder, 1, 0)
 
 
 def rename_collection_data(ctx, source_file_full_path, destination_file_full_path):

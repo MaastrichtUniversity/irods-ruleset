@@ -135,7 +135,7 @@ def read_data_object_from_irods(ctx, path):
     file_desc = ret_val["arguments"][1]
 
     # Read iRODS file
-    ret_val = ctx.callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
+    ret_val = ctx.callback.msiDataObjRead(file_desc, 2**31 - 1, irods_types.BytesBuf())
     read_buf = ret_val["arguments"][2]
 
     # Convert BytesBuffer to string

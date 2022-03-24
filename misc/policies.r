@@ -8,6 +8,7 @@
 acPreConnect(*OUT) { *OUT="CS_NEG_REQUIRE"; }
 
 acPostProcForPut {
+    # Policy to increment the size of the ingested files for the progress bar
     if($objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
         *resource = "";
         *sizeIngested = 0;
@@ -25,6 +26,11 @@ acPostProcForPut {
             msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
             msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C");
         }
+    }
+
+    # Policy to give read access on metadata files to dropzone creator
+    if ($objPath like regex "/nlmumc/ingest/direct/.*/instance.json" || $objPath like regex "/nlmumc/ingest/direct/.*/schema.json"){
+        msiSetACL("default", "read", "$userNameClient", "$objPath")
     }
 }
 
@@ -61,9 +67,23 @@ acSetRescSchemeForCreate {
             msiOprDisallowed;
         }
     } else {
-        # We are not in a projectfolder at all
+        # We are not in a project folder at all
         msiSetDefaultResc("rootResc","null");
     }
+
+    ### Policy to prevent file creation directly in direct ingest folder ###
+    if($objPath like regex "/nlmumc/ingest/direct/.*") {
+        uuChopPath($objPath, *path, *c);
+        if (*path == "/nlmumc/ingest/direct"){
+            msiWriteRodsLog("DEBUG: No creating of files in root of /nlmumc/ingest/direct allowed. Path = $objPath by '$userNameClient'", *status);
+            cut;
+            msiOprDisallowed;
+        } else {
+            # The resource of anything created in /nlmumc/ingest/direct should always be stagingResc01
+            msiSetDefaultResc("stagingResc01", "forced");
+        }
+    }
+
 }
 
 acPreprocForCollCreate {
@@ -76,6 +96,27 @@ acPreprocForCollCreate {
             msiOprDisallowed;
         }
     }
+
+    ### Policy to regulate folder creation within direct ingest ###
+    if($collParentName == "/nlmumc/ingest/direct") {
+        # Allow rods-admin to create folders
+        if (! ($userNameClient == "rods")){
+            # Allow the creation of folder trough python-irodsclient (MDR)
+            if ( !($connectOption == "python-irodsclient")){
+                    msiWriteRodsLog("DEBUG: Folder '$collName' was not allowed to be created in /nlmumc/ingest/direct/ by '$userNameClient'", *status);
+                    cut;
+                    msiOprDisallowed;
+            }
+        }
+    }
+
+    ### Policy to restrict folder creation of .metadata_versions inside of a dropzone ###
+    if($collName like regex "/nlmumc/ingest/direct/.*/.metadata_versions") {
+        msiWriteRodsLog("DEBUG: Folder '$collName' was not allowed to be created by '$userNameClient'", *status);
+        cut;
+        msiOprDisallowed;
+    }
+
 }
 
 acPostProcForCollCreate {

@@ -1,8 +1,10 @@
 # Call with
 #
-# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within start_ingest.py rule
+# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within post_ingest.py rule
 
-delayRemoveDropzone(*irodsIngestRemoveDelay, *srcColl, *ingestResourceHost, *token) {
+delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
+     msi_getenv("IRODS_INGEST_REMOVE_DELAY", *irodsIngestRemoveDelay)
+
      delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
@@ -10,8 +12,10 @@ delayRemoveDropzone(*irodsIngestRemoveDelay, *srcColl, *ingestResourceHost, *tok
             setErrorAVU(*srcColl,"state", "error-post-ingestion","Error removing Dropzone-collection");
         }
 
-        remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
-            msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+        if ( *dropzoneType == "mounted" ){
+            remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
+                msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+            }
         }
     }
 }

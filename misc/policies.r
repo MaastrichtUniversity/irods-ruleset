@@ -84,6 +84,18 @@ acSetRescSchemeForCreate {
         }
     }
 
+    ### Policy to restrict object creation during or after ingestion ###
+    if($objPath like regex "/nlmumc/ingest/direct/.*/.*") {
+        *state = "";
+        uuChop($objPath, *basePath, *tail, "/nlmumc/ingest/direct/", true);
+        uuChop(*tail, *token, *rest, "/", true);
+        getCollectionAVU("/nlmumc/ingest/direct/*token","state",*state,"","false");
+        if(*state != "open" && *state != "warning-validation-incorrect" && *state != "error-post-ingestion" && *state != "error-ingestion") {
+            msiWriteRodsLog("DEBUG: Object '$objPath' was not allowed to be created during dropzone state '*state' by '$userNameClient'", *status);
+            cut;
+            msiOprDisallowed;
+        }
+    }
 }
 
 acPreprocForCollCreate {
@@ -115,6 +127,19 @@ acPreprocForCollCreate {
         msiWriteRodsLog("DEBUG: Folder '$collName' was not allowed to be created by '$userNameClient'", *status);
         cut;
         msiOprDisallowed;
+    }
+
+    ### Policy to restrict folder creation during or after ingestion ###
+    if($collName like regex "/nlmumc/ingest/direct/.*/.*") {
+        *state = "";
+        uuChop($collName, *basePath, *tail, "/nlmumc/ingest/direct/", true);
+        uuChop(*tail, *token, *rest, "/", true);
+        getCollectionAVU("/nlmumc/ingest/direct/*token","state",*state,"","false");
+        if(*state != "open" && *state != "warning-validation-incorrect" && *state != "error-post-ingestion" && *state != "error-ingestion") {
+            msiWriteRodsLog("DEBUG: Folder '$collName' was not allowed to be created during dropzone state '*state' by '$userNameClient'", *status);
+            cut;
+            msiOprDisallowed;
+        }
     }
 
 }

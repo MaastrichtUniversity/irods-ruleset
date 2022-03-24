@@ -69,7 +69,7 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
 
     # Create the dropzone
     status = ctx.callback.msiCollCreate(dropzone_path, 0, 0)["arguments"][2]
-    if status != 0:
+    if int(status) != 0:
         ctx.callback.msiExit("-1", "Collection creation failed")
 
     # Set AVUs

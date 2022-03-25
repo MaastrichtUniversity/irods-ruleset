@@ -37,4 +37,10 @@ def set_acl_for_metadata_snapshot(ctx, project_id, collection_id, user, open_acl
         ctx.callback.msiWriteRodsLog("DEBUG: '{}' doesn't exist yet".format(metadata_folder_path), 0)
 
     if close_acl == "true":
-        ctx.callback.closeProjectCollection(project_id, collection_id)
+        set_collection_size_call = "setCollectionSize('{}', '{}', 'false', 'false')".format(project_id, collection_id)
+        close_project_collection_call = "closeProjectCollection('{}', '{}')".format(project_id, collection_id)
+        ctx.delayExec(
+            "<PLUSET>1s</PLUSET>",
+            "{};{};".format(set_collection_size_call, close_project_collection_call),
+            "",
+        )

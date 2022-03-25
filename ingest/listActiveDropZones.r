@@ -38,6 +38,14 @@ IRULE_listActiveDropZones(*report, *result) {
         *dropzone_path = *Row.COLL_NAME
         uuChopPath(*Row.COLL_NAME, *collection, *token);
 
+        *type = ""
+        if (*Row.COLL_PARENT_NAME == "/nlmumc/ingest/zones"){
+            *type = "mounted"
+        }
+        else if (*Row.COLL_PARENT_NAME == "/nlmumc/ingest/direct"){
+            *type = "direct"
+        }
+
         *title = "";
         *state = "";
         *validateState = "";
@@ -83,6 +91,7 @@ IRULE_listActiveDropZones(*report, *result) {
 
         # Map AVU's and construct json object
         msiAddKeyVal(*kvp, 'token', *token);
+        msiAddKeyVal(*kvp, 'type', *type);
 
         if ( *title == "" ) {
             msiAddKeyVal(*kvp, 'title', "no-title-AVU-set");

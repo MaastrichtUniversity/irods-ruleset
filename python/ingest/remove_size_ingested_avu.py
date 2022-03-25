@@ -6,13 +6,7 @@ def remove_size_ingested_avu(ctx, path):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
-    mode : str
-        'default', 'recursive' expected values
-    access : str
-        access level: 'own', 'write', 'read'
-    user : str
-        The username
+        Combined type of callback and rei struct.
     path : str
         The absolute path of the collection
     """

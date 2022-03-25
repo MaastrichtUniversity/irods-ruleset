@@ -1,5 +1,5 @@
-@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
-def get_active_drop_zone(ctx, token, check_ingest_resource_status):
+@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
+def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type):
     """
     Get the attribute values for an active dropzone
 
@@ -11,6 +11,8 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         The dropzone token
     check_ingest_resource_status : str
         'true'/'false' expected; If true, query the project resource status
+    dropzone_type: str
+        The type of dropzone, 'mounted' or 'direct'
 
     Returns
     -------
@@ -21,7 +23,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
 
     # Check if the user has right access at /nlmumc/ingest/zones
     # TODO: Make check dynamic
-    dropzone_path = format_dropzone_path(ctx, token, "mounted")
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
     ret = ctx.callback.checkDropZoneACL(username, "mounted", "*has_dropzone_permission")
     has_dropzone_permission = ret["arguments"][1]
     if has_dropzone_permission == "false":
@@ -47,6 +49,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status):
         "projectTitle": "",
         "date": "",
         "token": token,
+        "type": dropzone_type,
         "resourceStatus": "",
         "totalSize": "0",
         "destination": "",

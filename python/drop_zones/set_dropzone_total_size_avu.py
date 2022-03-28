@@ -1,5 +1,5 @@
-@make(inputs=[0], outputs=[], handler=Output.STORE)
-def set_dropzone_total_size_avu(ctx, token):
+@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
+def set_dropzone_total_size_avu(ctx, token, dropzone_type):
     """
     Set an attribute value with the total size of a dropzone
 
@@ -9,6 +9,8 @@ def set_dropzone_total_size_avu(ctx, token):
         Combined type of a callback and rei struct.
     token : str
         The token (i.e. 'vast-chinchilla')
+    dropzone_type: str
+        The type of dropzone, 'mounted' or 'direct'
 
     Returns
     -------
@@ -27,7 +29,7 @@ def set_dropzone_total_size_avu(ctx, token):
         # -816000 CAT_INVALID_ARGUMENT
         ctx.callback.msiExit("-816000", "Invalid name for ingest zone")
 
-    drop_zone_path = format_dropzone_path(ctx, token, "mounted")
+    drop_zone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     # This call makes sure that the dropzone path exists. If it does not exist,
     # iRODS will throw an exception and the rule execution will not continue

@@ -69,9 +69,9 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     ]
     handle_pids_version = json.loads(handle_pids_version)
     if (
-            not handle_pids_version
-            or "collection" not in handle_pids_version
-            or handle_pids_version["collection"]["handle"] == ""
+        not handle_pids_version
+        or "collection" not in handle_pids_version
+        or handle_pids_version["collection"]["handle"] == ""
     ):
         pid_request_status = False
 

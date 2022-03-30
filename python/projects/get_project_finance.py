@@ -85,7 +85,7 @@ def get_project_finance(ctx, project_path):
         project_size = project_size + collection_size
 
     project_size_gib = project_size
-    project_size_gb = project_size * (1.024 ** 3)
+    project_size_gb = project_size * (1.024**3)
 
     project_cost_yearly = project_cost
     project_cost_monthly = project_cost / 12

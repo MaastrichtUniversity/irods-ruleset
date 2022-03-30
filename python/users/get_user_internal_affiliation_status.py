@@ -18,6 +18,6 @@ def get_user_internal_affiliation_status(ctx, username):
     external_id = json.loads(ret)["value"]
     affiliation = external_id.split("@")[1]
     ctx.writeLine("stdout", affiliation)
-    if affiliation in ["maastrichtuniversity.nl", "mumc.nl"]:
+    if affiliation in ["unimaas.nl", "mumc.nl"]:
         return True
     return False

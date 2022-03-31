@@ -22,9 +22,8 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
     username = ctx.callback.get_client_username("")["arguments"][0]
 
     # Check if the user has right access at /nlmumc/ingest/zones
-    # TODO: Make check dynamic
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
-    ret = ctx.callback.checkDropZoneACL(username, "mounted", "*has_dropzone_permission")
+    ret = ctx.callback.checkDropZoneACL(username, dropzone_type, "*has_dropzone_permission")
     has_dropzone_permission = ret["arguments"][1]
     if has_dropzone_permission == "false":
         msg = "User '{}' has insufficient DropZone permissions on /nlmumc/ingest/zones".format(username)

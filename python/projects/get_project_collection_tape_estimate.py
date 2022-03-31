@@ -1,5 +1,5 @@
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
-def get_project_collection_tape_estimate(ctx, project, collection):
+def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     """
     The project collection tape status & the number and total bytes size of files eligible for tape
 
@@ -7,20 +7,20 @@ def get_project_collection_tape_estimate(ctx, project, collection):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    project: str
+    project_id: str
         The project's id; e.g P000000010
-    collection: str
+    collection_id: str
         The collection's id; e.g C000000001
 
     Returns
     -------
     dict
-        The project collection tape status, above_threshold and archivable
+        The project_id collection tape status, above_threshold and archivable
     """
-    project_path = "/nlmumc/projects/{}".format(project)
-    collection_path = "/nlmumc/projects/{}/{}".format(project, collection)
+    project_path = format_project_path(ctx, project_id)
+    collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Get the destination archive resource from the project
-    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", "false")
+    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", FALSE_AS_STRING)
     archive_resource = ret["arguments"][2]
 
     minimum_size = 262144000  # The minimum file size (in bytes)

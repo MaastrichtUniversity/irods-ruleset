@@ -23,15 +23,15 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     bool
         PIDs request status; If true, the handle PIDs were successfully requested.
     """
-    collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
-    project_path = "/nlmumc/projects/{}".format(project_id)
-    metadata_folder_path = collection_path + "/.metadata_versions"
+    collection_path = format_project_collection_path(ctx, project_id, collection_id)
+    project_path = format_project_path(ctx, project_id)
+    metadata_folder_path = format_metadata_versions_path(ctx, project_id, collection_id)
     metadata_folder_exist = True
     pid_request_status = True
 
     # Check if user is allowed to edit metadata for this project
     can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, "")["arguments"][1]
-    if can_edit_metadata == "false":
+    if not formatters.format_string_to_boolean(can_edit_metadata):
         ctx.callback.msiExit("-1", "ERROR: User has no edit metadata rights for  '{}'".format(project_id))
 
     # Check .metadata_versions folder exists
@@ -47,10 +47,10 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         except RuntimeError:
             ctx.callback.msiExit("-1", "ERROR: Couldn't create '{}'".format(metadata_folder_path))
 
-    source_schema = collection_path + "/schema.json"
-    source_instance = collection_path + "/instance.json"
+    source_schema = format_schema_collection_path(ctx, project_id, collection_id)
+    source_instance = format_instance_collection_path(ctx, project_id, collection_id)
 
-    version = ctx.callback.getCollectionAVU(collection_path, "latest_version_number", "", "", "false")["arguments"][2]
+    version = ctx.callback.getCollectionAVU(collection_path, "latest_version_number", "", "", FALSE_AS_STRING)["arguments"][2]
     new_version = 0
     try:
         version_number = int(version)
@@ -60,8 +60,8 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
             "-1", "ERROR: 'Cannot increment version number '{}' for collection '{}'".format(version, collection_path)
         )
 
-    destination_schema = metadata_folder_path + "/schema.{}.json".format(new_version)
-    destination_instance = metadata_folder_path + "/instance.{}.json".format(new_version)
+    destination_schema = format_schema_versioned_collection_path(ctx, project_id, collection_id, new_version)
+    destination_instance = format_instance_versioned_collection_path(ctx, project_id, collection_id, new_version)
 
     # Request new PIDs
     handle_pids_version = ctx.callback.get_versioned_pids(project_id, collection_id, str(new_version), "")["arguments"][

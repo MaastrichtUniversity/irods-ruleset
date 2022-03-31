@@ -18,16 +18,18 @@ def set_acl_for_metadata_snapshot(ctx, project_id, collection_id, user, open_acl
     close_acl: str
         'true'/'false' expected; If true, open the collection ACL for the current user
     """
-    collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
+    collection_path = format_project_collection_path(ctx, project_id, collection_id)
+    schema_path = format_schema_collection_path(ctx, project_id, collection_id)
+    instance_path = format_instance_collection_path(ctx, project_id, collection_id)
     access = "read"
-    if open_acl == "true":
+    if formatters.format_string_to_boolean(open_acl):
         ctx.callback.openProjectCollection(project_id, collection_id, "rods", "own")
         access = "write"
     ctx.callback.msiSetACL("default", access, user, collection_path)
-    ctx.callback.msiSetACL("default", access, user, collection_path + "/schema.json")
-    ctx.callback.msiSetACL("default", access, user, collection_path + "/instance.json")
+    ctx.callback.msiSetACL("default", access, user, schema_path)
+    ctx.callback.msiSetACL("default", access, user, instance_path)
 
-    metadata_folder_path = collection_path + "/.metadata_versions"
+    metadata_folder_path = format_metadata_versions_path(ctx, project_id, collection_id)
     try:
         ctx.callback.msiSetACL("default", access, user, metadata_folder_path)
     except RuntimeError:
@@ -36,5 +38,5 @@ def set_acl_for_metadata_snapshot(ctx, project_id, collection_id, user, open_acl
         # during the execution of create_collection_metadata_snapshot and therefore have write access to it.
         ctx.callback.msiWriteRodsLog("DEBUG: '{}' doesn't exist yet".format(metadata_folder_path), 0)
 
-    if close_acl == "true":
+    if formatters.format_string_to_boolean(close_acl):
         ctx.callback.closeProjectCollection(project_id, collection_id)

@@ -14,7 +14,7 @@ def get_user_internal_affiliation_status(ctx, username):
     bool
         True, if the user is from the UM or MUMC organization. Otherwise, False.
     """
-    ret = ctx.get_user_attribute_value(username, "voPersonExternalID", "true", "result")["arguments"][3]
+    ret = ctx.get_user_attribute_value(username, "voPersonExternalID", TRUE_AS_STRING, "result")["arguments"][3]
     external_id = json.loads(ret)["value"]
     affiliation = external_id.split("@")[1]
     ctx.writeLine("stdout", affiliation)

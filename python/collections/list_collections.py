@@ -31,10 +31,10 @@ def list_collections(ctx, project_path):
 
         # Get AVUs
         collection["size"] = coll_size
-        collection["title"] = ctx.callback.getCollectionAVU(proj_coll[0], "title", "", "", "false")["arguments"][2]
-        collection["creator"] = ctx.callback.getCollectionAVU(proj_coll[0], "creator", "", "", "false")["arguments"][2]
-        collection["PID"] = ctx.callback.getCollectionAVU(proj_coll[0], "PID", "", "", "false")["arguments"][2]
-        collection["numFiles"] = ctx.callback.getCollectionAVU(proj_coll[0], "numFiles", "", "", "false")["arguments"][
+        collection["title"] = ctx.callback.getCollectionAVU(proj_coll[0], "title", "", "", FALSE_AS_STRING)["arguments"][2]
+        collection["creator"] = ctx.callback.getCollectionAVU(proj_coll[0], "creator", "", "", FALSE_AS_STRING)["arguments"][2]
+        collection["PID"] = ctx.callback.getCollectionAVU(proj_coll[0], "PID", "", "", FALSE_AS_STRING)["arguments"][2]
+        collection["numFiles"] = ctx.callback.getCollectionAVU(proj_coll[0], "numFiles", "", "", FALSE_AS_STRING)["arguments"][
             2
         ]
 

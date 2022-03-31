@@ -3,11 +3,16 @@ import irods_types
 import session_vars
 from genquery import *
 
+from dhpythonirodsutils import formatters, exceptions, loggers
+
 from enum import Enum
 
 
 # Global vars
 activelyUpdatingAVUs = False
+
+FALSE_AS_STRING = "false"
+TRUE_AS_STRING = "true"
 
 # https://github.com/UtrechtUniversity/irods-ruleset-uu/blob/development/util/rule.py
 # __copyright__ = 'Copyright (c) 2019, Utrecht University'
@@ -157,12 +162,59 @@ def convert_to_current_timezone(date, date_format="%Y-%m-%d %H:%M:%S"):
 
 
 def format_dropzone_path(ctx, token, dropzone_type):
-    if dropzone_type == "mounted":
-        dropzone_path = "/nlmumc/ingest/zones/{}".format(token)
-    elif dropzone_type == "direct":
-        dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
-    else:
+    try:
+        dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
+    except exceptions.ValidationError:
         ctx.callback.msiExit(
             "-1", "Invalid dropzone type, supported 'mounted' and 'direct', got '{}'.".format(dropzone_type)
         )
     return dropzone_path
+
+def format_project_path(ctx, project_id):
+    try:
+        project_path = formatters.format_project_path(project_id)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID format: '{}'".format(project_id))
+    return project_path
+
+def format_project_collection_path(ctx, project_id, collection_id):
+    try:
+        project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+    return project_collection_path
+
+def format_instance_collection_path(ctx, project_id, collection_id):
+    try:
+        instance_path = formatters.format_instance_collection_path(project_id, collection_id)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+    return instance_path
+
+def format_schema_collection_path(ctx, project_id, collection_id):
+    try:
+        schema_path = formatters.format_schema_collection_path(project_id, collection_id)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+    return schema_path
+
+def format_instance_versioned_collection_path(ctx, project_id, collection_id, version):
+    try:
+        instance_path = formatters.format_instance_versioned_collection_path(project_id, collection_id, version)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+    return instance_path
+
+def format_schema_versioned_collection_path(ctx, project_id, collection_id, version):
+    try:
+        schema_path = formatters.format_schema_versioned_collection_path(project_id, collection_id, version)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+    return schema_path
+
+def format_metadata_versions_path(ctx, project_id, collection_id):
+    try:
+        metadata_versions_path = formatters.format_metadata_versions_path(project_id, collection_id)
+    except exceptions.ValidationError:
+        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+    return metadata_versions_path

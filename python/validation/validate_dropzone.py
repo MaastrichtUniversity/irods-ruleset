@@ -23,7 +23,7 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     """
     # Check if ingesting user has dropzone permissions
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, dropzone_type, "")["arguments"][2]
-    if has_dropzone_permission != "true":
+    if not formatters.format_string_to_boolean(has_dropzone_permission):
         ctx.callback.msiExit(
             "-818000", "User '{}' has insufficient DropZone permissions on '{}'".format(username, dropzone_path)
         )
@@ -37,30 +37,30 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
 
     # If direct ingest: check if user ingesting is the creator
     if dropzone_type == "direct" and username != "rods":
-        creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", "true")["arguments"][2]
+        creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
         if creator != username:
             ctx.callback.msiExit(
                 "-818000", "User '{}' is not the creator of dropzone '{}'".format(username, dropzone_path)
             )
 
     # Get dropzone metadata
-    project_id = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", "true")["arguments"][2]
+    project_id = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
 
     # Check if project path exists
     try:
-        ctx.callback.msiObjStat("/nlmumc/projects/{}".format(project_id), irods_types.RodsObjStat())
+        ctx.callback.msiObjStat(format_project_path(ctx, project_id), irods_types.RodsObjStat())
     except RuntimeError:
         # -814000 CAT_UNKNOWN_COLLECTION
         ctx.callback.msiExit("-814000", "Unknown project: {}".format(project_id))
 
-    title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", "true")["arguments"][2]
-    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", "true")["arguments"][2]
+    title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
+    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
 
     # Get resource availability -- check ingest & destination resource
-    available = ctx.callback.get_project_resource_availability(project_id, "true", "true", "false", "")["arguments"][4]
+    available = ctx.callback.get_project_resource_availability(project_id, TRUE_AS_STRING, TRUE_AS_STRING, FALSE_AS_STRING, "")["arguments"][4]
 
     # Project or ingest resource is not available, abort ingest
-    if available != "true":
+    if not formatters.format_string_to_boolean(available):
         # -831000 CAT_INVALID_RESOURCE
         ctx.callback.msiExit(
             "-831000", "The project or ingest resource is disabled for this project '{}'".format(project_id)

@@ -57,7 +57,7 @@ def create_new_project(
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
     while error < 0 and retry < 10:
         latest_project_number = ctx.callback.getCollectionAVU(
-            "/nlmumc/projects", "latest_project_number", "*latest_project_number", "", "true"
+            "/nlmumc/projects", "latest_project_number", "*latest_project_number", "", TRUE_AS_STRING
         )["arguments"][2]
         new_latest = int(latest_project_number) + 1
         project = str(new_latest)
@@ -65,8 +65,7 @@ def create_new_project(
             project = "0" + str(project)
         project = "P" + project
 
-        new_project_path = "/nlmumc/projects/" + project
-
+        new_project_path = format_project_path(ctx, project)
         retry = retry + 1
         try:
             ctx.callback.msiCollCreate(new_project_path, 0, 0)
@@ -93,7 +92,7 @@ def create_new_project(
     ctx.callback.setCollectionAVU(new_project_path, "enableArchive", tape_archive)
     ctx.callback.setCollectionAVU(new_project_path, "enableUnarchive", tape_unarchive)
     ctx.callback.setCollectionAVU(new_project_path, "collectionMetadataSchemas", metadata_schemas)
-    ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", "false")
+    ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", FALSE_AS_STRING)
 
     archive_dest_resc = ""
     for result in row_iterator(

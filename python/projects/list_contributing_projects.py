@@ -44,7 +44,7 @@ def list_contributing_projects(ctx, show_service_accounts):
         project = {"id": collection_result[0].split("/")[3]}
 
         # List Contributors
-        ret = ctx.callback.list_project_contributors(project["id"], "false", show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
         project["contributors"] = json.loads(ret)
 
         # List Managers
@@ -52,17 +52,17 @@ def list_contributing_projects(ctx, show_service_accounts):
         project["managers"] = json.loads(ret)
 
         # List Viewers
-        ret = ctx.callback.list_project_viewers(project["id"], "false", show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_viewers(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
         project["viewers"] = json.loads(ret)
 
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
-        project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
-        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")[
+        project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
+        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", TRUE_AS_STRING)[
             "arguments"
         ][2]
         project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
-            collection_result[0], "collectionMetadataSchemas", "", "", "true"
+            collection_result[0], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
         )["arguments"][2]
 
         projects.append(project)

@@ -2,10 +2,10 @@
 def get_user_metadata(ctx, username):
     result = {"username": username}
 
-    ret = ctx.get_user_attribute_value(result["username"], "email", "true", "result")["arguments"][3]
+    ret = ctx.get_user_attribute_value(result["username"], "email", TRUE_AS_STRING, "result")["arguments"][3]
     result["email"] = json.loads(ret)["value"]
 
-    ret = ctx.get_user_attribute_value(result["username"], "displayName", "true", "result")["arguments"][3]
+    ret = ctx.get_user_attribute_value(result["username"], "displayName", TRUE_AS_STRING, "result")["arguments"][3]
     result["displayName"] = json.loads(ret)["value"]
 
     split_display_name = result["displayName"].split(" ", 1)

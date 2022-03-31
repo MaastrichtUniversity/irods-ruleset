@@ -15,12 +15,12 @@ def get_project_contributors_metadata(ctx, project_id):
     dict
         The contributors (PI, data-steward, etc) metadata
     """
-    project_path = "/nlmumc/projects/{}".format(project_id)
+    project_path = format_project_path(ctx, project_id)
 
-    pi_username = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
+    pi_username = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
     pi_dict = json.loads(ctx.get_user_metadata(pi_username, "")["arguments"][1])
 
-    ds_username = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", "true")["arguments"][2]
+    ds_username = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", TRUE_AS_STRING)["arguments"][2]
     ds_dict = json.loads(ctx.get_user_metadata(ds_username, "")["arguments"][1])
 
     project = {"principalInvestigator": pi_dict, "dataSteward": ds_dict}

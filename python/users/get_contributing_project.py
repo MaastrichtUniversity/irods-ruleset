@@ -39,30 +39,30 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
     conditions = (
         "COLL_ACCESS_NAME in ('own', 'modify object') "
         "and COLL_ACCESS_USER_ID in ({}) "
-        "and COLL_NAME = '/nlmumc/projects/{}'".format(groups, project_id)
+        "and COLL_NAME = '{}'".format(groups, format_project_path(ctx,project_id))
     )
 
     for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        project = {"id": collection_result[0].split("/")[3]}
+        project = {"id": formatters.get_project_id_from_project_path(collection_result[0])}
 
         # List Managers
         ret = ctx.callback.list_project_managers(project["id"], show_service_accounts, "")["arguments"][2]
         project["managers"] = json.loads(ret)
 
         # List Contributors
-        ret = ctx.callback.list_project_contributors(project["id"], "false", show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
         project["contributors"] = json.loads(ret)
 
         # List Viewers
-        ret = ctx.callback.list_project_viewers(project["id"], "false", show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_viewers(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
         project["viewers"] = json.loads(ret)
 
-        project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
-        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")[
+        project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
+        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", TRUE_AS_STRING)[
             "arguments"
         ][2]
         project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
-            collection_result[0], "collectionMetadataSchemas", "", "", "true"
+            collection_result[0], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
         )["arguments"][2]
 
     return project

@@ -56,7 +56,7 @@ def optimized_list_projects(ctx):
                 add_access_id_to_project(access_user_id, access_level_name, project)
         else:
             project = reset_project_dict()
-            project["path"] = project_path.split("/")[3]
+            project["path"] = formatters.get_project_id_from_project_path(project_path)
 
             # Calculate the project's size
             if project["path"] in sizes:

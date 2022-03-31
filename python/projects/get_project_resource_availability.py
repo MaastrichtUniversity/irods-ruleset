@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
-def get_project_resource_availability(ctx, project_id, ingest="true", destination="false", archive="false"):
+def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, destination=FALSE_AS_STRING, archive=FALSE_AS_STRING):
     """
     Get if a project's resource(s) is/are up
 
@@ -22,27 +22,27 @@ def get_project_resource_availability(ctx, project_id, ingest="true", destinatio
         If the resource(s) to check are both not down, we return True
     """
 
-    project_path = "/nlmumc/projects/{}".format(project_id)
-    check_destination_resource = destination == "true"
-    check_ingest_resource = ingest == "true"
-    check_archive_resource = archive == "true"
+    project_path = format_project_path(ctx, project_id)
+    check_destination_resource = formatters.format_string_to_boolean(destination)
+    check_ingest_resource = formatters.format_string_to_boolean(ingest)
+    check_archive_resource = formatters.format_string_to_boolean(archive)
 
     if not check_archive_resource and not check_ingest_resource and not check_destination_resource:
         ctx.callback.msiExit("-1", "At least one of the three check parameters needs to be true")
 
     ingest_status = False
     if check_ingest_resource:
-        ingest_resource = ctx.callback.getCollectionAVU(project_path, "ingestResource", "", "", "true")["arguments"][2]
+        ingest_resource = ctx.callback.getCollectionAVU(project_path, "ingestResource", "", "", TRUE_AS_STRING)["arguments"][2]
         ingest_status = get_resource_status(ctx, ingest_resource)
 
     destination_status = False
     if check_destination_resource:
-        destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", "true")["arguments"][2]
+        destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", TRUE_AS_STRING)["arguments"][2]
         destination_status = get_resource_status(ctx, destination_resource)
 
     archive_status = False
     if check_archive_resource:
-        archive_resource = ctx.callback.getCollectionAVU(project_path, "archiveDestinationResource", "", "", "true")[
+        archive_resource = ctx.callback.getCollectionAVU(project_path, "archiveDestinationResource", "", "", TRUE_AS_STRING)[
             "arguments"
         ][2]
         archive_status = get_resource_status(ctx, archive_resource)

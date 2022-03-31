@@ -34,12 +34,12 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
-    destination_collection = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
+    destination_collection = format_project_collection_path(ctx, project_id, collection_id)
     # Set the Creator AVU
     ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_collection), 0)
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
-    ret = ctx.get_user_attribute_value(username, "email", "false", "result")["arguments"][3]
+    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(
@@ -71,10 +71,10 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
 
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
-    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", "true")["arguments"][2]
-    overwrite_flag = "false"
+    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
+    overwrite_flag = FALSE_AS_STRING
     if state == "error-post-ingestion":
-        overwrite_flag = "true"
+        overwrite_flag = TRUE_AS_STRING
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
     ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag)
 
@@ -84,11 +84,11 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     # Calculate and set the byteSize and numFiles AVU. false/false because collection
     # is already open and needs to stay open.
     # Recalculation is required because we copied files and created a folder
-    ctx.callback.setCollectionSize(project_id, collection_id, "false", "false")
+    ctx.callback.setCollectionSize(project_id, collection_id, FALSE_AS_STRING, FALSE_AS_STRING)
 
     # Copy schemaVersion and schemaName AVU from dropzone to the ingested collection
-    schema_name = ctx.callback.getCollectionAVU(dropzone_path, "schemaName", "", "", "true")["arguments"][2]
-    schema_version = ctx.callback.getCollectionAVU(dropzone_path, "schemaVersion", "", "", "true")["arguments"][2]
+    schema_name = ctx.callback.getCollectionAVU(dropzone_path, "schemaName", "", "", TRUE_AS_STRING)["arguments"][2]
+    schema_version = ctx.callback.getCollectionAVU(dropzone_path, "schemaVersion", "", "", TRUE_AS_STRING)["arguments"][2]
     ctx.callback.setCollectionAVU(destination_collection, "schemaName", schema_name)
     ctx.callback.setCollectionAVU(destination_collection, "schemaVersion", schema_version)
 

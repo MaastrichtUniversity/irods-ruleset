@@ -22,10 +22,8 @@ def update_metadata_during_ingest(ctx, project, collection, handle, version):
     """
     import datetime
 
-    project_collection_full_path = "/nlmumc/projects/{}/{}".format(project, collection)
-
     # Setting the PID in the instance.json file
-    instance_location = "{}/instance.json".format(project_collection_full_path)
+    instance_location = format_instance_collection_path(ctx, project, collection)
     # Reading the instance.json and parsing it
     instance = read_data_object_from_irods(ctx, instance_location)
     instance_object = json.loads(instance)
@@ -56,7 +54,7 @@ def update_metadata_during_ingest(ctx, project, collection, handle, version):
     ctx.callback.msiDataObjClose(opened_file, 0)
 
     # Setting the PID in the schema.json file
-    schema_location = "{}/schema.json".format(project_collection_full_path)
+    schema_location = format_schema_collection_path(ctx, project, collection)
     # Reading the instance.json and parsing it
     schema = read_data_object_from_irods(ctx, schema_location)
     schema_object = json.loads(schema)

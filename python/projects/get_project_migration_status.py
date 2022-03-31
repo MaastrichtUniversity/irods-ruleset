@@ -22,17 +22,17 @@ def get_project_migration_status(ctx, project_path):
         collection = proj_coll[0]
         card = {
             "collection": collection.split("/")[4],
-            "title": ctx.callback.getCollectionAVU(collection, "title", "", "", "true")["arguments"][2],
+            "title": ctx.callback.getCollectionAVU(collection, "title", "", "", TRUE_AS_STRING)["arguments"][2],
         }
 
-        archive = ctx.callback.getCollectionAVU(collection, "archiveState", "", "", "false")["arguments"][2]
+        archive = ctx.callback.getCollectionAVU(collection, "archiveState", "", "", FALSE_AS_STRING)["arguments"][2]
         if archive != "":
             new_card = card.copy()
             new_card["repository"] = "SURFSara Tape"
             new_card["status"] = archive
             cards.append(new_card)
 
-        exporter = ctx.callback.getCollectionAVU(collection, "exporterState", "", "", "false")["arguments"][2]
+        exporter = ctx.callback.getCollectionAVU(collection, "exporterState", "", "", FALSE_AS_STRING)["arguments"][2]
         if exporter != "":
             new_card = card.copy()
             status_split = exporter.split(":")

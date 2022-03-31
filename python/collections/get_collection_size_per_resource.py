@@ -24,25 +24,26 @@ def get_collection_size_per_resource(ctx, project):
         resources[row[1]] = row[0]
 
     # set collection path based on input
-    project_path = "/nlmumc/projects/{}/%".format(project)
+    project_path = format_project_path(ctx, project)
+    project_path_wilcard = project_path + "/%"
     total_sizes = {}
     for row in row_iterator(
         "COLL_NAME, META_COLL_ATTR_VALUE",
-        "META_COLL_ATTR_NAME like 'dcat:byteSize' AND COLL_NAME like '{}'".format(project_path),
+        "META_COLL_ATTR_NAME like 'dcat:byteSize' AND COLL_NAME like '{}'".format(project_path_wilcard),
         AS_LIST,
         ctx.callback,
     ):
-        collection_id = re.sub("^/nlmumc/projects/P[0-9]{9}/", "", row[0])
+        collection_id = formatters.get_collection_id_from_collection_path(row[0])
         total_sizes[collection_id] = row[1]
 
     # query size of collection per resource attribute (resource ID)
     for row in row_iterator(
         "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
-        "META_COLL_ATTR_NAME like 'dcat:byteSize_resc%' AND COLL_NAME like '{}'".format(project_path),
+        "META_COLL_ATTR_NAME like 'dcat:byteSize_resc%' AND COLL_NAME like '{}'".format(project_path_wilcard),
         AS_LIST,
         ctx.callback,
     ):
-        collection_id = re.sub("^/nlmumc/projects/P[0-9]{9}/", "", row[0])
+        collection_id = formatters.get_collection_id_from_collection_path(row[0])
         resource_id = re.sub("^dcat:byteSize_resc_", "", row[1])
         relative_size = (float(row[2]) / float(total_sizes[collection_id])) * 100
         result = {

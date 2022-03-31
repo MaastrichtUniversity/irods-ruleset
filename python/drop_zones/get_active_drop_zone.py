@@ -24,8 +24,8 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
     # Check if the user has right access at /nlmumc/ingest/zones
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
     ret = ctx.callback.checkDropZoneACL(username, dropzone_type, "*has_dropzone_permission")
-    has_dropzone_permission = ret["arguments"][1]
-    if has_dropzone_permission == "false":
+    has_dropzone_permission = ret["arguments"][2]
+    if not formatters.format_string_to_boolean(has_dropzone_permission):
         msg = "User '{}' has insufficient DropZone permissions on /nlmumc/ingest/zones".format(username)
         # -818000 CAT_NO_ACCESS_PERMISSION
         ctx.callback.msiExit("-818000", msg)
@@ -66,7 +66,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         if attr_name == "project":
             avu[attr_name] = attr_value
             avu["date"] = result[0]
-            project_path = "/nlmumc/projects/{}".format(attr_value)
+            project_path = format_project_path(ctx, attr_value)
             for project_result in row_iterator(
                 "META_COLL_ATTR_VALUE",
                 "META_COLL_ATTR_NAME = 'title' AND " "COLL_NAME = '{}'".format(project_path),
@@ -77,9 +77,9 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         else:
             avu[attr_name] = attr_value
 
-    if check_ingest_resource_status == "true":
+    if formatters.format_string_to_boolean(check_ingest_resource_status):
         # Query project resource avu
-        resource = ctx.callback.getCollectionAVU(project_path, "resource", "*resource", "", "true")["arguments"][2]
+        resource = ctx.callback.getCollectionAVU(project_path, "resource", "*resource", "", TRUE_AS_STRING)["arguments"][2]
         # Query the resource status
         for resc_result in row_iterator("RESC_STATUS", "RESC_NAME = '{}'".format(resource), AS_LIST, ctx.callback):
             avu["resourceStatus"] = resc_result[0]

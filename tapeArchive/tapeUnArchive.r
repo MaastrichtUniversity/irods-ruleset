@@ -75,13 +75,19 @@ tapeUnArchive(*count, *archColl){
 
                 # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
                 # will automatically also include a checksum check on the destination
-                msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
-                if ( *moveStatus != 0 ) {
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
+                msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+                msiWriteRodsLog("DEBUG: moveStatus *moveStatus", 0);
+                if ( *moveError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                 }
 
-                msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus);
-                if ( *trimStatus != 1 ) {
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
+                msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+                msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
+                if ( *trimError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
                 }
 
@@ -121,13 +127,19 @@ tapeUnArchive(*count, *archColl){
 
                 # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
                 # will automatically also include a checksum check on the destination
-                msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
-                if ( *moveStatus != 0 ) {
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
+                msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+                msiWriteRodsLog("DEBUG: moveStatus *moveStatus", 0);
+                if ( *moveError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                 }
 
-                msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus);
-                if ( *trimStatus != 1 ) {
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
+                msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+                msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
+                if ( *trimError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
                 }
 

@@ -44,10 +44,6 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
     destination_instance = format_instance_versioned_collection_path(ctx, project_id, collection_id, "1")
 
     force_flag = ""
-    ctx.callback.msiWriteRodsLog("SRC SCHEMA = " + source_schema, 0)
-    ctx.callback.msiWriteRodsLog("SRC INSTANCE = " + source_instance, 0)
-    ctx.callback.msiWriteRodsLog("DEST SCHEMA = " + destination_schema, 0)
-    ctx.callback.msiWriteRodsLog("DEST INSTANCE = " + destination_instance, 0)
     if formatters.format_string_to_boolean(overwrite_flag):
         force_flag = "forceFlag="
 

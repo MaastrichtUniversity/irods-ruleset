@@ -51,7 +51,7 @@ def create_new_project(
     retry = 0
     error = -1
     new_project_path = ""
-    project = ""
+    project_id = ""
 
     # Try to create the new_project_path. Exit the loop on success (error = 0) or after too many retries.
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
@@ -60,12 +60,12 @@ def create_new_project(
             "/nlmumc/projects", "latest_project_number", "*latest_project_number", "", TRUE_AS_STRING
         )["arguments"][2]
         new_latest = int(latest_project_number) + 1
-        project = str(new_latest)
-        while len(project) < 9:
-            project = "0" + str(project)
-        project = "P" + project
+        project_id = str(new_latest)
+        while len(project_id) < 9:
+            project_id = "0" + str(project_id)
+        project_id = "P" + project_id
 
-        new_project_path = format_project_path(ctx, project)
+        new_project_path = format_project_path(ctx, project_id)
         retry = retry + 1
         try:
             ctx.callback.msiCollCreate(new_project_path, 0, 0)
@@ -117,4 +117,4 @@ def create_new_project(
         ctx.callback.msiSetACL("default", "own", "rods", new_project_path)
         ctx.callback.msiSetACL("default", "null", current_user, new_project_path)
 
-    return {"project_path": new_project_path, "project_id": project}
+    return {"project_path": new_project_path, "project_id": project_id}

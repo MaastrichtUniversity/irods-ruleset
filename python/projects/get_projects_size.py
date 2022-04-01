@@ -14,7 +14,7 @@ def get_projects_size(ctx):
         Key => project id; Value => Project size
     """
 
-    project = {}
+    projects = {}
 
     for proj_coll in row_iterator(
         "COLL_NAME, META_COLL_ATTR_VALUE",
@@ -26,9 +26,9 @@ def get_projects_size(ctx):
         project_id = proj_coll[0].split("/")[3]
         # Convert bytes to GiB
         size_gib = float(proj_coll[1]) / 1024 / 1024 / 1024
-        if project_id in project:
-            project[project_id] += size_gib
+        if project_id in projects:
+            projects[project_id] += size_gib
         else:
-            project[project_id] = size_gib
+            projects[project_id] = size_gib
 
-    return project
+    return projects

@@ -27,7 +27,7 @@ def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
     group_objects = []
     user_objects = []
 
-    if inherited == "true":
+    if formatters.format_string_to_boolean(inherited):
         criteria = "'own', 'modify object', 'read object'"
     else:
         criteria = "'read object'"
@@ -71,7 +71,7 @@ def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
 
             if account_type == "rodsuser":
                 # Filter out service account from output
-                if show_service_accounts == "false" and "service-" in account_name:
+                if not formatters.format_string_to_boolean(show_service_accounts) and "service-" in account_name:
                     continue
 
                 for user_result in row_iterator(

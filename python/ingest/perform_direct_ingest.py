@@ -18,6 +18,9 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     """
     import time
 
+    RETRY_MAX_NUMBER = 5
+    RETRY_SLEEP_NUMBER = 60
+
     dropzone_path = format_dropzone_path(ctx, token, "direct")
 
     pre_ingest_results = json.loads(
@@ -30,7 +33,7 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
 
-    retry_counter = 5
+    retry_counter = RETRY_MAX_NUMBER
     status = 0
     while retry_counter > 0:
         ret = ctx.callback.ingest_collection_data(dropzone_path, destination_collection, project_id, "")
@@ -41,7 +44,7 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
         else:
             retry_counter = 0
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(dropzone_path), 0)
-        time.sleep(10)
+        time.sleep(RETRY_SLEEP_NUMBER)
 
     if status != 0:
         ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error copying ingest zone")

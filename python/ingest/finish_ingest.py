@@ -34,18 +34,18 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
-    destination_collection = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
+    destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Set the Creator AVU
-    ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_collection), 0)
+    ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_project_collection_path), 0)
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
-    ret = ctx.get_user_attribute_value(username, "email", "false", "result")["arguments"][3]
+    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(
             project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(username)
         )
-    ctx.callback.setCollectionAVU(destination_collection, "creator", email)
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "creator", email)
 
     # Requesting a PID via epicPID for version 0 (root version)
     handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]
@@ -53,7 +53,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
 
     if "collection" in handle_pids and handle_pids["collection"]["handle"] != "":
         # Setting the PID as AVU on the project collection
-        ctx.callback.setCollectionAVU(destination_collection, "PID", handle_pids["collection"]["handle"])
+        ctx.callback.setCollectionAVU(destination_project_collection_path, "PID", handle_pids["collection"]["handle"])
     else:
         ctx.callback.set_post_ingestion_error_avu(
             project_id, collection_id, dropzone_path, "Unable to register PID's for root"
@@ -71,32 +71,32 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
 
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
-    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", "true")["arguments"][2]
-    overwrite_flag = "false"
+    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
+    overwrite_flag = FALSE_AS_STRING
     if state == "error-post-ingestion":
-        overwrite_flag = "true"
+        overwrite_flag = TRUE_AS_STRING
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
     ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag)
 
     # Set latest version number to 1 for metadata latest version
-    ctx.callback.setCollectionAVU(destination_collection, "latest_version_number", "1")
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "latest_version_number", "1")
 
     # Calculate and set the byteSize and numFiles AVU. false/false because collection
     # is already open and needs to stay open.
     # Recalculation is required because we copied files and created a folder
-    ctx.callback.setCollectionSize(project_id, collection_id, "false", "false")
+    ctx.callback.setCollectionSize(project_id, collection_id, FALSE_AS_STRING, FALSE_AS_STRING)
 
     # Copy schemaVersion and schemaName AVU from dropzone to the ingested collection
-    schema_name = ctx.callback.getCollectionAVU(dropzone_path, "schemaName", "", "", "true")["arguments"][2]
-    schema_version = ctx.callback.getCollectionAVU(dropzone_path, "schemaVersion", "", "", "true")["arguments"][2]
-    ctx.callback.setCollectionAVU(destination_collection, "schemaName", schema_name)
-    ctx.callback.setCollectionAVU(destination_collection, "schemaVersion", schema_version)
+    schema_name = ctx.callback.getCollectionAVU(dropzone_path, "schemaName", "", "", TRUE_AS_STRING)["arguments"][2]
+    schema_version = ctx.callback.getCollectionAVU(dropzone_path, "schemaVersion", "", "", TRUE_AS_STRING)["arguments"][2]
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "schemaName", schema_name)
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "schemaVersion", schema_version)
 
     # Setting the State AVU to Ingested
     ctx.callback.setCollectionAVU(dropzone_path, "state", "ingested")
 
     # Remove the temporary sizeIngested AVU at *dstColl
-    ctx.callback.remove_size_ingested_avu(destination_collection)
+    ctx.callback.remove_size_ingested_avu(destination_project_collection_path)
 
     # Close collection by making all access read only
     ctx.callback.closeProjectCollection(project_id, collection_id)
@@ -112,4 +112,4 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
             ctx.callback.setErrorAVU(dropzone_path, "state", "error-post-ingestion", "Error unmounting")
 
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
-    ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_collection), 0)
+    ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)

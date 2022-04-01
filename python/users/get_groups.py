@@ -41,7 +41,7 @@ def get_groups(ctx, show_special_groups):
             "displayName": display_name,
             "description": description,
         }
-        if show_special_groups == "false":
+        if not formatters.format_string_to_boolean(show_special_groups):
             if group_name not in ["public", "rodsadmin", "DH-ingest", "DH-project-admins"]:
                 groups.append(group_object)
         else:

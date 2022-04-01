@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def get_versioned_pids(ctx, project, collection, version=None):
+def get_versioned_pids(ctx, project_id, collection_id, version=None):
     """
     Request a PID via epicpid
 
@@ -7,9 +7,9 @@ def get_versioned_pids(ctx, project, collection, version=None):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    project : str
+    project_id : str
         The project to request and set a pid for (ie. P000000010)
-    collection : str
+    collection_id : str
         The collection to request and set a PID for (ie. C000000002)
     version : str
         The version number of collection,schema and instance that PID are requested for
@@ -20,15 +20,15 @@ def get_versioned_pids(ctx, project, collection, version=None):
     epicpid_base = ctx.callback.msi_getenv("EPICPID_URL", "")["arguments"][1]
     ctx.callback.msiWriteRodsLog(
         "Requesting multiple PID's with base url: {} project: {} collection: {} version: {}".format(
-            epicpid_base, project, collection, version
+            epicpid_base, project_id, collection_id, version
         ),
         0,
     )
-    epicpid_url = epicpid_base + "multiple/" + project + collection
+    epicpid_url = epicpid_base + "multiple/" + project_id + collection_id
 
     # Getting the handle URL to format
     mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
-    handle_url = mdr_handle_url + project + "/" + collection
+    handle_url = mdr_handle_url + project_id + "/" + collection_id
 
     # Getting the epicpid user and password from env variable
     epicpid_user = ctx.callback.msi_getenv("EPICPID_USER", "")["arguments"][1]
@@ -55,22 +55,22 @@ def get_versioned_pids(ctx, project, collection, version=None):
     except KeyError as e:
         ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
 
-    destination_collection = "/nlmumc/projects/{}/{}".format(project, collection)
+    destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     if not handle:
         ctx.callback.msiWriteRodsLog(
-            "Retrieving multiple PID's failed for {}, leaving blank".format(destination_collection), 0
+            "Retrieving multiple PID's failed for {}, leaving blank".format(destination_project_collection_path), 0
         )
     if "collection" not in handle or handle["collection"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection failed for {}, leaving blank".format(destination_collection), 0
+            "Retrieving PID for root collection failed for {}, leaving blank".format(destination_project_collection_path), 0
         )
     if "schema" not in handle or handle["schema"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_collection), 0
+            "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_project_collection_path), 0
         )
     if "instance" not in handle or handle["instance"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_collection), 0
+            "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_project_collection_path), 0
         )
 
     return handle

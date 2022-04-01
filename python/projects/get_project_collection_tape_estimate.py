@@ -18,7 +18,7 @@ def get_project_collection_tape_estimate(ctx, project_id, collection_id):
         The project_id collection tape status, above_threshold and archivable
     """
     project_path = format_project_path(ctx, project_id)
-    collection_path = format_project_collection_path(ctx, project_id, collection_id)
+    project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Get the destination archive resource from the project
     ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", FALSE_AS_STRING)
     archive_resource = ret["arguments"][2]
@@ -28,7 +28,7 @@ def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     number_files = 0
     bytes_size = 0
     condition = "COLL_NAME = '{}' || like '{}/%' AND DATA_SIZE  >= '{}'".format(
-        collection_path, collection_path, minimum_size
+        project_collection_path, project_collection_path, minimum_size
     )
     for data in row_iterator("DATA_NAME, DATA_SIZE", condition, AS_LIST, ctx.callback):
         number_files += 1
@@ -40,7 +40,7 @@ def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     bytes_size = 0
     for data in row_iterator(
         "DATA_NAME, DATA_SIZE",
-        "COLL_NAME = '{}' || like '{}/%' ".format(collection_path, collection_path)
+        "COLL_NAME = '{}' || like '{}/%' ".format(project_collection_path, project_collection_path)
         + " AND DATA_RESC_NAME != '{}' ".format(archive_resource)
         + " AND DATA_SIZE >= '{}'".format(minimum_size),
         AS_LIST,

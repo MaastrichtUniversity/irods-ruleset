@@ -40,8 +40,8 @@ def list_contributing_projects(ctx, show_service_accounts):
         "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
     )
 
-    for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        project = {"id": collection_result[0].split("/")[3]}
+    for project_path in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        project = {"id": formatters.get_project_id_from_project_path(project_path[0])}
 
         # List Contributors
         ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
@@ -57,12 +57,12 @@ def list_contributing_projects(ctx, show_service_accounts):
 
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
-        project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
-        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", TRUE_AS_STRING)[
+        project["title"] = ctx.callback.getCollectionAVU(project_path[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
+        project["resource"] = ctx.callback.getCollectionAVU(project_path[0], "resource", "", "", TRUE_AS_STRING)[
             "arguments"
         ][2]
         project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
-            collection_result[0], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
+            project_path[0], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
         )["arguments"][2]
 
         projects.append(project)

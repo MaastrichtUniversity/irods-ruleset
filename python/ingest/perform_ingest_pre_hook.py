@@ -23,9 +23,9 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
         ctx.callback.msiWriteRodsLog("Failed creating projectCollection", 0)
         ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error creating projectCollection")
 
-    destination_collection = format_project_collection_path(ctx, project_id, collection_id)
+    destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
 
-    ctx.callback.msiWriteRodsLog("Ingesting {} to {}".format(dropzone_path, destination_collection), 0)
+    ctx.callback.msiWriteRodsLog("Ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
     ingest_resource = ctx.callback.getCollectionAVU(
@@ -40,6 +40,6 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
 
     return {
         "collection_id": collection_id,
-        "destination_collection": destination_collection,
+        "destination_collection": destination_project_collection_path,
         "ingest_resource_host": ingest_resource_host,
     }

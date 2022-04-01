@@ -23,7 +23,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     bool
         PIDs request status; If true, the handle PIDs were successfully requested.
     """
-    collection_path = format_project_collection_path(ctx, project_id, collection_id)
+    project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     project_path = format_project_path(ctx, project_id)
     metadata_folder_path = format_metadata_versions_path(ctx, project_id, collection_id)
     metadata_folder_exist = True
@@ -50,14 +50,14 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     source_schema = format_schema_collection_path(ctx, project_id, collection_id)
     source_instance = format_instance_collection_path(ctx, project_id, collection_id)
 
-    version = ctx.callback.getCollectionAVU(collection_path, "latest_version_number", "", "", FALSE_AS_STRING)["arguments"][2]
+    version = ctx.callback.getCollectionAVU(project_collection_path, "latest_version_number", "", "", FALSE_AS_STRING)["arguments"][2]
     new_version = 0
     try:
         version_number = int(version)
         new_version = version_number + 1
     except ValueError:
         ctx.callback.msiExit(
-            "-1", "ERROR: 'Cannot increment version number '{}' for collection '{}'".format(version, collection_path)
+            "-1", "ERROR: 'Cannot increment version number '{}' for collection '{}'".format(version, project_collection_path)
         )
 
     destination_schema = format_schema_versioned_collection_path(ctx, project_id, collection_id, new_version)
@@ -88,6 +88,6 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
 
     # Only set latest_version_number if everything went fine.
-    ctx.callback.setCollectionAVU(collection_path, "latest_version_number", str(new_version))
+    ctx.callback.setCollectionAVU(project_collection_path, "latest_version_number", str(new_version))
 
     return pid_request_status

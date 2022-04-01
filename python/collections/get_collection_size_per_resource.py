@@ -1,15 +1,18 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
-def get_collection_size_per_resource(ctx, project):
+def get_collection_size_per_resource(ctx, project_id):
     """
     Query the resource attribute for the files in a collection
+
     Parameters
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    project : str
+    project_id : str
         Project ID
+
     Returns
     -------
+    A dictionary of project collections with the location of their data
     """
     from collections import OrderedDict
     import re
@@ -24,7 +27,7 @@ def get_collection_size_per_resource(ctx, project):
         resources[row[1]] = row[0]
 
     # set collection path based on input
-    project_path = format_project_path(ctx, project)
+    project_path = format_project_path(ctx, project_id)
     project_path_wilcard = project_path + "/%"
     total_sizes = {}
     for row in row_iterator(

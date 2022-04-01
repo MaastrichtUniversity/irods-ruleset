@@ -1,11 +1,11 @@
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
 def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, difference):
-    destination_collection = format_project_collection_path(ctx, project_id, collection_id)
+    destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Calculate and set the byteSize and numFiles AVU. false/false because collection
     # is already open and needs to stay open
     ctx.callback.setCollectionSize(project_id, collection_id, FALSE_AS_STRING, FALSE_AS_STRING)
-    num_files = ctx.callback.getCollectionAVU(destination_collection, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
-    size = ctx.callback.getCollectionAVU(destination_collection, "dcat:byteSize", "", "", TRUE_AS_STRING)["arguments"][2]
+    num_files = ctx.callback.getCollectionAVU(destination_project_collection_path, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
+    size = ctx.callback.getCollectionAVU(destination_project_collection_path, "dcat:byteSize", "", "", TRUE_AS_STRING)["arguments"][2]
 
     avg_speed = float(size) / 1024 / 1024 / float(difference)
     size_gib = float(size) / 1024 / 1024 / 1024

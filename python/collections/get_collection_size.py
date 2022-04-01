@@ -1,5 +1,5 @@
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def get_collection_size(ctx, collection, unit, round):
+def get_collection_size(ctx, project_collection_path, unit, round):
     """
     Get the collection's size. The returned value can formatted by unit and rounded.
 
@@ -7,8 +7,8 @@ def get_collection_size(ctx, collection, unit, round):
     ----------
     ctx : Context
         Combined type of a callback and rei struct.
-    collection: str
-        Collection absolute path
+    project_collection_path: str
+        Project collection absolute path
     unit: str
         Format the size to the correct unit: B, KiB, GiB, TiB
     round: str
@@ -22,7 +22,7 @@ def get_collection_size(ctx, collection, unit, round):
     from math import floor
     from math import ceil
 
-    size_bytes = float(ctx.callback.getCollectionAVU(collection, "dcat:byteSize", "", "0", FALSE_AS_STRING)["arguments"][2])
+    size_bytes = float(ctx.callback.getCollectionAVU(project_collection_path, "dcat:byteSize", "", "0", FALSE_AS_STRING)["arguments"][2])
 
     if unit == "B":
         size = size_bytes

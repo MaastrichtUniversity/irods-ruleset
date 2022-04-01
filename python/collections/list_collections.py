@@ -16,7 +16,7 @@ def list_collections(ctx, project_path):
         a json list of collections objects
     """
     # Initialize the collections dictionary
-    collections = []
+    project_collections = []
 
     proj_size = float(0)
     for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '" + project_path + "'", AS_LIST, ctx.callback):
@@ -25,19 +25,19 @@ def list_collections(ctx, project_path):
         proj_size = proj_size + coll_size
 
         # Initialize the collections dictionary
-        collection = {}
+        project_collection = {}
 
-        collection["id"] = proj_coll[0].split("/")[4]
+        project_collection["id"] = proj_coll[0].split("/")[4]
 
         # Get AVUs
-        collection["size"] = coll_size
-        collection["title"] = ctx.callback.getCollectionAVU(proj_coll[0], "title", "", "", FALSE_AS_STRING)["arguments"][2]
-        collection["creator"] = ctx.callback.getCollectionAVU(proj_coll[0], "creator", "", "", FALSE_AS_STRING)["arguments"][2]
-        collection["PID"] = ctx.callback.getCollectionAVU(proj_coll[0], "PID", "", "", FALSE_AS_STRING)["arguments"][2]
-        collection["numFiles"] = ctx.callback.getCollectionAVU(proj_coll[0], "numFiles", "", "", FALSE_AS_STRING)["arguments"][
+        project_collection["size"] = coll_size
+        project_collection["title"] = ctx.callback.getCollectionAVU(proj_coll[0], "title", "", "", FALSE_AS_STRING)["arguments"][2]
+        project_collection["creator"] = ctx.callback.getCollectionAVU(proj_coll[0], "creator", "", "", FALSE_AS_STRING)["arguments"][2]
+        project_collection["PID"] = ctx.callback.getCollectionAVU(proj_coll[0], "PID", "", "", FALSE_AS_STRING)["arguments"][2]
+        project_collection["numFiles"] = ctx.callback.getCollectionAVU(proj_coll[0], "numFiles", "", "", FALSE_AS_STRING)["arguments"][
             2
         ]
 
-        collections.append(collection)
+        project_collections.append(project_collection)
 
-    return collections
+    return project_collections

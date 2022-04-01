@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F rules/ingest/listActiveDropZones.r "*report='true'"
+# irule -F /rules/ingest/listActiveDropZones.r "*report='true'"
 
 irule_dummy() {
     IRULE_listActiveDropZones(*report, *result);
@@ -9,17 +9,42 @@ irule_dummy() {
 
 IRULE_listActiveDropZones(*report, *result) {
     *hasDropZonepermission = "";
-    checkDropZoneACL($userNameClient, "mounted", *hasDropZonepermission);
-    if (*hasDropZonepermission == "false") {
+    checkDropZoneACL($userNameClient, "mounted", *hasDropZonePermissionMounted);
+    checkDropZoneACL($userNameClient, "direct", *hasDropZonePermissionDirect);
+    if (*hasDropZonePermissionMounted == "false" && *hasDropZonePermissionDirect == "false" ) {
         # -818000 CAT_NO_ACCESS_PERMISSION
         failmsg(-818000, "User '$userNameClient' has insufficient DropZone permissions on /nlmumc/ingest/zones");
+    }
+    *dropzoneQuery = ""
+    if (*hasDropZonePermissionMounted == "true" && *hasDropZonePermissionDirect == "false" ) {
+        *dropzoneQuery = "'/nlmumc/ingest/zones'"
+    }
+    if (*hasDropZonePermissionMounted == "false" && *hasDropZonePermissionDirect == "true" ) {
+        *dropzoneQuery = "'/nlmumc/ingest/direct'"
+    }
+    if (*hasDropZonePermissionMounted == "true" && *hasDropZonePermissionDirect == "true" ) {
+        *dropzoneQuery = "'/nlmumc/ingest/zones','/nlmumc/ingest/direct'"
     }
 
     *json_str = '[]';
     *size = 0;
 
-    foreach ( *Row in SELECT COLL_NAME, order_desc(COLL_MODIFY_TIME) WHERE COLL_ACCESS_NAME = 'own' and COLL_PARENT_NAME = "/nlmumc/ingest/zones" ) {
+    *param = "COLL_NAME, order_desc(COLL_MODIFY_TIME), COLL_PARENT_NAME";
+    *cond = "COLL_ACCESS_NAME = 'own' and COLL_PARENT_NAME in (*dropzoneQuery)";
+    msiMakeGenQuery(*param, *cond, *Query);
+    msiExecGenQuery(*Query, *QOut);
+
+    foreach ( *Row in *QOut ) {
+        *dropzone_path = *Row.COLL_NAME
         uuChopPath(*Row.COLL_NAME, *collection, *token);
+
+        *type = ""
+        if (*Row.COLL_PARENT_NAME == "/nlmumc/ingest/zones"){
+            *type = "mounted"
+        }
+        else if (*Row.COLL_PARENT_NAME == "/nlmumc/ingest/direct"){
+            *type = "direct"
+        }
 
         *title = "";
         *state = "";
@@ -31,7 +56,7 @@ IRULE_listActiveDropZones(*report, *result) {
         *totalSize = "";
         *destination = "";
         # Get contents of AVU's
-        foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "/nlmumc/ingest/zones/*token") {
+        foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*dropzone_path") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {
                 *title = *av.META_COLL_ATTR_VALUE;
             }
@@ -66,6 +91,7 @@ IRULE_listActiveDropZones(*report, *result) {
 
         # Map AVU's and construct json object
         msiAddKeyVal(*kvp, 'token', *token);
+        msiAddKeyVal(*kvp, 'type', *type);
 
         if ( *title == "" ) {
             msiAddKeyVal(*kvp, 'title', "no-title-AVU-set");

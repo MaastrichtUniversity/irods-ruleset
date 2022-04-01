@@ -26,7 +26,7 @@ def start_ingest(ctx, username, token, dropzone_type):
     title = pre_ingest_tasks["title"]
     validation_result = pre_ingest_tasks["validation_result"]
 
-    if validation_result == "true":
+    if formatters.format_string_to_boolean(validation_result):
         ctx.callback.msiWriteRodsLog(
             "Validation result OK {}. Setting status to 'in-queue-for-ingestion'".format(dropzone_path), 0
         )

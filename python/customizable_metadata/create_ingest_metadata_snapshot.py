@@ -19,8 +19,7 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
         'true'/'false' expected; If true, the copy overwrites possible existing schema.1.json & instance.1.json files
     """
 
-    collection_path = "/nlmumc/projects/{}/{}".format(project_id, collection_id)
-    metadata_folder_path = collection_path + "/.metadata_versions"
+    metadata_folder_path = format_metadata_versions_path(ctx, project_id, collection_id)
     metadata_folder_exist = True
 
     # Check .metadata_versions folder exists
@@ -38,14 +37,14 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
                 project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
             )
 
-    source_schema = collection_path + "/schema.json"
-    source_instance = collection_path + "/instance.json"
+    source_schema = format_schema_collection_path(ctx, project_id, collection_id)
+    source_instance = format_instance_collection_path(ctx, project_id, collection_id)
 
-    destination_schema = metadata_folder_path + "/schema.1.json"
-    destination_instance = metadata_folder_path + "/instance.1.json"
+    destination_schema = format_schema_versioned_collection_path(ctx, project_id, collection_id, "1")
+    destination_instance = format_instance_versioned_collection_path(ctx, project_id, collection_id, "1")
 
     force_flag = ""
-    if overwrite_flag == "true":
+    if formatters.format_string_to_boolean(overwrite_flag):
         force_flag = "forceFlag="
 
     # Copy current metadata json files to /.metadata_versions

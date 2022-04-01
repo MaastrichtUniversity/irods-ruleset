@@ -20,7 +20,6 @@ better
 bewildered
 bloody
 blue
-blue-eyed
 blushing
 bored
 brainy
@@ -151,7 +150,6 @@ nutty
 obedient
 obnoxious
 odd
-old-fashioned
 open
 outrageous
 outstanding
@@ -213,7 +211,6 @@ vivacious
 wandering
 weary
 wicked
-wide-eyed
 wild
 witty
 worrisome

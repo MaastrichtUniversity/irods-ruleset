@@ -18,20 +18,20 @@ def get_project_finance(ctx, project_path):
     project_cost = 0
     project_size = 0
     resources_prices = {}
-    collections_output = []
+    project_collections_output = []
 
     # Get all project's collections
     for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(project_path), AS_LIST, ctx.callback):
         # collections.append(result[0])
 
-        collection_path = result[0]
+        project_collection_path = result[0]
         collection_cost = 0
         collection_size = 0
         resources_details = []
 
         # Get the collection size on each resources
         parameters = "META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-        conditions = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{}'".format(collection_path)
+        conditions = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{}'".format(project_collection_path)
         for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
             resource_id = collection_result[0].replace("dcat:byteSize_resc_", "")
             collection_size_on_resource = float(collection_result[1])
@@ -73,13 +73,13 @@ def get_project_finance(ctx, project_path):
         collection_size = float(collection_size) / 1024 / 1024 / 1024
 
         # Store the overall collection finance information
-        collection = {
-            "collection": collection_path,
+        project_collection = {
+            "collection": project_collection_path,
             "data_size_gib": collection_size,
             "details_per_resource": resources_details,
             "collection_storage_cost": collection_cost,
         }
-        collections_output.append(collection)
+        project_collections_output.append(project_collection)
 
         project_cost = project_cost + collection_cost
         project_size = project_size + collection_size
@@ -94,7 +94,7 @@ def get_project_finance(ctx, project_path):
     output = {
         "project_cost_yearly": project_cost_yearly,
         "project_cost_monthly": project_cost_monthly,
-        "collections": collections_output,
+        "collections": project_collections_output,
         "project_size_gib": project_size_gib,
         "project_size_gb": project_size_gb,
     }

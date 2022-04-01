@@ -28,7 +28,7 @@ def get_user_attribute_value(ctx, username, attribute, fatal):
     ):
         value = result[0]
 
-    if fatal == "true" and value == "":
+    if formatters.format_string_to_boolean(fatal) and value == "":
         ctx.callback.msiExit("-807000", "AVU {} is missing for user {}".format(attribute, username))
 
     return {"value": value}

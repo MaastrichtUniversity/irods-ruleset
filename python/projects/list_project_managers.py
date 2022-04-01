@@ -25,7 +25,7 @@ def list_project_managers(ctx, project_id, show_service_accounts):
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",
-        "COLL_ACCESS_NAME = 'own' AND " "COLL_NAME = '/nlmumc/projects/{}'".format(project_id),
+        "COLL_ACCESS_NAME = 'own' AND " "COLL_NAME = '{}'".format(format_project_path(ctx, project_id)),
         AS_LIST,
         ctx.callback,
     ):
@@ -62,7 +62,7 @@ def list_project_managers(ctx, project_id, show_service_accounts):
 
             if account_type == "rodsuser":
                 # Filter out service account from output
-                if show_service_accounts == "false" and "service-" in account_name:
+                if not formatters.format_string_to_boolean(show_service_accounts) and "service-" in account_name:
                     continue
 
                 for user_result in row_iterator(

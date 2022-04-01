@@ -53,7 +53,7 @@ def get_user_group_memberships(ctx, show_special_groups, username):
                 "description": group_description,
             }
 
-            if show_special_groups == "false":
+            if not formatters.format_string_to_boolean(show_special_groups):
                 if (
                     group_name != "public"
                     and group_name != "rodsadmin"

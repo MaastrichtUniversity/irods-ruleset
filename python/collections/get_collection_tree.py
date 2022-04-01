@@ -1,15 +1,13 @@
-# ./run_test.sh -r get_collection_tree -a "P000000014/C000000001/,P000000014/C000000001/.metadata_versions"
-@make(inputs=[0,1], outputs=[2], handler=Output.STORE)
-def get_collection_tree(ctx, base , path):
+# ./run_test.sh -r get_collection_tree -a "P000000014/C000000001/.metadata_versions"
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def get_collection_tree(ctx, relative_path):
     """
        #     Lists the folders and files attributes at the input 'path'
        #
        #     Parameters
        #     ----------
-       #     base : str
-       #        The base path ; eg. P000000001/C000000001
-       #     path : str
-       #         The collection's id; eg. P000000001/C000000001/SubFolder1/Experiment1/
+       #     relative_path : str
+       #         Relative path to collection; eg. P000000014/C000000001/.metadata_versions
        #     Returns
        #     -------
        #     dict
@@ -20,19 +18,19 @@ def get_collection_tree(ctx, base , path):
 
     output = []
 
-    absolute_path = "/nlmumc/projects/" + path
+    absolute_path = formatters.format_absolute_project_path(relative_path)
 
     # Get Subfolders
     for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME", "COLL_PARENT_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback):
 
         # Extract only the name of the subfolder from the full name/path
         name = result[0].rsplit('/', 1)[1]
-        relative_path = path + "/" + name
+        relative_collection_path = relative_path + "/" + name
 
         folder_node = {
             "name": name,
             "full_path": result[0],
-            "path": relative_path,
+            "path": relative_collection_path,
             "type": "folder",
             "size": "--",
             "rescname": "--",
@@ -45,11 +43,11 @@ def get_collection_tree(ctx, base , path):
     for result in row_iterator("DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME","COLL_NAME = '{}'".format(absolute_path),
                                AS_LIST, ctx.callback):
 
-        relative_path = path + "/" + result[0]
+        relative_data_path = relative_path + "/" + result[0]
 
         data_node = {
             "name": result[0],
-            "path": relative_path,
+            "path": relative_data_path,
             "type": "file",
             "size": result[1],
             "rescname": result[2],

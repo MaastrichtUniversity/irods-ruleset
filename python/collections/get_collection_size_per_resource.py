@@ -36,7 +36,7 @@ def get_collection_size_per_resource(ctx, project_id):
         AS_LIST,
         ctx.callback,
     ):
-        collection_id = formatters.get_collection_id_from_collection_path(row[0])
+        collection_id = formatters.get_collection_id_from_project_collection_path(row[0])
         total_sizes[collection_id] = row[1]
 
     # query size of collection per resource attribute (resource ID)
@@ -46,7 +46,7 @@ def get_collection_size_per_resource(ctx, project_id):
         AS_LIST,
         ctx.callback,
     ):
-        collection_id = formatters.get_collection_id_from_collection_path(row[0])
+        collection_id = formatters.get_collection_id_from_project_collection_path(row[0])
         resource_id = re.sub("^dcat:byteSize_resc_", "", row[1])
         relative_size = (float(row[2]) / float(total_sizes[collection_id])) * 100
         result = {

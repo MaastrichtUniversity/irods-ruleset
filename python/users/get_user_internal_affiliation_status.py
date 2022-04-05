@@ -16,7 +16,10 @@ def get_user_internal_affiliation_status(ctx, username):
     """
     ret = ctx.get_user_attribute_value(username, "voPersonExternalID", TRUE_AS_STRING, "result")["arguments"][3]
     external_id = json.loads(ret)["value"]
-    affiliation = external_id.split("@")[1]
+    try:
+        affiliation = external_id.split("@")[1]
+    except ValueError:
+        affiliation = ""
     ctx.writeLine("stdout", affiliation)
     if affiliation in ["unimaas.nl", "mumc.nl"]:
         return True

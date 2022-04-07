@@ -1,4 +1,4 @@
-# ./run_test.sh -r open_project_collection_snapshot -a "P000000014,C000000001"
+# ./run_test.sh -r open_project_collection_snapshot -a "P000000014,C000000001,rods,admin:own"
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
 def open_project_collection_snapshot(ctx, project_id, collection_id, username, access):
     """

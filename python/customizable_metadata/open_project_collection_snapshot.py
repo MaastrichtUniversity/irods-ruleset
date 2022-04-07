@@ -3,7 +3,7 @@
 def open_project_collection_snapshot(ctx, project_id, collection_id, username, access):
     """
     This rule opens a project collection root, the schema.json , instance.json and the .metadataversions subfolder
-    in order to add, modify or delete data by an user. It uses user=rods and right=own. Is does NOT open recursively
+    in order to add, modify or delete data by an user. It uses parameters for username and access. Is does NOT open recursively
 
     Parameters
     ----------
@@ -13,6 +13,11 @@ def open_project_collection_snapshot(ctx, project_id, collection_id, username, a
         The project ID ie P000000001
     collection_id: str
         The collection ID ie C000000001
+    username: str
+        The username
+    access: str
+        ownership rights
+
     """
 
     project_collection_path = format_project_collection_path(ctx, project_id, collection_id)

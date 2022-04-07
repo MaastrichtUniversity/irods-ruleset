@@ -80,7 +80,7 @@ tapeUnArchive(*count, *archColl){
                 msiWriteRodsLog("DEBUG: moveError *moveError", 0);
                 msiWriteRodsLog("DEBUG: moveStatus *moveStatus", 0);
                 if ( *moveError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                 }
 
                 # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
@@ -88,7 +88,7 @@ tapeUnArchive(*count, *archColl){
                 msiWriteRodsLog("DEBUG: trimError *trimError", 0);
                 msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
                 if ( *trimError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
                 }
 
                 *isMoved=*isMoved+1;
@@ -132,7 +132,7 @@ tapeUnArchive(*count, *archColl){
                 msiWriteRodsLog("DEBUG: moveError *moveError", 0);
                 msiWriteRodsLog("DEBUG: moveStatus *moveStatus", 0);
                 if ( *moveError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *coordResourceName to *archiveResc FAILED.")
                 }
 
                 # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
@@ -140,7 +140,7 @@ tapeUnArchive(*count, *archColl){
                 msiWriteRodsLog("DEBUG: trimError *trimError", 0);
                 msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
                 if ( *trimError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *coordResourceName FAILED.")
                 }
 
                 *isMoved=*isMoved+1;

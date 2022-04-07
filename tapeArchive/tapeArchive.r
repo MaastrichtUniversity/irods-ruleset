@@ -63,7 +63,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     msiWriteRodsLog("DEBUG: moveError *moveError", 0);
                     msiWriteRodsLog("DEBUG: moveStatus *moveStatus", 0);
                     if ( *moveError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "archive-failed", "Replication of *dataPath from *coordResourceName to *archiveResc FAILED.")
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Replication of *dataPath from *coordResourceName to *archiveResc FAILED.")
                     }
 
                     # Trim data from *coordResourceName
@@ -72,7 +72,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     msiWriteRodsLog("DEBUG: trimError *trimError", 0);
                     msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
                     if ( *trimError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "archive-failed", "Trim *dataPath from *coordResourceName FAILED.")
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Trim *dataPath from *coordResourceName FAILED.")
                     }
 
                     # Update counter

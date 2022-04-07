@@ -41,10 +41,10 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
         if status != 0:
             retry_counter -= 1
             ctx.callback.msiWriteRodsLog("DEBUG: Decrement retry_counter: {}".format(str(retry_counter)), 0)
+            time.sleep(RETRY_SLEEP_NUMBER)
         else:
             retry_counter = 0
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(dropzone_path), 0)
-        time.sleep(RETRY_SLEEP_NUMBER)
 
     if status != 0:
         ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error copying ingest zone")

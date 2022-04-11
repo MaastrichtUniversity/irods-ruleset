@@ -5,7 +5,7 @@
 
 # Input files.
 
-RULE_FILES = $(wildcard *.py)
+RULE_FILES = $(wildcard *.py) $(wildcard */*.py)
 # Filter out core.py to be able to position it first during the concatenation
 FILTER := $(filter-out core.py,$(RULE_FILES))
 ASSETS_SRC = assets/

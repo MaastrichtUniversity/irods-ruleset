@@ -1,13 +1,13 @@
 # This rule checks if a user has sufficient permissions to (create and) delete dropzones, based on iRODS ACL's on the dropzones parent-collection
 #
-# irule -F checkDropZoneACL.r
+# irule -F /rules/ingest/checkDropZoneACL.r "*user='dlinssen'" "*dropzoneType='direct'"
 
 irule_dummy() {
-    IRULE_checkDropZoneACL(*user, *result)
-    #writeLine("stdout", *result);
+    IRULE_checkDropZoneACL(*user, *dropzoneType, *result)
+    writeLine("stdout", *result);
 }
 
-IRULE_checkDropZoneACL(*user, *result) {
+IRULE_checkDropZoneACL(*user, *dropzoneType, *result) {
     *result = "";
 
     userNameToUserId(*user, *userId);
@@ -22,22 +22,27 @@ IRULE_checkDropZoneACL(*user, *result) {
     # Remove first comma
     *groups=substr(*groups, 1, strlen(*groups));
 
+    *collectionToQuery = '';
+    if ( *dropzoneType == "mounted" ) {
+        *collectionToQuery = 'zones'
+    } else if ( *dropzoneType == "direct" ) {
+        *collectionToQuery = 'direct'
+    }
+
     # Generate and execute SQL query
-    msiMakeGenQuery("count(COLL_NAME)", "COLL_NAME = '/nlmumc/ingest/zones' and COLL_ACCESS_NAME in ('own', 'modify object') and COLL_ACCESS_USER_ID in (*groups)", *Query);
+    msiMakeGenQuery("count(COLL_NAME)", "COLL_NAME = '/nlmumc/ingest/*collectionToQuery' and COLL_ACCESS_NAME in ('own', 'modify object') and COLL_ACCESS_USER_ID in (*groups)", *Query);
     msiExecGenQuery(*Query, *QOut);
 
     # Check if SQL result was not empty and return true
     foreach ( *Row in *QOut ) {
         if ( int(*Row.COLL_NAME) > 0 ) {
             *result= "true";
-            #writeLine("stdout", "true");
         } else {
             *result= "false";
-            #writeLine("stdout", "false");
         }
     }
 
 }
 
-INPUT *user='',*result=''
+INPUT *user='',*dropzoneType='',*result=''
 OUTPUT ruleExecOut

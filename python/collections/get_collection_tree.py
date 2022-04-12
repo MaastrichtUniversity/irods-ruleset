@@ -2,17 +2,20 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_collection_tree(ctx, relative_path):
     """
-       #     Lists the folders and files attributes at the input 'path'
-       #
-       #     Parameters
-       #     ----------
-       #     relative_path : str
-       #         Relative path to collection; eg. P000000014/C000000001/.metadata_versions
-       #     Returns
-       #     -------
-       #     dict
-       #         The folders and files attributes at the requested path
-       #     """
+    Lists the folders and files attributes at the input 'path'
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    relative_path : str
+       Relative path to collection; e.g: P000000014/C000000001/.metadata_versions
+
+    Returns
+    -------
+    dict
+       The folders and files attributes at the requested path
+    """
 
     import time
 
@@ -20,7 +23,7 @@ def get_collection_tree(ctx, relative_path):
 
     absolute_path = formatters.format_absolute_project_path(relative_path)
 
-    # Get Subfolders
+    # Get sub-folders
     for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME", "COLL_PARENT_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback):
 
         # Extract only the name of the subfolder from the full name/path
@@ -40,7 +43,7 @@ def get_collection_tree(ctx, relative_path):
 
         output.append(folder_node)
 
-    for result in row_iterator("DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME","COLL_NAME = '{}'".format(absolute_path),
+    for result in row_iterator("DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME", "COLL_NAME = '{}'".format(absolute_path),
                                AS_LIST, ctx.callback):
 
         relative_data_path = relative_path + "/" + result[0]

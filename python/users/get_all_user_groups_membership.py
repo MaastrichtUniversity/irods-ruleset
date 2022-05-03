@@ -6,6 +6,7 @@ def get_all_users_groups_memberships(
     ctx, show_service_accounts, show_special_groups, show_username, extended_group_info
 ):
     """
+    Query the group memberships all existing users with some extra information based on the input parameters.
 
     Parameters
     ----------
@@ -21,7 +22,8 @@ def get_all_users_groups_memberships(
 
     Returns
     -------
-    dictionary with key for every userId and for every userId the groups it belongs to
+    dict
+        With key for every userId and for every userId the groups where it belongs to.
 
     """
     ret = ctx.callback.getUsers(show_service_accounts, "")["arguments"][1]

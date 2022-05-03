@@ -3,8 +3,8 @@
 
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
 def get_all_users_groups_memberships(
-    ctx, show_service_accounts:bool, show_special_groups:bool, show_username:bool, extended_group_info:bool
-)->dict:
+    ctx, show_service_accounts, show_special_groups, show_username, extended_group_info
+):
     """
 
     Parameters
@@ -14,9 +14,9 @@ def get_all_users_groups_memberships(
         include service accounts in the output
     show_special_groups: bool
         include special groups in the output
-    show_username : bool
+    show_username: bool
         include user_names in output
-    extended_group_info:bool
+    extended_group_info: bool
         include extended group information in the output
 
     Returns
@@ -34,10 +34,14 @@ def get_all_users_groups_memberships(
         groups = json.loads(ret)
         if extended_group_info == TRUE_AS_STRING:
             output[user["userId"]]["groups"] = groups
+            output[user["userId"]]["group_names"] = []
+            for group in groups:
+                output[user["userId"]]["group_names"].append(group["name"])
         else:
             output[user["userId"]]["groups"] = []
+            output[user["userId"]]["group_names"] = []
             for group in groups:
-                output[user["userId"]]["groups"].append(group["name"])
+                output[user["userId"]]["group_names"].append(group["name"])
         if show_username == TRUE_AS_STRING:
             output[user["userId"]]["user_name"] = user["userName"]
 

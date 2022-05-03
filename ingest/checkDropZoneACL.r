@@ -9,8 +9,8 @@ irule_dummy() {
 
 IRULE_checkDropZoneACL(*user, *dropzoneType, *result) {
     *result = "";
-
-    userNameToUserId(*user, *userId);
+    *userId = "";
+    get_user_id(*user, *userId);
 
     # Create a list of group-IDs (the user-ID is also a "group-ID")
     *groups = '';

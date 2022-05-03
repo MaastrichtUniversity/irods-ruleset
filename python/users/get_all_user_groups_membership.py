@@ -44,5 +44,7 @@ def get_all_users_groups_memberships(
                 output[user["userId"]]["group_names"].append(group["name"])
         if show_username == TRUE_AS_STRING:
             output[user["userId"]]["user_name"] = user["userName"]
+        else:
+            output[user["userId"]]["user_name"] = None
 
     return output

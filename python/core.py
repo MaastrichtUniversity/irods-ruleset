@@ -129,6 +129,12 @@ def get_client_username(ctx):
     return username
 
 
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def format_audit_trail_message(ctx, username, event):
+    user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
+    return loggers.format_audit_trail_message(int(user_id), "POLICY", event)
+
+
 def read_data_object_from_irods(ctx, path):
     """This rule gets a JSON schema stored as an iRODS object
     :param ctx:  iRODS context
@@ -170,12 +176,14 @@ def format_dropzone_path(ctx, token, dropzone_type):
         )
     return dropzone_path
 
+
 def format_project_path(ctx, project_id):
     try:
         project_path = formatters.format_project_path(project_id)
     except exceptions.ValidationError:
         ctx.callback.msiExit("-1", "Invalid project ID format: '{}'".format(project_id))
     return project_path
+
 
 def format_project_collection_path(ctx, project_id, collection_id):
     try:
@@ -184,12 +192,14 @@ def format_project_collection_path(ctx, project_id, collection_id):
         ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return project_collection_path
 
+
 def format_instance_collection_path(ctx, project_id, collection_id):
     try:
         instance_path = formatters.format_instance_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
         ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return instance_path
+
 
 def format_schema_collection_path(ctx, project_id, collection_id):
     try:
@@ -198,6 +208,7 @@ def format_schema_collection_path(ctx, project_id, collection_id):
         ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return schema_path
 
+
 def format_instance_versioned_collection_path(ctx, project_id, collection_id, version):
     try:
         instance_path = formatters.format_instance_versioned_collection_path(project_id, collection_id, version)
@@ -205,12 +216,14 @@ def format_instance_versioned_collection_path(ctx, project_id, collection_id, ve
         ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return instance_path
 
+
 def format_schema_versioned_collection_path(ctx, project_id, collection_id, version):
     try:
         schema_path = formatters.format_schema_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
         ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return schema_path
+
 
 def format_metadata_versions_path(ctx, project_id, collection_id):
     try:

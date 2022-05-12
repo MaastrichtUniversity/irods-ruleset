@@ -1,12 +1,14 @@
+# /rules/tests/run_test.sh -r list_contributing_projects -a "false" -j -u jmelius
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def list_contributing_projects(ctx, show_service_accounts):
     """
-    Query the list of ACL for a project for the client user
+    Query the list of ACL for all projects for the client user.
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     show_service_accounts: str
         'true'/'false' expected; If true, hide the service accounts in the result
 
@@ -21,9 +23,7 @@ def list_contributing_projects(ctx, show_service_accounts):
     projects = []
     groups = ""
     username = ctx.callback.get_client_username("")["arguments"][0]
-
-    ret = ctx.callback.userNameToUserId(username, "*userId")
-    user_id = ret["arguments"][1]
+    user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
 
     for result in row_iterator("USER_GROUP_ID", "USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback):
         group_id = "'" + result[0] + "'"

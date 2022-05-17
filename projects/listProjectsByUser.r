@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F listProjectsByUser.r
+# irule -F /rules/projects/listProjectsByUser.r | python -m json.tool
 
 irule_dummy() {
     IRULE_listProjectsByUser(*result);
@@ -16,7 +16,8 @@ IRULE_listProjectsByUser(*result) {
        *json_str = '[]';
        *size = 0;
        *username = *Row.USER_NAME;
-       userNameToUserId(*username, *userId);
+       *userId = "";
+       get_user_id(*username, *userId);
        #User rodsadmin crashes rest of scripts
        if (*userId != '9001') {
             # Create a list of group-IDs (the user-ID is also a "group-ID")
@@ -40,14 +41,6 @@ IRULE_listProjectsByUser(*result) {
         }
     }
     *result = *json_str2;
-}
-
-userNameToUserId(*userName, *userId) {
-    *O = select USER_ID where USER_NAME = '*userName';
-
-    foreach (*R in *O) {
-        *userId = *R.USER_ID;
-    }
 }
 
 INPUT null

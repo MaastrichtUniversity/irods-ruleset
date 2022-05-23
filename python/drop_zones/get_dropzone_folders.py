@@ -1,6 +1,6 @@
 # /rules/tests/run_test.sh -r get_dropzone_tree -a "vast-dove"
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
-def get_dropzone_tree(ctx, token):
+def get_dropzone_folders(ctx, token):
     """
     Lists the folders and files attributes at the input 'path'
 
@@ -19,16 +19,16 @@ def get_dropzone_tree(ctx, token):
 
     import time
 
-    output = []
+    output = {"folders": []}
 
     absolute_path = "/nlmumc/ingest/direct/{}".format(token)
 
     # Get sub-folders
-    for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME", "COLL_PARENT_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback):
+    for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME", "COLL_PARENT_NAME LIKE '{}'".format(absolute_path), AS_LIST, ctx.callback):
 
         # Extract only the name of the subfolder from the full name/path
         name = result[0].rsplit('/', 1)[1]
-        relative_collection_path = token + "/" + name
+        relative_collection_path = result[0].replace("/nlmumc/ingest/direct/{}".format(token), "")
 
         folder_node = {
             "name": name,
@@ -41,24 +41,6 @@ def get_dropzone_tree(ctx, token):
             "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[2])))
         }
 
-        output.append(folder_node)
-
-    for result in row_iterator("DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME", "COLL_NAME = '{}'".format(absolute_path),
-                               AS_LIST, ctx.callback):
-
-        relative_data_path = token + "/" + result[0]
-
-        data_node = {
-            "name": result[0],
-            "path": relative_data_path,
-            "type": "file",
-            "size": result[1],
-            "rescname": result[2],
-            "offlineResource": result[2] == "arcRescSURF01",
-            "ctime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[3]))),
-            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[4])))
-        }
-
-        output.append(data_node)
+        output["folders"].append(folder_node)
 
     return output

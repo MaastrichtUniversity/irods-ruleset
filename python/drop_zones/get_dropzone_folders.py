@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r get_dropzone_tree -a "vast-dove"
+# /rules/tests/run_test.sh -r get_dropzone_folders -a "vast-dove"
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_dropzone_folders(ctx, token):
     """

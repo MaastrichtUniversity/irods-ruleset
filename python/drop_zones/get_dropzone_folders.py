@@ -1,6 +1,6 @@
-# /rules/tests/run_test.sh -r get_dropzone_folders -a "vast-dove"
-@make(inputs=[0], outputs=[1], handler=Output.STORE)
-def get_dropzone_folders(ctx, token):
+# /rules/tests/run_test.sh -r get_dropzone_folders -a "vast-dove,/"
+@make(inputs=[0,1], outputs=[2], handler=Output.STORE)
+def get_dropzone_folders(ctx, token, path ):
     """
     Lists the folders and files attributes at the input 'path'
 
@@ -10,6 +10,8 @@ def get_dropzone_folders(ctx, token):
         Combined type of callback and rei struct.
     token : str
        The dropzone token
+    path : str
+       Relative path in dropzone for folder
 
     Returns
     -------
@@ -21,14 +23,13 @@ def get_dropzone_folders(ctx, token):
 
     output = {"folders": []}
 
-    absolute_path = "/nlmumc/ingest/direct/{}".format(token)
-
+    absolute_path = "/nlmumc/ingest/direct/{}{}".format(token,path)
     # Get sub-folders
     for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME", "COLL_PARENT_NAME LIKE '{}'".format(absolute_path), AS_LIST, ctx.callback):
 
         # Extract only the name of the subfolder from the full name/path
         name = result[0].rsplit('/', 1)[1]
-        relative_collection_path = result[0].replace("/nlmumc/ingest/direct/{}".format(token), "")
+        relative_collection_path = result[0].replace("/nlmumc/ingest/direct/{}{}".format(token,path), "")
 
         folder_node = {
             "name": name,

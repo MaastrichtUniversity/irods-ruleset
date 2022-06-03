@@ -16,7 +16,7 @@ def get_user_admin_status(ctx, username):
         True or false as a string
     """
 
-    groups = json.loads(ctx.callback.get_user_group_memberships("true", username, "")["arguments"][2])
+    groups = json.loads(ctx.callback.get_user_group_memberships(TRUE_AS_STRING, username, "")["arguments"][2])
     is_admin = False
     for group in groups:
         if group["name"] == "DH-project-admins":

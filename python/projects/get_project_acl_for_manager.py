@@ -27,18 +27,18 @@ def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
     if username not in managers["users"]:
         return []
 
-    contributors = ctx.callback.list_project_contributors(project_id, "false", show_service_accounts, "")["arguments"][
+    contributors = ctx.callback.list_project_contributors(project_id, FALSE_AS_STRING, show_service_accounts, "")["arguments"][
         3
     ]
     contributors = json.loads(contributors)
 
-    viewers = ctx.callback.list_project_viewers(project_id, "false", show_service_accounts, "viewers")["arguments"][3]
+    viewers = ctx.callback.list_project_viewers(project_id, FALSE_AS_STRING, show_service_accounts, "viewers")["arguments"][3]
     viewers = json.loads(viewers)
 
-    project_path = "/nlmumc/projects/" + project_id
+    project_path = format_project_path(ctx, project_id)
 
-    principal_investigator = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", "true")["arguments"][2]
-    data_steward = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", "true")["arguments"][2]
+    principal_investigator = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
+    data_steward = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", TRUE_AS_STRING)["arguments"][2]
 
     output = {
         "managers": managers,

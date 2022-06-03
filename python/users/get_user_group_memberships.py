@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_user_group_memberships -a "false,pvanschay2" -j
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_user_group_memberships(ctx, show_special_groups, username):
     """
@@ -17,10 +19,7 @@ def get_user_group_memberships(ctx, show_special_groups, username):
     list
         a json list of groups objects
     """
-    user_id = ""
-    result = ctx.callback.userNameToUserId(username, user_id)
-    user_id = result["arguments"][1]
-
+    user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
     output = []
 
     for result in row_iterator(
@@ -53,7 +52,7 @@ def get_user_group_memberships(ctx, show_special_groups, username):
                 "description": group_description,
             }
 
-            if show_special_groups == "false":
+            if not formatters.format_string_to_boolean(show_special_groups):
                 if (
                     group_name != "public"
                     and group_name != "rodsadmin"

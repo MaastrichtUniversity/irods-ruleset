@@ -24,10 +24,10 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project = {}
 
     project["path"] = project_path
-    project["project"] = project["path"].split("/")[3]
+    project["project"] = formatters.get_project_id_from_project_path(project_path)
 
     # List Contributors
-    ret = ctx.callback.list_project_contributors(project["project"], "false", show_service_accounts, "")["arguments"][3]
+    ret = ctx.callback.list_project_contributors(project["project"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
     project["contributors"] = json.loads(ret)
 
     # List Managers
@@ -35,35 +35,35 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["managers"] = json.loads(ret)
 
     # List Viewers
-    ret = ctx.callback.list_project_viewers(project["project"], "false", show_service_accounts, "")["arguments"][3]
+    ret = ctx.callback.list_project_viewers(project["project"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
     project["viewers"] = json.loads(ret)
 
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'
-    project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", "true")["arguments"][2]
+    project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", TRUE_AS_STRING)["arguments"][2]
     project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(
-        project["path"], "enableOpenAccessExport", "", "false", "false"
+        project["path"], "enableOpenAccessExport", "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
-    project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", "false", "false")[
+    project["enableArchive"] = ctx.callback.getCollectionAVU(project["path"], "enableArchive", "", FALSE_AS_STRING, FALSE_AS_STRING)[
         "arguments"
     ][2]
     project["enableUnarchive"] = ctx.callback.getCollectionAVU(
-        project["path"], "enableUnarchive", "", project["enableArchive"], "false"
+        project["path"], "enableUnarchive", "", project["enableArchive"], FALSE_AS_STRING
     )["arguments"][2]
     project["enableContributorEditMetadata"] = ctx.callback.getCollectionAVU(
-        project["path"], "enableContributorEditMetadata", "", "false", "false"
+        project["path"], "enableContributorEditMetadata", "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
-    project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", "true")[
+    project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", TRUE_AS_STRING)[
         "arguments"
     ][2]
-    project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", "true")[
+    project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", TRUE_AS_STRING)[
         "arguments"
     ][2]
     project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
-        project["path"], "collectionMetadataSchemas", "", "", "true"
+        project["path"], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
     )["arguments"][2]
 
-    ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", "true")["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the PI
@@ -71,7 +71,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
         if user["userName"] == ret:
             project["principalInvestigatorDisplayName"] = user["displayName"]
 
-    ret = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", "true")["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", TRUE_AS_STRING)["arguments"][2]
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the data steward

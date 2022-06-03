@@ -1,12 +1,14 @@
+# /rules/tests/run_test.sh -r list_contributing_projects -a "false" -j -u jmelius
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def list_contributing_projects(ctx, show_service_accounts):
     """
-    Query the list of ACL for a project for the client user
+    Query the list of ACL for all projects for the client user.
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     show_service_accounts: str
         'true'/'false' expected; If true, hide the service accounts in the result
 
@@ -21,9 +23,7 @@ def list_contributing_projects(ctx, show_service_accounts):
     projects = []
     groups = ""
     username = ctx.callback.get_client_username("")["arguments"][0]
-
-    ret = ctx.callback.userNameToUserId(username, "*userId")
-    user_id = ret["arguments"][1]
+    user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
 
     for result in row_iterator("USER_GROUP_ID", "USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback):
         group_id = "'" + result[0] + "'"
@@ -40,11 +40,11 @@ def list_contributing_projects(ctx, show_service_accounts):
         "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
     )
 
-    for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        project = {"id": collection_result[0].split("/")[3]}
+    for project_path in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        project = {"id": formatters.get_project_id_from_project_path(project_path[0])}
 
         # List Contributors
-        ret = ctx.callback.list_project_contributors(project["id"], "false", show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
         project["contributors"] = json.loads(ret)
 
         # List Managers
@@ -52,17 +52,17 @@ def list_contributing_projects(ctx, show_service_accounts):
         project["managers"] = json.loads(ret)
 
         # List Viewers
-        ret = ctx.callback.list_project_viewers(project["id"], "false", show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_viewers(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
         project["viewers"] = json.loads(ret)
 
         # Get project metadata
         # Note: Retrieving the rule outcome is done with '["arguments"][2]'
-        project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", "true")["arguments"][2]
-        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", "true")[
+        project["title"] = ctx.callback.getCollectionAVU(project_path[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
+        project["resource"] = ctx.callback.getCollectionAVU(project_path[0], "resource", "", "", TRUE_AS_STRING)[
             "arguments"
         ][2]
         project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
-            collection_result[0], "collectionMetadataSchemas", "", "", "true"
+            project_path[0], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
         )["arguments"][2]
 
         projects.append(project)

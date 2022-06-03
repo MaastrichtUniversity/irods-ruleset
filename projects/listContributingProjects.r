@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F rules/projects/listContributingProjects.r
+# irule -F /rules/projects/listContributingProjects.r | python -m json.tool
 #
 # This rule returns a JSON array of projects for which the calling user is a Manager or a Contributor
 # By default, iRODS returns only the projects for which a user is authorized. If a user has read-access to a
@@ -16,9 +16,8 @@ listContributingProjects {
     *json_str = '[]';
     *size = 0;
     *groups = '';
-
-    userNameToUserId($userNameClient, *userId);
-
+    *userId = "";
+    get_user_id($userNameClient, *userId);
     # Create a list of group-IDs (the user-ID is also a "group-ID")
     foreach ( *Row2 in SELECT USER_GROUP_ID where USER_ID = *userId ) {
          *groupID = "'" ++ *Row2.USER_GROUP_ID ++ "'";

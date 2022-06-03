@@ -75,21 +75,25 @@ tapeUnArchive(*count, *archColl){
 
                 # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
                 # will automatically also include a checksum check on the destination
-                msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
-                if ( *moveStatus != 0 ) {
-                       failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
+                msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+                if ( *moveError != 0 ) {
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
                 }
 
-                msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus);
-                if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
+                msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+                msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
+                if ( *trimError != 0 ) {
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
                 }
 
                 *isMoved=*isMoved+1;
                 # Debug
                 msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
                 msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
                 msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                 msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
                 msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
@@ -121,21 +125,25 @@ tapeUnArchive(*count, *archColl){
 
                 # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
                 # will automatically also include a checksum check on the destination
-                msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus);
-                if ( *moveStatus != 0 ) {
-                       failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
+                msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+                if ( *moveError != 0 ) {
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
                 }
 
-                msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus);
-                if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
+                msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+                msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
+                if ( *trimError != 0 ) {
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
                 }
 
                 *isMoved=*isMoved+1;
                 # Debug
                 msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
                 msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
                 msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                 msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
                 msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);

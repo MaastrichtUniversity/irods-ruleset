@@ -85,7 +85,6 @@ tapeUnArchive(*count, *archColl){
                 # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
                 *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
                 msiWriteRodsLog("DEBUG: trimError *trimError", 0);
-                msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
                 if ( *trimError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
                 }
@@ -94,7 +93,6 @@ tapeUnArchive(*count, *archColl){
                 # Debug
                 msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
                 msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                 msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
                 msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
             }
@@ -135,7 +133,6 @@ tapeUnArchive(*count, *archColl){
                 # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
                 *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
                 msiWriteRodsLog("DEBUG: trimError *trimError", 0);
-                msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
                 if ( *trimError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
                 }
@@ -144,7 +141,6 @@ tapeUnArchive(*count, *archColl){
                 # Debug
                 msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
                 msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                 msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
                 msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
             }

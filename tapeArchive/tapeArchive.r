@@ -61,7 +61,6 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
                     *moveError = errorcode(msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus));
                     msiWriteRodsLog("DEBUG: moveError *moveError", 0);
-                    msiWriteRodsLog("DEBUG: moveStatus *moveStatus", 0);
                     if ( *moveError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Replication of *dataPath from *coordResourceName to *archiveResc FAILED.")
                     }
@@ -70,7 +69,6 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
                     *trimError = errorcode(msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus));
                     msiWriteRodsLog("DEBUG: trimError *trimError", 0);
-                    msiWriteRodsLog("DEBUG: trimStatus *trimStatus", 0);
                     if ( *trimError != 0 ) {
                        setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Trim *dataPath from *coordResourceName FAILED.")
                     }
@@ -80,8 +78,6 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
 
                     # Report logs
                     msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                    msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
-                    msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                     msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
                 }
             }

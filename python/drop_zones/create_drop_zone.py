@@ -79,5 +79,6 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
 
     # Set ACLs
     ctx.callback.msiSetACL("default", "own", username, dropzone_path)
+    ctx.callback.msiSetACL("recursive", "inherit", "", dropzone_path)
 
     return token

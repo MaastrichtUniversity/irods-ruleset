@@ -1,4 +1,4 @@
-@make(inputs=range(13), outputs=[13], handler=Output.STORE)
+@make(inputs=range(14), outputs=[14], handler=Output.STORE)
 def create_new_project(
     ctx,
     authorization_period_end_date,
@@ -13,6 +13,7 @@ def create_new_project(
     open_access,
     tape_archive,
     tape_unarchive,
+    shared_dropzones,
     metadata_schemas,
 ):
     """
@@ -43,6 +44,8 @@ def create_new_project(
     tape_archive : str
         'true'/'false' expected values
     tape_unarchive : str
+        'true'/'false' expected values
+    shared_dropzones : str
         'true'/'false' expected values
     metadata_schemas : str
         csv string that contains the list of schema names
@@ -91,6 +94,7 @@ def create_new_project(
     ctx.callback.setCollectionAVU(new_project_path, "enableOpenAccessExport", open_access)
     ctx.callback.setCollectionAVU(new_project_path, "enableArchive", tape_archive)
     ctx.callback.setCollectionAVU(new_project_path, "enableUnarchive", tape_unarchive)
+    ctx.callback.setCollectionAVU(new_project_path, "enableDropzoneSharing", shared_dropzones)
     ctx.callback.setCollectionAVU(new_project_path, "collectionMetadataSchemas", metadata_schemas)
     ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", FALSE_AS_STRING)
 

@@ -1,0 +1,78 @@
+@make(inputs=[0], outputs=[], handler=Output.STORE)
+def transfer_project_acl_to_dropzone(ctx, project_id):
+    """
+    Has to be run as 'RODS' for mounted collections
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of a callback and rei struct.
+    project_id: str
+        The id of the project to transfer the ACLs from to it's dropzones
+    Returns
+    -------
+    str
+        The token of the created dropzone
+    """
+    project_path = format_project_path(ctx, project_id)
+
+    #TODO: Figure out when to trigger this rule
+        # Create dropzone
+        # Change project permissions (acPreProcForModifyAccessControl ?)
+    #TODO: Add some comments on how this flow works and what it does
+
+    sharing_enabled = ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", "", FALSE_AS_STRING)["arguments"][2]
+    sharing_enabled = formatters.format_string_to_boolean(sharing_enabled)
+
+    for item in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE", "COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{}'".format(project_id), AS_LIST, ctx.callback):
+        dropzone_path = item[0]
+        if sharing_enabled:
+            contributors = get_contributors(ctx, project_path)
+            set_write_permissions_dropzone(ctx, dropzone_path, contributors)
+        else:
+            contributors = get_contributors(ctx, dropzone_path)
+            creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+            revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator)
+
+def set_write_permissions_dropzone(ctx, dropzone_path, contributors):
+    for contributor in contributors:
+        ctx.callback.msiSetACL("recursive", "write", contributor["account_name"], dropzone_path)
+        ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/instance.json")
+        ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/schema.json")
+
+def revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator):
+    for contributor in contributors:
+        ctx.callback.msiSetACL("recursive", "null", contributor["account_name"], dropzone_path)
+    ctx.callback.msiSetACL("recursive", "own", creator, dropzone_path)
+    ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/instance.json")
+    ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/schema.json")
+
+def get_contributors(ctx, path):
+    criteria = "'own', 'modify object'"
+
+    output = []
+    for result in row_iterator(
+        "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
+        "COLL_ACCESS_NAME in ({}) AND ".format(criteria) + "COLL_NAME = '{}'".format(path),
+        AS_LIST,
+        ctx.callback,
+    ):
+        access_name = result[1]
+        access_type = result[2]
+        account_id = result[0]
+        account_name = ""
+        account_type = ""
+
+        access = {"account_id": account_id, "access_name": access_name, "access_type": access_type}
+
+        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+            account_name = account[0]
+            account_type = account[1]
+
+            access["account_name"] = account_name
+            access["account_type"] = account_type
+
+        if account_type != "rodsadmin" and "service-" not in access["account_name"]:
+            output.append(access)
+
+    return output

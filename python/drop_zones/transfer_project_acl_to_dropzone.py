@@ -1,5 +1,5 @@
-@make(inputs=[0], outputs=[], handler=Output.STORE)
-def transfer_project_acl_to_dropzone(ctx, project_id):
+@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
+def transfer_project_acl_to_dropzone(ctx, project_id, new_dropzone):
     """
     Has to be run as 'RODS' for mounted collections
 
@@ -9,9 +9,11 @@ def transfer_project_acl_to_dropzone(ctx, project_id):
         Combined type of a callback and rei struct.
     project_id: str
         The id of the project to transfer the ACLs from to it's dropzones
+    new_dropzone: bool
+        Transfer the ACL for a new dropzone
     """
     project_path = format_project_path(ctx, project_id)
-
+    new_dropzone = formatters.format_string_to_boolean(new_dropzone)
     #TODO: Figure out when to trigger this rule
     # Create dropzone
     # Change project permissions (acPreProcForModifyAccessControl ?)
@@ -24,18 +26,19 @@ def transfer_project_acl_to_dropzone(ctx, project_id):
         dropzone_path = item[0]
         if sharing_enabled:
             contributors = get_contributors(ctx, project_path)
-            set_write_permissions_dropzone(ctx, dropzone_path, contributors)
+            set_write_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone)
         else:
             contributors = get_contributors(ctx, dropzone_path)
             creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
             revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator)
 
 
-def set_write_permissions_dropzone(ctx, dropzone_path, contributors):
+def set_write_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone):
     for contributor in contributors:
-        ctx.callback.msiSetACL("recursive", "write", contributor["account_name"], dropzone_path)
-        ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/instance.json")
-        ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/schema.json")
+        ctx.callback.msiSetACL("recursive", "own", contributor["account_name"], dropzone_path)
+        if not new_dropzone:
+            ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/instance.json")
+            ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/schema.json")
 
 
 def revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator):

@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_active_drop_zone -a "handsome-snake,false,direct"
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type):
     """
@@ -52,6 +53,9 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         "resourceStatus": "",
         "totalSize": "0",
         "destination": "",
+        "creator": "",
+        "enableDropzoneSharing": "",
+        "sharedWithMe": ""
     }
     # Query the dropzone metadata
     for result in row_iterator(
@@ -67,15 +71,15 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
             avu[attr_name] = attr_value
             avu["date"] = result[0]
             project_path = format_project_path(ctx, attr_value)
-            for project_result in row_iterator(
-                "META_COLL_ATTR_VALUE",
-                "META_COLL_ATTR_NAME = 'title' AND " "COLL_NAME = '{}'".format(project_path),
-                AS_LIST,
-                ctx.callback,
-            ):
-                avu["projectTitle"] = project_result[0]
+            avu["projectTitle"] = ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
+            avu["enableDropzoneSharing"] = ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING)["arguments"][2]
         else:
             avu[attr_name] = attr_value
+
+    if username == avu["creator"]:
+        avu["sharedWithMe"] = "false"
+    else:
+        avu["sharedWithMe"] = "true"
 
     if formatters.format_string_to_boolean(check_ingest_resource_status):
         # Query project resource avu

@@ -30,7 +30,7 @@ def transfer_project_acl_to_dropzone(ctx, project_id, new_dropzone):
         else:
             contributors = get_contributors(ctx, dropzone_path)
             creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
-            revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator)
+            revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator, new_dropzone)
 
 
 def set_write_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone):
@@ -41,12 +41,13 @@ def set_write_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzon
             ctx.callback.msiSetACL("default", "read", contributor["account_name"], dropzone_path + "/schema.json")
 
 
-def revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator):
+def revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator, new_dropzone):
     for contributor in contributors:
         ctx.callback.msiSetACL("recursive", "null", contributor["account_name"], dropzone_path)
     ctx.callback.msiSetACL("recursive", "own", creator, dropzone_path)
-    ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/instance.json")
-    ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/schema.json")
+    if not new_dropzone:
+        ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/instance.json")
+        ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/schema.json")
 
 
 def get_contributors(ctx, path):

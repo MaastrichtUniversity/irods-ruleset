@@ -1,7 +1,13 @@
+# ./run_test.sh -r transfer_project_acl_to_dropzone -a "P000000014,false"
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
 def transfer_project_acl_to_dropzone(ctx, project_id, new_dropzone):
     """
-    Has to be run as 'RODS' for mounted collections
+    This rule transfers the ACLs that exist on a project level to all of its dropzones
+    - Get the 'enableDropzoneSharing' avu on the project
+    - Get all dropzones for the project
+    - For each dropzone, depending on the enableDropzoneSharing avu perform the following:
+        - Remove all contributors and managers from the dropzones except for the creator
+        - Add all contributors and managers to a dropzone with 'own' rights
 
     Parameters
     ----------
@@ -12,12 +18,9 @@ def transfer_project_acl_to_dropzone(ctx, project_id, new_dropzone):
     new_dropzone: bool
         Transfer the ACL for a new dropzone
     """
+
     project_path = format_project_path(ctx, project_id)
     new_dropzone = formatters.format_string_to_boolean(new_dropzone)
-    #TODO: Figure out when to trigger this rule
-    # Create dropzone
-    # Change project permissions (acPreProcForModifyAccessControl ?)
-    #TODO: Add some comments on how this flow works and what it does
 
     sharing_enabled = ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING)["arguments"][2]
     sharing_enabled = formatters.format_string_to_boolean(sharing_enabled)
@@ -25,15 +28,15 @@ def transfer_project_acl_to_dropzone(ctx, project_id, new_dropzone):
     for item in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE", "COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{}'".format(project_id), AS_LIST, ctx.callback):
         dropzone_path = item[0]
         if sharing_enabled:
-            contributors = get_contributors(ctx, project_path)
-            set_write_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone)
+            contributors = get_contributors_for_project(ctx, project_path)
+            set_own_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone)
         else:
-            contributors = get_contributors(ctx, dropzone_path)
+            contributors = get_contributors_for_project(ctx, dropzone_path)
             creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
             revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator)
 
 
-def set_write_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone):
+def set_own_permissions_dropzone(ctx, dropzone_path, contributors, new_dropzone):
     for contributor in contributors:
         ctx.callback.msiSetACL("recursive", "own", contributor["account_name"], dropzone_path)
         if not new_dropzone:
@@ -49,7 +52,7 @@ def revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator):
     ctx.callback.msiSetACL("default", "read", creator, dropzone_path + "/schema.json")
 
 
-def get_contributors(ctx, path):
+def get_contributors_for_project(ctx, path):
     criteria = "'own', 'modify object'"
 
     output = []

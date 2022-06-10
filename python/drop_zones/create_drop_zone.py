@@ -78,7 +78,6 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
         ctx.callback.createRemoteDirectory(project_id, token_stripped, vo_person_external_id)
 
     if dropzone_type == "direct":
-        ctx.callback.transfer_project_acl_to_dropzone(project_id, "true")
         ctx.callback.msiSetACL("recursive", "inherit", "", dropzone_path)
 
     # Set ACLs

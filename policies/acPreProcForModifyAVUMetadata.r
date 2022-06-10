@@ -5,7 +5,7 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
 
     ### Policy to prevent setting specials AVU by unauthorized users
     if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableUnarchive"
-    || *AName == "enableOpenAccessExport" || *AName == "collectionMetadataSchemas" || *AName == "enableContributorEditMetadata") {
+    || *AName == "enableOpenAccessExport" || *AName == "collectionMetadataSchemas" || *AName == "enableContributorEditMetadata" || *AName == "enableDropzoneSharing") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
         # Get the value for the Data Steward
@@ -39,7 +39,7 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit,
 
     ### Policy to prevent setting specials AVU by unauthorized users
     if(*AName == "responsibleCostCenter" || *AName == "enableArchive" || *AName == "enableUnarchive"
-    || *AName == "enableOpenAccessExport" || *AName == "collectionMetadataSchemas" || *AName == "enableContributorEditMetadata") {
+    || *AName == "enableOpenAccessExport" || *AName == "collectionMetadataSchemas" || *AName == "enableContributorEditMetadata" || *AName == "enableDropzoneSharing") {
         # Get the value for the PI registered
         getCollectionAVU(*ItemName,"OBI:0000103",*pi,"","true");
         # Get the value for the Data Steward

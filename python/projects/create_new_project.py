@@ -1,36 +1,23 @@
-@make(inputs=range(14), outputs=[14], handler=Output.STORE)
+@make(inputs=range(7), outputs=[7], handler=Output.STORE)
 def create_new_project(
     ctx,
-    authorization_period_end_date,
-    data_retention_period_end_date,
     ingest_resource,
     resource,
-    storage_quota_gb,
     title,
     principal_investigator,
     data_steward,
     resp_cost_center,
-    open_access,
-    tape_archive,
-    tape_unarchive,
-    shared_dropzones,
-    metadata_schemas,
+    extra_parameters
 ):
     """
     Create a new iRODS project
 
     Parameters
     ----------
-    authorization_period_end_date : str
-        The username
-    data_retention_period_end_date : str
-        The username
     ingest_resource : str
         The ingest resource to use during the ingestion
     resource : str
         The destination resource to store future collection
-    storage_quota_gb  : str
-        The storage quota in Gb
     title : str
         The project title
     principal_investigator : str
@@ -39,22 +26,56 @@ def create_new_project(
         The data steward for the project
     resp_cost_center : str
         The budget number
-    open_access : str
-        'true'/'false' expected values
-    tape_archive : str
-        'true'/'false' expected values
-    tape_unarchive : str
-        'true'/'false' expected values
-    shared_dropzones : str
-        'true'/'false' expected values
-    metadata_schemas : str
-        csv string that contains the list of schema names
+    extra_parameters: str
+        Json formatted list of extra parameters.
+        Currently supported are:
+            authorization_period_end_date : str
+                Date
+            data_retention_period_end_date : str
+                Date
+            storage_quota_gb  : str
+                The storage quota in Gb
+            open_access : str
+                'true'/'false' expected values
+            tape_archive : str
+                'true'/'false' expected values
+            tape_unarchive : str
+                'true'/'false' expected values
+            shared_dropzones : str
+                'true'/'false' expected values
+            metadata_schemas : str
+                csv string that contains the list of schema names
     """
 
     retry = 0
     error = -1
     new_project_path = ""
     project_id = ""
+    extra_parameter_default_values = {"authorization_period_end_date": "01-01-9999",
+                                                "data_retention_period_end_date": "01-01-9999",
+                                                "storage_quota_gb": "0",
+                                                "open_access": "false",
+                                                "tape_archive": "false",
+                                                "tape_unarchive": "false",
+                                                "shared_dropzones": "false",
+                                                "metadata_schemas": "DataHub_general_schema"}
+
+    extra_parameter_AVU_names = {"authorization_period_end_date": "authorizationPeriodEndDate",
+                                                "data_retention_period_end_date": "dataRetentionPeriodEndDate",
+                                                "storage_quota_gb": "storageQuotaGb",
+                                                "open_access": "enableOpenAccessExport",
+                                                "tape_archive": "enableArchive",
+                                                "tape_unarchive": "enableUnarchive",
+                                                "shared_dropzones": "enableDropzoneSharing",
+                                                "metadata_schemas": "collectionMetadataSchemas"}
+
+    if not extra_parameters or extra_parameters == '':
+        extra_parameters = "{}"
+
+    try:
+        extra_parameters = json.loads(extra_parameters)
+    except ValueError as e:
+        ctx.callback.msiExit("-1", "ERROR: Extra parameters are not provided as valid json")
 
     # Try to create the new_project_path. Exit the loop on success (error = 0) or after too many retries.
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
@@ -82,20 +103,21 @@ def create_new_project(
         msg = "ERROR: Collection '{}' attempt no. {} : Unable to create {}".format(title, retry, new_project_path)
         ctx.callback.msiExit(str(error), msg)
 
-    ctx.callback.setCollectionAVU(new_project_path, "authorizationPeriodEndDate", authorization_period_end_date)
-    ctx.callback.setCollectionAVU(new_project_path, "dataRetentionPeriodEndDate", data_retention_period_end_date)
     ctx.callback.setCollectionAVU(new_project_path, "ingestResource", ingest_resource)
     ctx.callback.setCollectionAVU(new_project_path, "resource", resource)
-    ctx.callback.setCollectionAVU(new_project_path, "storageQuotaGb", storage_quota_gb)
     ctx.callback.setCollectionAVU(new_project_path, "title", title)
     ctx.callback.setCollectionAVU(new_project_path, "OBI:0000103", principal_investigator)
     ctx.callback.setCollectionAVU(new_project_path, "dataSteward", data_steward)
     ctx.callback.setCollectionAVU(new_project_path, "responsibleCostCenter", resp_cost_center)
-    ctx.callback.setCollectionAVU(new_project_path, "enableOpenAccessExport", open_access)
-    ctx.callback.setCollectionAVU(new_project_path, "enableArchive", tape_archive)
-    ctx.callback.setCollectionAVU(new_project_path, "enableUnarchive", tape_unarchive)
-    ctx.callback.setCollectionAVU(new_project_path, "enableDropzoneSharing", shared_dropzones)
-    ctx.callback.setCollectionAVU(new_project_path, "collectionMetadataSchemas", metadata_schemas)
+
+    for extra_parameter_name in extra_parameter_default_values:
+        if extra_parameter_name in extra_parameters:
+            ctx.callback.setCollectionAVU(new_project_path, extra_parameter_AVU_names[extra_parameter_name] ,
+                                          extra_parameters[extra_parameter_name])
+        else:
+            ctx.callback.setCollectionAVU(new_project_path, extra_parameter_AVU_names[extra_parameter_name],
+                                          extra_parameter_default_values[extra_parameter_name])
+
     ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", FALSE_AS_STRING)
 
     archive_dest_resc = ""

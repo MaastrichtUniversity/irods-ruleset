@@ -6,7 +6,7 @@ def create_new_project(
     title,
     principal_investigator,
     data_steward,
-    resp_cost_center,
+    responsible_cost_center,
     extra_parameters
 ):
     """
@@ -24,7 +24,7 @@ def create_new_project(
         The principal investigator(OBI:0000103) for the project
     data_steward : str
         The data steward for the project
-    resp_cost_center : str
+    responsible_cost_center : str
         The budget number
     extra_parameters: str
         Json formatted list of extra parameters.
@@ -35,15 +35,15 @@ def create_new_project(
                 Date
             storage_quota_gb  : str
                 The storage quota in Gb
-            open_access : str
+            enable_open_access : str
                 'true'/'false' expected values
-            tape_archive : str
+            enable_archive : str
                 'true'/'false' expected values
-            tape_unarchive : str
+            enable_unarchive : str
                 'true'/'false' expected values
-            shared_dropzones : str
+            enable_dropzone_sharing : str
                 'true'/'false' expected values
-            metadata_schemas : str
+            collection_metadata_schemas : str
                 csv string that contains the list of schema names
     """
 
@@ -54,20 +54,20 @@ def create_new_project(
     extra_parameter_default_values = {"authorization_period_end_date": "01-01-9999",
                                                 "data_retention_period_end_date": "01-01-9999",
                                                 "storage_quota_gb": "0",
-                                                "open_access": "false",
-                                                "tape_archive": "false",
-                                                "tape_unarchive": "false",
-                                                "shared_dropzones": "false",
-                                                "metadata_schemas": "DataHub_general_schema"}
+                                                "enable_open_access": "false",
+                                                "enable_archive": "false",
+                                                "enable_unarchive": "false",
+                                                "enable_dropzone_sharing": "false",
+                                                "collection_metadata_schemas": "DataHub_general_schema"}
 
     extra_parameter_AVU_names = {"authorization_period_end_date": "authorizationPeriodEndDate",
                                                 "data_retention_period_end_date": "dataRetentionPeriodEndDate",
                                                 "storage_quota_gb": "storageQuotaGb",
-                                                "open_access": "enableOpenAccessExport",
-                                                "tape_archive": "enableArchive",
-                                                "tape_unarchive": "enableUnarchive",
-                                                "shared_dropzones": "enableDropzoneSharing",
-                                                "metadata_schemas": "collectionMetadataSchemas"}
+                                                "enable_open_access": "enableOpenAccessExport",
+                                                "enable_archive": "enableArchive",
+                                                "enable_unarchive": "enableUnarchive",
+                                                "enable_dropzone_sharing": "enableDropzoneSharing",
+                                                "collection_metadata_schemas": "collectionMetadataSchemas"}
 
     if not extra_parameters or extra_parameters == '':
         extra_parameters = "{}"
@@ -108,7 +108,7 @@ def create_new_project(
     ctx.callback.setCollectionAVU(new_project_path, "title", title)
     ctx.callback.setCollectionAVU(new_project_path, "OBI:0000103", principal_investigator)
     ctx.callback.setCollectionAVU(new_project_path, "dataSteward", data_steward)
-    ctx.callback.setCollectionAVU(new_project_path, "responsibleCostCenter", resp_cost_center)
+    ctx.callback.setCollectionAVU(new_project_path, "responsibleCostCenter", responsible_cost_center)
 
     for extra_parameter_name in extra_parameter_default_values:
         if extra_parameter_name in extra_parameters:

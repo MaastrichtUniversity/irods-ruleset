@@ -111,7 +111,7 @@ def create_new_project(
     for extra_parameter_name in extra_parameter_default_values:
         if extra_parameter_name in extra_parameters:
             ctx.callback.setCollectionAVU(new_project_path, extra_parameter_AVU_names[extra_parameter_name] ,
-                                          extra_parameters[extra_parameter_name])
+                                          str(extra_parameters[extra_parameter_name]))
         else:
             ctx.callback.setCollectionAVU(new_project_path, extra_parameter_AVU_names[extra_parameter_name],
                                           extra_parameter_default_values[extra_parameter_name])

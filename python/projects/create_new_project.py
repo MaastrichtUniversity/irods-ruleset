@@ -46,6 +46,7 @@ def create_new_project(
             collection_metadata_schemas : str
                 csv string that contains the list of schema names
     """
+    import ast
 
     retry = 0
     error = -1
@@ -72,10 +73,7 @@ def create_new_project(
     if not extra_parameters or extra_parameters == '':
         extra_parameters = "{}"
 
-    try:
-        extra_parameters = json.loads(extra_parameters)
-    except ValueError as e:
-        ctx.callback.msiExit("-1", "ERROR: Extra parameters are not provided as valid json")
+    extra_parameters = ast.literal_eval(extra_parameters)
 
     # Try to create the new_project_path. Exit the loop on success (error = 0) or after too many retries.
     # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.

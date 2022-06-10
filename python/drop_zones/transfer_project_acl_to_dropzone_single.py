@@ -40,17 +40,19 @@ def transfer_project_acl_to_dropzone_single(ctx, project_id, username):
             else:
                 revoke_single_permissions_dropzone(ctx, dropzone_path, username, prefix)
 
+
 def set_single_own_permissions_dropzone(ctx, dropzone_path, username, prefix):
     ctx.callback.msiSetACL("recursive", prefix + "own", username, dropzone_path)
     ctx.callback.msiSetACL("default", prefix + "read", username, dropzone_path + "/instance.json")
     ctx.callback.msiSetACL("default", prefix + "read", username, dropzone_path + "/schema.json")
 
+
 def revoke_single_permissions_dropzone(ctx, dropzone_path, username, prefix):
     ctx.callback.msiSetACL("recursive", prefix + "null", username, dropzone_path)
 
+
 def get_username_privileges(ctx, path, username):
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
-    output = []
     access_name = ""
     for result in row_iterator(
         "COLL_ACCESS_NAME",

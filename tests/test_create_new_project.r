@@ -1,35 +1,27 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_create_new_project.r "*authorizationPeriodEndDate='1-1-2018'" "*dataRetentionPeriodEndDate='1-1-2018'" "*ingestResource='iresResource'" "*resource='replRescUM01'" "*storageQuotaGb='10'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*respCostCenter='UM-30001234X'" "*openAccess='false'" "*tapeArchive='true'" "*tapeUnarchive='true'" "*sharedDropzones='true'" "*collectionMetadataSchemas='DataHub_general_schema'"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_create_new_project.r  "*ingestResource='iresResource'" "*resource='replRescUM01'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*responsibleCostCenter='UM-30001234X'" "*extraParameters='{\"enableDropzoneSharing\":\"true\"}'"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_create_new_project.r  "*ingestResource='iresResource'" "*resource='replRescUM01'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*responsibleCostCenter='UM-30001234X'" "*extraParameters=''"
+# irule -r irods_rule_engine_plugin-python-instance -F /rules/tests/test_create_new_project.r  "*ingestResource='iresResource'" "*resource='replRescUM01'" "*title='Testing'" "*principalInvestigator='p.rofessor@maastrichtuniversity.nl'" "*dataSteward='d.steward@maastrichtuniversity.nl'" "*responsibleCostCenter='UM-30001234X'" "*extraParameters='{\"authorizationPeriodEndDate\":\"01-01-2022\", \"dataRetentionPeriodEndDate\":\"01-01-2022\", \"storageQuotaGb\":\"99\", \"enableOpenAccessExport\":\"true\", \"enableArchive\":\"true\", \"enableUnarchive\":\"true\",  \"enableDropzoneSharing\":\"true\", \"collectionMetadataSchemas\":\"DataHub_general_schema\"}'"
 
 def main(rule_args, callback, rei):
-    authorizationPeriodEndDate = global_vars["*authorizationPeriodEndDate"][1:-1]
-    dataRetentionPeriodEndDate = global_vars["*dataRetentionPeriodEndDate"][1:-1]
-    ingestResource = global_vars["*ingestResource"][1:-1]
-    resource = global_vars["*resource"][1:-1]
-    storageQuotaGb = global_vars["*storageQuotaGb"][1:-1]
-    title = global_vars["*title"][1:-1]
-    principalInvestigator = global_vars["*principalInvestigator"][1:-1]
-    dataSteward = global_vars["*dataSteward"][1:-1]
-    respCostCenter = global_vars["*respCostCenter"][1:-1]
-    openAccess = global_vars["*openAccess"][1:-1]
-    tapeArchive = global_vars["*tapeArchive"][1:-1]
-    tapeUnarchive = global_vars["*tapeUnarchive"][1:-1]
-    sharedDropzones = global_vars["*sharedDropzones"][1:-1]
-    collectionMetadataSchemas = global_vars["*collectionMetadataSchemas"][1:-1]
+    ingestResource = global_vars["*ingestResource"][1:-1] #
+    resource = global_vars["*resource"][1:-1] #
+    title = global_vars["*title"][1:-1] #
+    principalInvestigator = global_vars["*principalInvestigator"][1:-1] #
+    dataSteward = global_vars["*dataSteward"][1:-1] #
+    respCostCenter = global_vars["*responsibleCostCenter"][1:-1] #
+    extra_parameters = global_vars["*extraParameters"][1:-1] #
 
 
-    output = callback.create_new_project(authorizationPeriodEndDate, dataRetentionPeriodEndDate,
-                                                   ingestResource, resource, storageQuotaGb, title,
+    output = callback.create_new_project( ingestResource, resource, title,
                                                    principalInvestigator, dataSteward,
-                                                   respCostCenter, openAccess,
-                                                   tapeArchive, tapeUnarchive,
-                                                   sharedDropzones, collectionMetadataSchemas,
+                                                   respCostCenter,extra_parameters,
                                                    "result")
 
-    callback.writeLine("stdout", output["arguments"][14])
+    callback.writeLine("stdout", output["arguments"][7])
 
 
 
-INPUT *authorizationPeriodEndDate="", *dataRetentionPeriodEndDate="", *ingestResource="", *resource="", *storageQuotaGb="", *title="", *principalInvestigator="", *dataSteward="", *respCostCenter="", *openAccess="", *tapeArchive="", *tapeUnarchive="", *sharedDropzones="", *collectionMetadataSchemas=""
+INPUT  *ingestResource="", *resource="", *title="", *principalInvestigator="", *dataSteward="", *responsibleCostCenter="", *extraParameters=""
 OUTPUT ruleExecOut

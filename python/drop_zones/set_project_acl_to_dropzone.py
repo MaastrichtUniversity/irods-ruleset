@@ -3,6 +3,10 @@
 def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
     """
     This rule transfers the ACLs that exist on the input project level to the input dropzone.
+            * Get the 'enableDropzoneSharing' avu on the project
+            * Depending on the enableDropzoneSharing avu perform the following:
+                    * False -> Remove all contributors and managers from the dropzone except for the creator
+                    * True  -> Add all contributors and managers to a dropzone with 'own' rights
 
     Parameters
     ----------
@@ -31,15 +35,9 @@ def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
         prefix = "admin:"
 
     if sharing_enabled:
-        ctx.callback.msiWriteRodsLog(
-            "set_project_acl_to_dropzone true", 0
-        )
         contributors = get_contributors_for_project(ctx, project_path)
         set_own_permissions_dropzone(ctx, dropzone_path, contributors, prefix)
     elif not sharing_enabled and not new_dropzone:
-        ctx.callback.msiWriteRodsLog(
-            "set_project_acl_to_dropzone else", 0
-        )
         contributors = get_contributors_for_project(ctx, dropzone_path)
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
         revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator, prefix)

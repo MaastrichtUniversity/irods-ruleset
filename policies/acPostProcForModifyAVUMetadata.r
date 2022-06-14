@@ -8,6 +8,6 @@ acPostProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit
          *auditTrailMessage = ""
          format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
          msiWriteRodsLog("INFO: *auditTrailMessage", *status);
-         transfer_project_acl_to_dropzone(*projectId, "false")
+         transfer_project_acl_to_dropzones(*projectId, "false")
     }
 }

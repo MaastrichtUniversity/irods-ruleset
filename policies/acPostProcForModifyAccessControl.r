@@ -6,6 +6,6 @@ acPostProcForModifyAccessControl(*RecursiveFlag,*AccessLevel,*UserName,*Zone,*Pa
         *auditTrailMessage = ""
         format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
         msiWriteRodsLog("INFO: *auditTrailMessage", *status);
-        transfer_project_acl_to_dropzones_single(*projectId, *UserName)
+        set_single_user_project_acl_to_dropzones(*projectId, *UserName)
     }
 }

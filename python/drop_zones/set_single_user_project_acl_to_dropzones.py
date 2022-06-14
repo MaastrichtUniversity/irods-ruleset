@@ -1,8 +1,8 @@
-# /rules/tests/run_test.sh -r transfer_project_acl_to_dropzones_single -a "P000000014,dlinssen"
+# /rules/tests/run_test.sh -r set_single_user_project_acl_to_dropzones -a "P000000014,dlinssen"
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
-def transfer_project_acl_to_dropzones_single(ctx, project_id, username):
+def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
     """
-    This rule transfers the ACLs that exist on a project level to all of its dropzones
+    This rule transfers the ACLs of the input user that exist on a project level to all of its dropzones
     - Get the 'enableDropzoneSharing' avu on the project
     - Get all dropzones for the project
     - For each dropzone, depending on the enableDropzoneSharing avu and creator perform the following:
@@ -12,18 +12,22 @@ def transfer_project_acl_to_dropzones_single(ctx, project_id, username):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
         The id of the project to transfer the ACLs from to it's dropzone
     username: str
-         The name of the user or group to modify the dropzone ACLs for
+        The name of the user or group to modify the dropzone ACLs for
     """
     project_path = format_project_path(ctx, project_id)
 
     sharing_enabled = ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", "", FALSE_AS_STRING)["arguments"][2]
     sharing_enabled = formatters.format_string_to_boolean(sharing_enabled)
-    prefix = ""
 
+    # If the AVU is not enabled, stop the rule's execution
+    if not sharing_enabled:
+        return
+
+    prefix = ""
     # If the user calling this rule is 'rods' we need to escalate
     if ctx.callback.get_client_username("")["arguments"][0] == "rods":
         prefix = "admin:"

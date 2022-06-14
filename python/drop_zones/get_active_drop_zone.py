@@ -7,7 +7,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     token : str
         The dropzone token
     check_ingest_resource_status : str

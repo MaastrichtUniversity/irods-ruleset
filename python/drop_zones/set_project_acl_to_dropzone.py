@@ -1,27 +1,28 @@
-# ./run_test.sh -r transfer_project_acl_to_dropzone -a "P000000014,false"
-@make(inputs=[0], outputs=[], handler=Output.STORE)
-def transfer_project_acl_to_dropzone(ctx, project_id):
+# /rules/tests/run_test.sh -r set_project_acl_to_dropzone -a "P000000014,nervous-reindeer,false"
+@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
+def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
     """
-    This rule transfers the ACLs that exist on a project level to all of its dropzones
-    - Get the 'enableDropzoneSharing' avu on the project
-    - Get all dropzones for the project
-    - For each dropzone, depending on the enableDropzoneSharing avu perform the following:
-        - Remove all contributors and managers from the dropzones except for the creator
-        - Add all contributors and managers to a dropzone with 'own' rights
+    This rule transfers the ACLs that exist on the input project level to the input dropzone.
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
-        The id of the project to transfer the ACLs from to it's dropzones
+        The id of the project to transfer the ACLs from to it's dropzone; e.g: P000000010
+    dropzone_token : str
+        The dropzone token; e.g: crazy-frog
+    new_dropzone : str
+        'true'/'false' expected; If true, the input dropzone has been newly created
     """
     project_path = format_project_path(ctx, project_id)
+    dropzone_path = format_dropzone_path(ctx, dropzone_token, "direct")
 
     sharing_enabled = \
     ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING)[
         "arguments"][2]
     sharing_enabled = formatters.format_string_to_boolean(sharing_enabled)
+    new_dropzone = formatters.format_string_to_boolean(new_dropzone)
 
     prefix = ""
     caller = ctx.callback.get_client_username("")["arguments"][0]
@@ -29,17 +30,19 @@ def transfer_project_acl_to_dropzone(ctx, project_id):
     if caller == "rods":
         prefix = "admin:"
 
-    for item in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
-                             "COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{}'".format(
-                                     project_id), AS_LIST, ctx.callback):
-        dropzone_path = item[0]
-        if sharing_enabled:
-            contributors = get_contributors_for_project(ctx, project_path)
-            set_own_permissions_dropzone(ctx, dropzone_path, contributors, prefix)
-        else:
-            contributors = get_contributors_for_project(ctx, dropzone_path)
-            creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
-            revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator, prefix)
+    if sharing_enabled:
+        ctx.callback.msiWriteRodsLog(
+            "set_project_acl_to_dropzone true", 0
+        )
+        contributors = get_contributors_for_project(ctx, project_path)
+        set_own_permissions_dropzone(ctx, dropzone_path, contributors, prefix)
+    elif not sharing_enabled and not new_dropzone:
+        ctx.callback.msiWriteRodsLog(
+            "set_project_acl_to_dropzone else", 0
+        )
+        contributors = get_contributors_for_project(ctx, dropzone_path)
+        creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+        revoke_permissions_dropzone(ctx, dropzone_path, contributors, creator, prefix)
 
 
 def set_own_permissions_dropzone(ctx, dropzone_path, contributors, prefix):

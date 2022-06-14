@@ -6,7 +6,7 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     dropzone_type: str
         The type of dropzone to create, either 'mounted' or 'direct'
     username: str

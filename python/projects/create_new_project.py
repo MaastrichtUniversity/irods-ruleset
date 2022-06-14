@@ -7,7 +7,7 @@ def create_new_project(
     principal_investigator,
     data_steward,
     responsible_cost_center,
-    extra_parameters
+    extra_parameters,
 ):
     """
     Create a new iRODS project
@@ -29,21 +29,21 @@ def create_new_project(
     extra_parameters: str
         Json formatted list of extra parameters.
         Currently supported are:
-            authorization_period_end_date : str
+            authorizationPeriodEndDate : str
                 Date
-            data_retention_period_end_date : str
+            dataRetentionPeriodEndDate : str
                 Date
-            storage_quota_gb  : str
+            storageQuotaGb  : str
                 The storage quota in Gb
-            enable_open_access : str
+            enableOpenAccessExport : str
                 'true'/'false' expected values
-            enable_archive : str
+            enableArchive : str
                 'true'/'false' expected values
-            enable_unarchive : str
+            enableUnarchive : str
                 'true'/'false' expected values
-            enable_dropzone_sharing : str
+            enableDropzoneSharing : str
                 'true'/'false' expected values
-            collection_metadata_schemas : str
+            collectionMetadataSchemas : str
                 csv string that contains the list of schema names
     """
     import ast
@@ -52,25 +52,18 @@ def create_new_project(
     error = -1
     new_project_path = ""
     project_id = ""
-    extra_parameter_default_values = {"authorization_period_end_date": "01-01-9999",
-                                                "data_retention_period_end_date": "01-01-9999",
-                                                "storage_quota_gb": "0",
-                                                "enable_open_access": "false",
-                                                "enable_archive": "false",
-                                                "enable_unarchive": "false",
-                                                "enable_dropzone_sharing": "false",
-                                                "collection_metadata_schemas": "DataHub_general_schema"}
+    extra_parameter_default_values = {
+        "authorizationPeriodEndDate": "01-01-9999",
+        "dataRetentionPeriodEndDate": "01-01-9999",
+        "storageQuotaGb": "0",
+        "enableOpenAccessExport": "false",
+        "enableArchive": "false",
+        "enableUnarchive": "false",
+        "enableDropzoneSharing": "false",
+        "collectionMetadataSchemas": "DataHub_general_schema",
+    }
 
-    extra_parameter_AVU_names = {"authorization_period_end_date": "authorizationPeriodEndDate",
-                                                "data_retention_period_end_date": "dataRetentionPeriodEndDate",
-                                                "storage_quota_gb": "storageQuotaGb",
-                                                "enable_open_access": "enableOpenAccessExport",
-                                                "enable_archive": "enableArchive",
-                                                "enable_unarchive": "enableUnarchive",
-                                                "enable_dropzone_sharing": "enableDropzoneSharing",
-                                                "collection_metadata_schemas": "collectionMetadataSchemas"}
-
-    if not extra_parameters or extra_parameters == '':
+    if not extra_parameters or extra_parameters == "":
         extra_parameters = "{}"
 
     extra_parameters = ast.literal_eval(extra_parameters)
@@ -110,11 +103,13 @@ def create_new_project(
 
     for extra_parameter_name in extra_parameter_default_values:
         if extra_parameter_name in extra_parameters:
-            ctx.callback.setCollectionAVU(new_project_path, extra_parameter_AVU_names[extra_parameter_name] ,
-                                          str(extra_parameters[extra_parameter_name]))
+            ctx.callback.setCollectionAVU(
+                new_project_path, extra_parameter_name, str(extra_parameters[extra_parameter_name])
+            )
         else:
-            ctx.callback.setCollectionAVU(new_project_path, extra_parameter_AVU_names[extra_parameter_name],
-                                          extra_parameter_default_values[extra_parameter_name])
+            ctx.callback.setCollectionAVU(
+                new_project_path, extra_parameter_name, extra_parameter_default_values[extra_parameter_name]
+            )
 
     ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", FALSE_AS_STRING)
 

@@ -1,6 +1,6 @@
-# ./run_test.sh -r transfer_project_acl_to_dropzone_single -a "P000000014,dlinssen"
+# /rules/tests/run_test.sh -r transfer_project_acl_to_dropzones_single -a "P000000014,dlinssen"
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
-def transfer_project_acl_to_dropzone_single(ctx, project_id, username):
+def transfer_project_acl_to_dropzones_single(ctx, project_id, username):
     """
     This rule transfers the ACLs that exist on a project level to all of its dropzones
     - Get the 'enableDropzoneSharing' avu on the project

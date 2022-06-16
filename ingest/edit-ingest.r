@@ -5,7 +5,9 @@
 editIngest {
     # Check for valid state to edit a drop zone
     getCollectionAVU(*dropzonePath,"state",*state,"","true");
-    if ( *state != "open" && *state != "warning-validation-incorrect" ) {
+    *ingestable = ""
+    is_dropzone_state_ingestable(*state, *ingestable)
+    if ( *ingestable != "true" ) {
         failmsg(-1, "Invalid state to edit drop zone.");
     }
 

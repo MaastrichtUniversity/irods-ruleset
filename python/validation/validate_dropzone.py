@@ -71,7 +71,8 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
         )
 
     # Check for valid state to start ingestion
-    if state != "open" and state != "warning-validation-incorrect":
+    ingestable = ctx.callback.is_dropzone_state_ingestable(state, "")["arguments"][1]
+    if not formatters.format_string_to_boolean(ingestable):
         ctx.callback.msiExit("-1", "Invalid state to start ingestion.")
 
     ctx.callback.msiWriteRodsLog("Starting validation of {}:".format(dropzone_path), 0)

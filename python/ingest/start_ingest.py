@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r start_ingest -a "dlinssen,handsome-snake,direct" -u "dlinssen"
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def start_ingest(ctx, username, token, dropzone_type):
     """

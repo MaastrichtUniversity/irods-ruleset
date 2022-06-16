@@ -32,35 +32,85 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
     if ctx.callback.get_client_username("")["arguments"][0] == "rods":
         prefix = "admin:"
 
-    for item in row_iterator("COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE", "COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{}'".format(project_id), AS_LIST, ctx.callback):
+    query_parameters = "COLL_NAME"
+    query_conditions = "COLL_PARENT_NAME = '/nlmumc/ingest/direct' " \
+                       "AND META_COLL_ATTR_NAME = 'project' " \
+                       "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+
+    for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
         dropzone_path = item[0]
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", FALSE_AS_STRING)["arguments"][2]
 
         # Do not revoke / add permissions if the creator's permissions were changed on the project
         if sharing_enabled and username != creator:
-            privileges = get_username_privileges(ctx, project_path, username)
-            if privileges == "own" or privileges == "modify object":
+            privilege = get_username_permission(ctx, project_path, username)
+            if privilege == "own" or privilege == "modify object":
                 set_single_own_permissions_dropzone(ctx, dropzone_path, username, prefix)
             else:
                 revoke_single_permissions_dropzone(ctx, dropzone_path, username, prefix)
 
 
-def set_single_own_permissions_dropzone(ctx, dropzone_path, username, prefix):
-    ctx.callback.msiSetACL("recursive", prefix + "own", username, dropzone_path)
-    ctx.callback.msiSetACL("default", prefix + "read", username, dropzone_path + "/instance.json")
-    ctx.callback.msiSetACL("default", prefix + "read", username, dropzone_path + "/schema.json")
+def set_single_own_permissions_dropzone(ctx, dropzone_path, username, admin_prefix):
+    """
+    Set the user to the input dropzone with 'own' rights recursively.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    dropzone_path : str
+        The absolute dropzone path; e.g: /nlmumc/ingest/direct/crazy-frog
+    username: str
+        The user that the permission need to be changed
+    admin_prefix: str
+        If the client user is an admin, set the ACL with admin mode
+    """
+    ctx.callback.msiSetACL("recursive", admin_prefix + "own", username, dropzone_path)
+    ctx.callback.msiSetACL("default", admin_prefix + "read", username, dropzone_path + "/instance.json")
+    ctx.callback.msiSetACL("default", admin_prefix + "read", username, dropzone_path + "/schema.json")
 
 
-def revoke_single_permissions_dropzone(ctx, dropzone_path, username, prefix):
-    ctx.callback.msiSetACL("recursive", prefix + "null", username, dropzone_path)
+def revoke_single_permissions_dropzone(ctx, dropzone_path, username, admin_prefix):
+    """
+    Revoke recursively the user permissions on the dropzone.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    dropzone_path : str
+        The absolute dropzone path; e.g: /nlmumc/ingest/direct/crazy-frog
+    username: str
+        The user that the permission need to be changed
+    admin_prefix: str
+        If the client user is an admin, set the ACL with admin mode
+    """
+    ctx.callback.msiSetACL("recursive", admin_prefix + "null", username, dropzone_path)
 
 
-def get_username_privileges(ctx, path, username):
+def get_username_permission(ctx, project_path, username):
+    """
+    Query the input user permission for the input path.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    project_path: str
+        The absolute path of the project to query.
+    username: str
+        The username to query.
+
+    Returns
+    -------
+    str
+        The user permission/access name
+    """
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
     access_name = ""
     for result in row_iterator(
         "COLL_ACCESS_NAME",
-        "COLL_ACCESS_USER_ID = '{}' AND ".format(user_id) + "COLL_NAME = '{}'".format(path),
+        "COLL_ACCESS_USER_ID = '{}' AND ".format(user_id) + "COLL_NAME = '{}'".format(project_path),
         AS_LIST,
         ctx.callback,
     ):

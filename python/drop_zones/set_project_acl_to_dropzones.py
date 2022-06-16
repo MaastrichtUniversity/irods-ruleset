@@ -16,9 +16,12 @@ def set_project_acl_to_dropzones(ctx, project_id):
     project_id: str
         The id of the project to transfer the ACLs from to it's dropzones
     """
-    for item in row_iterator("COLL_NAME",
-                             "COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{}'".format(
-                                     project_id), AS_LIST, ctx.callback):
+    query_parameters = "COLL_NAME"
+    query_conditions = "COLL_PARENT_NAME = '/nlmumc/ingest/direct' " \
+                       "AND META_COLL_ATTR_NAME = 'project' " \
+                       "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+
+    for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
         dropzone_path = item[0]
         token = dropzone_path.replace("/nlmumc/ingest/direct/", "")
         ctx.callback.set_project_acl_to_dropzone(project_id, token, "false")

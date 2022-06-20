@@ -22,6 +22,12 @@ def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
     project_path = format_project_path(ctx, project_id)
     dropzone_path = format_dropzone_path(ctx, dropzone_token, "direct")
 
+    dropzone_state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", FALSE_AS_STRING, FALSE_AS_STRING)[
+        "arguments"][2]
+
+    if not is_dropzone_state_ingestable(dropzone_state):
+        return
+
     sharing_enabled = \
     ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING)[
         "arguments"][2]

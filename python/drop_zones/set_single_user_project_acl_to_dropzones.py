@@ -40,6 +40,11 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
     for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
         dropzone_path = item[0]
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", FALSE_AS_STRING)["arguments"][2]
+        dropzone_state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", FALSE_AS_STRING, FALSE_AS_STRING)[
+            "arguments"][2]
+
+        if not is_dropzone_state_ingestable(dropzone_state):
+            continue
 
         # Do not revoke / add permissions if the creator's permissions were changed on the project
         if sharing_enabled and username != creator:

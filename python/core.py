@@ -145,7 +145,7 @@ def is_dropzone_state_ingestable(ctx, state):
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
-def f(ctx, state):
+def is_dropzone_state_in_active_ingestion(ctx, state):
     in_active_ingestion = True
     if type(state) == str:
         try:

@@ -25,7 +25,9 @@ def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
     dropzone_state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", FALSE_AS_STRING, FALSE_AS_STRING)[
         "arguments"][2]
 
-    if not is_dropzone_state_ingestable(dropzone_state):
+    # Check if the dropzone is still in an ingestable state
+    ingestable = ctx.callback.is_dropzone_state_ingestable(dropzone_state, "")["arguments"][1]
+    if not formatters.format_string_to_boolean(ingestable):
         return
 
     sharing_enabled = \

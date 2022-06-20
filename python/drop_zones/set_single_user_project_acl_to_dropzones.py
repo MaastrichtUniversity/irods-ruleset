@@ -43,7 +43,9 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
         dropzone_state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", FALSE_AS_STRING, FALSE_AS_STRING)[
             "arguments"][2]
 
-        if not is_dropzone_state_ingestable(dropzone_state):
+        # Check if the dropzone is still in an ingestable state
+        ingestable = ctx.callback.is_dropzone_state_ingestable(dropzone_state, "")["arguments"][1]
+        if not formatters.format_string_to_boolean(ingestable):
             continue
 
         # Do not revoke / add permissions if the creator's permissions were changed on the project

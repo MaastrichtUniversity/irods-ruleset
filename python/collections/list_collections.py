@@ -56,8 +56,10 @@ def list_collections(ctx, project_path):
         latest_version_number = ctx.callback.getCollectionAVU(
             proj_coll[0], "latest_version_number", "", "", FALSE_AS_STRING
         )["arguments"][2]
-        metadata_files = (int(latest_version_number) * 2) + 2
-        system_files = system_files + metadata_files
+
+        if latest_version_number:
+            metadata_files = (int(latest_version_number) * 2) + 2
+            system_files = system_files + metadata_files
 
         project_collection_path = formatters.format_project_collection_path(project_id, project_collection["id"])
         for file in num_files_exclusion:

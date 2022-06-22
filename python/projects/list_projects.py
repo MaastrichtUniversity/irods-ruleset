@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r list_projects -a "false"
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def list_projects(ctx, show_service_accounts):
     """
@@ -6,7 +7,7 @@ def list_projects(ctx, show_service_accounts):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     show_service_accounts: str
         'true'/'false' expected; If true, hide the service accounts in the result
 

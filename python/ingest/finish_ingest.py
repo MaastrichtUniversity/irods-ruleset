@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r finish_ingest -a "P000000014,dlinssen,handsome-snake,C000000001,iresResource,direct"
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
 def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host, dropzone_type):
     """
@@ -34,18 +35,23 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
+
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Set the Creator AVU
     ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_project_collection_path), 0)
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
-    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
+    dropzone_creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+    ret = ctx.get_user_attribute_value(dropzone_creator, "email", FALSE_AS_STRING, "result")["arguments"][3]
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(username)
+            project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(dropzone_creator)
         )
     ctx.callback.setCollectionAVU(destination_project_collection_path, "creator", email)
+
+    # Set the Depositor (=person who started th ingest) AVU
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "depositor", username)
 
     # Requesting a PID via epicPID for version 0 (root version)
     handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]

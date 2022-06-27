@@ -36,7 +36,9 @@ acPreprocForCollCreate {
         uuChop($collName, *basePath, *tail, "/nlmumc/ingest/direct/", true);
         uuChop(*tail, *token, *rest, "/", true);
         getCollectionAVU("/nlmumc/ingest/direct/*token","state",*state,"","false");
-        if(*state != "open" && *state != "warning-validation-incorrect" && *state != "error-post-ingestion" && *state != "error-ingestion") {
+        *in_active_ingest = ""
+        is_dropzone_state_in_active_ingestion(*state, *in_active_ingest)
+        if(*in_active_ingest == "true") {
             msiWriteRodsLog("DEBUG: Folder '$collName' was not allowed to be created during dropzone state '*state' by '$userNameClient'", *status);
             cut;
             msiOprDisallowed;

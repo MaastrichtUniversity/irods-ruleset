@@ -6,7 +6,7 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     dropzone_type: str
         The type of dropzone to create, either 'mounted' or 'direct'
     username: str
@@ -76,6 +76,9 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     # Create the folder on the SMB share if mounted dropzone
     if dropzone_type == "mounted":
         ctx.callback.createRemoteDirectory(project_id, token_stripped, vo_person_external_id)
+
+    if dropzone_type == "direct":
+        ctx.callback.msiSetACL("recursive", "inherit", "", dropzone_path)
 
     # Set ACLs
     ctx.callback.msiSetACL("default", "own", username, dropzone_path)

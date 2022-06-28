@@ -4,15 +4,16 @@ import session_vars
 from genquery import *
 
 from dhpythonirodsutils import formatters, exceptions, loggers
+from dhpythonirodsutils.enums import DropzoneState
 
 from enum import Enum
-
 
 # Global vars
 activelyUpdatingAVUs = False
 
 FALSE_AS_STRING = "false"
 TRUE_AS_STRING = "true"
+
 
 # https://github.com/UtrechtUniversity/irods-ruleset-uu/blob/development/util/rule.py
 # __copyright__ = 'Copyright (c) 2019, Utrecht University'
@@ -129,6 +130,34 @@ def get_client_username(ctx):
     return username
 
 
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def is_dropzone_state_ingestable(ctx, state):
+    ingestable = False
+    if type(state) == str:
+        try:
+            state = DropzoneState(state)
+            ingestable = formatters.get_is_dropzone_state_ingestable(state)
+        except ValueError:
+            pass
+    elif type(state) == DropzoneState:
+        ingestable = formatters.get_is_dropzone_state_ingestable(state)
+    return ingestable
+
+
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def is_dropzone_state_in_active_ingestion(ctx, state):
+    in_active_ingestion = True
+    if type(state) == str:
+        try:
+            state = DropzoneState(state)
+            in_active_ingestion = formatters.get_is_dropzone_state_in_active_ingestion(state)
+        except ValueError:
+            pass
+    elif type(state) == DropzoneState:
+        in_active_ingestion = formatters.get_is_dropzone_state_in_active_ingestion(state)
+    return in_active_ingestion
+
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def format_audit_trail_message(ctx, username, event):
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
@@ -146,7 +175,7 @@ def read_data_object_from_irods(ctx, path):
     file_desc = ret_val["arguments"][1]
 
     # Read iRODS file
-    ret_val = ctx.callback.msiDataObjRead(file_desc, 2**31 - 1, irods_types.BytesBuf())
+    ret_val = ctx.callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
     read_buf = ret_val["arguments"][2]
 
     # Convert BytesBuffer to string
@@ -189,7 +218,8 @@ def format_project_collection_path(ctx, project_id, collection_id):
     try:
         project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit("-1",
+                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return project_collection_path
 
 
@@ -197,7 +227,8 @@ def format_instance_collection_path(ctx, project_id, collection_id):
     try:
         instance_path = formatters.format_instance_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit("-1",
+                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return instance_path
 
 
@@ -205,7 +236,8 @@ def format_schema_collection_path(ctx, project_id, collection_id):
     try:
         schema_path = formatters.format_schema_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit("-1",
+                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return schema_path
 
 
@@ -213,7 +245,8 @@ def format_instance_versioned_collection_path(ctx, project_id, collection_id, ve
     try:
         instance_path = formatters.format_instance_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit("-1",
+                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return instance_path
 
 
@@ -221,7 +254,8 @@ def format_schema_versioned_collection_path(ctx, project_id, collection_id, vers
     try:
         schema_path = formatters.format_schema_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit("-1",
+                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return schema_path
 
 
@@ -229,5 +263,6 @@ def format_metadata_versions_path(ctx, project_id, collection_id):
     try:
         metadata_versions_path = formatters.format_metadata_versions_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit("-1",
+                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return metadata_versions_path

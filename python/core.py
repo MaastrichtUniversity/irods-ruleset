@@ -3,7 +3,7 @@ import irods_types
 import session_vars
 from genquery import *
 
-from dhpythonirodsutils import formatters, exceptions, loggers
+from dhpythonirodsutils import formatters, exceptions, loggers, validators
 from dhpythonirodsutils.enums import DropzoneState
 
 from enum import Enum

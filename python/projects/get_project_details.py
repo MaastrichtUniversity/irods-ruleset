@@ -1,4 +1,5 @@
 # /rules/tests/run_test.sh -r get_project_details -a "/nlmumc/projects/P000000014,false" -u dlinssen -j
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_project_details(ctx, project_path, show_service_accounts):
     """
@@ -7,7 +8,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_path: str
         Project absolute path
     show_service_accounts: str
@@ -75,7 +76,9 @@ def get_project_details(ctx, project_path, show_service_accounts):
         if user["userName"] == ret:
             project["principalInvestigatorDisplayName"] = user["displayName"]
 
-    ret = ctx.callback.getCollectionAVU(project["path"], "dataSteward", "", "", TRUE_AS_STRING)["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the data steward

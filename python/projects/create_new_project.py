@@ -100,7 +100,7 @@ def create_new_project(
     ctx.callback.setCollectionAVU(new_project_path, "resource", resource)
     ctx.callback.setCollectionAVU(new_project_path, "title", title)
     ctx.callback.setCollectionAVU(new_project_path, "OBI:0000103", principal_investigator)
-    ctx.callback.setCollectionAVU(new_project_path, "dataSteward", data_steward)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.DATA_STEWARD.value, data_steward)
     ctx.callback.setCollectionAVU(new_project_path, "responsibleCostCenter", responsible_cost_center)
 
     for extra_parameter_name in extra_parameter_default_values:

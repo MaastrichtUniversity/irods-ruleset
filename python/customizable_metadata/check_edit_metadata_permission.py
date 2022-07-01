@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r check_edit_metadata_permission -a "/nlmumc/projects/P000000014" -u opalmen -j
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def check_edit_metadata_permission(ctx, project_path):
     """
@@ -28,7 +30,9 @@ def check_edit_metadata_permission(ctx, project_path):
         return False
 
     # If user is the Data Steward he is allowed to edit the metadata
-    ret = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", TRUE_AS_STRING)["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     if ret == username:
         return True
 

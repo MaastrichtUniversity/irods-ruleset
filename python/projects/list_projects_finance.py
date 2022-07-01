@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_projects_finance -u opalmen -j
+
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_projects_finance(ctx):
     """
@@ -23,7 +25,9 @@ def get_projects_finance(ctx):
         projects.append(result[0])
 
     # Get all the projects where the user is the data steward
-    for result in row_iterator("COLL_NAME", condition.format("dataSteward", username), AS_LIST, ctx.callback):
+    for result in row_iterator(
+            "COLL_NAME", condition.format(ProjectAVUs.DATA_STEWARD.value, username), AS_LIST, ctx.callback
+    ):
         projects.append(result[0])
 
     output = []

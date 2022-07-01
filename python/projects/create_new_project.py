@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r create_new_project -a "iresResource,replRescUM01,PROJECTNAME,jmelius,opalmen,UM-30001234X,{'enableDropzoneSharing':'true'}"
+
 @make(inputs=range(7), outputs=[7], handler=Output.STORE)
 def create_new_project(
     ctx,
@@ -28,7 +30,7 @@ def create_new_project(
         The budget number
     extra_parameters: str
         Json formatted list of extra parameters.
-        Currently supported are:
+        Currently, supported are:
             authorizationPeriodEndDate : str
                 Date
             dataRetentionPeriodEndDate : str
@@ -121,7 +123,7 @@ def create_new_project(
     if archive_dest_resc == "":
         ctx.callback.msiExit("-1", "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
 
-    ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, archive_dest_resc)
 
     # Set recursive permissions
     ctx.callback.msiSetACL("default", "write", "service-pid", new_project_path)

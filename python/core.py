@@ -4,7 +4,7 @@ import session_vars
 from genquery import *
 
 from dhpythonirodsutils import formatters, exceptions, loggers, validators
-from dhpythonirodsutils.enums import DropzoneState
+from dhpythonirodsutils.enums import DropzoneState, ProjectAVUs
 
 from enum import Enum
 

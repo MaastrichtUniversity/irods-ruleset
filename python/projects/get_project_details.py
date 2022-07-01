@@ -1,4 +1,4 @@
-# ./run_test.sh -r get_project_details -a "/nlmumc/projects/P000000014,false" -u dlinssen -j
+# /rules/tests/run_test.sh -r get_project_details -a "/nlmumc/projects/P000000014,false" -u dlinssen -j
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_project_details(ctx, project_path, show_service_accounts):
     """
@@ -60,8 +60,8 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", TRUE_AS_STRING)[
         "arguments"
     ][2]
-    project["collectionMetadataSchemas"] = ctx.callback.getCollectionAVU(
-        project["path"], "collectionMetadataSchemas", "", "", TRUE_AS_STRING
+    project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
     project["enableDropzoneSharing"] = ctx.callback.getCollectionAVU(
         project["path"], "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING

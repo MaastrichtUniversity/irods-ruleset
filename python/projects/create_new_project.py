@@ -62,7 +62,7 @@ def create_new_project(
         "enableArchive": "false",
         "enableUnarchive": "false",
         "enableDropzoneSharing": "false",
-        "collectionMetadataSchemas": "DataHub_general_schema",
+        ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value: "DataHub_general_schema",
     }
 
     if not extra_parameters or extra_parameters == "":

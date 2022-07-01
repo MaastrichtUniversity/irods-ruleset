@@ -55,7 +55,7 @@ def create_new_project(
     new_project_path = ""
     project_id = ""
     extra_parameter_default_values = {
-        "authorizationPeriodEndDate": "01-01-9999",
+        ProjectAVUs.AUTHORIZATION_PERIOD_END_DATE.value: "01-01-9999",
         "dataRetentionPeriodEndDate": "01-01-9999",
         "storageQuotaGb": "0",
         "enableOpenAccessExport": "false",

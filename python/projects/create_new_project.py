@@ -113,7 +113,7 @@ def create_new_project(
                 new_project_path, extra_parameter_name, extra_parameter_default_values[extra_parameter_name]
             )
 
-    ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", FALSE_AS_STRING)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, FALSE_AS_STRING)
 
     archive_dest_resc = ""
     for result in row_iterator(

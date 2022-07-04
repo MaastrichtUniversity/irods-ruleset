@@ -56,8 +56,8 @@ def get_project_details(ctx, project_path, show_service_accounts):
         project[ProjectAVUs.ENABLE_ARCHIVE.value],
         FALSE_AS_STRING
     )["arguments"][2]
-    project["enableContributorEditMetadata"] = ctx.callback.getCollectionAVU(
-        project["path"], "enableContributorEditMetadata", "", FALSE_AS_STRING, FALSE_AS_STRING
+    project[ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value] = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
     project["respCostCenter"] = ctx.callback.getCollectionAVU(project["path"], "responsibleCostCenter", "", "", TRUE_AS_STRING)[
         "arguments"

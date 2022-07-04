@@ -34,7 +34,9 @@ def get_projects_finance(ctx):
     # Loop over the unique set of projects to avoid duplicate query/values
     for project_path in set(projects):
         # Get project AVUs budget_number & title
-        budget_number = ctx.callback.getCollectionAVU(project_path, "responsibleCostCenter", "", "", TRUE_AS_STRING)["arguments"][2]
+        budget_number = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         title = ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
 
         # Get project finance information

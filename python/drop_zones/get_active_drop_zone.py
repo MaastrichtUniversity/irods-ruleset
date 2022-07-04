@@ -72,7 +72,9 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
             avu[attr_name] = attr_value
             avu["date"] = result[0]
             project_path = format_project_path(ctx, attr_value)
-            avu["projectTitle"] = ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
+            avu["projectTitle"] = ctx.callback.getCollectionAVU(
+                project_path, ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
+            )["arguments"][2]
             avu[ProjectAVUs.ENABLE_DROPZONE_SHARING.value] = ctx.callback.getCollectionAVU(
                 project_path, ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", FALSE_AS_STRING, FALSE_AS_STRING
             )["arguments"][2]

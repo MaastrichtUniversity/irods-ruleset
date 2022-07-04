@@ -42,13 +42,18 @@ def get_project_details(ctx, project_path, show_service_accounts):
 
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'
-    project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", TRUE_AS_STRING)["arguments"][2]
+    project[ProjectAVUs.TITLE.value] = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+
     project[ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
+
     project[ProjectAVUs.ENABLE_ARCHIVE.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.ENABLE_ARCHIVE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
+
     project[ProjectAVUs.ENABLE_UNARCHIVE.value] = ctx.callback.getCollectionAVU(
         project["path"],
         ProjectAVUs.ENABLE_UNARCHIVE.value,
@@ -56,18 +61,23 @@ def get_project_details(ctx, project_path, show_service_accounts):
         project[ProjectAVUs.ENABLE_ARCHIVE.value],
         FALSE_AS_STRING
     )["arguments"][2]
+
     project[ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
+
     project["respCostCenter"] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
+
     project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.STORAGE_QUOTA_GB.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
+
     project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
+
     project[ProjectAVUs.ENABLE_DROPZONE_SHARING.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]

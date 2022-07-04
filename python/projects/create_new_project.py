@@ -98,7 +98,7 @@ def create_new_project(
 
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.INGEST_RESOURCE.value, ingest_resource)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.RESOURCE.value, resource)
-    ctx.callback.setCollectionAVU(new_project_path, "title", title)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.TITLE.value, title)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, principal_investigator)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.DATA_STEWARD.value, data_steward)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, responsible_cost_center)
@@ -132,7 +132,7 @@ def create_new_project(
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     # If the user calling this function is someone other than 'rods' (so a project admin)
-    # we need to add rods as a owner on this project and remove the person calling this method
+    # we need to add rods as an owner on this project and remove the person calling this method
     # from the ACLs
     if current_user != "rods":
         ctx.callback.msiSetACL("default", "own", "rods", new_project_path)

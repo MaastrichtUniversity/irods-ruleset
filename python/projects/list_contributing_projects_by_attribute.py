@@ -47,7 +47,9 @@ def list_contributing_projects_by_attribute(ctx, attribute):
         project = {
             "id": formatters.get_project_id_from_project_path(project_path[0]),
             "path": project_path[0],
-            "title": ctx.callback.getCollectionAVU(project_path[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
+            ProjectAVUs.TITLE.value: ctx.callback.getCollectionAVU(
+                project_path[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
+            )["arguments"][2]
         }
         projects.append(project)
 

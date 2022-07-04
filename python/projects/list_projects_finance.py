@@ -37,7 +37,9 @@ def get_projects_finance(ctx):
         budget_number = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        title = ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
+        title = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
 
         # Get project finance information
         ret = ctx.callback.get_project_finance(project_path, "result")
@@ -46,7 +48,7 @@ def get_projects_finance(ctx):
         # Add the AVUs value to the project dictionary
         ret["project_id"] = formatters.get_project_id_from_project_path(project_path)
         ret["budget_number"] = budget_number
-        ret["title"] = title
+        ret[ProjectAVUs.TITLE.value] = title
         output.append(ret)
 
     return output

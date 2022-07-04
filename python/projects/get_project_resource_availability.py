@@ -34,7 +34,9 @@ def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, de
 
     ingest_status = False
     if check_ingest_resource:
-        ingest_resource = ctx.callback.getCollectionAVU(project_path, "ingestResource", "", "", TRUE_AS_STRING)["arguments"][2]
+        ingest_resource = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         ingest_status = get_resource_status(ctx, ingest_resource)
 
     destination_status = False

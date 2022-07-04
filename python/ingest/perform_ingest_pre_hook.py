@@ -29,7 +29,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
     ingest_resource = ctx.callback.getCollectionAVU(
-        format_project_path(ctx, project_id), "ingestResource", "", "", TRUE_AS_STRING
+        format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
 
     # Obtain the resource host from the specified ingest resource

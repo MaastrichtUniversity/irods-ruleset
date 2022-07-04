@@ -96,7 +96,7 @@ def create_new_project(
         msg = "ERROR: Collection '{}' attempt no. {} : Unable to create {}".format(title, retry, new_project_path)
         ctx.callback.msiExit(str(error), msg)
 
-    ctx.callback.setCollectionAVU(new_project_path, "ingestResource", ingest_resource)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.INGEST_RESOURCE.value, ingest_resource)
     ctx.callback.setCollectionAVU(new_project_path, "resource", resource)
     ctx.callback.setCollectionAVU(new_project_path, "title", title)
     ctx.callback.setCollectionAVU(new_project_path, "OBI:0000103", principal_investigator)

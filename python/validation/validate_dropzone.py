@@ -81,7 +81,7 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
 
     ctx.callback.msiWriteRodsLog("Starting validation of {}:".format(dropzone_path), 0)
     # Set 'state' AVU to 'validating'
-    ctx.callback.setCollectionAVU(dropzone_path, "state", "validating")
+    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.VALIDATING.value)
 
     validation_result = ctx.callback.validate_metadata(dropzone_path, "")["arguments"][1]
     return {"project_id": project_id, "title": title, "validation_result": validation_result}

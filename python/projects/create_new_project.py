@@ -60,7 +60,7 @@ def create_new_project(
         "storageQuotaGb": "0",
         "enableOpenAccessExport": "false",
         ProjectAVUs.ENABLE_ARCHIVE.value: "false",
-        "enableUnarchive": "false",
+        ProjectAVUs.ENABLE_UNARCHIVE.value: "false",
         "enableDropzoneSharing": "false",
         ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value: "DataHub_general_schema",
     }

@@ -59,7 +59,7 @@ def create_new_project(
         ProjectAVUs.DATA_RETENTION_PERIOD_END_DATE.value: "01-01-9999",
         "storageQuotaGb": "0",
         "enableOpenAccessExport": "false",
-        "enableArchive": "false",
+        ProjectAVUs.ENABLE_ARCHIVE.value: "false",
         "enableUnarchive": "false",
         "enableDropzoneSharing": "false",
         ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value: "DataHub_general_schema",

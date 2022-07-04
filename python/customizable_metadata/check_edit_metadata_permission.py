@@ -23,7 +23,9 @@ def check_edit_metadata_permission(ctx, project_path):
     # If user is the Principal Investigator he is allowed to edit the metadata
     # If this query fails, the user has no rights to this project or project does not exist so False should be returned
     try:
-        ret = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
+        ret = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         if ret == username:
             return True
     except RuntimeError:

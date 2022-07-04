@@ -72,7 +72,9 @@ def get_project_details(ctx, project_path, show_service_accounts):
         project["path"], ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
 
-    ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the PI

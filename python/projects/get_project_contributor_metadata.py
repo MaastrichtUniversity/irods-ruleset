@@ -19,7 +19,9 @@ def get_project_contributors_metadata(ctx, project_id):
     """
     project_path = format_project_path(ctx, project_id)
 
-    pi_username = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
+    pi_username = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     pi_dict = json.loads(ctx.get_user_metadata(pi_username, "")["arguments"][1])
 
     ds_username = ctx.callback.getCollectionAVU(

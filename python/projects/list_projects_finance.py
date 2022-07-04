@@ -21,7 +21,7 @@ def get_projects_finance(ctx):
 
     projects = []
     # Get all the projects where the user is the principal investigator
-    for result in row_iterator("COLL_NAME", condition.format("OBI:0000103", username), AS_LIST, ctx.callback):
+    for result in row_iterator("COLL_NAME", condition.format(ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, username), AS_LIST, ctx.callback):
         projects.append(result[0])
 
     # Get all the projects where the user is the data steward

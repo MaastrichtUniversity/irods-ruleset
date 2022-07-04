@@ -97,7 +97,7 @@ def create_new_project(
         ctx.callback.msiExit(str(error), msg)
 
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.INGEST_RESOURCE.value, ingest_resource)
-    ctx.callback.setCollectionAVU(new_project_path, "resource", resource)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.RESOURCE.value, resource)
     ctx.callback.setCollectionAVU(new_project_path, "title", title)
     ctx.callback.setCollectionAVU(new_project_path, "OBI:0000103", principal_investigator)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.DATA_STEWARD.value, data_steward)

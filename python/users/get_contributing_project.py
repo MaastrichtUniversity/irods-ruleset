@@ -58,9 +58,9 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
         project["viewers"] = json.loads(ret)
 
         project["title"] = ctx.callback.getCollectionAVU(collection_result[0], "title", "", "", TRUE_AS_STRING)["arguments"][2]
-        project["resource"] = ctx.callback.getCollectionAVU(collection_result[0], "resource", "", "", TRUE_AS_STRING)[
-            "arguments"
-        ][2]
+        project[ProjectAVUs.RESOURCE.value] = ctx.callback.getCollectionAVU(
+            collection_result[0], ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
             collection_result[0], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
         )["arguments"][2]

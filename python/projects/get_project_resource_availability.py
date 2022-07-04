@@ -41,7 +41,7 @@ def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, de
 
     destination_status = False
     if check_destination_resource:
-        destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", TRUE_AS_STRING)["arguments"][2]
+        destination_resource = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)["arguments"][2]
         destination_status = get_resource_status(ctx, destination_resource)
 
     archive_status = False

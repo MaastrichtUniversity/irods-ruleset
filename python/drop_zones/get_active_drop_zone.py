@@ -86,7 +86,9 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
 
     if formatters.format_string_to_boolean(check_ingest_resource_status):
         # Query project resource avu
-        resource = ctx.callback.getCollectionAVU(project_path, "resource", "*resource", "", TRUE_AS_STRING)["arguments"][2]
+        resource = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.RESOURCE.value, "*resource", "", TRUE_AS_STRING
+        )["arguments"][2]
         # Query the resource status
         for resc_result in row_iterator("RESC_STATUS", "RESC_NAME = '{}'".format(resource), AS_LIST, ctx.callback):
             avu["resourceStatus"] = resc_result[0]

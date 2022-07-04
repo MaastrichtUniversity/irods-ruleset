@@ -1,4 +1,5 @@
 # /rules/tests/run_test.sh -r set_project_acl_to_dropzone -a "P000000014,nervous-reindeer,false"
+
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
     """
@@ -30,9 +31,9 @@ def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
     if not formatters.format_string_to_boolean(ingestable):
         return
 
-    sharing_enabled = \
-    ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING)[
-        "arguments"][2]
+    sharing_enabled = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", FALSE_AS_STRING, FALSE_AS_STRING
+    )["arguments"][2]
     sharing_enabled = formatters.format_string_to_boolean(sharing_enabled)
     new_dropzone = formatters.format_string_to_boolean(new_dropzone)
 

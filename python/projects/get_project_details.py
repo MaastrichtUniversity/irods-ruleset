@@ -68,8 +68,8 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
-    project["enableDropzoneSharing"] = ctx.callback.getCollectionAVU(
-        project["path"], "enableDropzoneSharing", "", FALSE_AS_STRING, FALSE_AS_STRING
+    project[ProjectAVUs.ENABLE_DROPZONE_SHARING.value] = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
 
     ret = ctx.callback.getCollectionAVU(project["path"], "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]

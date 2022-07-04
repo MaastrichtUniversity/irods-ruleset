@@ -8,7 +8,7 @@ def get_projects_finance(ctx):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
 
     Returns
     -------

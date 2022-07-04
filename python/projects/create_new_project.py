@@ -57,7 +57,7 @@ def create_new_project(
     extra_parameter_default_values = {
         ProjectAVUs.AUTHORIZATION_PERIOD_END_DATE.value: "01-01-9999",
         ProjectAVUs.DATA_RETENTION_PERIOD_END_DATE.value: "01-01-9999",
-        "storageQuotaGb": "0",
+        ProjectAVUs.STORAGE_QUOTA_GB.value: "0",
         ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value: "false",
         ProjectAVUs.ENABLE_ARCHIVE.value: "false",
         ProjectAVUs.ENABLE_UNARCHIVE.value: "false",

@@ -62,9 +62,9 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["respCostCenter"] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
-    project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(project["path"], "storageQuotaGb", "", "", TRUE_AS_STRING)[
-        "arguments"
-    ][2]
+    project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.STORAGE_QUOTA_GB.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
     )["arguments"][2]

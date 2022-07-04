@@ -43,8 +43,8 @@ def get_project_details(ctx, project_path, show_service_accounts):
     # Get project metadata
     # Note: Retrieving the rule outcome is done with '["arguments"][2]'
     project["title"] = ctx.callback.getCollectionAVU(project["path"], "title", "", "", TRUE_AS_STRING)["arguments"][2]
-    project["enableOpenAccessExport"] = ctx.callback.getCollectionAVU(
-        project["path"], "enableOpenAccessExport", "", FALSE_AS_STRING, FALSE_AS_STRING
+    project[ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value] = ctx.callback.getCollectionAVU(
+        project["path"], ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
     project[ProjectAVUs.ENABLE_ARCHIVE.value] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.ENABLE_ARCHIVE.value, "", FALSE_AS_STRING, FALSE_AS_STRING

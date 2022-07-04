@@ -58,7 +58,7 @@ def create_new_project(
         ProjectAVUs.AUTHORIZATION_PERIOD_END_DATE.value: "01-01-9999",
         ProjectAVUs.DATA_RETENTION_PERIOD_END_DATE.value: "01-01-9999",
         "storageQuotaGb": "0",
-        "enableOpenAccessExport": "false",
+        ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value: "false",
         ProjectAVUs.ENABLE_ARCHIVE.value: "false",
         ProjectAVUs.ENABLE_UNARCHIVE.value: "false",
         ProjectAVUs.ENABLE_DROPZONE_SHARING.value: "false",

@@ -6,7 +6,7 @@ def set_dropzone_total_size_avu(ctx, token, dropzone_type):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     token : str
         The token (i.e. 'vast-chinchilla')
     dropzone_type: str
@@ -17,7 +17,10 @@ def set_dropzone_total_size_avu(ctx, token, dropzone_type):
     dict
         The attribute value
     """
-    import subprocess
+    # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
+    # subprocess is only use for subprocess.check_output and its usage have been validated up to the following commit
+    # hash: 02122d8f0c767fe79fbb8448db3fe8420cd36c14
+    import subprocess  # nosec
     import re
     import datetime
 
@@ -39,14 +42,17 @@ def set_dropzone_total_size_avu(ctx, token, dropzone_type):
         # -814000 CAT_UNKNOWN_COLLECTION
         ctx.callback.msiExit("-814000", "Unknown ingest zone")
 
-    list_files = subprocess.check_output(["ils", "-lr", drop_zone_path])
+    # Suppress [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+    # The input parameters of format_dropzone_path are validated inside the function before outputting drop_zone_path.
+    # drop_zone_path is then again check against iRODS with msiObjStat.
+    list_files = subprocess.check_output(["ils", "-lr", drop_zone_path], shell=False)  # nosec
     lines = list_files.splitlines()
     total_size = 0
     for line in lines:
         split_line = line.split()
         if len(split_line) > 4:
             try:
-                # After the size is always a datetime in the output. If that isnt the case, this is a folder
+                # After the size is always a datetime in the output. If that isn't the case, this is a folder,
                 # and it should not be calculated and parsed to an int (its subsequent files will)
                 d = datetime.datetime.strptime(split_line[4], "%Y-%m-%d.%H:%M")
                 total_size += int(split_line[3])

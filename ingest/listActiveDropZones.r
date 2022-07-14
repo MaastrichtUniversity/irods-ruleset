@@ -55,6 +55,8 @@ IRULE_listActiveDropZones(*report, *result) {
         *date = "";
         *totalSize = "";
         *destination = "";
+        *creator = ""
+        *enableDropzoneSharing = "";
         # Get contents of AVU's
         foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*dropzone_path") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {
@@ -75,6 +77,9 @@ IRULE_listActiveDropZones(*report, *result) {
                     if ( *av.META_COLL_ATTR_NAME == "title" ) {
                         *projectTitle = *av.META_COLL_ATTR_VALUE;
                     }
+                    if ( *av.META_COLL_ATTR_NAME == "enableDropzoneSharing" ) {
+                        *enableDropzoneSharing = *av.META_COLL_ATTR_VALUE;
+                    }
                 }
             }
             *date = *av.COLL_MODIFY_TIME;
@@ -83,6 +88,9 @@ IRULE_listActiveDropZones(*report, *result) {
             }
             if( *av.META_COLL_ATTR_NAME == "destination" ) {
                 *destination = *av.META_COLL_ATTR_VALUE;
+            }
+            if ( *av.META_COLL_ATTR_NAME == "creator" ) {
+                *creator = *av.META_COLL_ATTR_VALUE;
             }
         }
 
@@ -120,9 +128,11 @@ IRULE_listActiveDropZones(*report, *result) {
         if ( *project == "" ) {
             msiAddKeyVal(*kvp, 'project', "no-project-AVU-set");
             msiAddKeyVal(*kvp, 'projectTitle', "No-projectTitle-AVU-set");
+            msiAddKeyVal(*kvp, 'enableDropzoneSharing', "false");
         } else {
             msiAddKeyVal(*kvp, 'project', *project);
             msiAddKeyVal(*kvp, 'projectTitle', *projectTitle);
+            msiAddKeyVal(*kvp, 'enableDropzoneSharing', *enableDropzoneSharing);
         }
 
         msiAddKeyVal(*kvp, 'date', *date);
@@ -139,6 +149,17 @@ IRULE_listActiveDropZones(*report, *result) {
             msiAddKeyVal(*kvp, 'destination', *destination);
         }
 
+        if (*creator == "") {
+            msiAddKeyVal(*kvp, 'creator', "");
+        } else {
+            msiAddKeyVal(*kvp, 'creator', *creator);
+        }
+
+        if ( $userNameClient == *creator){
+            msiAddKeyVal(*kvp, 'sharedWithMe', "false");
+        } else {
+            msiAddKeyVal(*kvp, 'sharedWithMe', "true");
+        }
 
         # Extract additional info when *report == "true"
         if ( *report == "true" ) {

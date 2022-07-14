@@ -58,15 +58,19 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                     # Replicate data from *coordResourceName to *archiveResc
                     # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
                     # will automatically also include a checksum check on the destination
-                    msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus);
-                    if ( *moveStatus != 0 ) {
-                       failmsg(-1, "Replication of *ipath from *coordResourceName to *archiveResc FAILED.");
+                    # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                    *moveError = errorcode(msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus));
+                    msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+                    if ( *moveError != 0 ) {
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Replication of *dataPath from *coordResourceName to *archiveResc FAILED.")
                     }
 
                     # Trim data from *coordResourceName
-                    msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus);
-                    if ( *trimStatus != 1 ) {
-                       failmsg(-1, "Trim *ipath from *coordResourceName FAILED.");
+                    # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+                    *trimError = errorcode(msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus));
+                    msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+                    if ( *trimError != 0 ) {
+                       setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Trim *dataPath from *coordResourceName FAILED.")
                     }
 
                     # Update counter
@@ -74,8 +78,6 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
 
                     # Report logs
                     msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                    msiWriteRodsLog("DEBUG: \t\trepl moveStat done *moveStatus", 0);
-                    msiWriteRodsLog("DEBUG: \t\ttrim stat done *trimStatus", 0);
                     msiWriteRodsLog("DEBUG: \t\tReplicate from *coordResourceName to *archiveResc", 0);
                 }
             }

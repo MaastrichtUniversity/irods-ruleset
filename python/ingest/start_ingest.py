@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r start_ingest -a "dlinssen,handsome-snake,direct" -u "dlinssen"
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def start_ingest(ctx, username, token, dropzone_type):
     """
@@ -26,11 +27,18 @@ def start_ingest(ctx, username, token, dropzone_type):
     title = pre_ingest_tasks["title"]
     validation_result = pre_ingest_tasks["validation_result"]
 
+    # Python2.7 default encoding is ASCII, so we need to enforce UFT-8 encoding
+    title = title.encode("utf-8")
+    username = username.encode("utf-8")
+    token = token.encode("utf-8")
+
     if formatters.format_string_to_boolean(validation_result):
         ctx.callback.msiWriteRodsLog(
-            "Validation result OK {}. Setting status to 'in-queue-for-ingestion'".format(dropzone_path), 0
+            "Validation result OK {}. Setting status to '{}'".format(
+                dropzone_path, DropzoneState.IN_QUEUE_FOR_INGESTION.value
+            ), 0
         )
-        ctx.callback.setCollectionAVU(dropzone_path, "state", "in-queue-for-ingestion")
+        ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_INGESTION.value)
 
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>",
@@ -38,4 +46,6 @@ def start_ingest(ctx, username, token, dropzone_type):
             "",
         )
     else:
-        ctx.callback.setErrorAVU(dropzone_path, "state", "warning-validation-incorrect", "Metadata is incorrect")
+        ctx.callback.setErrorAVU(
+            dropzone_path, "state", DropzoneState.WARNING_VALIDATION_INCORRECT.value, "Metadata is incorrect"
+        )

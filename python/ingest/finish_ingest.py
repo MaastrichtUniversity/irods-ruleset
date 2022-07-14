@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r finish_ingest -a "P000000014,dlinssen,handsome-snake,C000000001,iresResource,direct"
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
 def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host, dropzone_type):
     """
@@ -34,18 +35,23 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
+
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Set the Creator AVU
     ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_project_collection_path), 0)
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
-    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
+    dropzone_creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+    ret = ctx.get_user_attribute_value(dropzone_creator, "email", FALSE_AS_STRING, "result")["arguments"][3]
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(username)
+            project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(dropzone_creator)
         )
     ctx.callback.setCollectionAVU(destination_project_collection_path, "creator", email)
+
+    # Set the Depositor (=person who started th ingest) AVU
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "depositor", username)
 
     # Requesting a PID via epicPID for version 0 (root version)
     handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]
@@ -73,7 +79,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
     overwrite_flag = FALSE_AS_STRING
-    if state == "error-post-ingestion":
+    if state == DropzoneState.ERROR_POST_INGESTION.value:
         overwrite_flag = TRUE_AS_STRING
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
     ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag)
@@ -93,7 +99,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     ctx.callback.setCollectionAVU(destination_project_collection_path, "schemaVersion", schema_version)
 
     # Setting the State AVU to Ingested
-    ctx.callback.setCollectionAVU(dropzone_path, "state", "ingested")
+    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTED.value)
 
     # Remove the temporary sizeIngested AVU at *dstColl
     ctx.callback.remove_size_ingested_avu(destination_project_collection_path)
@@ -109,7 +115,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         try:
             ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
         except RuntimeError:
-            ctx.callback.setErrorAVU(dropzone_path, "state", "error-post-ingestion", "Error unmounting")
+            ctx.callback.setErrorAVU(
+                dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
+            )
 
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)

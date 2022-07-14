@@ -1,4 +1,5 @@
 # /rules/tests/run_test.sh -r set_single_user_project_acl_to_dropzones -a "P000000014,dlinssen"
+
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
 def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
     """
@@ -20,7 +21,9 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
     """
     project_path = format_project_path(ctx, project_id)
 
-    sharing_enabled = ctx.callback.getCollectionAVU(project_path, "enableDropzoneSharing", "", "", FALSE_AS_STRING)["arguments"][2]
+    sharing_enabled = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", "", FALSE_AS_STRING
+    )["arguments"][2]
     sharing_enabled = formatters.format_string_to_boolean(sharing_enabled)
 
     # If the AVU is not enabled, stop the rule's execution

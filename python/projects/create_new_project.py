@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r create_new_project -a "iresResource,replRescUM01,PROJECTNAME,jmelius,opalmen,UM-30001234X,{'enableDropzoneSharing':'true'}"
+
 @make(inputs=range(7), outputs=[7], handler=Output.STORE)
 def create_new_project(
     ctx,
@@ -28,7 +30,7 @@ def create_new_project(
         The budget number
     extra_parameters: str
         Json formatted list of extra parameters.
-        Currently supported are:
+        Currently, supported are:
             authorizationPeriodEndDate : str
                 Date
             dataRetentionPeriodEndDate : str
@@ -53,14 +55,14 @@ def create_new_project(
     new_project_path = ""
     project_id = ""
     extra_parameter_default_values = {
-        "authorizationPeriodEndDate": "01-01-9999",
-        "dataRetentionPeriodEndDate": "01-01-9999",
-        "storageQuotaGb": "0",
-        "enableOpenAccessExport": "false",
-        "enableArchive": "false",
-        "enableUnarchive": "false",
-        "enableDropzoneSharing": "false",
-        "collectionMetadataSchemas": "DataHub_general_schema",
+        ProjectAVUs.AUTHORIZATION_PERIOD_END_DATE.value: "01-01-9999",
+        ProjectAVUs.DATA_RETENTION_PERIOD_END_DATE.value: "01-01-9999",
+        ProjectAVUs.STORAGE_QUOTA_GB.value: "0",
+        ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value: "false",
+        ProjectAVUs.ENABLE_ARCHIVE.value: "false",
+        ProjectAVUs.ENABLE_UNARCHIVE.value: "false",
+        ProjectAVUs.ENABLE_DROPZONE_SHARING.value: "false",
+        ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value: "DataHub_general_schema",
     }
 
     if not extra_parameters or extra_parameters == "":
@@ -94,12 +96,12 @@ def create_new_project(
         msg = "ERROR: Collection '{}' attempt no. {} : Unable to create {}".format(title, retry, new_project_path)
         ctx.callback.msiExit(str(error), msg)
 
-    ctx.callback.setCollectionAVU(new_project_path, "ingestResource", ingest_resource)
-    ctx.callback.setCollectionAVU(new_project_path, "resource", resource)
-    ctx.callback.setCollectionAVU(new_project_path, "title", title)
-    ctx.callback.setCollectionAVU(new_project_path, "OBI:0000103", principal_investigator)
-    ctx.callback.setCollectionAVU(new_project_path, "dataSteward", data_steward)
-    ctx.callback.setCollectionAVU(new_project_path, "responsibleCostCenter", responsible_cost_center)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.INGEST_RESOURCE.value, ingest_resource)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.RESOURCE.value, resource)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.TITLE.value, title)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, principal_investigator)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.DATA_STEWARD.value, data_steward)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, responsible_cost_center)
 
     for extra_parameter_name in extra_parameter_default_values:
         if extra_parameter_name in extra_parameters:
@@ -111,7 +113,7 @@ def create_new_project(
                 new_project_path, extra_parameter_name, extra_parameter_default_values[extra_parameter_name]
             )
 
-    ctx.callback.setCollectionAVU(new_project_path, "enableContributorEditMetadata", FALSE_AS_STRING)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, FALSE_AS_STRING)
 
     archive_dest_resc = ""
     for result in row_iterator(
@@ -121,7 +123,7 @@ def create_new_project(
     if archive_dest_resc == "":
         ctx.callback.msiExit("-1", "ERROR: The attribute 'archiveDestResc' has no value in iCAT")
 
-    ctx.callback.setCollectionAVU(new_project_path, "archiveDestinationResource", archive_dest_resc)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, archive_dest_resc)
 
     # Set recursive permissions
     ctx.callback.msiSetACL("default", "write", "service-pid", new_project_path)
@@ -130,7 +132,7 @@ def create_new_project(
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     # If the user calling this function is someone other than 'rods' (so a project admin)
-    # we need to add rods as a owner on this project and remove the person calling this method
+    # we need to add rods as an owner on this project and remove the person calling this method
     # from the ACLs
     if current_user != "rods":
         ctx.callback.msiSetACL("default", "own", "rods", new_project_path)

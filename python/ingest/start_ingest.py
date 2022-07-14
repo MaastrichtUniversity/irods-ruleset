@@ -34,9 +34,11 @@ def start_ingest(ctx, username, token, dropzone_type):
 
     if formatters.format_string_to_boolean(validation_result):
         ctx.callback.msiWriteRodsLog(
-            "Validation result OK {}. Setting status to 'in-queue-for-ingestion'".format(dropzone_path), 0
+            "Validation result OK {}. Setting status to '{}'".format(
+                dropzone_path, DropzoneState.IN_QUEUE_FOR_INGESTION.value
+            ), 0
         )
-        ctx.callback.setCollectionAVU(dropzone_path, "state", "in-queue-for-ingestion")
+        ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_INGESTION.value)
 
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>",
@@ -44,4 +46,6 @@ def start_ingest(ctx, username, token, dropzone_type):
             "",
         )
     else:
-        ctx.callback.setErrorAVU(dropzone_path, "state", "warning-validation-incorrect", "Metadata is incorrect")
+        ctx.callback.setErrorAVU(
+            dropzone_path, "state", DropzoneState.WARNING_VALIDATION_INCORRECT.value, "Metadata is incorrect"
+        )

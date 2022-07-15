@@ -79,7 +79,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
     overwrite_flag = FALSE_AS_STRING
-    if state == "error-post-ingestion":
+    if state == DropzoneState.ERROR_POST_INGESTION.value:
         overwrite_flag = TRUE_AS_STRING
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
     ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag)
@@ -99,7 +99,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     ctx.callback.setCollectionAVU(destination_project_collection_path, "schemaVersion", schema_version)
 
     # Setting the State AVU to Ingested
-    ctx.callback.setCollectionAVU(dropzone_path, "state", "ingested")
+    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTED.value)
 
     # Remove the temporary sizeIngested AVU at *dstColl
     ctx.callback.remove_size_ingested_avu(destination_project_collection_path)
@@ -115,7 +115,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         try:
             ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
         except RuntimeError:
-            ctx.callback.setErrorAVU(dropzone_path, "state", "error-post-ingestion", "Error unmounting")
+            ctx.callback.setErrorAVU(
+                dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
+            )
 
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)

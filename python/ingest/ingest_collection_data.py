@@ -27,7 +27,9 @@ def ingest_collection_data(ctx, source_collection, destination_collection, proje
          The sum of the ingestion status codes. 0 is success.
     """
     project_path = format_project_path(ctx, project_id)
-    destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", TRUE_AS_STRING)["arguments"][2]
+    destination_resource = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
     # TODO Change to query instead of hardcoded ingest_resource value?
     ingest_resource = "stagingResc01"

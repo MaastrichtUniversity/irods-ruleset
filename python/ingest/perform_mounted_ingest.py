@@ -41,7 +41,9 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
             "",
         )
     except RuntimeError:
-        ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error copying ingest zone")
+        ctx.callback.setErrorAVU(
+            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
+        )
 
     after = time.time()
     difference = float(after - before) + 1

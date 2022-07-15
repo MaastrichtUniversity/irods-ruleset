@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_project_acl_for_manager -a "P000000014,false" -u opalmen -j
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
     """
@@ -6,9 +8,9 @@ def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id : str
-        The project's id; eg.g P000000010
+        The project's id; e.g: P000000010
     show_service_accounts: str
         'true'/'false' expected; If true, hide the service accounts in the result
 
@@ -37,8 +39,12 @@ def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
 
     project_path = format_project_path(ctx, project_id)
 
-    principal_investigator = ctx.callback.getCollectionAVU(project_path, "OBI:0000103", "", "", TRUE_AS_STRING)["arguments"][2]
-    data_steward = ctx.callback.getCollectionAVU(project_path, "dataSteward", "", "", TRUE_AS_STRING)["arguments"][2]
+    principal_investigator = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    data_steward = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
     output = {
         "managers": managers,

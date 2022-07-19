@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_project_resource_availability -a "P000000014,true,false,false" -j
+
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
 def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, destination=FALSE_AS_STRING, archive=FALSE_AS_STRING):
     """
@@ -6,15 +8,15 @@ def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, de
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
         The project id, ie 'P000000010'
     ingest: bool
-        If we need to check the 'ingestResource' attribute of the project as well, default True
+        If we need to check the 'ingestResource' attribute of the project as well, default true
     destination: bool
-        If we need to check the 'ingestResource' attribute of the project as well, default True
+        If we need to check the 'resource' attribute of the project as well, default true
     archive: bool
-        If we need to check the 'ingestResource' attribute of the project as well, default True
+        If we need to check the 'archiveDestinationResource' attribute of the project as well, default true
 
     Returns
     -------
@@ -32,19 +34,21 @@ def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, de
 
     ingest_status = False
     if check_ingest_resource:
-        ingest_resource = ctx.callback.getCollectionAVU(project_path, "ingestResource", "", "", TRUE_AS_STRING)["arguments"][2]
+        ingest_resource = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         ingest_status = get_resource_status(ctx, ingest_resource)
 
     destination_status = False
     if check_destination_resource:
-        destination_resource = ctx.callback.getCollectionAVU(project_path, "resource", "", "", TRUE_AS_STRING)["arguments"][2]
+        destination_resource = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)["arguments"][2]
         destination_status = get_resource_status(ctx, destination_resource)
 
     archive_status = False
     if check_archive_resource:
-        archive_resource = ctx.callback.getCollectionAVU(project_path, "archiveDestinationResource", "", "", TRUE_AS_STRING)[
-            "arguments"
-        ][2]
+        archive_resource = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         archive_status = get_resource_status(ctx, archive_resource)
 
     return (

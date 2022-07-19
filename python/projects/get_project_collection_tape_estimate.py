@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_project_collection_tape_estimate -a "P000000014,C000000001" -j
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     """
@@ -6,11 +8,11 @@ def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
-        The project's id; e.g P000000010
+        The project's id; e.g: P000000010
     collection_id: str
-        The collection's id; e.g C000000001
+        The collection's id; e.g: C000000001
 
     Returns
     -------
@@ -20,7 +22,8 @@ def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     project_path = format_project_path(ctx, project_id)
     project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Get the destination archive resource from the project
-    ret = ctx.getCollectionAVU(project_path, "archiveDestinationResource", "archive_resource", "", FALSE_AS_STRING)
+    ret = ctx.getCollectionAVU(project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "archive_resource", "",
+                               FALSE_AS_STRING)
     archive_resource = ret["arguments"][2]
 
     minimum_size = 262144000  # The minimum file size (in bytes)
@@ -39,12 +42,12 @@ def get_project_collection_tape_estimate(ctx, project_id, collection_id):
     number_files = 0
     bytes_size = 0
     for data in row_iterator(
-        "DATA_NAME, DATA_SIZE",
-        "COLL_NAME = '{}' || like '{}/%' ".format(project_collection_path, project_collection_path)
-        + " AND DATA_RESC_NAME != '{}' ".format(archive_resource)
-        + " AND DATA_SIZE >= '{}'".format(minimum_size),
-        AS_LIST,
-        ctx.callback,
+            "DATA_NAME, DATA_SIZE",
+            "COLL_NAME = '{}' || like '{}/%' ".format(project_collection_path, project_collection_path)
+            + " AND DATA_RESC_NAME != '{}' ".format(archive_resource)
+            + " AND DATA_SIZE >= '{}'".format(minimum_size),
+            AS_LIST,
+            ctx.callback,
     ):
         number_files += 1
         bytes_size += int(data[1])

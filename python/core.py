@@ -3,8 +3,8 @@ import irods_types
 import session_vars
 from genquery import *
 
-from dhpythonirodsutils import formatters, exceptions, loggers
-from dhpythonirodsutils.enums import DropzoneState
+from dhpythonirodsutils import formatters, exceptions, loggers, validators
+from dhpythonirodsutils.enums import DropzoneState, ProjectAVUs, AuditTailTopics
 
 from enum import Enum
 
@@ -161,7 +161,7 @@ def is_dropzone_state_in_active_ingestion(ctx, state):
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def format_audit_trail_message(ctx, username, event):
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
-    return loggers.format_audit_trail_message(int(user_id), "POLICY", event)
+    return loggers.format_audit_trail_message(int(user_id), AuditTailTopics.POLICY.value, event)
 
 
 def read_data_object_from_irods(ctx, path):

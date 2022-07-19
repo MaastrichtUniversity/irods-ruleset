@@ -15,13 +15,15 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
         The dropzone absolute path
     """
     ctx.callback.msiWriteRodsLog("Starting ingestion {}".format(dropzone_path), 0)
-    ctx.callback.setCollectionAVU(dropzone_path, "state", "ingesting")
+    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
     try:
         collection_id = ctx.callback.createProjectCollection(project_id, "", title)["arguments"][1]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating projectCollection", 0)
-        ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error creating projectCollection")
+        ctx.callback.setErrorAVU(
+            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error creating projectCollection"
+        )
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
 
@@ -29,7 +31,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
     ingest_resource = ctx.callback.getCollectionAVU(
-        format_project_path(ctx, project_id), "ingestResource", "", "", TRUE_AS_STRING
+        format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
 
     # Obtain the resource host from the specified ingest resource

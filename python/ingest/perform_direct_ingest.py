@@ -47,7 +47,9 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(dropzone_path), 0)
 
     if status != 0:
-        ctx.callback.setErrorAVU(dropzone_path, "state", "error-ingestion", "Error copying ingest zone")
+        ctx.callback.setErrorAVU(
+            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
+        )
 
     after = time.time()
     difference = float(after - before) + 1

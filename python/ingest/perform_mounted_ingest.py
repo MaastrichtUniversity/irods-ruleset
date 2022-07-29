@@ -6,7 +6,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
         The project id, ie P00000010
     title: str
@@ -32,7 +32,10 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
 
     # Ingest the files from local directory on resource server to iRODS collection
     try:
-        ctx.remote_run_ingest_job(token, destination_collection, ingest_resource_host)
+        rule_code = """
+        run_put_ingest_job("{token}", "{destination_collection}")
+        """.format(token=token, destination_collection=destination_collection)
+        ctx.callback.remoteExec(ingest_resource_host, '', rule_code, '')
     except RuntimeError:
         ctx.callback.setErrorAVU(
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"

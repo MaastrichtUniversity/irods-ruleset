@@ -21,7 +21,7 @@ def run_put_ingest_job(ctx, token, target_collection):
 
     ctx.callback.setCollectionAVU(dropzone_path, "totalSize", str(total_size))
 
-    event_handler = "/opt/irods/event_handler_replRescUM01_put.py"
+    event_handler = "/opt/irods/event_handler_put_operation.py"
     return_code = None
     try:
         return_code = check_call(

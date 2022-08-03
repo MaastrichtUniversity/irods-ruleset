@@ -1,4 +1,5 @@
-TOKEN_FORMAT = "{}-{}"
+# /rules/tests/run_test.sh -r generate_token
+DROPZONE_NAME_FORMAT = "{}-{}"
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)
@@ -9,7 +10,7 @@ def generate_token(ctx):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
 
     Returns
     -------
@@ -33,11 +34,11 @@ def generate_token(ctx):
 
 
 def random_token(adjectives, nouns, existing_tokens):
-    from random import randrange
-
-    chosen_adjective = adjectives[randrange(0, len(adjectives) - 1)]
-    chosen_noun = nouns[randrange(0, len(nouns) - 1)]
-    new_token = TOKEN_FORMAT.format(chosen_adjective, chosen_noun)
+    from random import SystemRandom
+    sys_rand = SystemRandom()
+    chosen_adjective = adjectives[sys_rand.randrange(0, len(adjectives) - 1)]
+    chosen_noun = nouns[sys_rand.randrange(0, len(nouns) - 1)]
+    new_token = DROPZONE_NAME_FORMAT.format(chosen_adjective, chosen_noun)
     # If the newly generated token already exists, call this function again
     if new_token in existing_tokens:
         random_token(adjectives, nouns, existing_tokens)

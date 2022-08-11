@@ -15,33 +15,41 @@ def index_all(ctx, remove_index):
         collections = json.loads(ctx.callback.list_collections(project_path, "")["arguments"][1])
         for collection in collections:
             collection_id = collection["id"]
-            instance_path = formatters.format_instance_collection_path(project_id, collection_id)
-            instance_exists = True
-            try:
-                ctx.callback.msiObjStat(instance_path, irods_types.RodsObjStat())
-            except RuntimeError:
-                instance_exists = False
-            if instance_exists:
-                instance = read_data_object_from_irods(ctx, instance_path)
-                instance_object = json.loads(instance)
+            index_project_collection(ctx, es, project_id, collection_id)
 
-                # Instance json
-                es.index(
-                    index="irods",
-                    id=project_id + "_" + collection_id,
-                    document=instance_object,
-                )
 
-            # AVU metadata
-            doc = {}
-            project_title = ctx.callback.getCollectionAVU(project_path, "title", "", "", FALSE_AS_STRING)["arguments"][
-                2
-            ]
-            doc["project_title"] = project_title
-            doc["project_id"] = project_id
-            doc["collection_id"] = collection_id
-            es.update(
-                index="irods",
-                id=project_id + "_" + collection_id,
-                body={"doc": doc},
-            )
+def index_project_collection(ctx, es, project_id,collection_id):
+    project_path = formatters.format_project_path(project_id)
+    instance_path = formatters.format_instance_collection_path(project_id, collection_id)
+
+    instance_exists = True
+    try:
+        ctx.callback.msiObjStat(instance_path, irods_types.RodsObjStat())
+    except RuntimeError:
+        instance_exists = False
+    if instance_exists:
+        instance = read_data_object_from_irods(ctx, instance_path)
+        instance_object = json.loads(instance)
+
+        # Instance json
+        es.index(
+            index="irods",
+            id=project_id + "_" + collection_id,
+            document=instance_object,
+        )
+
+    # AVU metadata
+    doc = {}
+    project_title = ctx.callback.getCollectionAVU(project_path, "title", "", "", FALSE_AS_STRING)["arguments"][
+        2
+    ]
+    doc["project_title"] = project_title
+    doc["project_id"] = project_id
+    doc["collection_id"] = collection_id
+    doc["user_access"] = json.loads(
+        ctx.callback.get_all_users_with_access_to_project(project_id, "")["arguments"][1])
+    es.update(
+        index="irods",
+        id=project_id + "_" + collection_id,
+        body={"doc": doc},
+    )

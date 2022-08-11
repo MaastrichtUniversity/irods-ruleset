@@ -24,7 +24,6 @@ def get_all_users_with_access_to_project(ctx, project_id):
     # Go over all groups and list their members
     for group in groups:
         group_users = json.loads(ctx.callback.get_users_in_group(group, "")["arguments"][1])
-        print(group_users)
         users.extend(group_users)
 
     # Remove duplicates

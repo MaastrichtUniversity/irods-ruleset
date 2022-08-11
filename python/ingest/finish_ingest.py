@@ -10,6 +10,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         Create metadata_versions folder with copy of schema and instance
         Requesting PID's for version 1 of collection,schema and metadata
         Recalculate collection size
+        Add metadata to elastic search index
         Removing the dropzone
         Closing the project collection
 
@@ -103,6 +104,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
 
     # Remove the temporary sizeIngested AVU at *dstColl
     ctx.callback.remove_size_ingested_avu(destination_project_collection_path)
+
+    # Add metadata to elastic index
+    ctx.callback.index_add_one(project_id, collection_id)
 
     # Close collection by making all access read only
     ctx.callback.closeProjectCollection(project_id, collection_id)

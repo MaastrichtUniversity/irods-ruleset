@@ -3,7 +3,7 @@
 def index_all(ctx, remove_index):
     from elasticsearch import Elasticsearch
 
-    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=('elastic', 'foobar'))
+    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=("elastic", "foobar"))
 
     if formatters.format_string_to_boolean(remove_index):
         es.indices.delete(index="irods", ignore=[400, 404])
@@ -18,7 +18,7 @@ def index_all(ctx, remove_index):
             index_project_collection(ctx, es, project_id, collection_id)
 
 
-def index_project_collection(ctx, es, project_id,collection_id):
+def index_project_collection(ctx, es, project_id, collection_id):
     project_path = formatters.format_project_path(project_id)
     instance_path = formatters.format_instance_collection_path(project_id, collection_id)
 
@@ -40,14 +40,11 @@ def index_project_collection(ctx, es, project_id,collection_id):
 
     # AVU metadata
     doc = {}
-    project_title = ctx.callback.getCollectionAVU(project_path, "title", "", "", FALSE_AS_STRING)["arguments"][
-        2
-    ]
+    project_title = ctx.callback.getCollectionAVU(project_path, "title", "", "", FALSE_AS_STRING)["arguments"][2]
     doc["project_title"] = project_title
     doc["project_id"] = project_id
     doc["collection_id"] = collection_id
-    doc["user_access"] = json.loads(
-        ctx.callback.get_all_users_with_access_to_project(project_id, "")["arguments"][1])
+    doc["user_access"] = json.loads(ctx.callback.get_all_users_with_access_to_project(project_id, "")["arguments"][1])
     es.update(
         index="irods",
         id=project_id + "_" + collection_id,

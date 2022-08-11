@@ -3,7 +3,7 @@
 def index_all(ctx, remove_index):
     from elasticsearch import Elasticsearch
 
-    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}])
+    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=('elastic', 'foobar'))
 
     if formatters.format_string_to_boolean(remove_index):
         es.indices.delete(index="irods", ignore=[400, 404])

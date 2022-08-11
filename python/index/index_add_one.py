@@ -3,7 +3,7 @@
 def index_add_one(ctx, project_id, collection_id):
     from elasticsearch import Elasticsearch
 
-    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}])
+    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=('elastic', 'foobar'))
 
     project_path = formatters.format_project_path(project_id)
     project_collection_path = formatters.format_project_collection_path(project_id, collection_id)

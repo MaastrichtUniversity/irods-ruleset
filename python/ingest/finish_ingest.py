@@ -105,11 +105,11 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     # Remove the temporary sizeIngested AVU at *dstColl
     ctx.callback.remove_size_ingested_avu(destination_project_collection_path)
 
-    # Add metadata to elastic index
-    ctx.callback.index_add_one(project_id, collection_id)
-
     # Close collection by making all access read only
     ctx.callback.closeProjectCollection(project_id, collection_id)
+
+    # Add metadata to elastic index
+    ctx.callback.index_add_one(project_id, collection_id)
 
     if dropzone_type == "mounted":
         # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.

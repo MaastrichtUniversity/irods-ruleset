@@ -52,7 +52,9 @@ def index_project_collection(ctx, es, project_id, collection_id):
 
 def setup_elastic():
     from elasticsearch import Elasticsearch
+    import os
 
-    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=("elastic", "foobar"))
+    ELASTIC_PASSWORD = os.getenv('ELASTIC_PASSWORD')
+    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=("elastic", ELASTIC_PASSWORD))
 
     return es

@@ -1,9 +1,7 @@
 # /rules/tests/run_test.sh -r index_all -a "true" -u service-disqover
 @make(inputs=[0], outputs=[], handler=Output.STORE)
 def index_all(ctx, remove_index):
-    from elasticsearch import Elasticsearch
-
-    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=("elastic", "foobar"))
+    es = setup_elastic()
 
     if formatters.format_string_to_boolean(remove_index):
         es.indices.delete(index="irods", ignore=[400, 404])
@@ -50,3 +48,11 @@ def index_project_collection(ctx, es, project_id, collection_id):
         id=project_id + "_" + collection_id,
         body={"doc": doc},
     )
+
+
+def setup_elastic():
+    from elasticsearch import Elasticsearch
+
+    es = Elasticsearch([{"host": "elasticsearch.dh.local", "port": "9200"}], http_auth=("elastic", "foobar"))
+
+    return es

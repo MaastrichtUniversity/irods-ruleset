@@ -95,6 +95,7 @@ IRULE_changeProjectPermissions(*project, *users){
             msiSetACL("recursive", "read", "rods", "*projectCollection");
         }
     }
+    index_update_project("*project")
 }
 
 

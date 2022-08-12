@@ -1,7 +1,6 @@
 # /rules/tests/run_test.sh -r index_update_project -a "P000000014" -u service-disqover
 @make(inputs=[0], outputs=[], handler=Output.STORE)
 def index_update_project(ctx, project_id):
-    print("index_update_project: " + project_id)
     es = setup_elastic()
 
     project_path = formatters.format_project_path(project_id)

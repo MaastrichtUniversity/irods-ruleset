@@ -7,7 +7,6 @@ def test_get_collection_attribute_value():
     ret = subprocess.check_output(rule, shell=True)
 
     avu = json.loads(ret)
-    assert avu is not None
     assert avu['value'] == "(MDL) Placeholder collection"
 
 
@@ -25,17 +24,25 @@ def test_get_collection_size_per_resource():
 
     collection_sizes = json.loads(ret)
     assert collection_sizes["C000000001"][0]["relativeSize"] == 100.0
-    # assert collection_sizes["C000000001"][0]["resourceId"] == "10107"
+    assert collection_sizes["C000000001"][0]["resourceId"].isdigit() is True
     assert collection_sizes["C000000001"][0]["resourceName"] == "arcRescSURF01"
     assert collection_sizes["C000000001"][0]["size"] == "393"
 
 
 def test_get_collection_tree():
-    rule = '/rules/tests/run_test.sh -r get_collection_tree -a "P000000014/C000000001/.metadata_versions"'
+    rule = '/rules/tests/run_test.sh -r get_collection_tree -a "P000000010/C000000001"'
     ret = subprocess.check_output(rule, shell=True)
 
     collection = json.loads(ret)
-    assert collection == []
+    assert len(collection) == 1
+    assert collection[0]["ctime"] is not None  # TODO regex against this format 2022-08-16 16:12:54
+    assert collection[0]["mtime"] is not None
+    assert collection[0]["name"] == "filebeat.yml"
+    assert collection[0]["offlineResource"] is True
+    assert collection[0]["path"] == "P000000010/C000000001/filebeat.yml"
+    assert collection[0]["rescname"] == "arcRescSURF01"
+    assert collection[0]["size"] == "393"
+    assert collection[0]["type"] == "file"
 
 
 def test_list_collections():

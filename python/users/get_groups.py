@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_groups -a "false" -j -u jmelius
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_groups(ctx, show_special_groups):
     """

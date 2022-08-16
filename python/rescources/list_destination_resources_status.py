@@ -1,12 +1,14 @@
+# /rules/tests/run_test.sh -r list_destination_resources_status -j
+
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def list_destination_resources_status(ctx):
     """
-    Lists all of the replicated resources and their availabilities.
+    Lists all the replicated resources and their availabilities.
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
 
     Returns
     -------

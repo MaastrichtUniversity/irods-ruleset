@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_resource_size_for_all_collections -j
+
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_resource_size_for_all_collections(ctx):
     """
@@ -6,13 +8,13 @@ def get_resource_size_for_all_collections(ctx):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
 
     Returns
     -------
     List
         The resources that data is stored on and the amount of data stored on them.
-        This includes replicated resources (so that amound is already doubled!)
+        This includes replicated resources (so that amount is already doubled!)
     """
 
     resources = {}

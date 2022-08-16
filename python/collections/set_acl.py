@@ -1,3 +1,6 @@
+# /rules/tests/run_test.sh -r set_acl -a "default,read,auser,/nlmumc/projects/P000000010/C000000001"
+
+
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
 def set_acl(ctx, mode, access_level, username, irods_collection_path):
     """

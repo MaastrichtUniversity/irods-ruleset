@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_collection_size_per_resource -a "P000000010" -j
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_collection_size_per_resource(ctx, project_id):
     """

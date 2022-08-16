@@ -1,4 +1,5 @@
-# ./run_test.sh -r get_collection_tree -a "P000000014/C000000001/.metadata_versions"
+# /rules/tests/run_test.sh -r get_collection_tree -a "P000000014/C000000001/.metadata_versions"
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_collection_tree(ctx, relative_path):
     """

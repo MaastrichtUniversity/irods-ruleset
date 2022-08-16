@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_collection_attribute_value -a "/nlmumc/projects/P000000010/C000000001,title" -j
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_collection_attribute_value(ctx, irods_collection_path, attribute):
     """
@@ -6,11 +8,11 @@ def get_collection_attribute_value(ctx, irods_collection_path, attribute):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     irods_collection_path : str
-        The path to an irods collection
+        iRODS collection absolute path. e.g: /nlmumc/projects/P000000010, /nlmumc/projects/P000000010/C000000001
     attribute : str
-        The user attribute to query
+        iRODS collection attribute to query
 
     Returns
     -------

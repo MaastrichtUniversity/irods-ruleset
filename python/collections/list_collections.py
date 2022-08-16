@@ -1,4 +1,5 @@
 # /rules/tests/run_test.sh -r list_collections -a "/nlmumc/projects/P000000014" -j
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def list_collections(ctx, project_path):
     """
@@ -7,7 +8,7 @@ def list_collections(ctx, project_path):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_path: str
         Project absolute path
 

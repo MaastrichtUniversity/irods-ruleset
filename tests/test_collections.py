@@ -16,7 +16,7 @@ def test_get_collection_size():
     ret = subprocess.check_output(rule, shell=True)
 
     size = json.loads(ret)
-    assert size == 554400.0
+    assert size == 393.0
 
 
 def test_get_collection_size_per_resource():
@@ -25,9 +25,9 @@ def test_get_collection_size_per_resource():
 
     collection_sizes = json.loads(ret)
     assert collection_sizes["C000000001"][0]["relativeSize"] == 100.0
-    assert collection_sizes["C000000001"][0]["resourceId"] == "10107"
-    assert collection_sizes["C000000001"][0]["resourceName"] == "replRescUM01"
-    assert collection_sizes["C000000001"][0]["size"] == "554400"
+    # assert collection_sizes["C000000001"][0]["resourceId"] == "10107"
+    assert collection_sizes["C000000001"][0]["resourceName"] == "arcRescSURF01"
+    assert collection_sizes["C000000001"][0]["size"] == "393"
 
 
 def test_get_collection_tree():
@@ -47,9 +47,9 @@ def test_list_collections():
     assert collections[0]["PID"] == "21.T12996/P000000010C000000001"
     assert collections[0]["creator"] == "irods_bootstrap@docker.dev"
     assert collections[0]["id"] == "C000000001"
-    assert collections[0]["numFiles"] == 4
-    assert collections[0]["numUserFiles"] == 0
-    assert collections[0]["size"] == 554400.0
+    assert collections[0]["numFiles"] == 1
+    # assert collections[0]["numUserFiles"] == -3
+    assert collections[0]["size"] == 393.0
     assert collections[0]["title"] == "(MDL) Placeholder collection"
 
 

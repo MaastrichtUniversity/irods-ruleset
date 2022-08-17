@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_user_admin_status -a "jmelius" -j
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_admin_status(ctx, username):
     """
@@ -6,7 +8,7 @@ def get_user_admin_status(ctx, username):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     username : str
         The username
 

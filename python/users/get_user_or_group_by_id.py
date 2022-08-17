@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_user_or_group_by_id -a "10043"
+
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_or_group_by_id(ctx, account_id):
     """
@@ -6,7 +8,7 @@ def get_user_or_group_by_id(ctx, account_id):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     account_id : str
         The account's id; eg.g '10132'
 

@@ -34,12 +34,12 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
     # Remove first comma
     groups = groups[1:]
 
-    # Get the collection size on each resources
+    # Get the collection size on each resource
     parameters = "COLL_NAME"
     conditions = (
         "COLL_ACCESS_NAME in ('own', 'modify object') "
         "and COLL_ACCESS_USER_ID in ({}) "
-        "and COLL_NAME = '{}'".format(groups, format_project_path(ctx,project_id))
+        "and COLL_NAME = '{}'".format(groups, format_project_path(ctx, project_id))
     )
 
     for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):

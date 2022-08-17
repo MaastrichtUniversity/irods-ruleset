@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_service_accounts_id
+
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_service_accounts_id(ctx):
     """
@@ -6,7 +8,7 @@ def get_service_accounts_id(ctx):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
 
     Returns
     -------

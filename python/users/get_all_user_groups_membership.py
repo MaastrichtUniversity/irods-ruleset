@@ -1,5 +1,4 @@
-# ./run_test.sh -r get_all_users_groups_memberships -a "false,false,false,false" -j
-
+# /rules/tests/run_test.sh -r get_all_users_groups_memberships -a "false,false,false,false" -j
 
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
 def get_all_users_groups_memberships(

@@ -8,7 +8,7 @@ def get_user_group_memberships(ctx, show_special_groups, username):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     show_special_groups : str
         'true'/'false' expected values; If true, hide the special groups in the result
     username : str

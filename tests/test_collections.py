@@ -2,6 +2,7 @@ import json
 import subprocess
 
 
+
 def test_get_collection_attribute_value():
     rule = '/rules/tests/run_test.sh -r get_collection_attribute_value -a "/nlmumc/projects/P000000010/C000000001,title"'
     ret = subprocess.check_output(rule, shell=True)

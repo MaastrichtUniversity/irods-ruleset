@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m pip install --upgrade "pip < 21.0" 
           python -m pip install flake8 pylint bandit==1.6.2
-      #        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --user -r python/python_requirements.txt
       - name: Run Bandit (static security check)
         run: |
           bandit -r ./python/

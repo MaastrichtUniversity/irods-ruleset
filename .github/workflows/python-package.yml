@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.10" ]
+        python-version: [ "2.7" ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -23,24 +23,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install flake8 pytest bandit pylint
+          python -m pip install --upgrade "pip < 21.0" 
+          python -m pip install flake8 pylint bandit==1.6.2
       #        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Run Bandit (static security check)
         run: |
           bandit -r ./python/
-      #    - name: Lint with flake8
-      #      run: |
-      #        # stop the build if there are Python syntax errors or undefined names
-      #        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-      #        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-      #        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      #    - name: Run Pylint
-      #      run: |
-      #        pylint --max-line-length=120 --exit-zero ./irodsrulewrapper/
-      #    - name: Test with pytest
-      #      run: |
-      #        pytest
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 ./datahubirodsruleset --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 ./datahubirodsruleset --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Run Pylint
+        run: |
+          pylint --max-line-length=120 --exit-zero ./datahubirodsruleset/
       - name: Report Status to Dean
         if: ${{ always() && github.event.pusher.name == 'deanlinssen' }}
         uses: ravsamhq/notify-slack-action@master

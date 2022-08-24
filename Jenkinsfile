@@ -5,7 +5,7 @@ pipeline {
             steps{
                 sh "echo 'Pulling...  $GIT_BRANCH'"
                 sh "printenv"
-                cleanWs()
+//                 cleanWs()
                 sh "mkdir docker-common"
                 dir('docker-common'){
                     git branch: 'develop', url: 'https://github.com/MaastrichtUniversity/docker-common.git'
@@ -70,26 +70,26 @@ pipeline {
                 	git branch: 'develop', url:'https://github.com/MaastrichtUniversity/irods-microservices.git'
                 }
                 dir('docker-dev/externals/irods-ruleset'){
-                	git branch: "develop", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'
+                	git branch: "${GIT_BRANCH}", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'
                 }
-                dir('docker-dev/externals/irods-ruleset'){
-                    // Checkout the trigger build git branch or the default develop
-                    sh returnStatus: true, script:'''
-                    git ls-remote --exit-code --heads https://github.com/MaastrichtUniversity/irods-ruleset ${GIT_BRANCH} &> /dev/null
-                    if [ $? -eq 0 ]
-                    then
-                      echo ${GIT_BRANCH}
-                      git checkout ${GIT_BRANCH}
-                      exit 0
-                    fi
-
-                    echo "develop"
-                    git checkout develop
-                    exit 0
-                    '''
-                    sh 'git status'
-                    sh 'ls -all'
-                }
+//                 dir('docker-dev/externals/irods-ruleset'){
+//                     // Checkout the trigger build git branch or the default develop
+//                     sh returnStatus: true, script:'''
+//                     git ls-remote --exit-code --heads https://github.com/MaastrichtUniversity/irods-ruleset ${GIT_BRANCH} &> /dev/null
+//                     if [ $? -eq 0 ]
+//                     then
+//                       echo ${GIT_BRANCH}
+//                       git checkout ${GIT_BRANCH}
+//                       exit 0
+//                     fi
+//
+//                     echo "develop"
+//                     git checkout develop
+//                     exit 0
+//                     '''
+//                     sh 'git status'
+//                     sh 'ls -all'
+//                 }
                 dir('docker-dev/externals/sram-sync'){
                 	git branch: 'develop', url: 'https://github.com/MaastrichtUniversity/sram-sync.git'
                 }
@@ -131,6 +131,12 @@ pipeline {
                           sleep 10
                         done
                         echo "ires is Done"
+
+                        until docker logs --tail 1 corpus_sram-sync_1 2>&1 | grep -q "Sleeping for 300 seconds";
+                        do
+                          echo "Waiting for sram-sync"
+                          sleep 5
+                        done
                     '''
                 }
             }

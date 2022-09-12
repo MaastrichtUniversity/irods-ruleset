@@ -15,7 +15,7 @@ def get_dropzone_folders(ctx, token, path):
 
     Returns
     -------
-    dict
+    list
        The recursive folders list at the requested path
     """
     absolute_path = "/nlmumc/ingest/direct/{}{}".format(token, path)

@@ -19,8 +19,6 @@ def get_dropzone_files(ctx, token, directory):
        The folders and files attributes at the requested path
     """
 
-    import time
-
     output = []
     dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
     absolute_path = "{}{}".format(dropzone_path, directory)
@@ -39,7 +37,7 @@ def get_dropzone_files(ctx, token, directory):
             "id": relative_collection_path,
             "type": "folder",
             "size": 0,
-            "date": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[1])))
+            "date": int(result[1])
         }
 
         output.append(folder_node)
@@ -54,7 +52,7 @@ def get_dropzone_files(ctx, token, directory):
             "id": relative_data_path,
             "type": "file",
             "size": result[1],
-            "date": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[2])))
+            "date": int(result[2])
         }
 
         output.append(data_node)

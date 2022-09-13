@@ -20,7 +20,7 @@ def get_dropzone_files(ctx, token, directory):
     """
 
     output = []
-    dropzone_path = "/nlmumc/ingest/direct/{}".format(token)
+    dropzone_path = formatters.format_dropzone_path(token, 'direct')
     absolute_path = "{}{}".format(dropzone_path, directory)
 
     if absolute_path[-1] == "/":

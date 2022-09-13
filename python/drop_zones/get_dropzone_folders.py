@@ -2,7 +2,7 @@
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def get_dropzone_folders(ctx, token, path):
     """
-    Lists recursively the folders and files attributes at the input 'path'
+    Lists recursively the folders at the input 'path'
 
     Parameters
     ----------
@@ -18,7 +18,8 @@ def get_dropzone_folders(ctx, token, path):
     list
        The recursive folders list at the requested path
     """
-    absolute_path = "/nlmumc/ingest/direct/{}{}".format(token, path)
+    dropzone_path = formatters.format_dropzone_path(token, 'direct')
+    absolute_path = "{}{}".format(dropzone_path, path)
 
     root = []
     walk_dropzone_folders(ctx, root, absolute_path, absolute_path)

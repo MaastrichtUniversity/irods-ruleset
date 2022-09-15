@@ -36,7 +36,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
         ctx.remoteExec(
             ingest_resource_host,
             "",
-            "perform_irsync('/mnt/ingest/zones/{}', '{}', '{}')".format(token, destination_collection, destination_resource),
+            "perform_irsync('{}', '{}', '{}')".format(token, destination_collection, destination_resource),
             "",
         )
     except RuntimeError:

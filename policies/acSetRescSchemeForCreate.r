@@ -49,6 +49,19 @@ acSetRescSchemeForCreate {
         }
     }
 
+    ### Policy to prevent file creation directly in direct ingest folder ###
+    if($objPath like regex "/nlmumc/ingest/zones/.*") {
+        uuChopPath($objPath, *path, *c);
+        if (*path == "/nlmumc/ingest/zones"){
+            msiWriteRodsLog("DEBUG: No creating of files in root of /nlmumc/ingest/zones allowed. Path = $objPath by '$userNameClient'", *status);
+            cut;
+            msiOprDisallowed;
+        } else {
+            # The resource of anything created in /nlmumc/ingest/direct should always be stagingResc01
+            msiSetDefaultResc("stagingResc01", "forced");
+        }
+    }
+
     ### Policy to restrict object creation during or after ingestion ###
     if($objPath like regex "/nlmumc/ingest/direct/.*/.*") {
         *state = "";

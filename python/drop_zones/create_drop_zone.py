@@ -76,6 +76,7 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     # Create the folder on the SMB share if mounted dropzone
     if dropzone_type == "mounted":
         ctx.callback.createRemoteDirectory(project_id, token_stripped, vo_person_external_id)
+        ctx.callback.msiSetACL("recursive", "inherit", "", dropzone_path)
 
     if dropzone_type == "direct":
         ctx.callback.msiSetACL("recursive", "inherit", "", dropzone_path)

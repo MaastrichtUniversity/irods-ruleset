@@ -44,6 +44,17 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
         )
 
+    dropzone_instance_path = formatters.format_instance_dropzone_path(token, "mounted")
+    dropzone_schema_path = formatters.format_schema_dropzone_path(token, "mounted")
+    PC_instance_path = formatters.format_instance_collection_path(project_id, collection_id)
+    PC_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
+
+    ctx.callback.msiDataObjUnlink('objPath=' + PC_instance_path + '++++forceFlag=', 0)
+    ctx.callback.msiDataObjUnlink('objPath=' + PC_schema_path + '++++forceFlag=', 0)
+
+    ctx.callback.msiDataObjCopy(dropzone_instance_path, PC_instance_path, "forceFlag=", 0)
+    ctx.callback.msiDataObjCopy(dropzone_schema_path, PC_schema_path, "forceFlag=", 0)
+
     after = time.time()
     difference = float(after - before) + 1
 

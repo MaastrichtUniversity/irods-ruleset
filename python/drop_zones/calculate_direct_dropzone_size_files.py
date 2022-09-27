@@ -15,8 +15,8 @@ def calculate_direct_dropzone_size_files(ctx, token):
     Returns
     -------
     dict
-         "total_file_count" : The total number of files in the dropzone
-         "total_file_size" : The dropzone size in bytes
+         "total_file_count" : int: The total number of files in the dropzone
+         "total_file_size" : int : The dropzone size in bytes
     """
     dropzone_path = formatters.format_dropzone_path(token, "direct")
     total_file_count = 0
@@ -24,7 +24,7 @@ def calculate_direct_dropzone_size_files(ctx, token):
     for result in row_iterator(
         "count(DATA_NAME),sum(DATA_SIZE)", "COLL_NAME like '{}%'".format(dropzone_path), AS_LIST, ctx.callback
     ):
-        total_file_count = result[0]
-        total_file_size = result[1]
+        total_file_count = int(result[0])
+        total_file_size = int(result[1])
 
     return {"total_file_count": total_file_count, "total_file_size": total_file_size}

@@ -21,6 +21,8 @@ def calculate_direct_dropzone_size_files(ctx, token):
     dropzone_path = formatters.format_dropzone_path(token, "direct")
     total_file_count = 0
     total_file_size = 0
+
+    # WARNING: this query only works as long the data objects are not replicated
     for result in row_iterator(
         "count(DATA_NAME),sum(DATA_SIZE)", "COLL_NAME like '{}%'".format(dropzone_path), AS_LIST, ctx.callback
     ):

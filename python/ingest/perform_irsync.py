@@ -3,7 +3,7 @@ def perform_irsync(ctx, token, destination_collection, destination_resource):
     from subprocess import CalledProcessError, check_call  # nosec
     import time
 
-    source_collection = "/mnt/ingest/hnas/{}".format(token)
+    source_collection = "/mnt/ingest/zones/{}".format(token)
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
     RETRY_MAX_NUMBER = 5

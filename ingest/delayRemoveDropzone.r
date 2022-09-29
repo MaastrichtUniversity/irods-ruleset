@@ -14,7 +14,7 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
 
         if ( *dropzoneType == "mounted" ){
             remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
-                msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/hnas/" ++ *token, "null", "null", "null", *OUT);
+                msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
             }
         }
     }

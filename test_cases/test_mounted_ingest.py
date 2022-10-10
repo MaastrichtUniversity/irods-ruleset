@@ -5,7 +5,7 @@ import time
 
 class TestMountedIngest:
     project_path = ""
-    project_id = "P000000066"
+    project_id = ""
     project_title = "PROJECTNAME"
 
     depositor = "jmelius"
@@ -68,7 +68,7 @@ class TestMountedIngest:
         drop_zone = json.loads(ret_get_active_drop_zone)
         assert drop_zone['token'] == token
 
-        fail_safe = 5
+        fail_safe = 10
         while fail_safe != 0:
             ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
 
@@ -77,7 +77,7 @@ class TestMountedIngest:
                 fail_safe = 0
             else:
                 fail_safe = fail_safe - 1
-                time.sleep(10)
+                time.sleep(5)
 
         print("End TestMountedIngest.setup_class")
 
@@ -163,7 +163,7 @@ class TestMountedIngest:
         """
         Check the data object that are in the project collection use the correct project destination resource.
         """
-        query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'/nlmumc/projects/P000000066/C000000001\'"'
+        query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(self.project_path, self.collection_id)
         ret = subprocess.check_output(query, shell=True)
         resources = ret.splitlines()
         assert len(resources) == 2
@@ -172,8 +172,8 @@ class TestMountedIngest:
 
     def test_collection_data_replicas(self):
         """
-        Check that data objects (instance.json & schema.json) at the root of project collection are correctly replicated.
+        Check that data objects (instance.json & schema.json) at the root of project collection are correctly replicated
         """
-        query = 'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'/nlmumc/projects/P000000066/C000000001\'"'
+        query = 'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(self.project_path, self.collection_id)
         ret = subprocess.check_output(query, shell=True)
         assert int(ret) == 4

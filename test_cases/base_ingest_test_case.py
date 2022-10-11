@@ -15,8 +15,8 @@ class BaseTestCaseIngest:
     manager1 = depositor
     manager2 = "opalmen"
 
-    ingest_resource = "iresResource"
-    destination_resource = "replRescUM01"
+    ingest_resource = ""
+    destination_resource = ""
     budget_number = "UM-30001234X"
 
     dropzone_type = ""

@@ -3,6 +3,7 @@ import subprocess
 
 from dhpythonirodsutils import formatters
 from test_cases.base_dropzone_test_case import BaseTestCaseDropZones
+from test_cases.utils import add_metadata_files_to_direct_dropzone
 
 
 class TestDirectDropZones(BaseTestCaseDropZones):
@@ -10,11 +11,7 @@ class TestDirectDropZones(BaseTestCaseDropZones):
 
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):
-        iput_instance = "iput -R stagingResc01 instance.json /nlmumc/ingest/direct/{}/instance.json".format(token)
-        subprocess.check_call(iput_instance, shell=True)
-
-        iput_schema = "iput -R stagingResc01 schema.json /nlmumc/ingest/direct/{}/schema.json".format(token)
-        subprocess.check_call(iput_schema, shell=True)
+        add_metadata_files_to_direct_dropzone(token)
 
     def test_calculate_direct_dropzone_size_files(self):
         rule = '/rules/tests/run_test.sh -r calculate_direct_dropzone_size_files -a "{}"'.format(self.token)

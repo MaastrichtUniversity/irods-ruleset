@@ -1,10 +1,8 @@
 import json
 import subprocess
-import time
 
-from dhpythonirodsutils import validators
-
-from test_cases.utils import revert_latest_project_number, remove_project
+from test_cases.utils import revert_latest_project_number, remove_project, create_dropzone, create_project, \
+    start_and_wait_for_ingest
 
 
 # TODO Test set_post_ingestion_error_avu
@@ -20,8 +18,11 @@ class BaseTestCaseIngest:
     ingest_resource = ""
     destination_resource = ""
     budget_number = "UM-30001234X"
+    schema_name = "DataHub_general_schema"
+    schema_version = "1.0.0"
 
     dropzone_type = ""
+    token = ""
 
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
     collection_title = "collection_title"
@@ -33,61 +34,19 @@ class BaseTestCaseIngest:
 
     @classmethod
     def setup_class(cls):
-        print("")
+        print()
         print("Start {}.setup_class".format(cls.__name__))
-
-        rule_create_new_project = '/rules/tests/run_test.sh -r create_new_project -a "{},{},{},{},{},{},{{\'enableDropzoneSharing\':\'true\'}}"'.format(
-                                    cls.ingest_resource,
-                                    cls.destination_resource,
-                                    cls.project_title,
-                                    cls.manager1,
-                                    cls.manager2,
-                                    cls.budget_number
-        )
-        ret_create_new_project = subprocess.check_output(rule_create_new_project, shell=True)
-
-        project = json.loads(ret_create_new_project)
-        assert validators.validate_project_id(str(project['project_id']))
-        assert validators.validate_project_path(project['project_path'])
+        project = create_project(cls)
         cls.project_path = project['project_path']
         cls.project_id = project['project_id']
-
-        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(cls.manager1, project['project_path'])
-        subprocess.check_call(rule_set_acl, shell=True)
-        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(cls.manager2, project['project_path'])
-        subprocess.check_call(rule_set_acl, shell=True)
-
-        rule_create_drop_zone = '/rules/tests/run_test.sh -r create_drop_zone -a "{},{},{},{},DataHub_general_schema,1.0.0"'.format(cls.dropzone_type, cls.depositor, project['project_id'], cls.collection_title)
-        ret_create_drop_zone = subprocess.check_output(rule_create_drop_zone, shell=True)
-        token = json.loads(ret_create_drop_zone)
-
-        cls.add_metadata_files_to_dropzone(token)
-
-        rule_start_ingest = '/rules/tests/run_test.sh -r start_ingest -a "{},{},{}" -u "{}"'.format(cls.depositor, token, cls.dropzone_type, cls.depositor)
-        subprocess.check_call(rule_start_ingest, shell=True)
-
-        rule_get_active_drop_zone = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(token, cls.dropzone_type)
-        ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
-
-        drop_zone = json.loads(ret_get_active_drop_zone)
-        assert drop_zone['token'] == token
-
-        fail_safe = 10
-        while fail_safe != 0:
-            ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
-
-            drop_zone = json.loads(ret_get_active_drop_zone)
-            if drop_zone['state'] == "ingested":
-                fail_safe = 0
-            else:
-                fail_safe = fail_safe - 1
-                time.sleep(5)
-
+        cls.token = create_dropzone(cls)
+        cls.add_metadata_files_to_dropzone(cls.token)
+        start_and_wait_for_ingest(cls)
         print("End {}.setup_class".format(cls.__name__))
 
     @classmethod
     def teardown_class(cls):
-        print("")
+        print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         revert_latest_project_number()
@@ -99,7 +58,10 @@ class BaseTestCaseIngest:
         list_collections = json.loads(ret_list_collections)
         assert list_collections[0]['id'] == self.collection_id
 
-        rule_collection_detail = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(self.project_id, self.collection_id)
+        rule_collection_detail = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
+            self.project_id,
+            self.collection_id
+        )
         ret_collection_detail = subprocess.check_output(rule_collection_detail, shell=True)
         collection_detail = json.loads(ret_collection_detail)
         assert collection_detail['creator'] == self.collection_creator
@@ -150,8 +112,10 @@ class BaseTestCaseIngest:
     def test_collection_pid(self):
         import requests
         # TODO How relevant is this test?
-        rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(self.project_id,
-                                                                                              self.collection_id)
+        rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
+            self.project_id,
+            self.collection_id
+        )
         ret = subprocess.check_output(rule, shell=True)
         collection_detail = json.loads(ret)
         print (json.dumps(collection_detail, indent=4, sort_keys=True))
@@ -167,7 +131,10 @@ class BaseTestCaseIngest:
         """
         Check the data object that are in the project collection use the correct project destination resource.
         """
-        query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(self.project_path, self.collection_id)
+        query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
+            self.project_path,
+            self.collection_id
+        )
         ret = subprocess.check_output(query, shell=True)
         resources = ret.splitlines()
         assert len(resources) == 2
@@ -178,6 +145,9 @@ class BaseTestCaseIngest:
         """
         Check that data objects (instance.json & schema.json) at the root of project collection are correctly replicated
         """
-        query = 'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(self.project_path, self.collection_id)
+        query = 'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
+            self.project_path,
+            self.collection_id
+        )
         ret = subprocess.check_output(query, shell=True)
         assert int(ret) == 4

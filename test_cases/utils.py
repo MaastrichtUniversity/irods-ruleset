@@ -1,8 +1,11 @@
+import json
 import subprocess
+import time
+
 import requests
 from os import path
 
-from dhpythonirodsutils import formatters
+from dhpythonirodsutils import formatters, validators
 
 TMP_INSTANCE_PATH = "/tmp/metadata_instance.json"
 TMP_SCHEMA_PATH = "/tmp/metadata_schema.json"
@@ -75,3 +78,73 @@ def remove_dropzone(token, dropzone_type):
     subprocess.check_call(set_dropzone_acl, shell=True)
     run_remove_dropzone = 'irm -rf {}'.format(dropzone_path)
     subprocess.check_call(run_remove_dropzone, shell=True)
+
+
+def create_project(test_case):
+    rule_create_new_project = '/rules/tests/run_test.sh -r create_new_project -a "{},{},{},{},{},{},{{\'enableDropzoneSharing\':\'true\'}}"'.format(
+        test_case.ingest_resource,
+        test_case.destination_resource,
+        test_case.project_title,
+        test_case.manager1,
+        test_case.manager2,
+        test_case.budget_number
+    )
+    ret_create_new_project = subprocess.check_output(rule_create_new_project, shell=True)
+
+    project = json.loads(ret_create_new_project)
+    assert validators.validate_project_id(str(project['project_id']))
+    assert validators.validate_project_path(project['project_path'])
+
+    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(test_case.manager1,
+                                                                                       project['project_path'])
+    subprocess.check_call(rule_set_acl, shell=True)
+    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(test_case.manager2,
+                                                                                       project['project_path'])
+    subprocess.check_call(rule_set_acl, shell=True)
+
+    return project
+
+
+def create_dropzone(test_case):
+    rule_create_drop_zone = '/rules/tests/run_test.sh -r create_drop_zone -a "{},{},{},{},{},{}"'.format(
+        test_case.dropzone_type,
+        test_case.depositor,
+        test_case.project_id,
+        test_case.collection_title,
+        test_case.schema_name,
+        test_case.schema_version
+    )
+    ret_create_drop_zone = subprocess.check_output(rule_create_drop_zone, shell=True)
+    token = json.loads(ret_create_drop_zone)
+
+    return token
+
+
+def start_and_wait_for_ingest(test_case):
+    rule_start_ingest = '/rules/tests/run_test.sh -r start_ingest -a "{},{},{}" -u "{}"'.format(
+        test_case.depositor,
+        test_case.token,
+        test_case.dropzone_type,
+        test_case.depositor
+    )
+    subprocess.check_call(rule_start_ingest, shell=True)
+
+    rule_get_active_drop_zone = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
+        test_case.token,
+        test_case.dropzone_type
+    )
+    ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
+
+    drop_zone = json.loads(ret_get_active_drop_zone)
+    assert drop_zone['token'] == test_case.token
+
+    fail_safe = 10
+    while fail_safe != 0:
+        ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
+
+        drop_zone = json.loads(ret_get_active_drop_zone)
+        if drop_zone['state'] == "ingested":
+            fail_safe = 0
+        else:
+            fail_safe = fail_safe - 1
+            time.sleep(5)

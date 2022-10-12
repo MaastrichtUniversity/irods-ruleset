@@ -48,7 +48,7 @@ def list_collections(ctx, project_path):
             "arguments"
         ][2]
         project_collection["numFiles"] = int(ctx.callback.getCollectionAVU(
-            proj_coll[0], "numFiles", "", "", FALSE_AS_STRING
+            proj_coll[0], "numFiles", "", "0", FALSE_AS_STRING
         )["arguments"][2])
 
         # Calculate the number of user uploaded files

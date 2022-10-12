@@ -12,10 +12,13 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
             setErrorAVU(*srcColl,"state", "error-post-ingestion","Error removing Dropzone-collection");
         }
 
-        if ( *dropzoneType == "mounted" ){
-            remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
-                msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
-            }
+        remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
+           if ( *dropzoneType == "mounted" ){
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+           }
+           else if ( *dropzoneType == "direct" ){
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/direct/" ++ *token, "null", "null", "null", *OUT);
+           }
         }
     }
 }

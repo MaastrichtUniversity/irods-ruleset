@@ -148,18 +148,21 @@ class BaseTestCaseIngest:
         assert "{}#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager2) in ret
 
-    # def test_collection_pid(self):
-    #     # TODO Cannot resolve PID inside iRODS container?
-    #     rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(self.project_id,
-    #                                                                                           self.collection_id)
-    #     ret = subprocess.check_output(rule, shell=True)
-    #     collection_detail = json.loads(ret)
-    #     print (json.dumps(collection_detail, indent=4, sort_keys=True))
-    #     print (collection_detail['PID'])
-    #     url = "https://hdl.handle.net/{}".format(collection_detail['PID'])
-    #     print (url)
-    #     response = requests.get(url)
-    #     assert response.status_code == 200
+    def test_collection_pid(self):
+        import requests
+        # TODO How relevant is this test?
+        rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(self.project_id,
+                                                                                              self.collection_id)
+        ret = subprocess.check_output(rule, shell=True)
+        collection_detail = json.loads(ret)
+        print (json.dumps(collection_detail, indent=4, sort_keys=True))
+        print (collection_detail['PID'])
+        url = "https://hdl.handle.net/{}".format(collection_detail['PID'])
+        print (url)
+        url = "https://hdl.handle.net/21.T12996/P000000099C000000001"
+        print (url)
+        response = requests.get(url, allow_redirects=False)
+        assert response.status_code == 302
 
     def test_collection_data_resource(self):
         """

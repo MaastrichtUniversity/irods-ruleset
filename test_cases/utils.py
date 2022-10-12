@@ -50,3 +50,28 @@ def add_metadata_files_to_direct_dropzone(token):
     schema_path = formatters.format_schema_dropzone_path(token, "direct")
     iput_schema = "iput -R stagingResc01 {} {}".format(TMP_SCHEMA_PATH, schema_path)
     subprocess.check_call(iput_schema, shell=True)
+
+
+def revert_latest_project_number():
+    run_iquest = 'iquest "%s" "SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = \'/nlmumc/projects\' and META_COLL_ATTR_NAME = \'latest_project_number\' "'
+    latest_project_number = subprocess.check_output(run_iquest, shell=True).strip()
+    assert latest_project_number.isdigit()
+    revert_value = int(latest_project_number) - 1
+
+    run_set_meta = 'imeta set -C /nlmumc/projects latest_project_number {}'.format(revert_value)
+    subprocess.check_call(run_set_meta, shell=True)
+
+
+def remove_project(project_path):
+    set_acl = 'ichmod -rM own rods {}'.format(project_path)
+    subprocess.check_call(set_acl, shell=True)
+    run_remove_project = 'irm -rf {}'.format(project_path)
+    subprocess.check_call(run_remove_project, shell=True)
+
+
+def remove_dropzone(token, dropzone_type):
+    dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
+    set_dropzone_acl = 'ichmod -rM own rods {}'.format(dropzone_path)
+    subprocess.check_call(set_dropzone_acl, shell=True)
+    run_remove_dropzone = 'irm -rf {}'.format(dropzone_path)
+    subprocess.check_call(run_remove_dropzone, shell=True)

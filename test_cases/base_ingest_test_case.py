@@ -4,6 +4,8 @@ import time
 
 from dhpythonirodsutils import validators
 
+from test_cases.utils import revert_latest_project_number, remove_project
+
 
 # TODO Test set_post_ingestion_error_avu
 class BaseTestCaseIngest:
@@ -87,11 +89,8 @@ class BaseTestCaseIngest:
     def teardown_class(cls):
         print("")
         print("Start {}.teardown_class".format(cls.__name__))
-        set_acl = 'ichmod -rM own rods {}'.format(cls.project_path)
-        subprocess.check_call(set_acl, shell=True)
-        remove_project = 'irm -rf {}'.format(cls.project_path)
-        subprocess.check_call(remove_project, shell=True)
-        # TODO reset latest_project_number increment from acPostProcForCollCreate
+        remove_project(cls.project_path)
+        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_collection_avu(self):

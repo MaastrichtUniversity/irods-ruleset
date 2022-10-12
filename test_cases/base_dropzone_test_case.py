@@ -1,7 +1,9 @@
 import json
 import subprocess
 
-from dhpythonirodsutils import validators, formatters
+from dhpythonirodsutils import validators
+
+from test_cases.utils import remove_project, revert_latest_project_number, remove_dropzone
 
 
 class BaseTestCaseDropZones:
@@ -68,19 +70,9 @@ class BaseTestCaseDropZones:
     def teardown_class(cls):
         print("")
         print("Start {}.teardown_class".format(cls.__name__))
-
-        set_project_acl = 'ichmod -rM own rods {}'.format(cls.project_path)
-        subprocess.check_call(set_project_acl, shell=True)
-        remove_project = 'irm -rf {}'.format(cls.project_path)
-        subprocess.check_call(remove_project, shell=True)
-
-        dropzone_path = formatters.format_dropzone_path(cls.token, cls.dropzone_type)
-        set_dropzone_acl = 'ichmod -rM own rods {}'.format(dropzone_path)
-        subprocess.check_call(set_dropzone_acl, shell=True)
-        remove_dropzone = 'irm -rf {}'.format(dropzone_path)
-        subprocess.check_call(remove_dropzone, shell=True)
-
-        # TODO reset latest_project_number increment from acPostProcForCollCreate
+        remove_project(cls.project_path)
+        remove_dropzone(cls.token, cls.dropzone_type)
+        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_dropzone_avu(self):

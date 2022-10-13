@@ -1,6 +1,18 @@
-# /rules/tests/run_test.sh -r index_all_metadata -u service-disqover
+# /rules/tests/run_test.sh -r index_all_project_collections_metadata -u service-disqover
 @make(inputs=[], outputs=[], handler=Output.STORE)
-def index_all_metadata(ctx):
+def index_all_project_collections_metadata(ctx):
+    """
+    Use this rule to re-create $COLLECTION_METADATA_INDEX with all project collection metadata (instance.json & AVUs):
+        - Connect to the $ELASTIC_HOST
+        - Delete the current elastic search index $COLLECTION_METADATA_INDEX
+        - Query all project collection metadata
+        - For each project collection metadata, create a new index document
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    """
     from elasticsearch import ElasticsearchException
 
     es = setup_elastic(ctx)

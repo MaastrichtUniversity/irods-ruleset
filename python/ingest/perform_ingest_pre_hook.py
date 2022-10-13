@@ -33,7 +33,9 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
     ingest_resource = ctx.callback.getCollectionAVU(
         format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
-
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     # Obtain the resource host from the specified ingest resource
     for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(ingest_resource), AS_LIST, ctx.callback):
         ingest_resource_host = row[0]
@@ -44,4 +46,5 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
         "collection_id": collection_id,
         "destination_collection": destination_project_collection_path,
         "ingest_resource_host": ingest_resource_host,
+        "destination_resource": destination_resource,
     }

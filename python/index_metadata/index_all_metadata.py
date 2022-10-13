@@ -2,7 +2,8 @@
 @make(inputs=[], outputs=[], handler=Output.STORE)
 def index_all_metadata(ctx):
     from elasticsearch import ElasticsearchException
-    es = setup_elastic()
+
+    es = setup_elastic(ctx)
 
     total = 0
     success_count = 0
@@ -78,16 +79,12 @@ def index_project_collection(ctx, es, project_collection_path):
     return False
 
 
-def setup_elastic():
+def setup_elastic(ctx):
     from elasticsearch import Elasticsearch
-    import os
 
-    # TODO USE HTTPS
-    # retry_on_timeout=True
-    # max_retries=5
-    ELASTIC_PASSWORD = os.getenv('ELASTIC_PASSWORD')
-    ELASTIC_URL = "elasticsearch.dh.local"  # TODO os.getenv('ELASTIC_URL')
-    ELASTIC_PORT = "9200"
-    es = Elasticsearch([{"host": ELASTIC_URL, "port": ELASTIC_PORT}],http_auth=("elastic", ELASTIC_PASSWORD))
+    elastic_password = ctx.callback.msi_getenv("ELASTIC_PASSWORD", "")["arguments"][1]
+    elastic_host = ctx.callback.msi_getenv("ELASTIC_HOST", "")["arguments"][1]
+    elastic_port = ctx.callback.msi_getenv("ELASTIC_PORT", "")["arguments"][1]
+    es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password))
 
     return es

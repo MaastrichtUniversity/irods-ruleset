@@ -10,7 +10,7 @@ def index_all_metadata(ctx):
     message = "Index summary: {}/{} successful collection index done"
 
     try:
-        es.indices.delete(index="irods", ignore=[400, 404])
+        es.indices.delete(index=COLLECTION_METADATA_INDEX, ignore=[400, 404])
     except ElasticsearchException:
         message = message.format(success_count, total)
         ctx.callback.writeLine("stdout", "ERROR: {}".format(message))
@@ -65,7 +65,7 @@ def index_project_collection(ctx, es, project_collection_path):
     # Instance json
     try:
         res = es.index(
-            index="irods",
+            index=COLLECTION_METADATA_INDEX,
             id=project_id + "_" + collection_id,
             document=instance_object,
         )

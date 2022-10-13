@@ -10,6 +10,7 @@ from enum import Enum
 
 # Global vars
 activelyUpdatingAVUs = False
+COLLECTION_METADATA_INDEX = "collection_metadata"
 
 FALSE_AS_STRING = "false"
 TRUE_AS_STRING = "true"

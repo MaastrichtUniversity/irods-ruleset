@@ -267,3 +267,14 @@ def format_metadata_versions_path(ctx, project_id, collection_id):
         ctx.callback.msiExit("-1",
                              "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
     return metadata_versions_path
+
+
+def get_elastic_search_connection(ctx):
+    from elasticsearch import Elasticsearch
+
+    elastic_password = ctx.callback.msi_getenv("ELASTIC_PASSWORD", "")["arguments"][1]
+    elastic_host = ctx.callback.msi_getenv("ELASTIC_HOST", "")["arguments"][1]
+    elastic_port = ctx.callback.msi_getenv("ELASTIC_PORT", "")["arguments"][1]
+    es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password))
+
+    return es

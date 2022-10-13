@@ -15,7 +15,7 @@ def index_all_project_collections_metadata(ctx):
     """
     from elasticsearch import ElasticsearchException
 
-    es = setup_elastic(ctx)
+    es = get_elastic_search_connection(ctx)
 
     total = 0
     success_count = 0
@@ -89,14 +89,3 @@ def index_project_collection(ctx, es, project_collection_path):
 
     ctx.callback.msiWriteRodsLog("ERROR: Collection metadata indexing failed for {}".format(project_collection_path), 0)
     return False
-
-
-def setup_elastic(ctx):
-    from elasticsearch import Elasticsearch
-
-    elastic_password = ctx.callback.msi_getenv("ELASTIC_PASSWORD", "")["arguments"][1]
-    elastic_host = ctx.callback.msi_getenv("ELASTIC_HOST", "")["arguments"][1]
-    elastic_port = ctx.callback.msi_getenv("ELASTIC_PORT", "")["arguments"][1]
-    es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password))
-
-    return es

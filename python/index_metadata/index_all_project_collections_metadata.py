@@ -27,6 +27,7 @@ def index_all_project_collections_metadata(ctx):
         message = message.format(success_count, total)
         ctx.callback.writeLine("stdout", "ERROR: {}".format(message))
         ctx.callback.msiWriteRodsLog("ERROR: {}".format(message), 0)
+        ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised during index deletion", 0)
         return
 
     parameters = "COLL_NAME"

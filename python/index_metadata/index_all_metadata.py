@@ -17,8 +17,6 @@ def index_all_metadata(ctx):
         ctx.callback.msiWriteRodsLog("ERROR: {}".format(message), 0)
         return
 
-    # TODO try to get all Project ID & Collection ID
-    # TODO STOP exec if instance.json doesn't exist
     parameters = "COLL_NAME"
     conditions = "COLL_NAME like '/nlmumc/projects/P_________/C_________' AND DATA_NAME = 'instance.json'"
     for row in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
@@ -42,27 +40,27 @@ def index_project_collection(ctx, es, project_collection_path):
     project_path = formatters.format_project_path(project_id)
     instance_path = formatters.format_instance_collection_path(project_id, collection_id)
 
-    instance_exists = True
     try:
         ctx.callback.msiObjStat(instance_path, irods_types.RodsObjStat())
     except RuntimeError:
-        instance_exists = False
-    if not instance_exists:
+        ctx.callback.msiWriteRodsLog("ERROR: msiObjStat RuntimeError raised for {}".format(project_collection_path), 0)
         return False
 
     instance = read_data_object_from_irods(ctx, instance_path)
-    # TODO add try catch around json parsing
-    instance_object = json.loads(instance)
+    try:
+        instance_object = json.loads(instance)
+    except ValueError:
+        ctx.callback.msiWriteRodsLog("ERROR: JSONDecodeError raised for {}".format(project_collection_path), 0)
+        return False
 
     # AVU metadata
-    project_title = ctx.callback.getCollectionAVU(project_path, "title", "", "", FALSE_AS_STRING)["arguments"][2]
+    project_title = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.TITLE.value, "", "", FALSE_AS_STRING)[
+        "arguments"
+    ][2]
     instance_object["project_title"] = project_title
     instance_object["project_id"] = project_id
     instance_object["collection_id"] = collection_id
 
-    # TODO to the es.index & es.update in 1 call
-    # TODO get status code of update ?
-    # Instance json
     try:
         res = es.index(
             index=COLLECTION_METADATA_INDEX,
@@ -70,12 +68,13 @@ def index_project_collection(ctx, es, project_collection_path):
             document=instance_object,
         )
     except ElasticsearchException:
-        ctx.callback.writeLine("stdout", project_title)
+        ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised for {}".format(project_collection_path), 0)
         return False
 
-    if res['result'] == "created":
+    if "result" in res and res["result"] == "created":
         return True
 
+    ctx.callback.msiWriteRodsLog("ERROR: Collection metadata indexing failed for {}".format(project_collection_path), 0)
     return False
 
 

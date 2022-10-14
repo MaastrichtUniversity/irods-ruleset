@@ -6,7 +6,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
         The project id, ie P00000010
     title: str
@@ -36,7 +36,9 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
         ctx.remoteExec(
             ingest_resource_host,
             "",
-            "perform_irsync('{}', '{}', '{}')".format(token, destination_collection, destination_resource),
+            "perform_irsync('{}', '{}', '{}', '{}')".format(
+                token, destination_collection, destination_resource, username
+            ),
             "",
         )
     except RuntimeError:

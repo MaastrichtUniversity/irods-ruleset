@@ -12,11 +12,12 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     title: str
         The title of the dropzone / new collection
     username: str
-        The username of the person requesting the ingest
+        The username of the person requesting the ingestion
     token: str
         The token of the dropzone to be ingested
     """
     import time
+    from subprocess import CalledProcessError, check_call  # nosec
 
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
@@ -46,16 +47,28 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
         )
 
+    pc_instance_path = formatters.format_instance_collection_path(project_id, collection_id)
+    pc_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
+
+    try:
+        check_call(["ichmod", "own", username, pc_instance_path], shell=False)
+        ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_instance_path), 0)
+        check_call(["ichmod", "own", username, pc_schema_path], shell=False)
+        ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_schema_path), 0)
+    except CalledProcessError:
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, dropzone_path,
+            "Update metadata files ACL failed for '{}'".format(destination_collection)
+        )
+
     dropzone_instance_path = formatters.format_instance_dropzone_path(token, "mounted")
     dropzone_schema_path = formatters.format_schema_dropzone_path(token, "mounted")
-    PC_instance_path = formatters.format_instance_collection_path(project_id, collection_id)
-    PC_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
 
-    ctx.callback.msiDataObjUnlink('objPath=' + PC_instance_path + '++++forceFlag=', 0)
-    ctx.callback.msiDataObjUnlink('objPath=' + PC_schema_path + '++++forceFlag=', 0)
+    ctx.callback.msiDataObjUnlink('objPath=' + pc_instance_path + '++++forceFlag=', 0)
+    ctx.callback.msiDataObjUnlink('objPath=' + pc_schema_path + '++++forceFlag=', 0)
 
-    ctx.callback.msiDataObjCopy(dropzone_instance_path, PC_instance_path, "forceFlag=", 0)
-    ctx.callback.msiDataObjCopy(dropzone_schema_path, PC_schema_path, "forceFlag=", 0)
+    ctx.callback.msiDataObjCopy(dropzone_instance_path, pc_instance_path, "forceFlag=", 0)
+    ctx.callback.msiDataObjCopy(dropzone_schema_path, pc_schema_path, "forceFlag=", 0)
 
     after = time.time()
     difference = float(after - before) + 1

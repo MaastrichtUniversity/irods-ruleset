@@ -26,6 +26,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
     ingest_resource_host = pre_ingest_results["ingest_resource_host"]
+    destination_resource = pre_ingest_results["destination_resource"]
 
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
@@ -35,15 +36,24 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
         ctx.remoteExec(
             ingest_resource_host,
             "",
-            "msiput_dataobj_or_coll('/mnt/ingest/zones/{}', 'dummy_resource', 'numThreads=10++++forceFlag=', {}, '')".format(
-                token, destination_collection
-            ),
+            "perform_irsync('{}', '{}', '{}')".format(token, destination_collection, destination_resource),
             "",
         )
     except RuntimeError:
         ctx.callback.setErrorAVU(
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
         )
+
+    dropzone_instance_path = formatters.format_instance_dropzone_path(token, "mounted")
+    dropzone_schema_path = formatters.format_schema_dropzone_path(token, "mounted")
+    PC_instance_path = formatters.format_instance_collection_path(project_id, collection_id)
+    PC_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
+
+    ctx.callback.msiDataObjUnlink('objPath=' + PC_instance_path + '++++forceFlag=', 0)
+    ctx.callback.msiDataObjUnlink('objPath=' + PC_schema_path + '++++forceFlag=', 0)
+
+    ctx.callback.msiDataObjCopy(dropzone_instance_path, PC_instance_path, "forceFlag=", 0)
+    ctx.callback.msiDataObjCopy(dropzone_schema_path, PC_schema_path, "forceFlag=", 0)
 
     after = time.time()
     difference = float(after - before) + 1

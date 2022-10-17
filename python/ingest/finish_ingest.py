@@ -107,17 +107,17 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     # Close collection by making all access read only
     ctx.callback.closeProjectCollection(project_id, collection_id)
 
-    if dropzone_type == "mounted":
-        # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
-        # This is because of a bug in the unmount. This is kept in memory for
-        # the remaining of the irodsagent session.
-        # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
-        try:
-            ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
-        except RuntimeError:
-            ctx.callback.setErrorAVU(
-                dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
-            )
+    # if dropzone_type == "mounted":
+    #     # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
+    #     # This is because of a bug in the unmount. This is kept in memory for
+    #     # the remaining of the irodsagent session.
+    #     # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
+    #     try:
+    #         ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
+    #     except RuntimeError:
+    #         ctx.callback.setErrorAVU(
+    #             dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
+    #         )
 
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)

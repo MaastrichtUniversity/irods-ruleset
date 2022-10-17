@@ -28,6 +28,23 @@ def perform_irsync(ctx, token, destination_collection, destination_resource, dep
     source_collection = "/mnt/ingest/zones/{}".format(token)
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
+    placeholder_instance_path = "{}/instance.json".format(source_collection)
+    placeholder_schema_path = "{}/schema.json".format(source_collection)
+
+    try:
+        check_call(["rm", placeholder_instance_path], shell=False)
+        check_call(["rm", placeholder_schema_path], shell=False)
+    except CalledProcessError:
+        ctx.callback.setErrorAVU(
+            dropzone_path,
+            "state",
+            DropzoneState.ERROR_INGESTION.value,
+            "Error while deleting metadata files placeholder '{}' or '{}'".format(
+                placeholder_instance_path,
+                placeholder_schema_path
+            )
+        )
+
     # Query dropzone state AVU and to call the rule finish_ingest if the state is 'error_ingestion' (= ingest restart)
     ingest_restart = False
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]

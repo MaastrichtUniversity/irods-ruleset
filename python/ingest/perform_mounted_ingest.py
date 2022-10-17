@@ -49,24 +49,24 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
 
     pc_instance_path = formatters.format_instance_collection_path(project_id, collection_id)
     pc_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
-
-    try:
-        check_call(["ichmod", "own", username, pc_instance_path], shell=False)
-        ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_instance_path), 0)
-        check_call(["ichmod", "own", username, pc_schema_path], shell=False)
-        ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_schema_path), 0)
-    except CalledProcessError:
-        ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path,
-            "Update metadata files ACL failed for '{}'".format(destination_collection)
-        )
-
+    #
+    # try:
+    #     check_call(["ichmod", "own", username, pc_instance_path], shell=False)
+    #     ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_instance_path), 0)
+    #     check_call(["ichmod", "own", username, pc_schema_path], shell=False)
+    #     ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_schema_path), 0)
+    # except CalledProcessError:
+    #     ctx.callback.set_post_ingestion_error_avu(
+    #         project_id, collection_id, dropzone_path,
+    #         "Update metadata files ACL failed for '{}'".format(destination_collection)
+    #     )
+    #
     dropzone_instance_path = formatters.format_instance_dropzone_path(token, "mounted")
     dropzone_schema_path = formatters.format_schema_dropzone_path(token, "mounted")
-
-    ctx.callback.msiDataObjUnlink('objPath=' + pc_instance_path + '++++forceFlag=', 0)
-    ctx.callback.msiDataObjUnlink('objPath=' + pc_schema_path + '++++forceFlag=', 0)
-
+    #
+    # ctx.callback.msiDataObjUnlink('objPath=' + pc_instance_path + '++++forceFlag=', 0)
+    # ctx.callback.msiDataObjUnlink('objPath=' + pc_schema_path + '++++forceFlag=', 0)
+    #
     ctx.callback.msiDataObjCopy(dropzone_instance_path, pc_instance_path, "forceFlag=", 0)
     ctx.callback.msiDataObjCopy(dropzone_schema_path, pc_schema_path, "forceFlag=", 0)
 

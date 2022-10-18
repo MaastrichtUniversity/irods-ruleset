@@ -1,8 +1,11 @@
-# /rules/tests/run_test.sh -r perform_irsync -a "handsome-snake,/nlmumc/projects/P000000019/C000000001,replRescUM01,dlinssen" -u "dlinssen"
-@make(inputs=range(4), outputs=[], handler=Output.STORE)
-def perform_irsync(ctx, token, destination_collection, destination_resource, depositor):
+# /rules/tests/run_test.sh -r perform_irsync -a "handsome-snake,/nlmumc/projects/P000000019/C000000001,dlinssen" -u "dlinssen"
+@make(inputs=range(3), outputs=[], handler=Output.STORE)
+def perform_irsync(ctx, token, destination_collection, depositor):
     """
     This rule is part the mounted ingest workflow.
+    It takes care of coping (syncing) the content of the physical drop-zone path into the destination collection.
+    When the coping is done, it also calls replace_metadata_placeholder_files to update the project collection
+    with the correct metadata files.
 
     In case of failed ingest and an admin want to restart the rule:
         * It MUST be done on the ingestion resource server (iRES-UM or iRES-AZM), NOT iCAT.
@@ -17,33 +20,27 @@ def perform_irsync(ctx, token, destination_collection, destination_resource, dep
         The dropzone token, to locate the source collection; e.g: 'handsome-snake'
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
-    destination_resource: str
-        The resource where the data objects will be replicated; e.g: 'replRescUM01'
     depositor: str
         The user who started the ingestion
     """
+    # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
+    # subprocess is only use for subprocess.check_call to execute irsync.
+    # The irsync checkcall has 3 variable inputs:
+    # * destination_resource, queried directly from iCAT with getCollectionAVU ProjectAVUs.RESOURCE
+    # * source_collection, token is validated with format_dropzone_path & check the ACL with getCollectionAVU state
+    # * destination_collection, validated with the formatter functions get_*_from_project_collection_path
     from subprocess import CalledProcessError, check_call  # nosec
     import time
 
     source_collection = "/mnt/ingest/zones/{}".format(token)
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
-    placeholder_instance_path = "{}/instance.json".format(source_collection)
-    placeholder_schema_path = "{}/schema.json".format(source_collection)
+    project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
+    collection_id = formatters.get_collection_id_from_project_collection_path(destination_collection)
 
-    try:
-        check_call(["rm", placeholder_instance_path], shell=False)
-        check_call(["rm", placeholder_schema_path], shell=False)
-    except CalledProcessError:
-        ctx.callback.setErrorAVU(
-            dropzone_path,
-            "state",
-            DropzoneState.ERROR_INGESTION.value,
-            "Error while deleting metadata files placeholder '{}' or '{}'".format(
-                placeholder_instance_path,
-                placeholder_schema_path
-            )
-        )
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
     # Query dropzone state AVU and to call the rule finish_ingest if the state is 'error_ingestion' (= ingest restart)
     ingest_restart = False
@@ -90,10 +87,9 @@ def perform_irsync(ctx, token, destination_collection, destination_resource, dep
             )
         )
 
-    if ingest_restart:
-        project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
-        collection_id = formatters.get_collection_id_from_project_collection_path(destination_collection)
+    ctx.callback.replace_metadata_placeholder_files(token, project_id, collection_id, depositor)
 
+    if ingest_restart:
         ingest_resource = ctx.callback.getCollectionAVU(
             format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]

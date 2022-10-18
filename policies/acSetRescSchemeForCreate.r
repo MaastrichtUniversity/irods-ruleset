@@ -57,7 +57,7 @@ acSetRescSchemeForCreate {
             cut;
             msiOprDisallowed;
         } else {
-            # The resource of anything created in /nlmumc/ingest/direct should always be stagingResc01
+            # The resource of anything created in /nlmumc/ingest/zones should always be stagingResc01
             msiSetDefaultResc("stagingResc01", "forced");
         }
     }

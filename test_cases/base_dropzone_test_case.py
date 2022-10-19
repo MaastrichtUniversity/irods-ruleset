@@ -1,8 +1,13 @@
 import json
 import subprocess
 
-from test_cases.utils import remove_project, revert_latest_project_number, remove_dropzone, create_project, \
-    create_dropzone
+from test_cases.utils import (
+    remove_project,
+    revert_latest_project_number,
+    remove_dropzone,
+    create_project,
+    create_dropzone,
+)
 
 
 class BaseTestCaseDropZones:
@@ -34,8 +39,8 @@ class BaseTestCaseDropZones:
         print()
         print("Start {}.setup_class".format(cls.__name__))
         project = create_project(cls)
-        cls.project_path = project['project_path']
-        cls.project_id = project['project_id']
+        cls.project_path = project["project_path"]
+        cls.project_id = project["project_id"]
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
         print("End {}.setup_class".format(cls.__name__))
@@ -51,25 +56,24 @@ class BaseTestCaseDropZones:
 
     def test_dropzone_avu(self):
         rule = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
-            self.token,
-            self.dropzone_type
+            self.token, self.dropzone_type
         )
         ret = subprocess.check_output(rule, shell=True)
 
         drop_zone = json.loads(ret)
-        assert drop_zone['creator'] == self.depositor
-        assert drop_zone['date'].isnumeric()
-        assert drop_zone['enableDropzoneSharing'] == "true"
-        assert drop_zone['project'] == self.project_id
-        assert drop_zone['projectTitle'] == self.project_title
-        assert drop_zone['resourceStatus'] == ""
-        assert drop_zone['schemaName'] == self.schema_name
-        assert drop_zone['schemaVersion'] == self.schema_version
-        assert drop_zone['sharedWithMe'] == "true"
-        assert drop_zone['state'] == "open"
-        assert drop_zone['title'] == self.collection_title
-        assert drop_zone['token'] == self.token
-        assert drop_zone['type'] == self.dropzone_type
+        assert drop_zone["creator"] == self.depositor
+        assert drop_zone["date"].isnumeric()
+        assert drop_zone["enableDropzoneSharing"] == "true"
+        assert drop_zone["project"] == self.project_id
+        assert drop_zone["projectTitle"] == self.project_title
+        assert drop_zone["resourceStatus"] == ""
+        assert drop_zone["schemaName"] == self.schema_name
+        assert drop_zone["schemaVersion"] == self.schema_version
+        assert drop_zone["sharedWithMe"] == "true"
+        assert drop_zone["state"] == "open"
+        assert drop_zone["title"] == self.collection_title
+        assert drop_zone["token"] == self.token
+        assert drop_zone["type"] == self.dropzone_type
 
     def test_set_dropzone_total_size_avu(self):
         rule_set_size = '/rules/tests/run_test.sh -r set_dropzone_total_size_avu -a "{},{}"'.format(
@@ -83,4 +87,4 @@ class BaseTestCaseDropZones:
         ret = subprocess.check_output(rule, shell=True)
 
         drop_zone = json.loads(ret)
-        assert int(drop_zone['totalSize']) == 203618
+        assert int(drop_zone["totalSize"]) == 203618

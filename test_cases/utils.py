@@ -35,11 +35,11 @@ def get_schema():
 
 def add_metadata_files_to_mounted_dropzone(token):
     get_instance()
-    copy_instance = 'cp {} /mnt/ingest/zones/{}/instance.json'.format(TMP_INSTANCE_PATH, token)
+    copy_instance = "cp {} /mnt/ingest/zones/{}/instance.json".format(TMP_INSTANCE_PATH, token)
     subprocess.check_call(copy_instance, shell=True)
 
     get_schema()
-    copy_schema = 'cp {} /mnt/ingest/zones/{}/schema.json'.format(TMP_SCHEMA_PATH, token)
+    copy_schema = "cp {} /mnt/ingest/zones/{}/schema.json".format(TMP_SCHEMA_PATH, token)
     subprocess.check_call(copy_schema, shell=True)
 
 
@@ -56,50 +56,52 @@ def add_metadata_files_to_direct_dropzone(token):
 
 
 def revert_latest_project_number():
-    run_iquest = 'iquest "%s" "SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = \'/nlmumc/projects\' and META_COLL_ATTR_NAME = \'latest_project_number\' "'
+    run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
     latest_project_number = subprocess.check_output(run_iquest, shell=True).strip()
     assert latest_project_number.isdigit()
     revert_value = int(latest_project_number) - 1
 
-    run_set_meta = 'imeta set -C /nlmumc/projects latest_project_number {}'.format(revert_value)
+    run_set_meta = "imeta set -C /nlmumc/projects latest_project_number {}".format(revert_value)
     subprocess.check_call(run_set_meta, shell=True)
 
 
 def remove_project(project_path):
-    set_acl = 'ichmod -rM own rods {}'.format(project_path)
+    set_acl = "ichmod -rM own rods {}".format(project_path)
     subprocess.check_call(set_acl, shell=True)
-    run_remove_project = 'irm -rf {}'.format(project_path)
+    run_remove_project = "irm -rf {}".format(project_path)
     subprocess.check_call(run_remove_project, shell=True)
 
 
 def remove_dropzone(token, dropzone_type):
     dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
-    set_dropzone_acl = 'ichmod -rM own rods {}'.format(dropzone_path)
+    set_dropzone_acl = "ichmod -rM own rods {}".format(dropzone_path)
     subprocess.check_call(set_dropzone_acl, shell=True)
-    run_remove_dropzone = 'irm -rf {}'.format(dropzone_path)
+    run_remove_dropzone = "irm -rf {}".format(dropzone_path)
     subprocess.check_call(run_remove_dropzone, shell=True)
 
 
 def create_project(test_case):
-    rule_create_new_project = '/rules/tests/run_test.sh -r create_new_project -a "{},{},{},{},{},{},{{\'enableDropzoneSharing\':\'true\'}}"'.format(
+    rule_create_new_project = "/rules/tests/run_test.sh -r create_new_project -a \"{},{},{},{},{},{},{{'enableDropzoneSharing':'true'}}\"".format(
         test_case.ingest_resource,
         test_case.destination_resource,
         test_case.project_title,
         test_case.manager1,
         test_case.manager2,
-        test_case.budget_number
+        test_case.budget_number,
     )
     ret_create_new_project = subprocess.check_output(rule_create_new_project, shell=True)
 
     project = json.loads(ret_create_new_project)
-    assert validators.validate_project_id(str(project['project_id']))
-    assert validators.validate_project_path(project['project_path'])
+    assert validators.validate_project_id(str(project["project_id"]))
+    assert validators.validate_project_path(project["project_path"])
 
-    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(test_case.manager1,
-                                                                                       project['project_path'])
+    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(
+        test_case.manager1, project["project_path"]
+    )
     subprocess.check_call(rule_set_acl, shell=True)
-    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(test_case.manager2,
-                                                                                       project['project_path'])
+    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(
+        test_case.manager2, project["project_path"]
+    )
     subprocess.check_call(rule_set_acl, shell=True)
 
     return project
@@ -112,7 +114,7 @@ def create_dropzone(test_case):
         test_case.project_id,
         test_case.collection_title,
         test_case.schema_name,
-        test_case.schema_version
+        test_case.schema_version,
     )
     ret_create_drop_zone = subprocess.check_output(rule_create_drop_zone, shell=True)
     token = json.loads(ret_create_drop_zone)
@@ -122,28 +124,24 @@ def create_dropzone(test_case):
 
 def start_and_wait_for_ingest(test_case):
     rule_start_ingest = '/rules/tests/run_test.sh -r start_ingest -a "{},{},{}" -u "{}"'.format(
-        test_case.depositor,
-        test_case.token,
-        test_case.dropzone_type,
-        test_case.depositor
+        test_case.depositor, test_case.token, test_case.dropzone_type, test_case.depositor
     )
     subprocess.check_call(rule_start_ingest, shell=True)
 
     rule_get_active_drop_zone = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
-        test_case.token,
-        test_case.dropzone_type
+        test_case.token, test_case.dropzone_type
     )
     ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
 
     drop_zone = json.loads(ret_get_active_drop_zone)
-    assert drop_zone['token'] == test_case.token
+    assert drop_zone["token"] == test_case.token
 
     fail_safe = 10
     while fail_safe != 0:
         ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
 
         drop_zone = json.loads(ret_get_active_drop_zone)
-        if drop_zone['state'] == "ingested":
+        if drop_zone["state"] == "ingested":
             fail_safe = 0
         else:
             fail_safe = fail_safe - 1

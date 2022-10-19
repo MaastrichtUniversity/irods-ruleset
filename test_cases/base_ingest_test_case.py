@@ -1,14 +1,20 @@
 import json
 import subprocess
 
-from test_cases.utils import revert_latest_project_number, remove_project, create_dropzone, create_project, \
-    start_and_wait_for_ingest
+from test_cases.utils import (
+    revert_latest_project_number,
+    remove_project,
+    create_dropzone,
+    create_project,
+    start_and_wait_for_ingest,
+)
 
 
 # TODO Test set_post_ingestion_error_avu
 # TODO Test for item added to delayed queue (iqstat)
 # TODO Test for trigger pre ingest error validation with corrupt metadata
 # TODO Test for trigger post ingest with missing dropzone creator email
+
 
 class BaseTestCaseIngest:
     project_path = ""
@@ -41,8 +47,8 @@ class BaseTestCaseIngest:
         print()
         print("Start {}.setup_class".format(cls.__name__))
         project = create_project(cls)
-        cls.project_path = project['project_path']
-        cls.project_id = project['project_id']
+        cls.project_path = project["project_path"]
+        cls.project_id = project["project_id"]
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
         start_and_wait_for_ingest(cls)
@@ -60,25 +66,24 @@ class BaseTestCaseIngest:
         rule_list_collections = '/rules/tests/run_test.sh -r list_collections -a "{}"'.format(self.project_path)
         ret_list_collections = subprocess.check_output(rule_list_collections, shell=True)
         list_collections = json.loads(ret_list_collections)
-        assert list_collections[0]['id'] == self.collection_id
+        assert list_collections[0]["id"] == self.collection_id
 
         rule_collection_detail = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
-            self.project_id,
-            self.collection_id
+            self.project_id, self.collection_id
         )
         ret_collection_detail = subprocess.check_output(rule_collection_detail, shell=True)
         collection_detail = json.loads(ret_collection_detail)
-        assert collection_detail['creator'] == self.collection_creator
-        assert collection_detail['collection'] == self.collection_id
-        assert collection_detail['title'] == self.collection_title
-        assert int(collection_detail['numFiles']) == 4
-        assert int(collection_detail['byteSize']) == 550514
-        assert self.manager1 in collection_detail['managers']["users"]
-        assert self.manager2 in collection_detail['managers']["users"]
+        assert collection_detail["creator"] == self.collection_creator
+        assert collection_detail["collection"] == self.collection_id
+        assert collection_detail["title"] == self.collection_title
+        assert int(collection_detail["numFiles"]) == 4
+        assert int(collection_detail["byteSize"]) == 550514
+        assert self.manager1 in collection_detail["managers"]["users"]
+        assert self.manager2 in collection_detail["managers"]["users"]
 
     def test_collection_instance(self):
         tmp_instance_path = "/tmp/tmp_instance.json"
-        iget = 'iget -f {}/{}/instance.json {}'.format(self.project_path, self.collection_id, tmp_instance_path)
+        iget = "iget -f {}/{}/instance.json {}".format(self.project_path, self.collection_id, tmp_instance_path)
         subprocess.check_call(iget, shell=True)
         with open(tmp_instance_path) as tmp_instance_file:
             tmp_instance = json.load(tmp_instance_file)
@@ -88,7 +93,7 @@ class BaseTestCaseIngest:
 
     def test_collection_schema(self):
         tmp_schema_path = "/tmp/tmp_schema.json"
-        iget = 'iget -f {}/{}/schema.json {}'.format(self.project_path, self.collection_id, tmp_schema_path)
+        iget = "iget -f {}/{}/schema.json {}".format(self.project_path, self.collection_id, tmp_schema_path)
         subprocess.check_call(iget, shell=True)
         with open(tmp_schema_path) as tmp_schema_file:
             tmp_instance = json.load(tmp_schema_file)
@@ -100,14 +105,14 @@ class BaseTestCaseIngest:
         """
         Check the project collection acl; assume that all members only have read access.
         """
-        acl = 'ils -A {}/{}'.format(self.project_path, self.collection_id)
+        acl = "ils -A {}/{}".format(self.project_path, self.collection_id)
         ret = subprocess.check_output(acl, shell=True)
         assert "own" not in ret
         assert "{}#nlmumc:read object".format(self.manager1) in ret
         assert "{}#nlmumc:read object".format(self.manager2) in ret
 
     def test_project_acl(self):
-        acl = 'ils -A {}'.format(self.project_path, self.collection_id)
+        acl = "ils -A {}".format(self.project_path, self.collection_id)
         ret = subprocess.check_output(acl, shell=True)
         assert "rods#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager1) in ret
@@ -115,19 +120,19 @@ class BaseTestCaseIngest:
 
     def test_collection_pid(self):
         import requests
+
         # TODO How relevant is this test?
         rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
-            self.project_id,
-            self.collection_id
+            self.project_id, self.collection_id
         )
         ret = subprocess.check_output(rule, shell=True)
         collection_detail = json.loads(ret)
-        print (json.dumps(collection_detail, indent=4, sort_keys=True))
-        print (collection_detail['PID'])
-        url = "https://hdl.handle.net/{}".format(collection_detail['PID'])
-        print (url)
+        print(json.dumps(collection_detail, indent=4, sort_keys=True))
+        print(collection_detail["PID"])
+        url = "https://hdl.handle.net/{}".format(collection_detail["PID"])
+        print(url)
         url = "https://hdl.handle.net/21.T12996/P000000099C000000001"
-        print (url)
+        print(url)
         response = requests.get(url, allow_redirects=False)
         assert response.status_code == 302
 
@@ -136,8 +141,7 @@ class BaseTestCaseIngest:
         Check the data object that are in the project collection use the correct project destination resource.
         """
         query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
-            self.project_path,
-            self.collection_id
+            self.project_path, self.collection_id
         )
         ret = subprocess.check_output(query, shell=True)
         resources = ret.splitlines()
@@ -150,8 +154,7 @@ class BaseTestCaseIngest:
         Check that data objects (instance.json & schema.json) at the root of project collection are correctly replicated
         """
         query = 'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
-            self.project_path,
-            self.collection_id
+            self.project_path, self.collection_id
         )
         ret = subprocess.check_output(query, shell=True)
         assert int(ret) == 4

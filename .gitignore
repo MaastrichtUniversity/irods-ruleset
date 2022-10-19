@@ -3,3 +3,6 @@
 *.re
 test.r
 venv/
+test_cases/.pytest_cache
+test_cases/*.pyc
+test_cases/__pycache__

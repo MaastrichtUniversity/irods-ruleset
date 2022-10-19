@@ -6,6 +6,10 @@ from test_cases.utils import revert_latest_project_number, remove_project, creat
 
 
 # TODO Test set_post_ingestion_error_avu
+# TODO Test for item added to delayed queue (iqstat)
+# TODO Test for trigger pre ingest error validation with corrupt metadata
+# TODO Test for trigger post ingest with missing dropzone creator email
+
 class BaseTestCaseIngest:
     project_path = ""
     project_id = ""

@@ -61,7 +61,7 @@ def perform_irsync(ctx, token, destination_collection, depositor):
     return_code = check_call([remove_script_path, vo_person_external_id,  source_collection], shell=False)
     # ctx.callback.msiWriteRodsLog("return_code remove_script_path {}".format(return_code), 0)
 
-    RETRY_MAX_NUMBER = 5
+    RETRY_MAX_NUMBER = 1
     RETRY_SLEEP_NUMBER = 20
 
     retry_counter = RETRY_MAX_NUMBER
@@ -88,6 +88,12 @@ def perform_irsync(ctx, token, destination_collection, depositor):
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(source_collection), 0)
 
     if return_code != 0:
+        add_script_path = "/var/lib/irods/msiExecCmd_bin/add-ingest-zone-access.sh"
+        # ctx.callback.msiWriteRodsLog("creator add_script_path {}".format(creator), 0)
+        # ctx.callback.msiWriteRodsLog("vo_person_external_id add_script_path {}".format(vo_person_external_id), 0)
+        return_code = check_call([add_script_path, vo_person_external_id, source_collection], shell=False)
+        # ctx.callback.msiWriteRodsLog("return_code add_script_path {}".format(return_code), 0)
+
         ctx.callback.setErrorAVU(
             dropzone_path,
             "state",

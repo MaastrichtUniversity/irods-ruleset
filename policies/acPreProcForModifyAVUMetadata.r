@@ -12,18 +12,18 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit)
         getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
         # Get if the user is a part of the DH-project-admins group
         *isAdmin = ""
-        get_user_admin_status($userNameClient, *isAdmin);
+#         get_user_admin_status($userNameClient, *isAdmin);
         if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods" || *isAdmin == "true") {
             # Do nothing and resume normal operation
             *eventMessage = "*ItemName: User $userNameClient sets '*AName' to '*AValue'"
             *auditTrailMessage = ""
-            format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
+#             format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
             msiWriteRodsLog("INFO: *auditTrailMessage", *status);
         }else{
             # Disallow setting the AVU
             *eventMessage = "*ItemName: User $userNameClient is not allowed to set '*AName'"
             *auditTrailMessage = ""
-            format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
+#             format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
             msiWriteRodsLog("ERROR: *auditTrailMessage", *status);
             cut;
             msiOprDisallowed;
@@ -46,19 +46,19 @@ acPreProcForModifyAVUMetadata(*Option,*ItemType,*ItemName,*AName,*AValue,*AUnit,
         getCollectionAVU(*ItemName,"dataSteward",*dataSteward,"","true");
         # Get if the user is a part of the DH-project-admins group
         *isAdmin = ""
-        get_user_admin_status($userNameClient, *isAdmin);
+#         get_user_admin_status($userNameClient, *isAdmin);
 
         if( $userNameClient == *pi || $userNameClient == *dataSteward || $userNameClient == "rods" || *isAdmin == "true") {
             # Do nothing and resume normal operation
             *eventMessage = "*ItemName: User $userNameClient modifies '*AName' to '*AValue'"
             *auditTrailMessage = ""
-            format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
+#             format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
             msiWriteRodsLog("INFO: *auditTrailMessage", *status);
         }else{
             # Disallow setting the AVU
             *eventMessage = "*ItemName: User $userNameClient is not allowed to modify '*NAValue'"
             *auditTrailMessage = ""
-            format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
+#             format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
             msiWriteRodsLog("ERROR: *auditTrailMessage", *status);
             cut;
             msiOprDisallowed;

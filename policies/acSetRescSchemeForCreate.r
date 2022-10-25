@@ -49,7 +49,7 @@ acSetRescSchemeForCreate {
         }
     }
 
-    ### Policy to prevent file creation directly in direct ingest folder ###
+    ### Policy to prevent file creation directly in mounted ingest folder ###
     if($objPath like regex "/nlmumc/ingest/zones/.*") {
         uuChopPath($objPath, *path, *c);
         if (*path == "/nlmumc/ingest/zones"){

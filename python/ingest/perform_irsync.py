@@ -50,16 +50,8 @@ def perform_irsync(ctx, token, destination_collection, depositor):
         ctx.callback.msiWriteRodsLog("Restarting ingestion {}".format(dropzone_path), 0)
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
-    remove_script_path = "/var/lib/irods/msiExecCmd_bin/remove-ingest-zone-access.sh"
-    creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
-    # ctx.callback.msiWriteRodsLog("creator ingestion {}".format(creator), 0)
-    ret = ctx.callback.get_user_attribute_value(creator, "voPersonExternalID", TRUE_AS_STRING, "")[
-        "arguments"
-    ][3]
-    vo_person_external_id = json.loads(ret)["value"]
-    # ctx.callback.msiWriteRodsLog("vo_person_external_id ingestion {}".format(vo_person_external_id), 0)
-    return_code = check_call([remove_script_path, vo_person_external_id,  source_collection], shell=False)
-    # ctx.callback.msiWriteRodsLog("return_code remove_script_path {}".format(return_code), 0)
+    # Revoke the user CIFS ACL on the mounted network dropzone folder
+    ctx.callback.set_dropzone_cifs_acl(token, "null")
 
     RETRY_MAX_NUMBER = 1
     RETRY_SLEEP_NUMBER = 20
@@ -88,11 +80,8 @@ def perform_irsync(ctx, token, destination_collection, depositor):
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(source_collection), 0)
 
     if return_code != 0:
-        add_script_path = "/var/lib/irods/msiExecCmd_bin/add-ingest-zone-access.sh"
-        # ctx.callback.msiWriteRodsLog("creator add_script_path {}".format(creator), 0)
-        # ctx.callback.msiWriteRodsLog("vo_person_external_id add_script_path {}".format(vo_person_external_id), 0)
-        return_code = check_call([add_script_path, vo_person_external_id, source_collection], shell=False)
-        # ctx.callback.msiWriteRodsLog("return_code add_script_path {}".format(return_code), 0)
+        # Re-set the user CIFS ACL on the mounted network dropzone folder
+        ctx.callback.set_dropzone_cifs_acl(ctx, token, "write")
 
         ctx.callback.setErrorAVU(
             dropzone_path,

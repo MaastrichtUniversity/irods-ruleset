@@ -6,7 +6,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id: str
         The project id, ie P00000010
     title: str
@@ -26,6 +26,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
     ingest_resource_host = pre_ingest_results["ingest_resource_host"]
+    destination_resource = pre_ingest_results["destination_resource"]
 
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
@@ -35,8 +36,8 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
         ctx.remoteExec(
             ingest_resource_host,
             "",
-            "msiput_dataobj_or_coll('/mnt/ingest/zones/{}', 'dummy_resource', 'numThreads=10++++forceFlag=', {}, '')".format(
-                token, destination_collection
+            "perform_irsync('{}', '{}', '{}', '{}')".format(
+                token, destination_collection, destination_resource, username
             ),
             "",
         )

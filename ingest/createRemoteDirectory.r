@@ -17,9 +17,5 @@ createRemoteDirectory(*project, *token, *voPersonExternalID) {
     remote(*ingestResourceHost,"") {
         *phyDir = "/mnt/ingest/zones/" ++ *token;
         msiExecCmd("enable-ingest-zone.sh", *voPersonExternalID ++ " " ++ *phyDir, "null", "null", "null", *status);
-
-        # Get the value for ingestResource again, in order to prevent SYS_HEADER_READ_LEN errors with msiPyPathReg
-        getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
-        msiPhyPathReg(*dropzonePath, *ingestResource, *phyDir, "mountPoint", *status);
     }
 }

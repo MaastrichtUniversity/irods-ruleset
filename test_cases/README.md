@@ -1,6 +1,6 @@
 # Prerequisites for the full test suite
 ```
-iCAT, iRES, iRES-centos, iRES-s3-1 and iRES-S3-2 containers need to up
+iCAT, iRES, iRES-centos, iRES-s3-1 and iRES-S3-2 containers need to be up
 
 SRAM-Sync needs to have run 
 
@@ -12,7 +12,7 @@ Make sure the irods user has write access to the test_cases folder
 chmod 755 /rules/test_cases
 ```
 
-# How to run all the test case
+# How to run all the test cases
 ```
 ./rit.sh exec ires
 su irods

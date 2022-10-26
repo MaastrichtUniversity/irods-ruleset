@@ -69,7 +69,7 @@ acSetRescSchemeForCreate {
         uuChop(*tail, *token, *rest, "/", true);
         getCollectionAVU("/nlmumc/ingest/direct/*token","state",*state,"","false");
         *in_active_ingest = ""
-#         is_dropzone_state_in_active_ingestion(*state, *in_active_ingest)
+        is_dropzone_state_in_active_ingestion(*state, *in_active_ingest)
         if(*in_active_ingest == "true") {
             msiWriteRodsLog("DEBUG: Object '$objPath' was not allowed to be created during dropzone state '*state' by '$userNameClient'", *status);
             cut;

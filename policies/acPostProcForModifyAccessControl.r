@@ -5,8 +5,8 @@ acPostProcForModifyAccessControl(*RecursiveFlag,*AccessLevel,*UserName,*Zone,*Pa
         uuChop(*Path, *head, *projectId, "/nlmumc/projects/", true);
         *eventMessage = "*Path: User $userNameClient sets '*UserName' to '*AccessLevel'"
         *auditTrailMessage = ""
-#         format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
+        format_audit_trail_message($userNameClient, *eventMessage, *auditTrailMessage);
         msiWriteRodsLog("INFO: *auditTrailMessage", *status);
-#         set_single_user_project_acl_to_dropzones(*projectId, *UserName)
+        set_single_user_project_acl_to_dropzones(*projectId, *UserName)
     }
 }

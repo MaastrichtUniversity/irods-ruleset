@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r create_drop_zone -a "direct,jmelius,P000000014,DZ,DataHub_general_schema,1.0.0" -u jmelius
+
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[6], handler=Output.STORE)
 def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_name, schema_version):
     """

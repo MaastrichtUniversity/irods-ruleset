@@ -11,12 +11,3 @@ class TestMountedDropZonesUM(BaseTestCaseDropZones):
     def add_metadata_files_to_dropzone(cls, token):
         add_metadata_files_to_mounted_dropzone(token)
 
-
-class TestMountedDropZonesAZM(BaseTestCaseDropZones):
-    dropzone_type = "mounted"
-
-    ingest_resource = "ires-centosResource"
-
-    @classmethod
-    def add_metadata_files_to_dropzone(cls, token):
-        add_metadata_files_to_mounted_dropzone(token)

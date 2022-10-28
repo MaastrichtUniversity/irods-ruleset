@@ -144,7 +144,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
             *value = "start-transfer";
             setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
             msiWriteRodsLog("DEBUG: Start replication back to UM for: *unArchivingList", 0);
-            delay("<PLUSET>1s</PLUSET>") {
+            delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
                 tapeUnArchive(*count, *archColl);
             }
         }

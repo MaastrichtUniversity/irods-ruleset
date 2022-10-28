@@ -116,7 +116,7 @@ IRULE_prepareTapeArchive(*archColl) {
     setCollectionAVU(*archColl, "archiveState", *value)
 
     # Delay before replication
-    delay("<PLUSET>1s</PLUSET>") {
+    delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
         tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescParentsName);
     }
 }

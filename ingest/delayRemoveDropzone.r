@@ -5,7 +5,7 @@
 delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
      msi_getenv("IRODS_INGEST_REMOVE_DELAY", *irodsIngestRemoveDelay)
 
-     delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET>") {
+     delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
 
         if ( *error < 0 ) {

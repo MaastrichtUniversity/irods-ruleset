@@ -35,7 +35,7 @@ def set_acl_for_metadata_snapshot(ctx, project_id, collection_id, username, open
             project_id, collection_id, "rods"
         )
         ctx.delayExec(
-            "<PLUSET>1s</PLUSET>",
+            "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
             "{};{};{};".format(
                 set_collection_size_call,
                 close_project_collection_snapshot_user_call,

@@ -77,6 +77,7 @@ def index_project_collection(ctx, es, project_collection_path):
     instance_object["collection_id"] = collection_id
     instance_object["user_access"] = project_access_info["users"]
     instance_object["group_display_names"] = project_access_info["group_display_names"]
+    instance_object["user_display_names"] = project_access_info["user_display_names"]
 
     try:
         res = es.index(

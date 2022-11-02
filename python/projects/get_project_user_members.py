@@ -14,8 +14,10 @@ def get_project_user_members(ctx, project_id):
 
     Returns
     -------
-    list
-        a list usernames
+    dict
+        * users: list
+        * user_display_names: list
+        * group_display_names: list
     """
     show_service_accounts = "false"
     users = set()
@@ -27,14 +29,18 @@ def get_project_user_members(ctx, project_id):
     groups = project["groups"]
 
     group_display_names = [group_object["displayName"] for group_object in project["groupObjects"]]
+    user_display_names = [user_object["displayName"] for user_object in project["userObjects"]]
+    user_display_names = set(user_display_names)
 
     # Go over all groups and list their members
     for group_name in groups:
-        group_members = json.loads(ctx.callback.get_group_members(group_name, "")["arguments"][1])
-        users.update(group_members)
+        group_members_info = json.loads(ctx.callback.get_group_members(group_name, "")["arguments"][1])
+        users.update(group_members_info["users"])
+        user_display_names.update(group_members_info["user_display_names"])
 
     output = {
         "users": list(users),
+        "user_display_names": list(user_display_names),
         "group_display_names": group_display_names,
     }
     return output

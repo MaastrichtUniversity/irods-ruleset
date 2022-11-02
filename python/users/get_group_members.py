@@ -2,7 +2,7 @@
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_group_members(ctx, group_name):
     """
-    Query all members of a group by its name.
+    Query all members of a group by the input group name.
 
     Parameters
     ----------
@@ -13,14 +13,25 @@ def get_group_members(ctx, group_name):
 
     Returns
     -------
-    list
-        a list of usernames
+    dict
+        * users: list
+        * user_display_names: list
     """
     users = []
-    for result in row_iterator(
-        "USER_NAME", "USER_GROUP_NAME = '{}' AND USER_TYPE = 'rodsuser'".format(group_name), AS_LIST, ctx.callback
-    ):
+    user_display_names = []
+
+    query_parameters = "USER_NAME, META_USER_ATTR_VALUE"
+    query_conditions = "USER_GROUP_NAME = '{}' " \
+                       "AND USER_TYPE = 'rodsuser' " \
+                       "AND META_USER_ATTR_NAME = 'displayName'".format(group_name)
+
+    for result in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
         if group_name != result[0]:
             users.append(result[0])
+            user_display_names.append(result[1])
 
-    return users
+    output = {
+        "users": users,
+        "user_display_names": user_display_names,
+    }
+    return output

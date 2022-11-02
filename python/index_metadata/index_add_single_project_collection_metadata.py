@@ -6,7 +6,7 @@ def index_add_single_project_collection_metadata(ctx, project_id, collection_id)
     Use this rule to index a single project collection metadata (instance.json & AVUs) into the
     $COLLECTION_METADATA_INDEX. project collection should not be indexed already
        - connect to the $ELASTIC_HOST
-       - create a new index document
+       - create a new document in the index
 
     Parameters
     ----------

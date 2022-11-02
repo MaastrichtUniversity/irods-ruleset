@@ -73,6 +73,7 @@ def index_project_collection(ctx, es, project_collection_path):
     instance_object["project_title"] = project_title
     instance_object["project_id"] = project_id
     instance_object["collection_id"] = collection_id
+    instance_object["user_access"] = json.loads(ctx.callback.get_project_user_members(project_id, "")["arguments"][1])
 
     try:
         res = es.index(

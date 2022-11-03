@@ -10,7 +10,6 @@ def index_add_single_project_collection_metadata(ctx, project_id, collection_id)
 
     Parameters
     ----------
-
     ctx : Context
        Combined type of callback and rei struct.
     project_id: str
@@ -21,10 +20,14 @@ def index_add_single_project_collection_metadata(ctx, project_id, collection_id)
     Returns
     -------
     bool
-        if the indexing was successful
-
+        True, if the indexing was successful. Otherwise, false
     """
-
     es = get_elastic_search_connection(ctx)
     project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
-    return index_project_collection(ctx, es, project_collection_path)
+
+    index_success = index_project_collection(ctx, es, project_collection_path)
+    if not index_success:
+        error_message = "ERROR: Elasticsearch update index failed for {}".format(project_collection_path)
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+
+    return index_success

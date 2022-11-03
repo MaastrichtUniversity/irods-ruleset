@@ -17,27 +17,29 @@ def index_update_single_project_collection_metadata(ctx, project_id, collection_
         The project ID ie P000000001
     collection_id: str
         The collection ID ie C000000001
-    es: Elasticsearch
-        Connection to elastic search.
 
     Returns
     -------
     bool
         if the indexing was successful
-
     """
     from elasticsearch import ElasticsearchException
 
     es = get_elastic_search_connection(ctx)
 
+    project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
+    error_message = "ERROR: Elasticsearch update index failed for {}".format(project_collection_path)
+
     try:
         es.delete(index=COLLECTION_METADATA_INDEX, id=project_id + "_" + collection_id, ignore=[400, 404])
     except ElasticsearchException:
-        message = "Unable to delete existing document"
-        ctx.callback.writeLine("stdout", "ERROR: {}".format(message))
-        ctx.callback.msiWriteRodsLog("ERROR: {}".format(message), 0)
         ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised during document deletion", 0)
+        ctx.callback.msiWriteRodsLog(error_message, 0)
         return False
 
-    project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
-    return index_project_collection(ctx, es, project_collection_path)
+    index_success = index_project_collection(ctx, es, project_collection_path)
+    if not index_success:
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+
+    return index_success
+

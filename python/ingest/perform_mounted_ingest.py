@@ -32,14 +32,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
 
     # Ingest the files from local directory on resource server to iRODS collection
     try:
-        ctx.remoteExec(
-            ingest_resource_host,
-            "",
-            "perform_irsync('{}', '{}', '{}')".format(
-                token, destination_collection, username
-            ),
-            "",
-        )
+        ctx.callback.sync_collection_data(token, destination_collection, username)
     except RuntimeError:
         ctx.callback.setErrorAVU(
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"

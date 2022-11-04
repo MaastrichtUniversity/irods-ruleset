@@ -1,16 +1,47 @@
-# /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token" -j
+# /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token,C000000001,jmelius" -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def save_dropzone_pre_ingest_info(ctx, token):
+    """
+    This rule generates a json formatted string with information about provided mounted dropzone
+    Included are:
+        - file/folder structure names + individual file sizes
+        - total number of files
+        - total of individual file sizes
+        - Dropzone type
+        - Dropzone creator
+        - Dropzone depositor
+        - Collection id
+        - Project id
+        - Dropzone token
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    token: str
+        The dropzone token, to locate the source collection; e.g: 'handsome-snake'
+    collection_id: str
+        The collection id, ie C00000004
+    depositor: str
+        The username of the person requesting the ingest
+
+    returns
+    -------
+    str
+        json formatted string with information about the dropzone content
+    """
     import os
     import json
 
-    result = {}
+    dropzone_type = "mounted"
 
-    dropzone_path = formatters.format_dropzone_path(token, "mounted")
+    dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
     physical_path = os.path.join("/mnt/ingest/zones", token)
 
+    result = {}
+
     file_folder_structure = path_to_dict(physical_path)
-    result['file_folder_structure'] = file_folder_structure
+    result["file_folder_structure"] = file_folder_structure
 
     size = 0
     file_count = 0
@@ -18,18 +49,15 @@ def save_dropzone_pre_ingest_info(ctx, token):
         size = size + item
         file_count += 1
 
-    type_count = 0
-    for item in gen_dict_extract("type", file_folder_structure):
-        type_count += 1
+    result["total_file_size"] = size
+    result["file_count"] = file_count
+    result["depositor"] = depositor
+    result["collection"] = collection_id
+    result["type"] = dropzone_type
 
-    result['dir_count'] = type_count - file_count
-    result['total_file_size'] = size
-    result['file_count'] = file_count
-    result['user_running_the_ingest'] = ctx.callback.get_client_username("")["arguments"][0]
-
-    result['creator'] = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
-    result['project'] = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
-    result['title'] = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
+    result["creator"] = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+    result["project"] = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
+    result["title"] = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
 
     save_pre_ingest_document(ctx, result, token)
 
@@ -37,6 +65,19 @@ def save_dropzone_pre_ingest_info(ctx, token):
 
 
 def path_to_dict(path):
+    """
+    Recursive function to convert a folder to a dictionary containing all files and subdirectories (including files)
+    Parameters
+    ----------
+    path: str
+        Physical path to a directory
+
+    Returns
+    -------
+    dict:
+        All files and subdirectories of the input path
+
+    """
     import os
 
     d = {'name': os.path.basename(path)}
@@ -51,8 +92,8 @@ def path_to_dict(path):
 
 
 def gen_dict_extract(key, var):
-    if hasattr(var, 'iteritems'):  # hasattr(var,'items') for python 3
-        for k, v in var.iteritems():  # var.items() for python 3
+    if hasattr(var, 'iteritems'):
+        for k, v in var.iteritems():
             if k == key:
                 yield v
             if isinstance(v, dict):

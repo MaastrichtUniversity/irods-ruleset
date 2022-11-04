@@ -25,11 +25,11 @@ def perform_irsync(ctx, destination_resource, token, destination_collection):
     from subprocess import CalledProcessError, check_call  # nosec
     import time
 
-    # Revoke the user CIFS ACL on the mounted network dropzone folder
-    ctx.callback.set_dropzone_cifs_acl(token, "null")
-
     source_collection = "/mnt/ingest/zones/{}".format(token)
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
+
+    # Revoke the user CIFS ACL on the mounted network dropzone folder
+    ctx.callback.set_dropzone_cifs_acl(token, "null")
 
     RETRY_MAX_NUMBER = 5
     RETRY_SLEEP_NUMBER = 20

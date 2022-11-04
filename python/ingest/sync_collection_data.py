@@ -23,7 +23,6 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     depositor: str
         The user who started the ingestion
     """
-    source_collection = "/mnt/ingest/zones/{}".format(token)
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
     project_id = formatters.get_project_id_from_project_collection_path(destination_collection)

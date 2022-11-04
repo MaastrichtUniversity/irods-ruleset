@@ -1,6 +1,6 @@
 # /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token,C000000001,jmelius" -j
-@make(inputs=[0], outputs=[1], handler=Output.STORE)
-def save_dropzone_pre_ingest_info(ctx, token):
+@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
+def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor):
     """
     This rule generates a json formatted string with information about provided mounted dropzone
     Included are:
@@ -80,19 +80,19 @@ def path_to_dict(path):
     """
     import os
 
-    d = {'name': os.path.basename(path)}
+    d = {"name": os.path.basename(path)}
     if os.path.isdir(path):
-        d['type'] = "directory"
-        d['children'] = [path_to_dict(os.path.join(path, x)) for x in os.listdir(path)]
+        d["type"] = "directory"
+        d["children"] = [path_to_dict(os.path.join(path, x)) for x in os.listdir(path)]
     else:
-        d['type'] = "file"
-        d['size'] = os.path.getsize(path)
+        d["type"] = "file"
+        d["size"] = os.path.getsize(path)
 
     return d
 
 
 def gen_dict_extract(key, var):
-    if hasattr(var, 'iteritems'):
+    if hasattr(var, "iteritems"):
         for k, v in var.iteritems():
             if k == key:
                 yield v
@@ -162,4 +162,3 @@ def clean_up_pre_ingest_document(ctx, document_folder, timestamp):
         if time_difference_in_seconds > one_month_in_seconds:
             ctx.callback.msiWriteRodsLog("DEBUG: Removing pre-ingest document {}".format(document_filename), 0)
             os.remove(document_filename)
-

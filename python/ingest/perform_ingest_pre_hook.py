@@ -1,5 +1,5 @@
-@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
+@make(inputs=[0, 1, 2, 3, 4, 5], outputs=[6], handler=Output.STORE)
+def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, depositor, dropzone_type):
     """
     This rule is part the ingestion workflow.
     Perform the preliminary common tasks for both 'mounted' and 'direct' ingest.
@@ -44,6 +44,28 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path):
         ingest_resource_host = row[0]
 
     ctx.callback.msiWriteRodsLog("DEBUG: Resource remote host {}".format(ingest_resource_host), 0)
+
+    try:
+        ctx.remoteExec(
+            ingest_resource_host,
+            "",
+            "save_dropzone_pre_ingest_info('{}', '{}', '{}', '{}')".format(
+                token, collection_id, depositor, dropzone_type
+            ),
+            "",
+        )
+    except RuntimeError:
+        ctx.callback.msiWriteRodsLog("Failed creating dropzone pre-ingest information", 0)
+        ctx.callback.setErrorAVU(
+            dropzone_path,
+            "state",
+            DropzoneState.ERROR_INGESTION.value,
+            "Failed creating dropzone pre-ingest information",
+        )
+
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: dropzone pre-ingest information created on {} for {}".format(ingest_resource_host, token), 0
+    )
 
     return {
         "collection_id": collection_id,

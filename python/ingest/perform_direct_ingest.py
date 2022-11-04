@@ -24,7 +24,9 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     dropzone_path = format_dropzone_path(ctx, token, "direct")
 
     pre_ingest_results = json.loads(
-        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, "")["arguments"][3]
+        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, token, username, "direct", "")[
+            "arguments"
+        ][6]
     )
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]

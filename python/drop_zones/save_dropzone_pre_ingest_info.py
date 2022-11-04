@@ -1,6 +1,6 @@
-# /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token,C000000001,jmelius" -j
-@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor):
+# /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token,C000000001,jmelius,mounted" -j
+@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
+def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone_type):
     """
     This rule generates a json formatted string with information about provided mounted dropzone
     Included are:
@@ -33,10 +33,12 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor):
     import os
     import json
 
-    dropzone_type = "mounted"
-
     dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
-    physical_path = os.path.join("/mnt/ingest/zones", token)
+    physical_path = ""
+    if dropzone_type == "mounted":
+        physical_path = os.path.join("/mnt/ingest/zones", token)
+    elif dropzone_type == "direct":
+        physical_path = os.path.join("/mnt/stagingResc01/ingest/direct/", token)
 
     result = {}
 
@@ -54,14 +56,12 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor):
     result["depositor"] = depositor
     result["collection"] = collection_id
     result["type"] = dropzone_type
-
+    result["token"] = token
     result["creator"] = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
     result["project"] = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
     result["title"] = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
 
     save_pre_ingest_document(ctx, result, token)
-
-    return json.dumps(result)
 
 
 def path_to_dict(path):

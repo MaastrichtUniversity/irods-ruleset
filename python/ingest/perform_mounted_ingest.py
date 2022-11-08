@@ -1,7 +1,7 @@
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
 def perform_mounted_ingest(ctx, project_id, title, username, token):
     """
-    Perform a direct (collection to collection) ingest operation.
+    Perform a mounted (physical directory to logical collection) ingest operation.
 
     Parameters
     ----------
@@ -12,7 +12,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     title: str
         The title of the dropzone / new collection
     username: str
-        The username of the person requesting the ingest
+        The username of the person requesting the ingestion
     token: str
         The token of the dropzone to be ingested
     """
@@ -26,21 +26,13 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
     ingest_resource_host = pre_ingest_results["ingest_resource_host"]
-    destination_resource = pre_ingest_results["destination_resource"]
 
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
 
     # Ingest the files from local directory on resource server to iRODS collection
     try:
-        ctx.remoteExec(
-            ingest_resource_host,
-            "",
-            "perform_irsync('{}', '{}', '{}', '{}')".format(
-                token, destination_collection, destination_resource, username
-            ),
-            "",
-        )
+        ctx.callback.sync_collection_data(token, destination_collection, username)
     except RuntimeError:
         ctx.callback.setErrorAVU(
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"

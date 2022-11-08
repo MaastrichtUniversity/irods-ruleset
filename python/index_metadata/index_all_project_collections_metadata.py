@@ -70,9 +70,14 @@ def index_project_collection(ctx, es, project_collection_path):
     project_title = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.TITLE.value, "", "", FALSE_AS_STRING)[
         "arguments"
     ][2]
+    project_access_info = json.loads(ctx.callback.get_project_user_members(project_id, "")["arguments"][1])
+
     instance_object["project_title"] = project_title
     instance_object["project_id"] = project_id
     instance_object["collection_id"] = collection_id
+    instance_object["user_access"] = project_access_info["users"]
+    instance_object["group_display_names"] = project_access_info["group_display_names"]
+    instance_object["user_display_names"] = project_access_info["user_display_names"]
 
     try:
         res = es.index(

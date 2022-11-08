@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r list_project_viewers -a "P000000015,false,false" -u service-disqover -j
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
     """
@@ -6,9 +7,9 @@ def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id : str
-        The project's id; e.g P000000010
+        The project's id; e.g: P000000010
     inherited : str
         Role inheritance
         * inherited='true' cumulates authorizations to designate the role. i.e. A viewer has OWN, WRITE or READ access

@@ -124,5 +124,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
                     dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
                 )
 
+    if dropzone_type == "direct":
+        ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)

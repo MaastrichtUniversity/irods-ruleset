@@ -36,12 +36,15 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     ctx.callback.msiWriteRodsLog("Ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
-    ingest_resource = ctx.callback.getCollectionAVU(
-        format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
-    # Obtain the resource host from the specified ingest resource
-    for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(ingest_resource), AS_LIST, ctx.callback):
-        ingest_resource_host = row[0]
+    if dropzone_type == "direct":
+        ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
+    else:
+        ingest_resource = ctx.callback.getCollectionAVU(
+            format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
+        # Obtain the resource host from the specified ingest resource
+        for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(ingest_resource), AS_LIST, ctx.callback):
+            ingest_resource_host = row[0]
 
     ctx.callback.msiWriteRodsLog("DEBUG: Resource remote host {}".format(ingest_resource_host), 0)
 

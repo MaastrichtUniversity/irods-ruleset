@@ -14,6 +14,12 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         The title of the dropzone / new collection
     dropzone_path: str
         The dropzone absolute path
+    token: str
+        The token of the dropzone
+    depositor: str
+        The person requesting the ingest
+    dropzone_type: str
+        The type of dropzone
 
     Returns
     -------

@@ -14,6 +14,8 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
         - Project id
         - Dropzone token
 
+    This rule also cleans up the save directory. It removes all logs older than 6 months.
+
     Parameters
     ----------
     ctx : Context
@@ -152,13 +154,13 @@ def clean_up_pre_ingest_document(ctx, document_folder, timestamp):
     """
     import os
 
-    one_month_in_seconds = 2678400  # 31 days
+    six_months_in_seconds = 16070400  # 6 months
 
     # Get the absolute path of all json files present in the document_folder path
     documents = [os.path.join(document_folder, doc) for doc in os.listdir(document_folder) if doc.endswith(".json")]
     for document_filename in documents:
         ctime = os.path.getctime(document_filename)
         time_difference_in_seconds = int(timestamp) - int(ctime)
-        if time_difference_in_seconds > one_month_in_seconds:
+        if time_difference_in_seconds > six_months_in_seconds:
             ctx.callback.msiWriteRodsLog("DEBUG: Removing pre-ingest document {}".format(document_filename), 0)
             os.remove(document_filename)

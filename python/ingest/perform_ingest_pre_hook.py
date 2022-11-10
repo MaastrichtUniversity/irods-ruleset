@@ -83,7 +83,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     )
 
     ctx.callback.msiWriteRodsLog(
-        "Starting the ingestion of {} to {} ({})({} bytes)".format(
+        "Starting the ingestion of {} to {} ({})({})".format(
             dropzone_path,
             destination_project_collection_path,
             destination_resource,

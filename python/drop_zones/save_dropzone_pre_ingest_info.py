@@ -2,19 +2,17 @@
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
 def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone_type):
     """
-    This rule generates a json formatted string with information about provided mounted dropzone
+    This rule generates a json formatted string with information about the provided dropzone
     Included are:
-        - file/folder structure names + individual file sizes
-        - total number of files
-        - total of individual file sizes
+        - File/folder structure names + individual file sizes
+        - Total number of files
+        - Total of individual file sizes
         - Dropzone type
         - Dropzone creator
         - Dropzone depositor
         - Collection id
         - Project id
         - Dropzone token
-
-    This rule also cleans up the save directory. It removes all logs older than 6 months.
 
     Parameters
     ----------
@@ -25,15 +23,11 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
     collection_id: str
         The collection id, ie C00000004
     depositor: str
-        The username of the person requesting the ingest
-
-    returns
-    -------
-    str
-        json formatted string with information about the dropzone content
+        The username of the person requesting to ingest
+    dropzone_type: str
+        The type of dropzone
     """
     import os
-    import json
 
     dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
     physical_path = ""
@@ -69,6 +63,7 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
 def path_to_dict(path):
     """
     Recursive function to convert a folder to a dictionary containing all files and subdirectories (including files)
+
     Parameters
     ----------
     path: str
@@ -78,7 +73,6 @@ def path_to_dict(path):
     -------
     dict:
         All files and subdirectories of the input path
-
     """
     import os
 
@@ -125,7 +119,6 @@ def save_pre_ingest_document(ctx, document, token):
 
     document_folder = "/var/log/irods-pre-ingest"
     timestamp = time.time()
-    clean_up_pre_ingest_document(ctx, document_folder, timestamp)
 
     creation_date = datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
     filename = "{project_id}_{dropzone_token}_{date}.json".format(
@@ -138,29 +131,3 @@ def save_pre_ingest_document(ctx, document, token):
     with open(document_path, "w") as outfile:
         outfile.write(json.dumps(document, indent=4))
         ctx.callback.msiWriteRodsLog("DEBUG: Writing pre-ingest document {}".format(document_path), 0)
-
-
-def clean_up_pre_ingest_document(ctx, document_folder, timestamp):
-    """
-    Remove all the old pre-ingest documents in the log folder that are older old 31 days than the input timestamp.
-
-    Parameters
-    ----------
-    ctx
-    document_folder: str
-        The absolute path to the log folder
-    timestamp: float
-        The epoch timestamp. Usually execution time
-    """
-    import os
-
-    six_months_in_seconds = 16070400  # 6 months
-
-    # Get the absolute path of all json files present in the document_folder path
-    documents = [os.path.join(document_folder, doc) for doc in os.listdir(document_folder) if doc.endswith(".json")]
-    for document_filename in documents:
-        ctime = os.path.getctime(document_filename)
-        time_difference_in_seconds = int(timestamp) - int(ctime)
-        if time_difference_in_seconds > six_months_in_seconds:
-            ctx.callback.msiWriteRodsLog("DEBUG: Removing pre-ingest document {}".format(document_filename), 0)
-            os.remove(document_filename)

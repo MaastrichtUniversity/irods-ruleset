@@ -54,6 +54,8 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
 
     ctx.callback.msiWriteRodsLog("DEBUG: Resource remote host {}".format(ingest_resource_host), 0)
 
+    total_size = ""
+    destination_resource = ""
     try:
         ctx.remoteExec(
             ingest_resource_host,
@@ -63,6 +65,10 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
             ),
             "",
         )
+        total_size = ctx.callback.getCollectionAVU(dropzone_path, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
+        destination_resource = ctx.callback.getCollectionAVU(
+            format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating dropzone pre-ingest information", 0)
         ctx.callback.setErrorAVU(
@@ -76,6 +82,15 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         "DEBUG: dropzone pre-ingest information created on {} for {}".format(ingest_resource_host, token), 0
     )
 
+    ctx.callback.msiWriteRodsLog(
+        "Starting the ingestion of {} to {} ({})({} bytes)".format(
+            dropzone_path,
+            destination_project_collection_path,
+            destination_resource,
+            str(format_human_bytes(total_size)),
+        ),
+        0,
+    )
     return {
         "collection_id": collection_id,
         "destination_collection": destination_project_collection_path,

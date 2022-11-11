@@ -1,4 +1,3 @@
-import json
 import subprocess
 import pytest
 
@@ -95,20 +94,27 @@ class TestPolicies:
         assert "dlinssen" not in third_ils_output
 
     def test_post_proc_for_put(self):
-        """ This tests whether the sizeIngested AVU is properly incremented when a file in ingested """
+        """
+        This tests whether the sizeIngested AVU is properly incremented when a file in ingested.
+        Also check the metadata files have the correct ACL for the dropzone creator
+        """
+        # Setup
         collection_path = "/nlmumc/projects/{}/C000000001".format(self.project_id)
         create_collection = "imkdir {}".format(collection_path)
         subprocess.check_call(create_collection, shell=True)
         get_instance()
         put_instance = "iput -R {} {} {}/instance.json".format(self.destination_resource, TMP_INSTANCE_PATH, collection_path)
         subprocess.check_call(put_instance, shell=True)
+        # Test sizeIngested AVU
         get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(collection_path)
         size_ingested = subprocess.check_output(get_size_ingested, shell=True)
         assert int(size_ingested) == 12521
+        # Test metadata file ACL
         run_ils = "ils -A /nlmumc/ingest/direct/{}/instance.json".format(self.token)
         ils_output = subprocess.check_output(run_ils, shell=True)
         assert "{}#nlmumc:read".format(self.manager1) in ils_output
         assert "{}#nlmumc:own".format(self.manager1) not in ils_output
+        # Tear down
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
 
     def test_pre_proc_for_modify_avu_metadata(self):

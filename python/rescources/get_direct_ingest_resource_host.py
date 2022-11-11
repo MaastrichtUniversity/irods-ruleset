@@ -4,11 +4,6 @@ def get_direct_ingest_resource_host(ctx):
     """
     Queries the resources to get the resource host of the resc that has the directIngestResc AVU
 
-    Parameters
-    ----------
-    path: str
-        Physical path to a directory
-
     Returns
     -------
     str:

@@ -89,6 +89,23 @@ def path_to_dict(path):
 
 
 def gen_dict_extract(key, var):
+    """
+    Find all occurrences of a key in nested dictionaries and lists
+    Source:
+    https://stackoverflow.com/questions/9807634/find-all-occurrences-of-a-key-in-nested-dictionaries-and-lists
+
+    Parameters
+    ----------
+    key: str
+        key for which the value  will be returned
+    var: dict
+        (Nested) dict that can contain lists
+
+    Returns
+    -------
+    Iterator[str]
+        List generator that return the values for the key given that occur in the input dict
+    """
     if hasattr(var, "iteritems"):
         for k, v in var.iteritems():
             if k == key:

@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_collection_size_per_resource -a "P000000028" -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_collection_size_per_resource(ctx, project_id):
     """
@@ -6,7 +7,7 @@ def get_collection_size_per_resource(ctx, project_id):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id : str
         Project ID
 

@@ -2,6 +2,7 @@ import json
 import subprocess
 import time
 
+import pytest
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
@@ -57,14 +58,10 @@ class TestTapeArchive:
         cls.add_archive_data_to_dropzone()
         start_and_wait_for_ingest(cls)
 
-        set_enable_archive = "imeta set -C /nlmumc/projects/{project_id} enableArchive true".format(
-            project_id=cls.project_id
-        )
+        set_enable_archive = "imeta set -C {} enableArchive true".format(cls.project_path)
         subprocess.check_call(set_enable_archive, shell=True)
 
-        set_enable_un_archive = "imeta set -C /nlmumc/projects/{project_id} enableUnarchive true".format(
-            project_id=cls.project_id
-        )
+        set_enable_un_archive = "imeta set -C {} enableUnarchive true".format(cls.project_path)
         subprocess.check_call(set_enable_un_archive, shell=True)
 
         cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
@@ -107,6 +104,25 @@ class TestTapeArchive:
     def test_un_archive_file(self):
         self.run_archive()
         self.run_un_archive(self.large_file_logical_path)
+
+    def test_tape_avu_permissions(self):
+        # setup
+        set_enable_archive = "imeta set -C {} enableArchive {{value}}".format(self.project_path)
+        subprocess.check_call(set_enable_archive.format(value="false"), shell=True)
+
+        set_enable_un_archive = "imeta set -C {} enableUnarchive {{value}}".format(self.project_path)
+        subprocess.check_call(set_enable_un_archive.format(value="false"), shell=True)
+
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_archive()
+
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_un_archive(self.project_collection_path)
+
+        # teardown
+        subprocess.check_call(set_enable_archive.format(value="true"), shell=True)
+        subprocess.check_call(set_enable_un_archive.format(value="true"), shell=True)
 
     def run_archive(self):
         # Setup Archive

@@ -1,9 +1,10 @@
 import json
 import subprocess
 import time
-from os import path
 
 import requests
+from os import path
+
 from dhpythonirodsutils import formatters, validators
 
 TMP_INSTANCE_PATH = "/tmp/metadata_instance.json"
@@ -143,20 +144,3 @@ def start_and_wait_for_ingest(test_case):
         else:
             fail_safe = fail_safe - 1
             time.sleep(5)
-
-
-def does_path_exist(absolute_path):
-    run_ilocate = "ilocate {}".format(absolute_path)
-    try:
-        subprocess.check_output(run_ilocate, shell=True).strip()
-    except subprocess.CalledProcessError:
-        return False
-
-    return True
-
-
-def set_collection_avu(collection_path, attribute, value):
-    run_imeta = 'imeta set -C {} {} "{}"'.format(
-        collection_path, attribute, value
-    )
-    subprocess.check_call(run_imeta, shell=True)

@@ -127,12 +127,8 @@ class BaseTestCaseIngest:
         )
         ret = subprocess.check_output(rule, shell=True)
         collection_detail = json.loads(ret)
-        print(json.dumps(collection_detail, indent=4, sort_keys=True))
-        print(collection_detail["PID"])
+
         url = "https://hdl.handle.net/{}".format(collection_detail["PID"])
-        print(url)
-        url = "https://hdl.handle.net/21.T12996/P000000099C000000001"
-        print(url)
         response = requests.get(url, allow_redirects=False)
         assert response.status_code == 302
 

@@ -14,8 +14,8 @@ from test_cases.utils import (
 
 
 class TestCollections:
-    project_path = "/nlmumc/projects/P000000028"
-    project_id = "P000000028"
+    project_path = ""
+    project_id = ""
     project_title = "PROJECTNAME"
 
     depositor = "jmelius"

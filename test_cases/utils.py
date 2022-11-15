@@ -160,3 +160,29 @@ def set_collection_avu(collection_path, attribute, value):
         collection_path, attribute, value
     )
     subprocess.check_call(run_imeta, shell=True)
+
+
+def create_user(username):
+    run_imeta = 'iadmin mkuser {} rodsuser'.format(username)
+    subprocess.check_call(run_imeta, shell=True)
+
+    set_user_avu(username, "displayName", "{} LastName".format(username))
+    set_user_avu(username, "eduPersonUniqueID", "{}@sram.surf.nl".format(username))
+    set_user_avu(username, "email", "{}@maastrichtuniversity.nl".format(username))
+    set_user_avu(username, "voPersonExternalAffiliation", "{}@maastrichtuniversity.nl".format(username))
+    set_user_avu(username, "voPersonExternalID", "{}@unimaas.nl".format(username))
+
+    run_ichmod = 'ichmod -M write {} /nlmumc/ingest/direct'.format(username)
+    subprocess.check_call(run_ichmod, shell=True)
+
+
+def set_user_avu(username, attribute, value):
+    run_imeta = 'imeta set -u {} {} "{}"'.format(
+        username, attribute, value
+    )
+    subprocess.check_call(run_imeta, shell=True)
+
+
+def remove_user(username):
+    run_imeta = 'iadmin rmuser {}'.format(username)
+    subprocess.check_call(run_imeta, shell=True)

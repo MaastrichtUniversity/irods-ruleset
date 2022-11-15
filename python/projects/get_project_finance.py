@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_project_finance -a "/nlmumc/projects/P000000014" -u psuppers -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_project_finance(ctx, project_path):
     """
@@ -6,7 +7,7 @@ def get_project_finance(ctx, project_path):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_path : str
         The project absolute path
 

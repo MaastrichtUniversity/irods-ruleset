@@ -89,7 +89,7 @@ class TestTapeArchive:
         logical_path = "{}/large_file".format(dropzone_path)
 
         with open(large_file_path, 'wb') as large_file:
-            num_chars = 1024 * 1024 * 1024  # One GB
+            num_chars = 262144001
             large_file.write('0' * num_chars)
             iput = "iput -R stagingResc01 {} {}".format(large_file_path, logical_path)
             subprocess.check_call(iput, shell=True)

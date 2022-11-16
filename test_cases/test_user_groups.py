@@ -260,29 +260,29 @@ class TestUserGroups:
         subprocess.check_output(imeta, shell=True)
 
     def test_get_data_stewards(self):
-        rule = "irule -F /rules/misc/getDataStewards.r"
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDataStewards.r"
         ret = subprocess.check_output(rule, shell=True)
         data_stewards = json.loads(ret)
         assert check_if_key_value_in_dict_list(data_stewards, "userName", self.data_steward)
 
     def test_get_display_name_for_account(self):
-        rule = "irule -F /rules/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(self.manager1)
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(self.manager1)
         display_name = subprocess.check_output(rule, shell=True).rstrip("\n")
         assert display_name == "{} LastName".format(self.manager1)
 
     def test_get_email_for_account(self):
-        rule = "irule -F /rules/misc/getEmailForAccount.r \"*account='{}'\"".format(self.manager1)
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getEmailForAccount.r \"*account='{}'\"".format(self.manager1)
         email = subprocess.check_output(rule, shell=True).rstrip("\n")
         assert email == "{}@maastrichtuniversity.nl".format(self.manager1)
 
     def test_get_groups_rule_language(self):
-        rule = "irule -F /rules/misc/getGroups.r \"*showSpecialGroups='false'\""
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getGroups.r \"*showSpecialGroups='false'\""
         ret = subprocess.check_output(rule, shell=True)
         groups = json.loads(ret)
         assert check_if_key_value_in_dict_list(groups, "userName", self.group)
 
     def test_get_users(self):
-        rule = "irule -F /rules/misc/getUsers.r \"*showServiceAccounts='false'\""
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getUsers.r \"*showServiceAccounts='false'\""
         ret = subprocess.check_output(rule, shell=True)
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
@@ -292,14 +292,14 @@ class TestUserGroups:
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.group)
         group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
-        rule = "irule -F /rules/misc/getUsersInGroup.r \"*groupId='{}'\"".format(group_id_iquest)
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getUsersInGroup.r \"*groupId='{}'\"".format(group_id_iquest)
         ret = subprocess.check_output(rule, shell=True)
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
         assert not check_if_key_value_in_dict_list(users, "userName", self.manager2)
 
     def test_list_groups_by_user(self):
-        rule = "irule -F /rules/misc/listGroupsByUser.r"
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/listGroupsByUser.r"
         ret = subprocess.check_output(rule, shell=True)
         groups = json.loads(ret)
         for group in groups:

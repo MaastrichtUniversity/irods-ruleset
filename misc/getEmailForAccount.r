@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F /rules/misc/getEmailForAccount.r "*account='mcoonen'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getEmailForAccount.r "*account='mcoonen'"
 
 irule_dummy() {
     IRULE_getEmailForAccount(*account , *result);

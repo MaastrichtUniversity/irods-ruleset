@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F /rules/misc/getUsersInGroup.r "*groupId='2'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getUsersInGroup.r "*groupId='2'"
 
 irule_dummy() {
     IRULE_getUsersInGroup(*groupId, *result);

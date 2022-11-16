@@ -12,6 +12,44 @@ from test_cases.utils import (
     revert_latest_project_number,
 )
 
+"""
+iRODS native rules usage summary:
+closeProjectCollection:
+    IN RW, not in MDR
+    Used in RS (ingest & tape)
+createProjectCollection
+    Used in RS (perform_ingest_pre_hook)
+detailsProjectCollection
+    Used in RW and MDR
+getProjectCollectionsArray
+    Obsolete
+openProjectCollection
+    IN RW, not in MDR
+    Used in RS (prepareExportProjectCollection & tape)
+prepareExportProjectCollection
+    Used in RW and MDR
+requestExportProjectCollection
+    Used in RW
+    Not used in MDR
+
+
+iRODS Python rules usage summary:
+get_collection_attribute_value
+    Used in MDR, RW and RS (remove_size_ingested_avu)
+get_collection_size
+    Used in RS (list_collections)
+    Not used in MDR and RW
+get_collection_size_per_resource
+    Used in MDR, RW and RS
+get_collection_tree
+    Used in MDR and RW
+    Not used in RS
+list_collections
+    Used in MDR (get_collections), RW and RS
+set_acl
+    Used in MDR, RW and RS
+"""
+
 
 class TestCollections:
     project_path = ""

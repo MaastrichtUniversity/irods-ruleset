@@ -124,7 +124,7 @@ def start_and_wait_for_ingest(test_case):
         test_case.depositor, test_case.token, test_case.dropzone_type, test_case.depositor
     )
     subprocess.check_call(rule_start_ingest, shell=True)
-
+    print("Starting {} ingestion of '{}'".format(test_case.dropzone_type, test_case.token))
     rule_get_active_drop_zone = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
         test_case.token, test_case.dropzone_type
     )
@@ -133,7 +133,7 @@ def start_and_wait_for_ingest(test_case):
     drop_zone = json.loads(ret_get_active_drop_zone)
     assert drop_zone["token"] == test_case.token
 
-    fail_safe = 10
+    fail_safe = 100
     while fail_safe != 0:
         ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
 
@@ -142,8 +142,9 @@ def start_and_wait_for_ingest(test_case):
             fail_safe = 0
         else:
             fail_safe = fail_safe - 1
-            time.sleep(5)
-
+            time.sleep(3)
+    assert drop_zone["state"] == "ingested"
+    print("Dropzone ingested, continuing tests")
 
 def does_path_exist(absolute_path):
     run_ilocate = "ilocate {}".format(absolute_path)

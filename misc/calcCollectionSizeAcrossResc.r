@@ -4,7 +4,7 @@
 #
 # Call with
 #
-# irule -F calcCollectionSizeAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
+# irule -F /rules/misc/calcCollectionSizeAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
 # 
 # Rounding options
 # *round='none' returns float with decimals

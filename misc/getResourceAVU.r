@@ -1,5 +1,5 @@
 # Call with
-# irule -F getResourceAVU.r "*resourceName='replRescUM01'" "*attribute='NCIT:C88193'" "*overrideValue=''" "*fatal='true'"
+# irule -F /rules/misc/getResourceAVU.r "*resourceName='replRescUM01'" "*attribute='NCIT:C88193'" "*overrideValue=''" "*fatal='true'"
 #
 # The following arguments are optional when using irule -F,
 # but still have to be specified when calling from within another rule:

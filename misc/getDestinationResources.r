@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getDestinationResources.r
+# irule -F /rules/misc/getDestinationResources.r
 
 irule_dummy() {
     IRULE_getDestinationResources(*result);

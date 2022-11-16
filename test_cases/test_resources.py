@@ -5,7 +5,6 @@ import pytest
 from test_cases.utils import (
     TMP_INSTANCE_PATH,
     start_and_wait_for_ingest,
-    get_instance,
     remove_project,
     revert_latest_project_number,
     remove_dropzone,
@@ -29,6 +28,7 @@ Native rules:
 - getResourcesInCollection: used in calcCollectionSizeAcrossResc and thus in setCollectionSize
 - resourceExists: NOT USED
 """
+
 
 class TestResources:
     project_path = ""
@@ -65,7 +65,9 @@ class TestResources:
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
         start_and_wait_for_ingest(cls)
-        subprocess.check_call("ichmod own -M rods /nlmumc/projects/{}/{}".format(cls.project_id, cls.collection_id), shell=True)
+        subprocess.check_call(
+            "ichmod own -M rods /nlmumc/projects/{}/{}".format(cls.project_id, cls.collection_id), shell=True
+        )
         print("End {}.setup_class".format(cls.__name__))
 
     @classmethod
@@ -90,34 +92,52 @@ class TestResources:
         rule_parsed = json.loads(second_time_output)
         for item in rule_parsed:
             if item["name"] == "replRescAZM01":
-                 assert item["available"] == False
+                assert not item["available"]
         subprocess.check_call(change_status.format("up"), shell=True)
 
     def test_calc_collection_files_across_resc(self):
-        rule = "irule -F /rules/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\"".format(self.project_id, self.collection_id)
+        rule = "irule -F /rules/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\"".format(
+            self.project_id, self.collection_id
+        )
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["numFilesPerResc"][0]["numFiles"] == "4"
         assert rule_parsed["numFilesPerResc"][0]["resourceID"].isnumeric()
-        subprocess.check_call("iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(TMP_INSTANCE_PATH, self.project_id, self.collection_id), shell=True)
+        subprocess.check_call(
+            "iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(
+                TMP_INSTANCE_PATH, self.project_id, self.collection_id
+            ),
+            shell=True,
+        )
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["numFilesPerResc"][1]["numFiles"] == "1"
         assert rule_parsed["numFilesPerResc"][1]["resourceID"].isnumeric()
-        subprocess.check_call("irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True)
+        subprocess.check_call(
+            "irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True
+        )
 
     def test_calc_collection_size_across_resc(self):
-        rule = "irule -F /rules/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(self.project_id, self.collection_id)
+        rule = "irule -F /rules/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
+            self.project_id, self.collection_id
+        )
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["sizePerResc"][0]["dataSize"] == "538"
         assert rule_parsed["sizePerResc"][0]["resourceID"].isnumeric()
-        subprocess.check_call("iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(TMP_INSTANCE_PATH, self.project_id, self.collection_id), shell=True)
+        subprocess.check_call(
+            "iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(
+                TMP_INSTANCE_PATH, self.project_id, self.collection_id
+            ),
+            shell=True,
+        )
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["sizePerResc"][1]["dataSize"] == "13"
         assert rule_parsed["sizePerResc"][1]["resourceID"].isnumeric()
-        subprocess.check_call("irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True)
+        subprocess.check_call(
+            "irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True
+        )
 
     def test_get_destination_resources(self):
         rule = "irule -F /rules/misc/getDestinationResources.r"

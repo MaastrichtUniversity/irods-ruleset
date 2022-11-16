@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getIngestResources.r
+# irule -F /rules/misc/getIngestResources.r
 
 irule_dummy() {
     IRULE_getIngestResources(*result);

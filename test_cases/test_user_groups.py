@@ -6,7 +6,6 @@ from test_cases.utils import (
     remove_project,
     revert_latest_project_number,
     create_project,
-    add_metadata_files_to_direct_dropzone,
     create_user,
     create_data_steward,
     create_group,
@@ -18,7 +17,9 @@ from test_cases.utils import (
 )
 
 """
-Python 
+Rule usages:
+
+Python rules
 
 get_all_users_groups_memberships
     Not used MDR, RW or RS. 
@@ -61,7 +62,7 @@ set_user_attribute_value
     Not used in RS
     Used in MDR, RW
 
-iRODS Rule language
+iRODS Rule language rules
 
 getDataStewards
     Not used in RS
@@ -101,8 +102,6 @@ class TestUserGroups:
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"
     schema_version = "1.0.0"
-
-    collection_title = "collection_title"
 
     @classmethod
     def setup_class(cls):
@@ -146,7 +145,6 @@ class TestUserGroups:
         )
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
-
         assert project["id"] == self.project_id
         assert project["title"] == self.project_title
 
@@ -163,14 +161,12 @@ class TestUserGroups:
         rule = "/rules/tests/run_test.sh -r get_service_accounts_id"
         ret = subprocess.check_output(rule, shell=True)
         service_accounts = json.loads(ret)
-
         assert user_id in service_accounts
 
     def test_get_temporary_password_lifetime(self):
         rule = "/rules/tests/run_test.sh -r get_temporary_password_lifetime"
         ret = subprocess.check_output(rule, shell=True)
         temporary_password = json.loads(ret)
-
         assert temporary_password == int(os.getenv("IRODS_TEMP_PASSWORD_LIFETIME"))
 
     def test_get_user_admin_status(self):
@@ -189,7 +185,6 @@ class TestUserGroups:
         )
         ret = subprocess.check_output(rule, shell=True)
         edu_person_unique_id = json.loads(ret)
-
         assert edu_person_unique_id["value"] == "{}@sram.surf.nl".format(self.manager1)
 
     def test_get_user_group_memberships(self):
@@ -205,7 +200,6 @@ class TestUserGroups:
         rule = '/rules/tests/run_test.sh -r get_user_id -a "{}"'.format(self.manager1)
         ret = subprocess.check_output(rule, shell=True)
         user_id_irule = json.loads(ret)
-
         assert int(user_id_iquest) == user_id_irule
 
     def test_get_user_internal_affiliation_status(self):
@@ -222,7 +216,6 @@ class TestUserGroups:
         rule = "/rules/tests/run_test.sh -r get_user_metadata -a {}".format(self.manager2)
         ret = subprocess.check_output(rule.format(), shell=True)
         user = json.loads(ret)
-
         assert user["givenName"] == "test_data_steward"
         assert user["familyName"] == "LastName"
 
@@ -234,7 +227,6 @@ class TestUserGroups:
         group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_user_or_group_by_id -a {id}"
-
         ret = subprocess.check_output(rule.format(id=user_id_iquest), shell=True)
         user = json.loads(ret)
         assert user["userName"] == self.manager1
@@ -262,7 +254,6 @@ class TestUserGroups:
             self.manager1, field_name
         )
         field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
-
         assert field_value_return == field_value
 
         imeta = "imeta rm -u {} {} {}".format(self.manager1, field_name, field_value)
@@ -311,7 +302,6 @@ class TestUserGroups:
         rule = "irule -F /rules/misc/listGroupsByUser.r"
         ret = subprocess.check_output(rule, shell=True)
         groups = json.loads(ret)
-
         for group in groups:
             if group["GroupName"] == self.group:
                 assert "{} LastName".format(self.manager1) in group["Users"]

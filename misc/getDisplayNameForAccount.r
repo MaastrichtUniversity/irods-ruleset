@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getDisplayNameForAccount.r "*account='d.theunissen@maastrichtuniversity.nl'"
+# irule -F /rules/misc/getDisplayNameForAccount.r "*account='dtheuniss'"
 
 irule_dummy() {
     IRULE_getDisplayNameForAccount(*account , *result);

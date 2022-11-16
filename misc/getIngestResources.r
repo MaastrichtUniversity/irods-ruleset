@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F /rules/misc/getIngestResources.r
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getIngestResources.r
 
 irule_dummy() {
     IRULE_getIngestResources(*result);

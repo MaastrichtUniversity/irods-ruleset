@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F /rules/misc/getDestinationResources.r
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDestinationResources.r
 
 irule_dummy() {
     IRULE_getDestinationResources(*result);

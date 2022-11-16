@@ -13,7 +13,8 @@ from test_cases.utils import (
     remove_group,
     add_user_to_group,
     remove_user_from_group,
-    set_user_avu, check_if_key_value_in_dict_list,
+    set_user_avu,
+    check_if_key_value_in_dict_list,
 )
 
 """
@@ -266,12 +267,16 @@ class TestUserGroups:
         assert check_if_key_value_in_dict_list(data_stewards, "userName", self.data_steward)
 
     def test_get_display_name_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(self.manager1)
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(
+            self.manager1
+        )
         display_name = subprocess.check_output(rule, shell=True).rstrip("\n")
         assert display_name == "{} LastName".format(self.manager1)
 
     def test_get_email_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getEmailForAccount.r \"*account='{}'\"".format(self.manager1)
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getEmailForAccount.r \"*account='{}'\"".format(
+            self.manager1
+        )
         email = subprocess.check_output(rule, shell=True).rstrip("\n")
         assert email == "{}@maastrichtuniversity.nl".format(self.manager1)
 
@@ -292,7 +297,9 @@ class TestUserGroups:
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.group)
         group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getUsersInGroup.r \"*groupId='{}'\"".format(group_id_iquest)
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getUsersInGroup.r \"*groupId='{}'\"".format(
+            group_id_iquest
+        )
         ret = subprocess.check_output(rule, shell=True)
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
@@ -306,5 +313,3 @@ class TestUserGroups:
             if group["GroupName"] == self.group:
                 assert "{} LastName".format(self.manager1) in group["Users"]
                 assert not "{} LastName".format(self.manager2) in group["Users"]
-
-

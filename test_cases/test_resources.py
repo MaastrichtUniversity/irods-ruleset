@@ -96,7 +96,7 @@ class TestResources:
         subprocess.check_call(change_status.format("up"), shell=True)
 
     def test_calc_collection_files_across_resc(self):
-        rule = "irule -F /rules/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\"".format(
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\"".format(
             self.project_id, self.collection_id
         )
         rule_output = subprocess.check_output(rule, shell=True)
@@ -118,7 +118,7 @@ class TestResources:
         )
 
     def test_calc_collection_size_across_resc(self):
-        rule = "irule -F /rules/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
             self.project_id, self.collection_id
         )
         rule_output = subprocess.check_output(rule, shell=True)
@@ -140,21 +140,21 @@ class TestResources:
         )
 
     def test_get_destination_resources(self):
-        rule = "irule -F /rules/misc/getDestinationResources.r"
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDestinationResources.r"
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         for item in rule_parsed:
             assert item["name"] in ["replRescAZM01", "replRescUM01", "replRescUMCeph01"]
 
     def test_get_ingest_resources(self):
-        rule = "irule -F /rules/misc/getIngestResources.r"
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getIngestResources.r"
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         for item in rule_parsed:
             assert item["name"] in ["ires-centosResource", "iresResource", "ires-s3-1Resource", "ires-s3-2Resource"]
 
     def test_get_resource_avu(self):
-        rule = "irule -F /rules/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""
+        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""
         rule_output = subprocess.check_output(rule.format("archiveDestResc", "", "true"), shell=True).strip()
         assert rule_output == "true"
         rule_output = subprocess.check_output(rule.format("non_existing", "", "false"), shell=True).strip()

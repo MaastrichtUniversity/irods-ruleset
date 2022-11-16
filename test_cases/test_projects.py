@@ -2,11 +2,17 @@ import json
 import subprocess
 
 from dhpythonirodsutils import formatters
+
 from test_cases.utils import (
     create_project,
     remove_project,
-    revert_latest_project_number, create_user, remove_user, create_dropzone, start_and_wait_for_ingest,
+    revert_latest_project_number,
+    create_user,
+    remove_user,
+    create_dropzone,
+    start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
+    set_irods_collection_avu,
 )
 
 """
@@ -193,6 +199,46 @@ class TestProjects:
         remove_project(project_path)
         revert_latest_project_number()
 
+    def test_project_migration_status(self):
+        # Setup
+        project_id = self.project_ids[0]
+        project_path = self.project_paths[0]
+        project_collection_path = formatters.format_project_collection_path(project_id, self.collection_id)
+
+        create_collection = "imkdir {}".format(project_collection_path)
+        subprocess.check_call(create_collection, shell=True)
+        set_irods_collection_avu(project_collection_path, "title", self.collection_title)
+
+        # Assert empty migration
+        rule = '/rules/tests/run_test.sh -r get_project_migration_status -a "{}"'.format(project_path)
+        ret = subprocess.check_output(rule, shell=True)
+        project_migration_status = json.loads(ret)
+
+        assert not project_migration_status
+
+        # Assert archive migration
+        status = "Repository:test_status"
+        set_irods_collection_avu(project_collection_path, "archiveState", status)
+        ret = subprocess.check_output(rule, shell=True)
+        project_migration_status = json.loads(ret)
+
+        assert len(project_migration_status) == 1
+        assert project_migration_status[0]["status"] == status
+        assert project_migration_status[0]["collection"] == self.collection_id
+        assert project_migration_status[0]["title"] == self.collection_title
+        assert project_migration_status[0]["repository"] == "SURFSara Tape"
+
+        # Assert 2 'ongoing' migrations
+        set_irods_collection_avu(project_collection_path, "exporterState", status)
+        ret = subprocess.check_output(rule, shell=True)
+        project_migration_status = json.loads(ret)
+
+        assert len(project_migration_status) == 2
+
+        # teardown
+        run_remove_folder = "irm -fr {}".format(project_collection_path)
+        subprocess.check_call(run_remove_folder, shell=True)
+
     def test_project_resource_availability(self):
         project_id = self.project_ids[0]
 
@@ -212,6 +258,48 @@ class TestProjects:
 
         assert self.get_project_resource_availability(project_id)
 
+    def test_list_contributing_projects(self):
+        # assert depositor has contributing access to all projects
+        cmd = '/rules/tests/run_test.sh -r list_contributing_projects -a "false" -u {}'
+        rule_as_depositor = cmd.format(self.depositor)
+        ret = subprocess.check_output(rule_as_depositor, shell=True)
+        projects = json.loads(ret)
+
+        assert len(projects) == self.number_of_projects
+        for project_index in range(self.number_of_projects):
+            assert projects[project_index]["id"] == self.project_ids[project_index]
+            assert projects[project_index]["title"] == self.project_titles[project_index]
+            assert projects[project_index]["collectionMetadataSchemas"] == self.schema_name
+            assert projects[project_index]["resource"] == self.destination_resource
+
+            assert len(projects[project_index]["managers"]["users"]) == 2
+            assert self.manager1 in projects[project_index]["managers"]["users"]
+            assert self.manager2 in projects[project_index]["managers"]["users"]
+
+        # setup new user
+        new_user = "new_user"
+        create_user(new_user)
+        project_path = self.project_paths[0]
+        rule_as_new_user = cmd.format(new_user)
+
+        # assert new user has no project access
+        ret = subprocess.check_output(rule_as_new_user, shell=True)
+        projects = json.loads(ret)
+        assert len(projects) == 0
+
+        # assert new user has one project access
+        ichmod = "ichmod -rM {} {} {}"
+        run_ichmod = ichmod.format("write", new_user, project_path)
+        subprocess.check_call(run_ichmod, shell=True)
+        ret = subprocess.check_output(rule_as_new_user, shell=True)
+        projects = json.loads(ret)
+        assert len(projects) == 1
+
+        # teardown
+        run_ichmod = ichmod.format("null", new_user, project_path)
+        subprocess.check_call(run_ichmod, shell=True)
+        remove_user(new_user)
+
     def assert_project_avu(self, project, project_index=0):
         assert project["collectionMetadataSchemas"] == self.schema_name
         assert project["dataSizeGiB"] == 0.0
@@ -220,7 +308,7 @@ class TestProjects:
         assert project["enableDropzoneSharing"] == "true"
         assert project["enableOpenAccessExport"] == "false"
         assert project["enableUnarchive"] == "false"
-        assert project["title"] == "{}{}".format(self.project_title_base, project_index)
+        assert project["title"] == self.project_titles[project_index]
 
     @staticmethod
     def update_resource_availability(resource, availability):

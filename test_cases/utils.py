@@ -5,6 +5,7 @@ from os import path
 
 import requests
 from dhpythonirodsutils import formatters, validators
+import uuid
 
 TMP_INSTANCE_PATH = "/tmp/metadata_instance.json"
 TMP_SCHEMA_PATH = "/tmp/metadata_schema.json"
@@ -146,6 +147,7 @@ def start_and_wait_for_ingest(test_case):
     assert drop_zone["state"] == "ingested"
     print("Dropzone ingested, continuing tests")
 
+
 def does_path_exist(absolute_path):
     run_ilocate = "ilocate {}".format(absolute_path)
     try:
@@ -177,6 +179,34 @@ def create_user(username):
     subprocess.check_call(run_ichmod, shell=True)
 
 
+def create_data_steward(username):
+    create_user(username)
+    set_user_avu(username, "specialty", "data-steward")
+
+def create_group(groupname):
+    run_iadmin = 'iadmin mkgroup {}'.format(groupname)
+    subprocess.check_call(run_iadmin, shell=True)
+    set_user_avu(groupname, "description", "{} is a cool group!".format(groupname))
+    set_user_avu(groupname, "displayName", "{}".format(groupname))
+    set_user_avu(groupname, "uniqueIdentifier", "{}".format(str(uuid.uuid1())))
+
+def remove_group(groupname):
+    run_iadmin = 'iadmin rmgroup {}'.format(groupname)
+    subprocess.check_call(run_iadmin, shell=True)
+
+def add_user_to_group(groupname, username):
+    run_iadmin = 'iadmin atg {} {}'.format(groupname, username)
+    subprocess.check_call(run_iadmin, shell=True)
+
+def remove_user_from_group(groupname, username):
+    run_iadmin = 'iadmin rfg {} {}'.format(groupname, username)
+    subprocess.check_call(run_iadmin, shell=True)
+
+def remove_user(username):
+    run_imeta = 'iadmin rmuser {}'.format(username)
+    subprocess.check_call(run_imeta, shell=True)
+
+
 def set_user_avu(username, attribute, value):
     run_imeta = 'imeta set -u {} {} "{}"'.format(
         username, attribute, value
@@ -184,6 +214,16 @@ def set_user_avu(username, attribute, value):
     subprocess.check_call(run_imeta, shell=True)
 
 
-def remove_user(username):
-    run_imeta = 'iadmin rmuser {}'.format(username)
+def set_irods_collection_avu(collection_path, attribute, value):
+    run_imeta = 'imeta set -C {} {} "{}"'.format(
+        collection_path, attribute, value
+    )
     subprocess.check_call(run_imeta, shell=True)
+
+
+def check_if_key_value_in_dict_list(dictionaries_list, key, value):
+    found = False
+    for dictionary in dictionaries_list:
+        if dictionary[key] == value:
+            found = True
+    return found

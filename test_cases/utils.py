@@ -146,6 +146,7 @@ def start_and_wait_for_ingest(test_case):
     assert drop_zone["state"] == "ingested"
     print("Dropzone ingested, continuing tests")
 
+
 def does_path_exist(absolute_path):
     run_ilocate = "ilocate {}".format(absolute_path)
     try:
@@ -177,6 +178,11 @@ def create_user(username):
     subprocess.check_call(run_ichmod, shell=True)
 
 
+def remove_user(username):
+    run_imeta = 'iadmin rmuser {}'.format(username)
+    subprocess.check_call(run_imeta, shell=True)
+
+
 def set_user_avu(username, attribute, value):
     run_imeta = 'imeta set -u {} {} "{}"'.format(
         username, attribute, value
@@ -184,6 +190,8 @@ def set_user_avu(username, attribute, value):
     subprocess.check_call(run_imeta, shell=True)
 
 
-def remove_user(username):
-    run_imeta = 'iadmin rmuser {}'.format(username)
+def set_irods_collection_avu(collection_path, attribute, value):
+    run_imeta = 'imeta set -C {} {} "{}"'.format(
+        collection_path, attribute, value
+    )
     subprocess.check_call(run_imeta, shell=True)

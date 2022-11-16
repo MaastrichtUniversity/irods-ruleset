@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getUsers.r "*showServiceAccounts='true'"
+# irule -F /rules/misc/getUsers.r "*showServiceAccounts='true'"
 
 irule_dummy() {
     IRULE_getUsers(*showServiceAccounts , *result);

@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getUsersInGroup.r "*groupId='2'"
+# irule -F /rules/misc/getUsersInGroup.r "*groupId='2'"
 
 irule_dummy() {
     IRULE_getUsersInGroup(*groupId, *result);

@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getGroups.r "*showSpecialGroups='true'"
+# irule -F /rules/misc/getGroups.r "*showSpecialGroups='true'"
 
 irule_dummy() {
     IRULE_getGroups(*showSpecialGroups, *result);

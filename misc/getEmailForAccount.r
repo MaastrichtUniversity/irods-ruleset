@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getEmailForAccount.r "*account='mcoonen'"
+# irule -F /rules/misc/getEmailForAccount.r "*account='mcoonen'"
 
 irule_dummy() {
     IRULE_getEmailForAccount(*account , *result);

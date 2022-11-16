@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getDataStewards.r
+# irule -F /rules/misc/getDataStewards.r
 
 irule_dummy() {
     IRULE_getDataStewards(*result);

@@ -9,7 +9,7 @@ EPIC PID needs to run (Error-post ingestion)
 # Prevent pytest cache warnings
 ```
 Make sure the irods user has write access to the test_cases folder
-chmod 755 /rules/test_cases
+chmod 777 /rules/test_cases
 ```
 
 # How to run all the test cases
@@ -19,6 +19,15 @@ su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v .
 ```
+
+# How to run all the test cases with print enabled 
+```
+./rit.sh exec ires
+su irods
+cd /rules/test_cases
+/var/lib/irods/.local/bin/pytest -v -s .
+```
+
 # How to run a single test file
 ```
 ./rit.sh exec ires

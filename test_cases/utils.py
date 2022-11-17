@@ -1,10 +1,10 @@
 import json
 import subprocess
 import time
-
-import requests
+import uuid
 from os import path
 
+import requests
 from dhpythonirodsutils import formatters, validators
 
 TMP_INSTANCE_PATH = "/tmp/metadata_instance.json"
@@ -125,7 +125,7 @@ def start_and_wait_for_ingest(test_case):
         test_case.depositor, test_case.token, test_case.dropzone_type, test_case.depositor
     )
     subprocess.check_call(rule_start_ingest, shell=True)
-
+    print("Starting {} ingestion of '{}'".format(test_case.dropzone_type, test_case.token))
     rule_get_active_drop_zone = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
         test_case.token, test_case.dropzone_type
     )
@@ -134,7 +134,7 @@ def start_and_wait_for_ingest(test_case):
     drop_zone = json.loads(ret_get_active_drop_zone)
     assert drop_zone["token"] == test_case.token
 
-    fail_safe = 10
+    fail_safe = 100
     while fail_safe != 0:
         ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
 
@@ -143,4 +143,115 @@ def start_and_wait_for_ingest(test_case):
             fail_safe = 0
         else:
             fail_safe = fail_safe - 1
-            time.sleep(5)
+            time.sleep(3)
+    assert drop_zone["state"] == "ingested"
+    print("Dropzone ingested, continuing tests")
+
+
+def wait_for_set_acl_for_metadata_snapshot_to_finish(project_id):
+    """
+    Wait for upto 90 seconds for the delay queue part of set_acl_for_metadata_snapshot to finish
+    Continue when completed in time
+    Parameters
+    ----------
+    project_id : str
+        The project to request and set a pid for (ie. P000000010)
+    """
+    cmd = 'iqstat -a | grep "setCollectionSize(\'{}\'"'.format(project_id)
+    fail_safe = 30
+    output = ''
+    while fail_safe != 0:
+        try:
+            output = subprocess.check_output(cmd, shell=True)
+            fail_safe = fail_safe - 1
+            time.sleep(3)
+        except subprocess.CalledProcessError:
+            fail_safe = 0
+            output = ''
+    assert project_id not in output
+
+
+def does_path_exist(absolute_path):
+    run_ilocate = "ilocate {}".format(absolute_path)
+    try:
+        subprocess.check_output(run_ilocate, shell=True).strip()
+    except subprocess.CalledProcessError:
+        return False
+
+    return True
+
+
+def set_collection_avu(collection_path, attribute, value):
+    run_imeta = 'imeta set -C {} {} "{}"'.format(
+        collection_path, attribute, value
+    )
+    subprocess.check_call(run_imeta, shell=True)
+
+
+def create_user(username):
+    run_imeta = 'iadmin mkuser {} rodsuser'.format(username)
+    subprocess.check_call(run_imeta, shell=True)
+
+    set_user_avu(username, "displayName", "{} LastName".format(username))
+    set_user_avu(username, "eduPersonUniqueID", "{}@sram.surf.nl".format(username))
+    set_user_avu(username, "email", "{}@maastrichtuniversity.nl".format(username))
+    set_user_avu(username, "voPersonExternalAffiliation", "{}@maastrichtuniversity.nl".format(username))
+    set_user_avu(username, "voPersonExternalID", "{}@unimaas.nl".format(username))
+
+    run_ichmod = 'ichmod -M write {} /nlmumc/ingest/direct'.format(username)
+    subprocess.check_call(run_ichmod, shell=True)
+
+
+def create_data_steward(username):
+    create_user(username)
+    set_user_avu(username, "specialty", "data-steward")
+
+
+def create_group(groupname):
+    run_iadmin = 'iadmin mkgroup {}'.format(groupname)
+    subprocess.check_call(run_iadmin, shell=True)
+    set_user_avu(groupname, "description", "{} is a cool group!".format(groupname))
+    set_user_avu(groupname, "displayName", "{}".format(groupname))
+    set_user_avu(groupname, "uniqueIdentifier", "{}".format(str(uuid.uuid1())))
+
+
+def remove_group(groupname):
+    run_iadmin = 'iadmin rmgroup {}'.format(groupname)
+    subprocess.check_call(run_iadmin, shell=True)
+
+
+def add_user_to_group(groupname, username):
+    run_iadmin = 'iadmin atg {} {}'.format(groupname, username)
+    subprocess.check_call(run_iadmin, shell=True)
+
+
+def remove_user_from_group(groupname, username):
+    run_iadmin = 'iadmin rfg {} {}'.format(groupname, username)
+    subprocess.check_call(run_iadmin, shell=True)
+
+
+def remove_user(username):
+    run_imeta = 'iadmin rmuser {}'.format(username)
+    subprocess.check_call(run_imeta, shell=True)
+
+
+def set_user_avu(username, attribute, value):
+    run_imeta = 'imeta set -u {} {} "{}"'.format(
+        username, attribute, value
+    )
+    subprocess.check_call(run_imeta, shell=True)
+
+
+def set_irods_collection_avu(collection_path, attribute, value):
+    run_imeta = 'imeta set -C {} {} "{}"'.format(
+        collection_path, attribute, value
+    )
+    subprocess.check_call(run_imeta, shell=True)
+
+
+def check_if_key_value_in_dict_list(dictionaries_list, key, value):
+    found = False
+    for dictionary in dictionaries_list:
+        if dictionary[key] == value:
+            found = True
+    return found

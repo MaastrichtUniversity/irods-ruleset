@@ -1,5 +1,5 @@
 # Call with
-# irule -F getCollectionAVU.r "*collName='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getResourceAVU.r "*resourceName='replRescUM01'" "*attribute='NCIT:C88193'" "*overrideValue=''" "*fatal='true'"
 #
 # The following arguments are optional when using irule -F,
 # but still have to be specified when calling from within another rule:
@@ -29,5 +29,5 @@ IRULE_getResourceAVU(*resourceName, *attribute, *value, *overrideValue, *fatal) 
     }
 }
 
-INPUT *resourceName'', *attribute='', *value='', *overrideValue='', *fatal='true'
+INPUT *resourceName='', *attribute='', *value='', *overrideValue='', *fatal='true'
 OUTPUT ruleExecOut

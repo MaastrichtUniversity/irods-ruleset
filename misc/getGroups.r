@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getGroups.r "*showSpecialGroups='true'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getGroups.r "*showSpecialGroups='true'"
 
 irule_dummy() {
     IRULE_getGroups(*showSpecialGroups, *result);

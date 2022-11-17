@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r set_user_attribute_value -a "jmelius,test,value" -j
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def set_user_attribute_value(ctx, username, attribute, value):
     """

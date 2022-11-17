@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_all_users_id -j
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_all_users_id(ctx):
     """

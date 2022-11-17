@@ -148,6 +148,29 @@ def start_and_wait_for_ingest(test_case):
     print("Dropzone ingested, continuing tests")
 
 
+def wait_for_set_acl_for_metadata_snapshot_to_finish(project_id):
+    """
+    Wait for upto 90 seconds for the delay queue part of set_acl_for_metadata_snapshot to finish
+    Continue when completed in time
+    Parameters
+    ----------
+    project_id : str
+        The project to request and set a pid for (ie. P000000010)
+    """
+    cmd = 'iqstat -a | grep "setCollectionSize(\'{}\'"'.format(project_id)
+    fail_safe = 30
+    output = ''
+    while fail_safe != 0:
+        try:
+            output = subprocess.check_output(cmd, shell=True)
+            fail_safe = fail_safe - 1
+            time.sleep(3)
+        except subprocess.CalledProcessError:
+            fail_safe = 0
+            output = ''
+    assert project_id not in output
+
+
 def does_path_exist(absolute_path):
     run_ilocate = "ilocate {}".format(absolute_path)
     try:

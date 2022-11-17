@@ -11,7 +11,7 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
     remove_project,
-    revert_latest_project_number,
+    revert_latest_project_number, create_data_steward, create_user, remove_user,
 )
 
 
@@ -20,9 +20,11 @@ class TestTapeArchive:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "jmelius"
+    depositor = "test_manager"
     manager1 = depositor
-    manager2 = "opalmen"
+    manager2 = "test_data_steward"
+    data_steward = manager2
+    service_account = "service-surfarchive"
 
     ingest_resource = "iresResource"
     destination_resource = "replRescUM01"
@@ -36,11 +38,9 @@ class TestTapeArchive:
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
     collection_title = "collection_title"
     collection_id = "C000000001"
+
     project_collection_path = ""
-
-    service_account = "service-surfarchive"
     large_file_logical_path = ""
-
     run_ichmod = ""
     rule_status = ""
     check_small_file_resource = ""
@@ -50,6 +50,8 @@ class TestTapeArchive:
     def setup_class(cls):
         print()
         print("Start {}.setup_class".format(cls.__name__))
+        create_user(cls.manager1)
+        create_data_steward(cls.manager2)
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
@@ -79,6 +81,8 @@ class TestTapeArchive:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         revert_latest_project_number()
+        remove_user(cls.manager1)
+        remove_user(cls.manager2)
         print("End {}.teardown_class".format(cls.__name__))
 
     # region extended setup
@@ -140,12 +144,10 @@ class TestTapeArchive:
         self.wait_for_migration(self.rule_status, project_migration_status)
 
         # Assert archive
-        check_small_file_resource = "ils -l {}/instance.json".format(self.project_collection_path)
-        output = subprocess.check_output(check_small_file_resource, shell=True)
+        output = subprocess.check_output(self.check_small_file_resource, shell=True)
         assert self.destination_resource in output
 
-        check_large_file_resource = "ils -l {}".format(self.large_file_logical_path)
-        output = subprocess.check_output(check_large_file_resource, shell=True)
+        output = subprocess.check_output(self.check_large_file_resource, shell=True)
         assert "arcRescSURF01" in output
 
     def run_un_archive(self, un_archive_path):

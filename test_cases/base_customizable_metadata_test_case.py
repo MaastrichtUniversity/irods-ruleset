@@ -10,7 +10,7 @@ from test_cases.utils import (
     set_collection_avu,
     does_path_exist,
     remove_project,
-    revert_latest_project_number,
+    revert_latest_project_number, wait_for_set_acl_for_metadata_snapshot_to_finish,
 )
 
 
@@ -65,6 +65,7 @@ class BaseTestCaseCustomizableMetadata:
     def teardown_class(cls):
         print()
         print("Start {}.teardown_class".format(cls.__name__))
+        wait_for_set_acl_for_metadata_snapshot_to_finish(cls.project_id)
         remove_project(cls.project_path)
         revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))

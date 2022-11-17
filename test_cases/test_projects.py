@@ -13,7 +13,7 @@ from test_cases.utils import (
     create_dropzone,
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
-    set_irods_collection_avu,
+    set_irods_collection_avu, create_data_steward,
 )
 
 """
@@ -57,7 +57,8 @@ class TestProjects:
     # a user who doesn't have any project access after the iRODS bootstraps
     depositor = "foobar"
     manager1 = depositor
-    manager2 = "opalmen"
+    manager2 = "test_datasteward"
+    data_steward = manager2
 
     ingest_resource = "iresResource"
     destination_resource = "replRescUM01"
@@ -82,6 +83,7 @@ class TestProjects:
         print()
         print("Start {}.setup_class".format(cls.__name__))
         create_user(cls.depositor)
+        create_data_steward(cls.data_steward)
         create_user(cls.new_user)
         for project_index in range(cls.number_of_projects):
             cls.project_title = "{}{}".format(cls.project_title_base, project_index)
@@ -101,6 +103,7 @@ class TestProjects:
 
         remove_user(cls.depositor)
         remove_user(cls.new_user)
+        remove_user(cls.data_steward)
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_list_projects(self):
@@ -138,7 +141,7 @@ class TestProjects:
         project = json.loads(ret)
         assert self.depositor in project["managers"]["users"]
 
-        rule = cmd.format(self.project_ids[0], "jmelius")
+        rule = cmd.format(self.project_ids[0], self.new_user)
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert not project
@@ -171,7 +174,7 @@ class TestProjects:
         self.assert_project_avu(project)
         assert project["path"] == project_path
         assert project["project"] == project_id
-        assert project["dataStewardDisplayName"] == "Olav Palmen"
+        assert project["dataStewardDisplayName"] == self.data_steward + " LastName"
         assert project["principalInvestigatorDisplayName"] == self.manager1 + " LastName"
         assert project["respCostCenter"] == self.budget_number
         assert project["storageQuotaGiB"] == "0"
@@ -440,7 +443,6 @@ class TestProjects:
         rule = '/rules/tests/run_test.sh -r list_projects_minimal -u {}'.format(self.depositor)
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
-        print (json.dumps(projects, indent=4))
         assert len(projects) == self.number_of_projects
         for project_index in range(self.number_of_projects):
             assert projects[project_index]["id"] == self.project_ids[project_index]

@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_user_metadata -a "jmelius" -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_metadata(ctx, username):
     result = {"username": username}

@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_user_or_group_by_id -a "jmelius" -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_or_group_by_id(ctx, account_id):
     """

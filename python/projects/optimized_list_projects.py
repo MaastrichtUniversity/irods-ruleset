@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r optimized_list_projects -u jmelius -j
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def optimized_list_projects(ctx):
     """

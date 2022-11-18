@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_user_internal_affiliation_status -a "jmelius" -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_user_internal_affiliation_status(ctx, username):
     """
@@ -20,7 +21,6 @@ def get_user_internal_affiliation_status(ctx, username):
         affiliation = external_id.split("@")[1]
     except ValueError:
         affiliation = ""
-    ctx.writeLine("stdout", affiliation)
     if affiliation in ["unimaas.nl", "mumc.nl"]:
         return True
     return False

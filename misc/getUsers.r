@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getUsers.r "*showServiceAccounts='true'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getUsers.r "*showServiceAccounts='true'"
 
 irule_dummy() {
     IRULE_getUsers(*showServiceAccounts , *result);

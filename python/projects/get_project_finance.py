@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_project_finance -a "/nlmumc/projects/P000000014" -u psuppers -j
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_project_finance(ctx, project_path):
     """
@@ -6,7 +7,7 @@ def get_project_finance(ctx, project_path):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_path : str
         The project absolute path
 
@@ -29,7 +30,7 @@ def get_project_finance(ctx, project_path):
         collection_size = 0
         resources_details = []
 
-        # Get the collection size on each resources
+        # Get the collection size on each resource
         parameters = "META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
         conditions = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{}'".format(project_collection_path)
         for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):

@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r get_service_accounts_id -j
+
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_service_accounts_id(ctx):
     """

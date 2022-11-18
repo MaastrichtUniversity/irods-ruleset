@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r list_destination_resources_status -j
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def list_destination_resources_status(ctx):
     """

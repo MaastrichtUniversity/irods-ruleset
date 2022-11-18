@@ -10,7 +10,7 @@ from test_cases.utils import (
     set_collection_avu,
     does_path_exist,
     remove_project,
-    revert_latest_project_number,
+    revert_latest_project_number, wait_for_set_acl_for_metadata_snapshot_to_finish,
 )
 
 
@@ -65,6 +65,7 @@ class BaseTestCaseCustomizableMetadata:
     def teardown_class(cls):
         print()
         print("Start {}.teardown_class".format(cls.__name__))
+        wait_for_set_acl_for_metadata_snapshot_to_finish(cls.project_id)
         remove_project(cls.project_path)
         revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
@@ -107,7 +108,7 @@ class BaseTestCaseCustomizableMetadata:
 
         # setCollectionSize is also called in set_acl_for_metadata_snapshot but in a delay queue
         # to avoid using a sleep call, we execute it synchronously to have the updated value during the test.
-        set_size = 'irule -F /rules/misc/setCollectionSize.r "*project=\'{}\'" "*projectCollection=\'{}\'" "*openPC=\'false\'" "*closePC=\'false\'"'.format(
+        set_size = 'irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/setCollectionSize.r "*project=\'{}\'" "*projectCollection=\'{}\'" "*openPC=\'false\'" "*closePC=\'false\'"'.format(
             cls.project_id, cls.collection_id
         )
         subprocess.check_call(set_size, shell=True)

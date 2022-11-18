@@ -58,6 +58,7 @@ def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, de
     )
 
 
+# TODO move to its own file
 def get_resource_status(ctx, resource_name):
     for result in row_iterator(
         "RESC_STATUS",

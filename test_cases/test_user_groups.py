@@ -168,7 +168,7 @@ class TestUserGroups:
         rule = "/rules/tests/run_test.sh -r get_temporary_password_lifetime"
         ret = subprocess.check_output(rule, shell=True)
         temporary_password = json.loads(ret)
-        assert temporary_password == int(os.getenv("IRODS_TEMP_PASSWORD_LIFETIME"))
+        assert temporary_password == int(os.getenv("ENV_IRODS_TEMP_PASSWORD_LIFETIME"))
 
     def test_get_user_admin_status(self):
         rule = "/rules/tests/run_test.sh -r get_user_admin_status -a {user}"

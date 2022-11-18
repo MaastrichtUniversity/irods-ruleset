@@ -16,7 +16,7 @@ pep_api_data_obj_put_post(*INSTANCE_NAME, *COMM, *DATAOBJINP, *BUFFER, *PORTAL_O
         *resource = "";
         *sizeIngested = 0;
         *rescName = ""
-        if (exists(*DATAOBJINP,"destRescName")){
+        if (checkIfKeyInList(*DATAOBJINP,"destRescName")){
             *rescName = *DATAOBJINP.destRescName
         }
         uuChop(*objPath, *head, *tail, "/nlmumc/projects/", true);
@@ -39,8 +39,4 @@ pep_api_data_obj_put_post(*INSTANCE_NAME, *COMM, *DATAOBJINP, *BUFFER, *PORTAL_O
     if (*objPath like regex "/nlmumc/ingest/direct/.*/instance.json" || *objPath like regex "/nlmumc/ingest/direct/.*/schema.json"){
         msiSetACL("default", "read", "$userNameClient", "*objPath")
     }
-}
-
-exists(*list, *key) {
-    errormsg(msiGetValByKey(*list, *key, *val), *err) == 0;
 }

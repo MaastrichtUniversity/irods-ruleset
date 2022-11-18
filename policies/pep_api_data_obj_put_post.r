@@ -11,12 +11,14 @@
 
 pep_api_data_obj_put_post(*INSTANCE_NAME, *COMM, *DATAOBJINP, *BUFFER, *PORTAL_OPR_OUT){
     *objPath = *DATAOBJINP.obj_path
-    *rescName = *DATAOBJINP.destRescName
-
     # Policy to increment the size of the ingested files for the progress bar
     if(*objPath like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}/.*") {
         *resource = "";
         *sizeIngested = 0;
+        *rescName = ""
+        if (exists(*DATAOBJINP,"destRescName")){
+            *rescName = *DATAOBJINP.destRescName
+        }
         uuChop(*objPath, *head, *tail, "/nlmumc/projects/", true);
         uuChop(*tail, *project, *tail, "/", true);
         uuChop(*tail, *collection, *tail, "/", true);
@@ -37,4 +39,8 @@ pep_api_data_obj_put_post(*INSTANCE_NAME, *COMM, *DATAOBJINP, *BUFFER, *PORTAL_O
     if (*objPath like regex "/nlmumc/ingest/direct/.*/instance.json" || *objPath like regex "/nlmumc/ingest/direct/.*/schema.json"){
         msiSetACL("default", "read", "$userNameClient", "*objPath")
     }
+}
+
+exists(*list, *key) {
+    errormsg(msiGetValByKey(*list, *key, *val), *err) == 0;
 }

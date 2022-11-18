@@ -93,7 +93,7 @@ class TestPolicies:
         third_ils_output = subprocess.check_output(run_ils, shell=True)
         assert "dlinssen" not in third_ils_output
 
-    def test_post_proc_for_put(self):
+    def test_pep_api_data_obj_put_post(self):
         """
         This tests whether the sizeIngested AVU is properly incremented when a file in ingested.
         Also check the metadata files have the correct ACL for the dropzone creator
@@ -107,7 +107,7 @@ class TestPolicies:
         subprocess.check_call(put_instance, shell=True)
         # Test sizeIngested AVU
         get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(collection_path)
-        size_ingested = subprocess.check_output(get_size_ingested, shell=True)
+        size_ingested = subprocess.check_output(get_size_ingested, shell=True).rstrip("\n")
         assert int(size_ingested) == 12521
         # Test metadata file ACL
         run_ils = "ils -A /nlmumc/ingest/direct/{}/instance.json".format(self.token)

@@ -2,11 +2,22 @@
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def checksum_collection(ctx, project_id, collection_id):
     """
+    Run checksum calculation for all data object inside the input project collection.
+    Note: The user who execute the rule needs at least write access on the data object to calculate the checksum.
 
     Parameters
     ----------
     ctx : Context
         Combined type of callback and rei struct.
+    project_id: str
+        The project ID ie P000000001
+    collection_id: str
+        The collection ID ie C000000001
+
+    Returns
+    -------
+    dict[str]
+        Key: data object logical path; Value: data object sha2 checksum value
     """
     project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     output = {}

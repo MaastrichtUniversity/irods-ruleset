@@ -13,12 +13,12 @@ IRULE_prepareTapeUnArchive(*archColl) {
 
     # Check the input absolute path and initialize the required variables for this rule
     if (*archColl like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}.*"){
-        # split the *archColl into *project and *projectCollection
-        *splitPath =  split(*archColl, "/");
-        *project = elem(*splitPath,2);
-        *projectPath =  "/nlmumc/projects/*project";
-        *projectCollection = elem(*splitPath,3);
-        *projectCollectionPath = "/nlmumc/projects/*project/*projectCollection";
+        *project = "";
+        get_project_id_from_project_collection_path(*archColl,*project)
+        *projectCollection = "";
+        get_collection_id_from_project_collection_path(*archColl,*projectCollection)
+        *projectCollectionPath = "";
+        get_project_collection_path(*project, *projectCollection,*projectCollectionPath)
     }
     else{
          failmsg(-1, "Invalid input path: *archColl");

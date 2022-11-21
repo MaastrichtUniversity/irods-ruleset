@@ -158,10 +158,34 @@ def is_dropzone_state_in_active_ingestion(ctx, state):
     return in_active_ingestion
 
 
+# region formatter utils rules
+# The following rules are needed for the native rules to use the python formatter functions
+
+
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def format_audit_trail_message(ctx, username, event):
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
     return loggers.format_audit_trail_message(int(user_id), AuditTailTopics.POLICY.value, event)
+
+
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def get_project_id_from_project_collection_path(ctx, objectpath):
+    project_id = formatters.get_project_id_from_project_collection_path(objectpath)
+    return project_id
+
+
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def get_collection_id_from_project_collection_path(ctx, objectpath):
+    collection_id = formatters.get_collection_id_from_project_collection_path(objectpath)
+    return collection_id
+
+
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def get_project_collection_path(ctx, project_id, collection_id):
+    project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
+    return project_collection_path
+
+# endregion
 
 
 def read_data_object_from_irods(ctx, path):

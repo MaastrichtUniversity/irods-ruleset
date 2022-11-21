@@ -96,6 +96,7 @@ class TestResources:
         subprocess.check_call(change_status.format("up"), shell=True)
 
     def test_calc_collection_files_across_resc(self):
+        resc_found = False
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\"".format(
             self.project_id, self.collection_id
         )
@@ -110,14 +111,20 @@ class TestResources:
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
+        run_iquest = "iquest \"%s\" \"SELECT RESC_ID WHERE RESC_NAME = 'replRescAZM01' \""
+        iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
-        assert rule_parsed["numFilesPerResc"][1]["numFiles"] == "1"
-        assert rule_parsed["numFilesPerResc"][1]["resourceID"].isnumeric()
+        for resc in rule_parsed["numFilesPerResc"]:
+            if resc["resourceID"] == iquest_result:
+                assert resc["numFiles"] == "1"
+                resc_found = True
+        assert resc_found == True
         subprocess.check_call(
             "irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True
         )
 
     def test_calc_collection_size_across_resc(self):
+        resc_found = False
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
             self.project_id, self.collection_id
         )
@@ -132,9 +139,14 @@ class TestResources:
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
+        run_iquest = "iquest \"%s\" \"SELECT RESC_ID WHERE RESC_NAME = 'replRescAZM01' \""
+        iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
-        assert rule_parsed["sizePerResc"][1]["dataSize"] == "13"
-        assert rule_parsed["sizePerResc"][1]["resourceID"].isnumeric()
+        for resc in rule_parsed["sizePerResc"]:
+            if resc["resourceID"] == iquest_result:
+                assert resc["dataSize"] == "13"
+                resc_found = True
+        assert resc_found == True
         subprocess.check_call(
             "irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True
         )

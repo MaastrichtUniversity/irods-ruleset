@@ -11,7 +11,7 @@ from test_cases.utils import add_metadata_files_to_direct_dropzone, get_instance
 class TestEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
     dropzone_type = "direct"
 
-    ingest_resource = "iresResource"
+    ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
 
     new_collection_title = "Test edit title"

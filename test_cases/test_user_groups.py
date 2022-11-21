@@ -98,7 +98,7 @@ class TestUserGroups:
     group = "test_group"
     service_account = "service-test"
 
-    ingest_resource = "iresResource"
+    ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"

@@ -39,7 +39,7 @@ class TestResources:
     manager1 = depositor
     manager2 = "opalmen"
 
-    ingest_resource = "iresResource"
+    ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"
@@ -163,7 +163,7 @@ class TestResources:
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         for item in rule_parsed:
-            assert item["name"] in ["ires-centosResource", "iresResource", "ires-s3-1Resource", "ires-s3-2Resource"]
+            assert item["name"] in ["ires-hnas-azmResource", "ires-hnas-umResource", "ires-ceph-acResource", "ires-ceph-glResource"]
 
     def test_get_resource_avu(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""

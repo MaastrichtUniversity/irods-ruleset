@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r create_new_project -a "iresResource,replRescUM01,PROJECTNAME,jmelius,opalmen,UM-30001234X,{'enableDropzoneSharing':'true'}"
+# /rules/tests/run_test.sh -r create_new_project -a "ires-hnas-umResource,replRescUM01,PROJECTNAME,jmelius,opalmen,UM-30001234X,{'enableDropzoneSharing':'true'}"
 
 @make(inputs=range(7), outputs=[7], handler=Output.STORE)
 def create_new_project(

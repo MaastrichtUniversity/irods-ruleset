@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r list_project_managers -a "P000000010,false" -j -u jmelius
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def list_project_managers(ctx, project_id, show_service_accounts):
     """
@@ -6,9 +7,9 @@ def list_project_managers(ctx, project_id, show_service_accounts):
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_id : str
-        The project's id; eg.g P000000010
+        The project's id; e.g: P000000010
     show_service_accounts: str
         'true'/'false' expected; If true, hide the service accounts in the result
 

@@ -1,3 +1,4 @@
+# /rules/tests/run_test.sh -r get_user_attribute_value -a "jmelius,email,false" -j
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def get_user_attribute_value(ctx, username, attribute, fatal):
     """

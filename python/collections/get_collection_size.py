@@ -1,12 +1,13 @@
+# /rules/tests/run_test.sh -r get_collection_size -a "/nlmumc/projects/P000000028/C000000001,B,floor" -j
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def get_collection_size(ctx, project_collection_path, unit, round):
     """
-    Get the collection's size. The returned value can formatted by unit and rounded.
+    Get the collection's size. The returned value can be formatted by unit and rounded.
 
     Parameters
     ----------
     ctx : Context
-        Combined type of a callback and rei struct.
+        Combined type of callback and rei struct.
     project_collection_path: str
         Project collection absolute path
     unit: str

@@ -2,7 +2,7 @@
 # E.g. 100 files on replRescUM01, 50 files on replRescUMCeph01
 # Call with
 #
-# irule -F calcCollectionFilesAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/calcCollectionFilesAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'"
 #
 # Output:
 # This rule outputs the same information both in json and iRODS list format

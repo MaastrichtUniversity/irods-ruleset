@@ -176,7 +176,7 @@ def read_data_object_from_irods(ctx, path):
     file_desc = ret_val["arguments"][1]
 
     # Read iRODS file
-    ret_val = ctx.callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
+    ret_val = ctx.callback.msiDataObjRead(file_desc, 2**31 - 1, irods_types.BytesBuf())
     read_buf = ret_val["arguments"][2]
 
     # Convert BytesBuffer to string
@@ -219,8 +219,9 @@ def format_project_collection_path(ctx, project_id, collection_id):
     try:
         project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1",
-                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit(
+            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+        )
     return project_collection_path
 
 
@@ -228,8 +229,9 @@ def format_instance_collection_path(ctx, project_id, collection_id):
     try:
         instance_path = formatters.format_instance_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1",
-                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit(
+            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+        )
     return instance_path
 
 
@@ -237,8 +239,9 @@ def format_schema_collection_path(ctx, project_id, collection_id):
     try:
         schema_path = formatters.format_schema_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1",
-                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit(
+            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+        )
     return schema_path
 
 
@@ -246,8 +249,9 @@ def format_instance_versioned_collection_path(ctx, project_id, collection_id, ve
     try:
         instance_path = formatters.format_instance_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1",
-                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit(
+            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+        )
     return instance_path
 
 
@@ -255,8 +259,9 @@ def format_schema_versioned_collection_path(ctx, project_id, collection_id, vers
     try:
         schema_path = formatters.format_schema_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1",
-                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit(
+            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+        )
     return schema_path
 
 
@@ -264,8 +269,9 @@ def format_metadata_versions_path(ctx, project_id, collection_id):
     try:
         metadata_versions_path = formatters.format_metadata_versions_path(project_id, collection_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1",
-                             "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id))
+        ctx.callback.msiExit(
+            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+        )
     return metadata_versions_path
 
 
@@ -278,3 +284,25 @@ def get_elastic_search_connection(ctx):
     es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password))
 
     return es
+
+
+def format_human_bytes(B):
+    """
+    Return the given bytes as a human friendly KB, MB, GB, or TB string.
+    """
+    B = float(B)
+    KB = float(1024)
+    MB = float(KB**2)  # 1,048,576
+    GB = float(KB**3)  # 1,073,741,824
+    TB = float(KB**4)  # 1,099,511,627,776
+
+    if B < KB:
+        return "{0} {1}".format(B, "Bytes" if 0 == B > 1 else "Byte")
+    elif KB <= B < MB:
+        return "{0:.2f} KB".format(B / KB)
+    elif MB <= B < GB:
+        return "{0:.2f} MB".format(B / MB)
+    elif GB <= B < TB:
+        return "{0:.2f} GB".format(B / GB)
+    elif TB <= B:
+        return "{0:.2f} TB".format(B / TB)

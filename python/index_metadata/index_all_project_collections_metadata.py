@@ -72,7 +72,7 @@ def index_project_collection(ctx, es, project_collection_path):
     ][2]
     project_access_info = json.loads(ctx.callback.get_project_user_members(project_id, "")["arguments"][1])
 
-    instance_object["project_title"] = project_title
+    instance_object["project_title"] = project_title.decode("utf-8")
     instance_object["project_id"] = project_id
     instance_object["collection_id"] = collection_id
     instance_object["user_access"] = project_access_info["users"]
@@ -85,8 +85,10 @@ def index_project_collection(ctx, es, project_collection_path):
             id=project_id + "_" + collection_id,
             document=instance_object,
         )
-    except ElasticsearchException:
-        ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised for {}".format(project_collection_path), 0)
+    except ElasticsearchException as err:
+        ctx.callback.msiWriteRodsLog(
+            "ERROR: ElasticsearchException raised for {} {}".format(project_collection_path, err), 0
+        )
         return False
 
     if "result" in res and res["result"] == "created":

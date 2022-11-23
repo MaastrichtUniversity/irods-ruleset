@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r index_update_single_project_collection_metadata -a "P000000014,C000000001," -u service-disqover
+# /rules/tests/run_test.sh -r index_update_single_project_collection_metadata -a "P000000014,C000000001" -u service-disqover
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def index_update_single_project_collection_metadata(ctx, project_id, collection_id):

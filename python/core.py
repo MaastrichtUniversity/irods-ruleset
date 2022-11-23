@@ -278,10 +278,13 @@ def format_metadata_versions_path(ctx, project_id, collection_id):
 def get_elastic_search_connection(ctx):
     from elasticsearch import Elasticsearch
 
+    environment = ctx.callback.msi_getenv("ENVIRONMENT", "")["arguments"][1]
+    use_ssl = True if environment == "acc" or environment == "prod" else False
+
     elastic_password = ctx.callback.msi_getenv("ELASTIC_PASSWORD", "")["arguments"][1]
     elastic_host = ctx.callback.msi_getenv("ELASTIC_HOST", "")["arguments"][1]
     elastic_port = ctx.callback.msi_getenv("ELASTIC_PORT", "")["arguments"][1]
-    es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password))
+    es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password), use_ssl=use_ssl)
 
     return es
 

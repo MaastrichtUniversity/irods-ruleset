@@ -61,7 +61,11 @@
 #         resource = callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)[
 #             "arguments"
 #         ][2]
-#         dest_resource = get_value_from_cond_input(rule_args[2].condInput, "destRescName")
+#
+#         try:
+#             dest_resource = get_value_from_cond_input(rule_args[2].condInput, "destRescName")
+#         except ValueError:
+#             dest_resource = ""
 #
 #         if resource == dest_resource:
 #             for row in row_iterator(

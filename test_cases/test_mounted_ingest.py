@@ -5,7 +5,7 @@ from test_cases.utils import add_metadata_files_to_mounted_dropzone
 class TestMountedIngestUM(BaseTestCaseIngest):
     dropzone_type = "mounted"
 
-    ingest_resource = "iresResource"
+    ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
 
     @classmethod
@@ -16,7 +16,7 @@ class TestMountedIngestUM(BaseTestCaseIngest):
 class TestMountedIngestAZM(BaseTestCaseIngest):
     dropzone_type = "mounted"
 
-    ingest_resource = "ires-centosResource"
+    ingest_resource = "ires-hnas-azmResource"
     destination_resource = "replRescAZM01"
 
     @classmethod
@@ -27,7 +27,7 @@ class TestMountedIngestAZM(BaseTestCaseIngest):
 class TestMountedIngestS3(BaseTestCaseIngest):
     dropzone_type = "mounted"
 
-    ingest_resource = "iresResource"
+    ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUMCeph01"
 
     @classmethod

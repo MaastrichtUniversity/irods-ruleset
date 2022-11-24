@@ -60,7 +60,7 @@ class TestProjects:
     manager2 = "test_datasteward"
     data_steward = manager2
 
-    ingest_resource = "iresResource"
+    ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"

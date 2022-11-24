@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r finish_ingest -a "P000000014,dlinssen,handsome-snake,C000000001,iresResource,direct"
+# /rules/tests/run_test.sh -r finish_ingest -a "P000000014,dlinssen,handsome-snake,C000000001,ires-hnas-umResource,direct"
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
 def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host, dropzone_type):
     """

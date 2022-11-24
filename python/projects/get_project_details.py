@@ -66,6 +66,10 @@ def get_project_details(ctx, project_path, show_service_accounts):
         project["path"], ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
 
+    project["description"] = ctx.callback.getCollectionAVU(
+        project["path"], "description", "", "", FALSE_AS_STRING
+    )["arguments"][2]
+
     project["respCostCenter"] = ctx.callback.getCollectionAVU(
         project["path"], ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
     )["arguments"][2]

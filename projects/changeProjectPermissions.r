@@ -95,6 +95,10 @@ IRULE_changeProjectPermissions(*project, *users){
             msiSetACL("recursive", "read", "rods", "*projectCollection");
         }
     }
+
+    # Update metadata for collection belonging to the project
+    index_update_single_project_metadata("*project")
+
 }
 
 

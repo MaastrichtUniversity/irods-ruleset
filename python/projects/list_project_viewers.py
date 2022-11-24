@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r list_project_viewers -a "P000000010,false,false" -j -u jmelius
+# /rules/tests/run_test.sh -r list_project_viewers -a "P000000015,false,false" -u service-disqover -j
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
     """

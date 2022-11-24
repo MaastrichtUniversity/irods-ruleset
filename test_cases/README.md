@@ -1,28 +1,30 @@
 # Prerequisites for the full test suite
 ```
-iCAT, iRES, iRES-centos, iRES-s3-1 and iRES-S3-2 containers need to be up
+icat, ires-hnas-um, ires-hnas-azm, ires-ceph-ac and ires-ceph-gl containers need to be up
 
-SRAM-Sync needs to have run 
+keycloak needs to have run
 
-EPIC PID needs to run (Error-post ingestion)
+sram-sync needs to have run
+
+epicpid needs to be up (Error-post ingestion)
 ```
 # Prevent pytest cache warnings
 ```
-Make sure the irods user has write access to the test_cases folder
+Make sure the irods user has write access to the test_cases folder (inside ires-hnas-um container)
 chmod 777 /rules/test_cases
 ```
 
 # How to run all the test cases
 ```
-./rit.sh exec ires
+./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v .
 ```
 
-# How to run all the test cases with print enabled 
+# How to run all the test cases with print enabled
 ```
-./rit.sh exec ires
+./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v -s .
@@ -30,21 +32,21 @@ cd /rules/test_cases
 
 # How to run a single test file
 ```
-./rit.sh exec ires
+./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v test_direct_ingest.py
 ```
 # How to run a single test case
 ```
-./rit.sh exec ires
+./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v test_direct_ingest.py::TestDirectIngestUM
 ```
 # How to run a single test
 ```
-./rit.sh exec ires
+./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v test_direct_ingest.py::TestDirectIngestUM::test_collection_avu

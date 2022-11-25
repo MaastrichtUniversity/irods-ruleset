@@ -179,6 +179,7 @@ class TestProjects:
         assert project["respCostCenter"] == self.budget_number
         assert project["storageQuotaGiB"] == "0"
         assert project["has_financial_view_access"]
+        assert project["description"] == ""
 
     def test_projects_finance(self):
         # setup

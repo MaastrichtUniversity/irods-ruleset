@@ -34,7 +34,6 @@ IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result)
             failmsg(-1, "ERROR: The attribute '*attribute' of collection '*path' has no value in iCAT");
         } else {
             *result = *overrideValue;
-            msiWriteRodsLog("WARNING: The attribute '*attribute' of collection '*path' has no value in iCAT. Using overrideValue '*overrideValue' instead",0);
         }
     }
 }

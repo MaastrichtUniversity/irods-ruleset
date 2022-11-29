@@ -21,10 +21,11 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     RETRY_MAX_NUMBER = 5
     RETRY_SLEEP_NUMBER = 60
 
-    dropzone_path = format_dropzone_path(ctx, token, "direct")
+    dropzone_type = "direct"
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     pre_ingest_results = json.loads(
-        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, token, username, "direct", "")[
+        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, token, username, dropzone_type, "")[
             "arguments"
         ][6]
     )
@@ -56,7 +57,7 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, str(difference))
+    ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, dropzone_type, str(difference))
 
     # Handle post ingestion operations
-    ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, "direct")
+    ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, dropzone_type)

@@ -57,6 +57,7 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
     result["project"] = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
     result["title"] = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
     ctx.callback.setCollectionAVU(dropzone_path, "totalSize", str(size))
+    ctx.callback.setCollectionAVU(dropzone_path, "numFiles", str(file_count))
 
     save_pre_ingest_document(ctx, result, token)
 

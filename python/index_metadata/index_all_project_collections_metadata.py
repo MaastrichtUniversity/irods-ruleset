@@ -59,11 +59,14 @@ def index_project_collection(ctx, es, project_collection_path):
         ctx.callback.msiWriteRodsLog("ERROR: msiObjStat RuntimeError raised for {}".format(project_collection_path), 0)
         return False
 
-    instance = read_data_object_from_irods(ctx, instance_path)
     try:
+        instance = read_data_object_from_irods(ctx, instance_path)
         instance_object = json.loads(instance)
     except ValueError:
         ctx.callback.msiWriteRodsLog("ERROR: JSONDecodeError raised for {}".format(project_collection_path), 0)
+        return False
+    except RuntimeError:
+        ctx.callback.msiWriteRodsLog("ERROR: RuntimeError raised for {}".format(project_collection_path), 0)
         return False
 
     # AVU metadata

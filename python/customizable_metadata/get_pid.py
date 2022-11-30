@@ -15,17 +15,17 @@ def get_pid(ctx, project_id, collection_id):
     import requests
 
     # Getting the epicpid url
-    epicpid_base = ctx.callback.msi_getenv("EPICPID_URL", "")["arguments"][1]
+    epicpid_base = ctx.callback.get_env("EPICPID_URL", "true", "")["arguments"][2]
     ctx.callback.msiWriteRodsLog("Requesting a PID with url {}".format(epicpid_base), 0)
     epicpid_url = epicpid_base + "single/" + project_id + collection_id
 
     # Getting the handle URL to format
-    mdr_handle_url = ctx.callback.msi_getenv("MDR_HANDLE_URL", "")["arguments"][1]
+    mdr_handle_url = ctx.callback.get_env("MDR_HANDLE_URL", "true", "")["arguments"][2]
     handle_url = mdr_handle_url + project_id + "/" + collection_id
 
     # Getting the epicpid user and password from env variable
-    epicpid_user = ctx.callback.msi_getenv("EPICPID_USER", "")["arguments"][1]
-    epicpid_password = ctx.callback.msi_getenv("EPICPID_PASSWORD", "")["arguments"][1]
+    epicpid_user = ctx.callback.get_env("EPICPID_USER", "true", "")["arguments"][2]
+    epicpid_password = ctx.callback.get_env("EPICPID_PASSWORD", "true", "")["arguments"][2]
 
     handle = ""
 

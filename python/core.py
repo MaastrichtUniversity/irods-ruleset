@@ -165,6 +165,16 @@ def format_audit_trail_message(ctx, username, event):
     return loggers.format_audit_trail_message(int(user_id), AuditTailTopics.POLICY.value, event)
 
 
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def get_env(ctx, key, fatal="false"):
+    import os
+    value = os.environ.get(key)
+    if fatal == TRUE_AS_STRING and not value:
+        ctx.callback.msiExit(
+            "-1", "Environment variable '{}' has no value".format(key)
+        )
+    return value
+
 def read_data_object_from_irods(ctx, path):
     """This rule gets a JSON schema stored as an iRODS object
     :param ctx:  iRODS context
@@ -278,12 +288,12 @@ def format_metadata_versions_path(ctx, project_id, collection_id):
 def get_elastic_search_connection(ctx):
     from elasticsearch import Elasticsearch
 
-    environment = ctx.callback.msi_getenv("ENVIRONMENT", "")["arguments"][1]
+    environment = ctx.callback.get_env("ENVIRONMENT", "true", "")["arguments"][2]
     use_ssl = True if environment == "acc" or environment == "prod" else False
 
-    elastic_password = ctx.callback.msi_getenv("ELASTIC_PASSWORD", "")["arguments"][1]
-    elastic_host = ctx.callback.msi_getenv("ELASTIC_HOST", "")["arguments"][1]
-    elastic_port = ctx.callback.msi_getenv("ELASTIC_PORT", "")["arguments"][1]
+    elastic_password = ctx.callback.get_env("ELASTIC_PASSWORD", "true", "")["arguments"][2]
+    elastic_host = ctx.callback.get_env("ELASTIC_HOST", "true", "")["arguments"][2]
+    elastic_port = ctx.callback.get_env("ELASTIC_PORT", "true", "")["arguments"][2]
     es = Elasticsearch([{"host": elastic_host, "port": elastic_port}], http_auth=("elastic", elastic_password), use_ssl=use_ssl)
 
     return es

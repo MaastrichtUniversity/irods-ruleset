@@ -3,7 +3,8 @@
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within post_ingest.py rule
 
 delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
-     msi_getenv("IRODS_INGEST_REMOVE_DELAY", *irodsIngestRemoveDelay)
+     *irodsIngestRemoveDelay = ""
+     get_env("IRODS_INGEST_REMOVE_DELAY", "true", *irodsIngestRemoveDelay)
 
      delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));

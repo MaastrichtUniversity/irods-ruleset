@@ -16,7 +16,7 @@ def update_metadata_during_edit_collection(ctx, project_id, collection_id, versi
     """
 
     # Getting the epicpid url and prefix
-    epicpid_base = ctx.callback.msi_getenv("EPICPID_URL", "")["arguments"][1]
+    epicpid_base = ctx.callback.get_env("EPICPID_URL", "true", "")["arguments"][2]
     epicpid_prefix = epicpid_base.rsplit("/", 2)[1]
 
     # Set up all the handles

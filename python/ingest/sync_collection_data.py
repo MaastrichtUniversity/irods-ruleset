@@ -23,7 +23,11 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     depositor: str
         The user who started the ingestion
     """
-    dropzone_path = format_dropzone_path(ctx, token, "mounted")
+    import time
+
+    before = 0
+    dropzone_type = "mounted"
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(destination_collection)
@@ -37,6 +41,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
     if state == DropzoneState.ERROR_INGESTION.value:
         ingest_restart = True
+        before = time.time()
         ctx.callback.msiWriteRodsLog("Restarting ingestion {}".format(dropzone_path), 0)
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
@@ -62,4 +67,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     ctx.callback.replace_metadata_placeholder_files(token, project_id, collection_id, depositor)
 
     if ingest_restart:
-        ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, "mounted")
+        after = time.time()
+        difference = float(after - before) + 1
+        ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, dropzone_type, str(difference))
+        ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type)

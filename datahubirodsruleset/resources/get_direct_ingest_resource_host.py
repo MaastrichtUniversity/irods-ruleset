@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r get_direct_ingest_resource_host
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)

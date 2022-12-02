@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r get_group_members -a "datahub" -j
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)

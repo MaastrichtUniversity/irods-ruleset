@@ -1,6 +1,7 @@
 import json
 
-from datahubirodsruleset.core import make, Output, read_data_object_from_irods
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import read_data_object_from_irods
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)

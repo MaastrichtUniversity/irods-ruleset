@@ -1,8 +1,9 @@
 # /rules/tests/run_test.sh -r update_metadata_during_ingest -a "P000000014,C000000001,21.T12996/P000000001C000000195,2" -u jmelius
 import json
 
-from datahubirodsruleset.core import make, Output, format_instance_collection_path, read_data_object_from_irods, \
-    format_schema_collection_path
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_instance_collection_path, format_schema_collection_path
+from datahubirodsruleset.utils import read_data_object_from_irods
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)

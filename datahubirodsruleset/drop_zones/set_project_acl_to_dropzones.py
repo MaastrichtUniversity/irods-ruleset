@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r set_project_acl_to_dropzones -a "P000000014"
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0], outputs=[], handler=Output.STORE)

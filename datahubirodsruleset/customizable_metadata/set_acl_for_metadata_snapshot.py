@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r set_acl_for_metadata_snapshot -a "P000000014,C000000001,jmelius,true,true"
 from dhpythonirodsutils import formatters
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=range(5), outputs=[], handler=Output.STORE)

@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r get_data_object_size -a "/nlmumc/projects/P000000001/C000000002,instance.json" -j
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)

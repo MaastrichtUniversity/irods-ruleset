@@ -1,7 +1,8 @@
 # /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct"
 from dhpythonirodsutils.enums import DropzoneState
 
-from datahubirodsruleset.core import make, Output, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)

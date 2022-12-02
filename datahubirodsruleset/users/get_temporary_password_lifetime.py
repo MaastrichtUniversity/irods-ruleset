@@ -1,6 +1,6 @@
 # /rules/tests/run_test.sh -r get_temporary_password_lifetime -j
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)

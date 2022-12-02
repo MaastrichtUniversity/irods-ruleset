@@ -3,7 +3,7 @@
 from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)

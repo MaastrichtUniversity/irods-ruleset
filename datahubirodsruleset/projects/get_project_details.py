@@ -4,7 +4,8 @@ import json
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
 
-from datahubirodsruleset.core import make, Output, FALSE_AS_STRING, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)

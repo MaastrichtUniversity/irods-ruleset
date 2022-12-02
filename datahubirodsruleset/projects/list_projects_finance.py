@@ -5,7 +5,8 @@ from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)

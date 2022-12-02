@@ -1,7 +1,8 @@
 # /rules/tests/run_test.sh -r get_user_internal_affiliation_status -a "jmelius" -j
 import json
 
-from datahubirodsruleset.core import make, Output, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)

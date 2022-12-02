@@ -1,6 +1,6 @@
 from dhpythonirodsutils.enums import DropzoneState
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)

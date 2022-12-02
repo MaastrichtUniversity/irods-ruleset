@@ -1,6 +1,9 @@
 # /rules/tests/run_test.sh -r set_dropzone_cifs_acl -a "vast-dove,null"
 import json
-from datahubirodsruleset.core import make, Output, format_dropzone_path, TRUE_AS_STRING
+
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_dropzone_path
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)

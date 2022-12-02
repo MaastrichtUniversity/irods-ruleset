@@ -3,7 +3,9 @@ import json
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import DropzoneState
 
-from datahubirodsruleset.core import make, Output, format_dropzone_path, TRUE_AS_STRING, FALSE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_dropzone_path
+from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[6], handler=Output.STORE)

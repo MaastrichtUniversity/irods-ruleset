@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r generate_token
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 DROPZONE_NAME_FORMAT = "{}-{}"
 

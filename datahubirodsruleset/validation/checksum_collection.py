@@ -1,7 +1,8 @@
 # /rules/tests/run_test.sh -r checksum_collection -a "P000000014,C000000006" -j -u jmelius
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output, format_project_collection_path
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_project_collection_path
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)

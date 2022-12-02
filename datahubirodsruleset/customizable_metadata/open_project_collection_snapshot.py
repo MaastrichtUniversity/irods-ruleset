@@ -1,5 +1,6 @@
 # ./run_test.sh -r open_project_collection_snapshot -a "P000000014,C000000001,rods,admin:own"
-from datahubirodsruleset.core import make, Output, format_project_collection_path, format_schema_collection_path, \
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_project_collection_path, format_schema_collection_path, \
     format_instance_collection_path, format_metadata_versions_path
 
 

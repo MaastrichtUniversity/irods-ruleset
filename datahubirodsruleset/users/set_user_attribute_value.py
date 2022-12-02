@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r set_user_attribute_value -a "jmelius,test,value" -j
 import irods_types  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)

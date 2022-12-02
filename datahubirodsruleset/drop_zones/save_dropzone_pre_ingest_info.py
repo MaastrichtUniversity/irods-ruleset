@@ -3,7 +3,8 @@ import json
 
 from dhpythonirodsutils import formatters
 
-from datahubirodsruleset.core import make, Output, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)

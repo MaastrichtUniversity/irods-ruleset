@@ -1,5 +1,5 @@
 # /rules/tests/run_test.sh -r set_acl -a "default,admin:own,jmelius,/nlmumc/projects/P000000028/C000000001"
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=range(4), outputs=[], handler=Output.STORE)

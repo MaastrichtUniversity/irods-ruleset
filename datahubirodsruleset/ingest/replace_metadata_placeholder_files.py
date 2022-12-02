@@ -1,7 +1,8 @@
 # /rules/tests/run_test.sh -r replace_metadata_placeholder_files -a "handsome-snake,P000000019,C000000001,dlinssen" -u "dlinssen"
 from dhpythonirodsutils import formatters
 
-from datahubirodsruleset.core import make, Output, format_dropzone_path
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_dropzone_path
 
 
 @make(inputs=range(4), outputs=[], handler=Output.STORE)

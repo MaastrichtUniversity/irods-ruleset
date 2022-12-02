@@ -1,4 +1,6 @@
-from datahubirodsruleset.core import make, Output, format_project_collection_path, TRUE_AS_STRING, FALSE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_project_collection_path
+from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3, 4], outputs=[], handler=Output.STORE)

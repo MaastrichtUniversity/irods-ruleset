@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r get_pid -a "P000000014,C000000001" -u jmelius -j
 import json
 
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)

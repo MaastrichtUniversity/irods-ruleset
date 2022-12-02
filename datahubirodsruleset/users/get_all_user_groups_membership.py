@@ -1,7 +1,8 @@
 # /rules/tests/run_test.sh -r get_all_users_groups_memberships -a "false,false,false,false" -j
 import json
 
-from datahubirodsruleset.core import make, Output, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)

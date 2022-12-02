@@ -1,9 +1,9 @@
 # /rules/tests/run_test.sh -r index_add_single_project_collection_metadata -a "P000000014,C000000001" -u service-disqover
 from dhpythonirodsutils import formatters
 
-from datahubirodsruleset.core import get_elastic_search_connection
 from datahubirodsruleset.index_metadata.index_all_project_collections_metadata import index_project_collection
-from datahubirodsruleset.core import make, Output
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import get_elastic_search_connection
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)

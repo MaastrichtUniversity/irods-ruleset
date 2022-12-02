@@ -1,5 +1,6 @@
 # /rules/tests/run_test.sh -r get_collection_size -a "/nlmumc/projects/P000000028/C000000001,B,floor" -j
-from datahubirodsruleset.core import make, Output, FALSE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)

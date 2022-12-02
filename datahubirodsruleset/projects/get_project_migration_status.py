@@ -1,7 +1,8 @@
 # /rules/tests/run_test.sh -r get_project_migration_status -a "/nlmumc/projects/P000000014" -u psuppers -j
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output, FALSE_AS_STRING, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)

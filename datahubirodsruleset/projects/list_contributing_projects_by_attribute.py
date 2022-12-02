@@ -3,7 +3,8 @@ from dhpythonirodsutils import formatters, validators, exceptions
 from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from datahubirodsruleset.core import make, Output, TRUE_AS_STRING
+from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)

@@ -155,7 +155,7 @@ def wait_for_set_acl_for_metadata_snapshot_to_finish(project_id):
     Parameters
     ----------
     project_id : str
-        The project to request and set a pid for (ie. P000000010)
+        The project to request and set a pid for (e.g: P000000010)
     """
     cmd = 'iqstat -a | grep "setCollectionSize(\'{}\'"'.format(project_id)
     fail_safe = 30

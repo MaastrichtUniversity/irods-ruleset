@@ -4,7 +4,7 @@
 #
 # Call with
 #
-# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/calcCollectionSizeAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionSizeAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'" "*unit='GiB'" "*round='ceiling'"
 # 
 # Rounding options
 # *round='none' returns float with decimals

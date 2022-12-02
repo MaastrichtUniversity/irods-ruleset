@@ -5,7 +5,7 @@
 #
 
 # The rule dirs to be processed
-RULEDIRS = ingest misc policies projects projectCollection tapeArchive
+RULEDIRS = native_irods_ruleset
 
 # The make target
 all: $(RULEDIRS) pip-install

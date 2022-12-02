@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDisplayNameForAccount.r "*account='dtheuniss'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDisplayNameForAccount.r "*account='dtheuniss'"
 
 irule_dummy() {
     IRULE_getDisplayNameForAccount(*account , *result);

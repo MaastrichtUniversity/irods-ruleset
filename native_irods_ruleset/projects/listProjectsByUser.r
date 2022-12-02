@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F /rules/projects/listProjectsByUser.r | python -m json.tool
+# irule -F /rules/native_irods_ruleset/projects/listProjectsByUser.r | python -m json.tool
 
 irule_dummy() {
     IRULE_listProjectsByUser(*result);

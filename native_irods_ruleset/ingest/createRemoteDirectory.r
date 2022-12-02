@@ -2,7 +2,7 @@
 #
 # Needs iRODS admin right
 #
-# irule -F /rules/ingest/createRemoteDirectory.r "*project='P000000001'" "*token='bla-token'" "*voPersonExternalID='p.vanschayck@unimaas.nl'"
+# irule -F /rules/native_irods_ruleset/ingest/createRemoteDirectory.r "*project='P000000001'" "*token='bla-token'" "*voPersonExternalID='p.vanschayck@unimaas.nl'"
 
 createRemoteDirectory(*project, *token, *voPersonExternalID) {
     *dropzonePath="/nlmumc/ingest/zones/*token"

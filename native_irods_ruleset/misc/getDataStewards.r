@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/getDataStewards.r
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDataStewards.r
 
 irule_dummy() {
     IRULE_getDataStewards(*result);

@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F /rules/ingest/listActiveDropZones.r "*report='true'"
+# irule -F /rules/native_irods_ruleset/ingest/listActiveDropZones.r "*report='true'"
 
 irule_dummy() {
     IRULE_listActiveDropZones(*report, *result);

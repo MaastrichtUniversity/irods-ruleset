@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/projectCollection/closeProjectCollection.r "*project='P000000001'" "*projectCollection='C000000001'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r "*project='P000000001'" "*projectCollection='C000000001'"
 
 irule_dummy() {
     IRULE_closeProjectCollection(*project, *projectCollection);

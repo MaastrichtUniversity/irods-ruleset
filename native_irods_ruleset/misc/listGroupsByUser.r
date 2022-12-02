@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/misc/listGroupsByUser.r | python -m json.tool
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/listGroupsByUser.r | python -m json.tool
 
 irule_dummy() {
     IRULE_listGroupsByUser(*result);

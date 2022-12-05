@@ -15,7 +15,7 @@ from test_cases.utils import (
 
 """
 Python rules:
-- list_destination_resources_status: valid, used in irods-rule-wrapper
+- list_destination_resources_status: valid, used in irods-rule-wrapper, but not MDR
 - get_resource_size_for_all_collections: valid, used by DevOps to calculate how much data is in iRODS in total
 
 
@@ -111,7 +111,7 @@ class TestResources:
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
-        run_iquest = "iquest \"%s\" \"SELECT RESC_ID WHERE RESC_NAME = 'replRescAZM01' \""
+        run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
         for resc in rule_parsed["numFilesPerResc"]:
@@ -139,7 +139,7 @@ class TestResources:
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
-        run_iquest = "iquest \"%s\" \"SELECT RESC_ID WHERE RESC_NAME = 'replRescAZM01' \""
+        run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
         for resc in rule_parsed["sizePerResc"]:
@@ -163,7 +163,12 @@ class TestResources:
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         for item in rule_parsed:
-            assert item["name"] in ["ires-hnas-azmResource", "ires-hnas-umResource", "ires-ceph-acResource", "ires-ceph-glResource"]
+            assert item["name"] in [
+                "ires-hnas-azmResource",
+                "ires-hnas-umResource",
+                "ires-ceph-acResource",
+                "ires-ceph-glResource",
+            ]
 
     def test_get_resource_avu(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""

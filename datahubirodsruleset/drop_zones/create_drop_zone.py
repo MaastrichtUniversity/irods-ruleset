@@ -45,9 +45,9 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     # Format the path based on the dropzone type
     dropzone_path = format_dropzone_path(ctx, token_stripped, dropzone_type)
     if dropzone_type == "mounted":
-        vo_person_external_id = ctx.callback.get_user_attribute_value(username, "voPersonExternalID", TRUE_AS_STRING, "")[
-            "arguments"
-        ][3]
+        vo_person_external_id = ctx.callback.get_user_attribute_value(
+            username, "voPersonExternalID", TRUE_AS_STRING, ""
+        )["arguments"][3]
         vo_person_external_id = json.loads(vo_person_external_id)["value"]
 
     # Check if user has permissions to create dropzone

@@ -26,31 +26,31 @@ def get_dropzone_files(ctx, token, directory):
     """
 
     output = []
-    dropzone_path = formatters.format_dropzone_path(token, 'direct')
+    dropzone_path = formatters.format_dropzone_path(token, "direct")
     absolute_path = "{}{}".format(dropzone_path, directory)
 
     if absolute_path[-1] == "/":
         absolute_path = absolute_path[:-1]
 
-    for result in row_iterator("COLL_NAME, COLL_CREATE_TIME",
-                               "COLL_PARENT_NAME = '{}'".format(absolute_path),
-                               AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "COLL_NAME, COLL_CREATE_TIME", "COLL_PARENT_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback
+    ):
         # Extract only the name of the sub-folder from the full name/path
-        name = result[0].rsplit('/', 1)[1]
+        name = result[0].rsplit("/", 1)[1]
         relative_collection_path = result[0].replace(dropzone_path, "")
         folder_node = {
             "value": name,
             "id": relative_collection_path,
             "type": "folder",
             "size": 0,
-            "date": int(result[1])
+            "date": int(result[1]),
         }
 
         output.append(folder_node)
 
-    for result in row_iterator("DATA_NAME, DATA_SIZE, DATA_CREATE_TIME",
-                               "COLL_NAME = '{}'".format(absolute_path),
-                               AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "DATA_NAME, DATA_SIZE, DATA_CREATE_TIME", "COLL_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback
+    ):
         relative_data_path = absolute_path + "/" + result[0]
         relative_data_path = relative_data_path.replace(dropzone_path, "")
         data_node = {
@@ -58,7 +58,7 @@ def get_dropzone_files(ctx, token, directory):
             "id": relative_data_path,
             "type": "file",
             "size": result[1],
-            "date": int(result[2])
+            "date": int(result[2]),
         }
 
         output.append(data_node)

@@ -24,7 +24,7 @@ def get_dropzone_folders(ctx, token, path):
     list
        The recursive folders list at the requested path
     """
-    dropzone_path = formatters.format_dropzone_path(token, 'direct')
+    dropzone_path = formatters.format_dropzone_path(token, "direct")
     absolute_path = "{}{}".format(dropzone_path, path)
 
     root = []
@@ -54,17 +54,16 @@ def get_collection_sub_folders(ctx, parent, parent_path, dropzone_root):
         If the parent is the root, return the updated list with the sub-folders on the root level.
         Otherwise, return the updated parent dict with the sub-folders list on the current location in the key "data".
     """
-    for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME",
-                               "COLL_PARENT_NAME = '{}'".format(parent_path), AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME",
+        "COLL_PARENT_NAME = '{}'".format(parent_path),
+        AS_LIST,
+        ctx.callback,
+    ):
         # Extract only the name of the sub_folder from the full name/path
-        name = result[0].rsplit('/', 1)[1]
+        name = result[0].rsplit("/", 1)[1]
         relative_collection_path = result[0].replace(dropzone_root, "")
-        folder_node = {
-            "value": name,
-            "full_path": result[0],
-            "id": relative_collection_path,
-            "data": []
-        }
+        folder_node = {"value": name, "full_path": result[0], "id": relative_collection_path, "data": []}
         if parent_path == dropzone_root:
             parent.append(folder_node)
         else:

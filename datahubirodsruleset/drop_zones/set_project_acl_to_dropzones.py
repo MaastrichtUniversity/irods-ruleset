@@ -22,9 +22,11 @@ def set_project_acl_to_dropzones(ctx, project_id):
         The id of the project to transfer the ACLs from to it's dropzones
     """
     query_parameters = "COLL_NAME"
-    query_conditions = "COLL_PARENT_NAME = '/nlmumc/ingest/direct' " \
-                       "AND META_COLL_ATTR_NAME = 'project' " \
-                       "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+    query_conditions = (
+        "COLL_PARENT_NAME = '/nlmumc/ingest/direct' "
+        "AND META_COLL_ATTR_NAME = 'project' "
+        "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+    )
 
     for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
         dropzone_path = item[0]

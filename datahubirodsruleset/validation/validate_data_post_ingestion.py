@@ -28,8 +28,12 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     dropzone_type: str
         The type of dropzone: direct or mounted.
     """
-    collection_num_files = ctx.callback.getCollectionAVU(project_collection, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
-    collection_size = ctx.callback.getCollectionAVU(project_collection, "dcat:byteSize", "", "", TRUE_AS_STRING)["arguments"][2]
+    collection_num_files = ctx.callback.getCollectionAVU(project_collection, "numFiles", "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
+    collection_size = ctx.callback.getCollectionAVU(project_collection, "dcat:byteSize", "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
 
     # Compare drop-zone & project collection content
     instance_file_name = "instance.json"
@@ -42,8 +46,12 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
         ret = ctx.callback.get_data_object_size(dropzone, schema_file_name, "")["arguments"][2]
         dropzone_schema_size = int(ret)
 
-        ctx.callback.msiWriteRodsLog("DEBUG: '{}' dropzone_instance_size: {}".format(dropzone, str(dropzone_instance_size)), 0)
-        ctx.callback.msiWriteRodsLog("DEBUG: '{}' dropzone_schema_size: {}".format(dropzone, str(dropzone_schema_size)), 0)
+        ctx.callback.msiWriteRodsLog(
+            "DEBUG: '{}' dropzone_instance_size: {}".format(dropzone, str(dropzone_instance_size)), 0
+        )
+        ctx.callback.msiWriteRodsLog(
+            "DEBUG: '{}' dropzone_schema_size: {}".format(dropzone, str(dropzone_schema_size)), 0
+        )
 
     # Project collection
     ret = ctx.callback.get_data_object_size(project_collection, instance_file_name, "")["arguments"][2]
@@ -51,10 +59,18 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     ret = ctx.callback.get_data_object_size(project_collection, schema_file_name, "")["arguments"][2]
     collection_schema_size = int(ret)
 
-    ctx.callback.msiWriteRodsLog("DEBUG: '{}' collection_instance_size: {}".format(project_collection, str(collection_instance_size)), 0)
-    ctx.callback.msiWriteRodsLog("DEBUG: '{}' collection_schema_size: {}".format(project_collection, str(collection_schema_size)), 0)
-    ctx.callback.msiWriteRodsLog("DEBUG: '{}' collection_total_size: {}".format(project_collection, str(collection_size)), 0)
-    ctx.callback.msiWriteRodsLog("DEBUG: '{}' collection_file_count: {}".format(project_collection, str(collection_num_files)), 0)
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: '{}' collection_instance_size: {}".format(project_collection, str(collection_instance_size)), 0
+    )
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: '{}' collection_schema_size: {}".format(project_collection, str(collection_schema_size)), 0
+    )
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: '{}' collection_total_size: {}".format(project_collection, str(collection_size)), 0
+    )
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: '{}' collection_file_count: {}".format(project_collection, str(collection_num_files)), 0
+    )
 
     dropzone_num_files = ctx.callback.getCollectionAVU(dropzone, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
     dropzone_size = ctx.callback.getCollectionAVU(dropzone, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
@@ -67,8 +83,13 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     elif dropzone_type == "direct":
         match_size = int(dropzone_size) == int(collection_size)
 
-    ctx.callback.msiWriteRodsLog("DEBUG: Match dropzone '{}' to '{}' size: {}".format(dropzone, project_collection, str(match_size)), 0)
-    ctx.callback.msiWriteRodsLog("DEBUG: Match dropzone '{}' to '{}' file_count: {}".format(dropzone, project_collection, str(match_num_files)), 0)
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: Match dropzone '{}' to '{}' size: {}".format(dropzone, project_collection, str(match_size)), 0
+    )
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: Match dropzone '{}' to '{}' file_count: {}".format(dropzone, project_collection, str(match_num_files)),
+        0,
+    )
 
     if match_size is False or match_num_files is False:
         ctx.callback.setErrorAVU(dropzone, "state", DropzoneState.ERROR_INGESTION.value, "Error copying data")

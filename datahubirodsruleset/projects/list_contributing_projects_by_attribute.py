@@ -56,7 +56,7 @@ def list_contributing_projects_by_attribute(ctx, attribute):
             "path": project_path[0],
             ProjectAVUs.TITLE.value: ctx.callback.getCollectionAVU(
                 project_path[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
-            )["arguments"][2]
+            )["arguments"][2],
         }
         projects.append(project)
 

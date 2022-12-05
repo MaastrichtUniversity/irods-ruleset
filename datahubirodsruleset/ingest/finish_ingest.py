@@ -47,7 +47,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Set the Creator AVU
-    ctx.callback.msiWriteRodsLog("{} : Setting AVUs to {}".format(dropzone_path, destination_project_collection_path), 0)
+    ctx.callback.msiWriteRodsLog(
+        "{} : Setting AVUs to {}".format(dropzone_path, destination_project_collection_path), 0
+    )
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
     dropzone_creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
@@ -103,7 +105,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
 
     # Copy schemaVersion and schemaName AVU from dropzone to the ingested collection
     schema_name = ctx.callback.getCollectionAVU(dropzone_path, "schemaName", "", "", TRUE_AS_STRING)["arguments"][2]
-    schema_version = ctx.callback.getCollectionAVU(dropzone_path, "schemaVersion", "", "", TRUE_AS_STRING)["arguments"][2]
+    schema_version = ctx.callback.getCollectionAVU(dropzone_path, "schemaVersion", "", "", TRUE_AS_STRING)["arguments"][
+        2
+    ]
     ctx.callback.setCollectionAVU(destination_project_collection_path, "schemaName", schema_name)
     ctx.callback.setCollectionAVU(destination_project_collection_path, "schemaVersion", schema_version)
 
@@ -121,7 +125,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
 
     if dropzone_type == "mounted":
         # Check if mounted dropzone is a legacy mounted dropzone
-        legacy_dropzone = ctx.callback.getCollectionAVU(dropzone_path, "legacy", "", FALSE_AS_STRING, FALSE_AS_STRING)["arguments"][2]
+        legacy_dropzone = ctx.callback.getCollectionAVU(dropzone_path, "legacy", "", FALSE_AS_STRING, FALSE_AS_STRING)[
+            "arguments"
+        ][2]
         ctx.callback.msiWriteRodsLog("{} is a legacy dropzone: {}".format(dropzone_path, legacy_dropzone), 0)
 
         if legacy_dropzone == TRUE_AS_STRING:
@@ -140,4 +146,6 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     if dropzone_type == "direct":
         ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
-    ctx.callback.msiWriteRodsLog("Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)
+    ctx.callback.msiWriteRodsLog(
+        "Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0
+    )

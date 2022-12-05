@@ -67,9 +67,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     ctx.remoteExec(
         ingest_resource_host,
         "",
-        "perform_irsync('{}', '{}', '{}')".format(
-            destination_resource, token, destination_collection
-        ),
+        "perform_irsync('{}', '{}', '{}')".format(destination_resource, token, destination_collection),
         "",
     )
 

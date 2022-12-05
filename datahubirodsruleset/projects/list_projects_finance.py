@@ -30,12 +30,14 @@ def get_projects_finance(ctx):
 
     projects = []
     # Get all the projects where the user is the principal investigator
-    for result in row_iterator("COLL_NAME", condition.format(ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, username), AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "COLL_NAME", condition.format(ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, username), AS_LIST, ctx.callback
+    ):
         projects.append(result[0])
 
     # Get all the projects where the user is the data steward
     for result in row_iterator(
-            "COLL_NAME", condition.format(ProjectAVUs.DATA_STEWARD.value, username), AS_LIST, ctx.callback
+        "COLL_NAME", condition.format(ProjectAVUs.DATA_STEWARD.value, username), AS_LIST, ctx.callback
     ):
         projects.append(result[0])
 
@@ -46,9 +48,9 @@ def get_projects_finance(ctx):
         budget_number = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        title = ctx.callback.getCollectionAVU(
-            project_path, ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
+        title = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING)[
+            "arguments"
+        ][2]
 
         # Get project finance information
         ret = ctx.callback.get_project_finance(project_path, "result")

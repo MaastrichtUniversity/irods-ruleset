@@ -41,9 +41,9 @@ def check_edit_metadata_permission(ctx, project_path):
         return False
 
     # If user is the Data Steward he is allowed to edit the metadata
-    ret = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
     if ret == username:
         return True
 

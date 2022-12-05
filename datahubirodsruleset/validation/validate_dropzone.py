@@ -74,7 +74,9 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
 
     # Get resource availability -- check ingest & destination resource
-    available = ctx.callback.get_project_resource_availability(project_id, TRUE_AS_STRING, TRUE_AS_STRING, FALSE_AS_STRING, "")["arguments"][4]
+    available = ctx.callback.get_project_resource_availability(
+        project_id, TRUE_AS_STRING, TRUE_AS_STRING, FALSE_AS_STRING, ""
+    )["arguments"][4]
 
     # Project or ingest resource is not available, abort ingest
     if not formatters.format_string_to_boolean(available):

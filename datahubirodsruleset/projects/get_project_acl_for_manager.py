@@ -36,12 +36,14 @@ def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
     if username not in managers["users"]:
         return []
 
-    contributors = ctx.callback.list_project_contributors(project_id, FALSE_AS_STRING, show_service_accounts, "")["arguments"][
-        3
-    ]
+    contributors = ctx.callback.list_project_contributors(project_id, FALSE_AS_STRING, show_service_accounts, "")[
+        "arguments"
+    ][3]
     contributors = json.loads(contributors)
 
-    viewers = ctx.callback.list_project_viewers(project_id, FALSE_AS_STRING, show_service_accounts, "viewers")["arguments"][3]
+    viewers = ctx.callback.list_project_viewers(project_id, FALSE_AS_STRING, show_service_accounts, "viewers")[
+        "arguments"
+    ][3]
     viewers = json.loads(viewers)
 
     project_path = format_project_path(ctx, project_id)
@@ -49,9 +51,9 @@ def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
     principal_investigator = ctx.callback.getCollectionAVU(
         project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
-    data_steward = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    data_steward = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
 
     output = {
         "managers": managers,

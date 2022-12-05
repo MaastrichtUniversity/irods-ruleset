@@ -30,10 +30,15 @@ def get_collection_tree(ctx, relative_path):
     absolute_path = formatters.format_absolute_project_path(relative_path)
 
     # Get sub-folders
-    for result in row_iterator("COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME", "COLL_PARENT_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME",
+        "COLL_PARENT_NAME = '{}'".format(absolute_path),
+        AS_LIST,
+        ctx.callback,
+    ):
 
         # Extract only the name of the sub-folder from the full name/path
-        name = result[0].rsplit('/', 1)[1]
+        name = result[0].rsplit("/", 1)[1]
         relative_collection_path = relative_path + "/" + name
 
         folder_node = {
@@ -44,13 +49,17 @@ def get_collection_tree(ctx, relative_path):
             "size": "--",
             "rescname": "--",
             "ctime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[1]))),
-            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[2])))
+            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[2]))),
         }
 
         output.append(folder_node)
 
-    for result in row_iterator("DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME", "COLL_NAME = '{}'".format(absolute_path),
-                               AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME",
+        "COLL_NAME = '{}'".format(absolute_path),
+        AS_LIST,
+        ctx.callback,
+    ):
 
         relative_data_path = relative_path + "/" + result[0]
 
@@ -62,7 +71,7 @@ def get_collection_tree(ctx, relative_path):
             "rescname": result[2],
             "offlineResource": result[2] == "arcRescSURF01",
             "ctime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[3]))),
-            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[4])))
+            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[4]))),
         }
 
         output.append(data_node)

@@ -37,7 +37,9 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["project"] = formatters.get_project_id_from_project_path(project_path)
 
     # List Contributors
-    ret = ctx.callback.list_project_contributors(project["project"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
+    ret = ctx.callback.list_project_contributors(project["project"], FALSE_AS_STRING, show_service_accounts, "")[
+        "arguments"
+    ][3]
     project["contributors"] = json.loads(ret)
 
     # List Managers
@@ -45,7 +47,9 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["managers"] = json.loads(ret)
 
     # List Viewers
-    ret = ctx.callback.list_project_viewers(project["project"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
+    ret = ctx.callback.list_project_viewers(project["project"], FALSE_AS_STRING, show_service_accounts, "")[
+        "arguments"
+    ][3]
     project["viewers"] = json.loads(ret)
 
     # Get project metadata
@@ -67,7 +71,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
         ProjectAVUs.ENABLE_UNARCHIVE.value,
         "",
         project[ProjectAVUs.ENABLE_ARCHIVE.value],
-        FALSE_AS_STRING
+        FALSE_AS_STRING,
     )["arguments"][2]
 
     project[ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value] = ctx.callback.getCollectionAVU(
@@ -100,9 +104,9 @@ def get_project_details(ctx, project_path, show_service_accounts):
         if user["userName"] == ret:
             project["principalInvestigatorDisplayName"] = user["displayName"]
 
-    ret = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    ret = ctx.callback.getCollectionAVU(project["path"], ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the data steward

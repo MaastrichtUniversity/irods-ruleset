@@ -9,7 +9,9 @@ from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
-def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, destination=FALSE_AS_STRING, archive=FALSE_AS_STRING):
+def get_project_resource_availability(
+    ctx, project_id, ingest=TRUE_AS_STRING, destination=FALSE_AS_STRING, archive=FALSE_AS_STRING
+):
     """
     Get if a project's resource(s) is/are up
 
@@ -49,7 +51,9 @@ def get_project_resource_availability(ctx, project_id, ingest=TRUE_AS_STRING, de
 
     destination_status = False
     if check_destination_resource:
-        destination_resource = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)["arguments"][2]
+        destination_resource = ctx.callback.getCollectionAVU(
+            project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         destination_status = get_resource_status(ctx, destination_resource)
 
     archive_status = False

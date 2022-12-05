@@ -66,7 +66,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         "destination": "",
         "creator": "",
         ProjectAVUs.ENABLE_DROPZONE_SHARING.value: "",
-        "sharedWithMe": ""
+        "sharedWithMe": "",
     }
     # Query the dropzone metadata
     for result in row_iterator(

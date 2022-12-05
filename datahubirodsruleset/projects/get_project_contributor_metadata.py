@@ -31,9 +31,9 @@ def get_project_contributors_metadata(ctx, project_id):
     )["arguments"][2]
     pi_dict = json.loads(ctx.get_user_metadata(pi_username, "")["arguments"][1])
 
-    ds_username = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    ds_username = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
     ds_dict = json.loads(ctx.get_user_metadata(ds_username, "")["arguments"][1])
 
     project = {"principalInvestigator": pi_dict, ProjectAVUs.DATA_STEWARD.value: ds_dict}

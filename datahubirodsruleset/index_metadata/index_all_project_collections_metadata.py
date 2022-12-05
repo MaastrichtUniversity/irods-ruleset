@@ -7,8 +7,12 @@ from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING, COLLECTION_METADATA_INDEX, get_elastic_search_connection, \
-    read_data_object_from_irods
+from datahubirodsruleset.utils import (
+    FALSE_AS_STRING,
+    COLLECTION_METADATA_INDEX,
+    get_elastic_search_connection,
+    read_data_object_from_irods,
+)
 
 
 @make(inputs=[], outputs=[], handler=Output.STORE)

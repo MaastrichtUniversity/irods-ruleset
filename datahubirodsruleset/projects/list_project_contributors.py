@@ -40,10 +40,10 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
         criteria = "'modify object'"
 
     for result in row_iterator(
-            "COLL_ACCESS_USER_ID",
-            "COLL_ACCESS_NAME in ({}) AND ".format(criteria) + "COLL_NAME = '/nlmumc/projects/{}'".format(project_id),
-            AS_LIST,
-            ctx.callback,
+        "COLL_ACCESS_USER_ID",
+        "COLL_ACCESS_NAME in ({}) AND ".format(criteria) + "COLL_NAME = '/nlmumc/projects/{}'".format(project_id),
+        AS_LIST,
+        ctx.callback,
     ):
 
         account_id = result[0]
@@ -55,10 +55,10 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
 
             if account_type == "rodsgroup":
                 for group_result in row_iterator(
-                        "META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
-                        "USER_TYPE = 'rodsgroup' AND " "USER_GROUP_ID = '{}'".format(account_id),
-                        AS_LIST,
-                        ctx.callback,
+                    "META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
+                    "USER_TYPE = 'rodsgroup' AND " "USER_GROUP_ID = '{}'".format(account_id),
+                    AS_LIST,
+                    ctx.callback,
                 ):
 
                     if "displayName" == group_result[0]:
@@ -82,10 +82,10 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
                     continue
 
                 for user_result in row_iterator(
-                        "META_USER_ATTR_VALUE",
-                        "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(account_name),
-                        AS_LIST,
-                        ctx.callback,
+                    "META_USER_ATTR_VALUE",
+                    "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(account_name),
+                    AS_LIST,
+                    ctx.callback,
                 ):
                     display_name = user_result[0]
 

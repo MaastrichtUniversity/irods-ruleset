@@ -28,7 +28,9 @@ def get_resource_size_for_all_collections(ctx):
     for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback):
         project_path = result[0]
         project_id = formatters.get_project_id_from_project_path(project_path)
-        collection_size_per_resource = json.loads(ctx.callback.get_collection_size_per_resource(project_id, "")["arguments"][1])
+        collection_size_per_resource = json.loads(
+            ctx.callback.get_collection_size_per_resource(project_id, "")["arguments"][1]
+        )
         collection = collection_size_per_resource.values()
         for collection_resources in collection:
             for collection_resource in collection_resources:

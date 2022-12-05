@@ -46,10 +46,16 @@ def perform_irsync(ctx, destination_resource, token, destination_collection):
         try:
             return_code = check_call(
                 [
-                    "irsync", "-K", "-v", "-R", destination_resource,
-                    "-r", source_collection, "i:" + destination_collection
+                    "irsync",
+                    "-K",
+                    "-v",
+                    "-R",
+                    destination_resource,
+                    "-r",
+                    source_collection,
+                    "i:" + destination_collection,
                 ],
-                shell=False
+                shell=False,
             )
         except CalledProcessError as err:
             ctx.callback.msiWriteRodsLog("ERROR: irsync: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
@@ -61,7 +67,9 @@ def perform_irsync(ctx, destination_resource, token, destination_collection):
             time.sleep(RETRY_SLEEP_NUMBER)
         else:
             retry_counter = 0
-            ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(source_collection), 0)
+            ctx.callback.msiWriteRodsLog(
+                "INFO: Ingest collection data '{}' was successful".format(source_collection), 0
+            )
 
     if return_code != 0:
         # Re-set the user CIFS ACL on the mounted network dropzone folder
@@ -72,7 +80,6 @@ def perform_irsync(ctx, destination_resource, token, destination_collection):
             "state",
             DropzoneState.ERROR_INGESTION.value,
             "Error while performing perform_irsync towards '{}:{}'".format(
-                destination_collection,
-                destination_resource
-            )
+                destination_collection, destination_resource
+            ),
         )

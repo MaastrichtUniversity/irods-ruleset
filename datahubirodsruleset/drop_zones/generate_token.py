@@ -39,6 +39,7 @@ def generate_token(ctx):
 
 def random_token(adjectives, nouns, existing_tokens):
     from random import SystemRandom
+
     sys_rand = SystemRandom()
     chosen_adjective = adjectives[sys_rand.randrange(0, len(adjectives) - 1)]
     chosen_noun = nouns[sys_rand.randrange(0, len(nouns) - 1)]

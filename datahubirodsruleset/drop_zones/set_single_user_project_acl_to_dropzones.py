@@ -44,15 +44,18 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
         prefix = "admin:"
 
     query_parameters = "COLL_NAME"
-    query_conditions = "COLL_PARENT_NAME = '/nlmumc/ingest/direct' " \
-                       "AND META_COLL_ATTR_NAME = 'project' " \
-                       "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+    query_conditions = (
+        "COLL_PARENT_NAME = '/nlmumc/ingest/direct' "
+        "AND META_COLL_ATTR_NAME = 'project' "
+        "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+    )
 
     for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
         dropzone_path = item[0]
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", FALSE_AS_STRING)["arguments"][2]
         dropzone_state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", FALSE_AS_STRING, FALSE_AS_STRING)[
-            "arguments"][2]
+            "arguments"
+        ][2]
 
         # Check if the dropzone is still in an ingestable state
         ingestable = ctx.callback.is_dropzone_state_ingestable(dropzone_state, "")["arguments"][1]

@@ -40,17 +40,13 @@ def set_dropzone_cifs_acl(ctx, token, access):
     elif access == "write":
         script_path = "/var/lib/irods/msiExecCmd_bin/add-ingest-zone-access.sh"
     else:
-        ctx.callback.msiExit(
-            "-1", "Invalid setcifsacl access parameter '{}'! Aborting perform_irsync".format(access)
-        )
+        ctx.callback.msiExit("-1", "Invalid setcifsacl access parameter '{}'! Aborting perform_irsync".format(access))
 
     creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
-    ret = ctx.callback.get_user_attribute_value(creator, "voPersonExternalID", TRUE_AS_STRING, "")[
-        "arguments"
-    ][3]
+    ret = ctx.callback.get_user_attribute_value(creator, "voPersonExternalID", TRUE_AS_STRING, "")["arguments"][3]
     vo_person_external_id = json.loads(ret)["value"]
     try:
-        check_call([script_path, vo_person_external_id,  source_collection], shell=False)
+        check_call([script_path, vo_person_external_id, source_collection], shell=False)
     except CalledProcessError as err:
         message = "ERROR: set_dropzone_cifs_acl: cmd '{}' retcode'{}'".format(err.cmd, err.returncode)
         ctx.callback.msiWriteRodsLog(message, 0)

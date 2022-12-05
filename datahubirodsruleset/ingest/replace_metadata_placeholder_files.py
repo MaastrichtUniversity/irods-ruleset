@@ -52,10 +52,12 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
 
     if depositor != ctx.callback.get_client_username("")["arguments"][0]:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path,
+            project_id,
+            collection_id,
+            dropzone_path,
             "Abort replace_metadata_placeholder_files: Rule client user '{}' is not the depositor '{}'".format(
                 project_id, collection_id
-            )
+            ),
         )
 
     try:
@@ -65,15 +67,17 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
         ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_schema_path), 0)
     except CalledProcessError:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path,
-            "Update metadata files ACL failed for '{}/{}'".format(project_id, collection_id)
+            project_id,
+            collection_id,
+            dropzone_path,
+            "Update metadata files ACL failed for '{}/{}'".format(project_id, collection_id),
         )
 
     dropzone_instance_path = formatters.format_instance_dropzone_path(token, dropzone_type)
     dropzone_schema_path = formatters.format_schema_dropzone_path(token, dropzone_type)
 
-    ctx.callback.msiDataObjUnlink('objPath=' + pc_instance_path + '++++forceFlag=', 0)
-    ctx.callback.msiDataObjUnlink('objPath=' + pc_schema_path + '++++forceFlag=', 0)
+    ctx.callback.msiDataObjUnlink("objPath=" + pc_instance_path + "++++forceFlag=", 0)
+    ctx.callback.msiDataObjUnlink("objPath=" + pc_schema_path + "++++forceFlag=", 0)
 
     ctx.callback.msiDataObjCopy(dropzone_instance_path, pc_instance_path, "forceFlag=", 0)
     ctx.callback.msiDataObjCopy(dropzone_schema_path, pc_schema_path, "forceFlag=", 0)

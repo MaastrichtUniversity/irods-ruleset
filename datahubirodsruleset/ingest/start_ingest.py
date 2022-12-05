@@ -45,7 +45,8 @@ def start_ingest(ctx, username, token, dropzone_type):
         ctx.callback.msiWriteRodsLog(
             "Validation result OK {}. Setting status to '{}'".format(
                 dropzone_path, DropzoneState.IN_QUEUE_FOR_INGESTION.value
-            ), 0
+            ),
+            0,
         )
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_INGESTION.value)
 

@@ -9,14 +9,14 @@ from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 @make(inputs=range(7), outputs=[7], handler=Output.STORE)
 def create_new_project(
-        ctx,
-        ingest_resource,
-        resource,
-        title,
-        principal_investigator,
-        data_steward,
-        responsible_cost_center,
-        extra_parameters,
+    ctx,
+    ingest_resource,
+    resource,
+    title,
+    principal_investigator,
+    data_steward,
+    responsible_cost_center,
+    extra_parameters,
 ):
     """
     Create a new iRODS project
@@ -126,8 +126,7 @@ def create_new_project(
 
     archive_dest_resc = ""
     for result in row_iterator(
-            "RESC_NAME", "META_RESC_ATTR_NAME = 'archiveDestResc' AND META_RESC_ATTR_VALUE = 'true'", AS_LIST,
-            ctx.callback
+        "RESC_NAME", "META_RESC_ATTR_NAME = 'archiveDestResc' AND META_RESC_ATTR_VALUE = 'true'", AS_LIST, ctx.callback
     ):
         archive_dest_resc = result[0]
     if archive_dest_resc == "":

@@ -24,7 +24,7 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
     import requests
 
     # Getting the EpicPID url
-    epicpid_base = ctx.callback.get_env("EPICPID_URL", "true",  "")["arguments"][2]
+    epicpid_base = ctx.callback.get_env("EPICPID_URL", "true", "")["arguments"][2]
     ctx.callback.msiWriteRodsLog(
         "Requesting multiple PID's with base url: {} project: {} collection: {} version: {}".format(
             epicpid_base, project_id, collection_id, version
@@ -69,15 +69,24 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
         )
     if "collection" not in handle or handle["collection"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection failed for {}, leaving blank".format(destination_project_collection_path), 0
+            "Retrieving PID for root collection failed for {}, leaving blank".format(
+                destination_project_collection_path
+            ),
+            0,
         )
     if "schema" not in handle or handle["schema"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection schema failed for {}, leaving blank".format(destination_project_collection_path), 0
+            "Retrieving PID for root collection schema failed for {}, leaving blank".format(
+                destination_project_collection_path
+            ),
+            0,
         )
     if "instance" not in handle or handle["instance"]["handle"] == "":
         ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection instance failed for {}, leaving blank".format(destination_project_collection_path), 0
+            "Retrieving PID for root collection instance failed for {}, leaving blank".format(
+                destination_project_collection_path
+            ),
+            0,
         )
 
     return handle

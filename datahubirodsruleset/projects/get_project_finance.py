@@ -37,7 +37,9 @@ def get_project_finance(ctx, project_path):
 
         # Get the collection size on each resource
         parameters = "META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-        conditions = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{}'".format(project_collection_path)
+        conditions = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{}'".format(
+            project_collection_path
+        )
         for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
             resource_id = collection_result[0].replace("dcat:byteSize_resc_", "")
             collection_size_on_resource = float(collection_result[1])

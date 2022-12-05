@@ -30,9 +30,9 @@ def list_projects_minimal(ctx):
     for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback):
         project = {
             "id": formatters.get_project_id_from_project_path(result[0]),
-            ProjectAVUs.TITLE.value: ctx.getCollectionAVU(
-                result[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
-            )["arguments"][2]
+            ProjectAVUs.TITLE.value: ctx.getCollectionAVU(result[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING)[
+                "arguments"
+            ][2],
         }
 
         # Append this project to the list

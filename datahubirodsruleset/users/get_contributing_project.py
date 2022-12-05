@@ -60,11 +60,15 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
         project["managers"] = json.loads(ret)
 
         # List Contributors
-        ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")[
+            "arguments"
+        ][3]
         project["contributors"] = json.loads(ret)
 
         # List Viewers
-        ret = ctx.callback.list_project_viewers(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][3]
+        ret = ctx.callback.list_project_viewers(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][
+            3
+        ]
         project["viewers"] = json.loads(ret)
 
         project[ProjectAVUs.TITLE.value] = ctx.callback.getCollectionAVU(

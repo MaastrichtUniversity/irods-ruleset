@@ -27,7 +27,11 @@ def get_collection_size(ctx, project_collection_path, unit, rounding):
     from math import floor
     from math import ceil
 
-    size_bytes = float(ctx.callback.getCollectionAVU(project_collection_path, "dcat:byteSize", "", "0", FALSE_AS_STRING)["arguments"][2])
+    size_bytes = float(
+        ctx.callback.getCollectionAVU(project_collection_path, "dcat:byteSize", "", "0", FALSE_AS_STRING)["arguments"][
+            2
+        ]
+    )
 
     if unit == "B":
         size = size_bytes

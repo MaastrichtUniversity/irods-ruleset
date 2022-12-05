@@ -3,8 +3,13 @@ import irods_types  # pylint: disable=import-error
 from dhpythonirodsutils import formatters
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.formatters import format_schema_versioned_collection_path, format_schema_collection_path, \
-    format_instance_collection_path, format_metadata_versions_path, format_instance_versioned_collection_path
+from datahubirodsruleset.formatters import (
+    format_schema_versioned_collection_path,
+    format_schema_collection_path,
+    format_instance_collection_path,
+    format_metadata_versions_path,
+    format_instance_versioned_collection_path,
+)
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)

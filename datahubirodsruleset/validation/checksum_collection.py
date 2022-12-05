@@ -28,7 +28,9 @@ def checksum_collection(ctx, project_id, collection_id):
     project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     output = {}
 
-    for row in row_iterator("DATA_NAME, COLL_NAME", "COLL_NAME LIKE '{}%'".format(project_collection_path), AS_LIST, ctx.callback):
+    for row in row_iterator(
+        "DATA_NAME, COLL_NAME", "COLL_NAME LIKE '{}%'".format(project_collection_path), AS_LIST, ctx.callback
+    ):
         virtual_path = row[1] + "/" + row[0]
         checksum = ctx.callback.msiDataObjChksum(virtual_path, "forceChksum=", "")["arguments"][2]
         formatted_checksum = checksum.replace("sha2:", "")

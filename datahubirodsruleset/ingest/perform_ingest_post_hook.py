@@ -28,13 +28,19 @@ def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, 
     # Calculate and set the byteSize and numFiles AVU. false/false because collection
     # is already open and needs to stay open
     ctx.callback.setCollectionSize(project_id, collection_id, FALSE_AS_STRING, FALSE_AS_STRING)
-    collection_num_files = ctx.callback.getCollectionAVU(destination_project_collection_path, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
-    collection_size = ctx.callback.getCollectionAVU(destination_project_collection_path, "dcat:byteSize", "", "", TRUE_AS_STRING)["arguments"][2]
+    collection_num_files = ctx.callback.getCollectionAVU(
+        destination_project_collection_path, "numFiles", "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    collection_size = ctx.callback.getCollectionAVU(
+        destination_project_collection_path, "dcat:byteSize", "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
     avg_speed = float(collection_size) / 1024 / 1024 / float(difference)
     size_gib = float(collection_size) / 1024 / 1024 / 1024
 
-    ctx.callback.msiWriteRodsLog("{} : Ingested {} GiB in {} files".format(source_collection, size_gib, collection_num_files), 0)
+    ctx.callback.msiWriteRodsLog(
+        "{} : Ingested {} GiB in {} files".format(source_collection, size_gib, collection_num_files), 0
+    )
     ctx.callback.msiWriteRodsLog("{} : Sync took {} seconds".format(source_collection, difference), 0)
     ctx.callback.msiWriteRodsLog("{} : AVG speed was {} MiB/s".format(source_collection, avg_speed), 0)
 

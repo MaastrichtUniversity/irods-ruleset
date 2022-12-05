@@ -25,4 +25,6 @@ def remove_size_ingested_avu(ctx, project_collection_path):
             1
         ]
         ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, project_collection_path, "-C")
-        ctx.callback.msiWriteRodsLog("INFO: {}: Remove AVU '{}':'{}'".format(project_collection_path, attribute, value), 0)
+        ctx.callback.msiWriteRodsLog(
+            "INFO: {}: Remove AVU '{}':'{}'".format(project_collection_path, attribute, value), 0
+        )

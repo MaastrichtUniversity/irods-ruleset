@@ -33,7 +33,7 @@ jobs:
           flake8 ./datahubirodsruleset --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Run Pylint
         run: |
-          pylint --max-line-length=120 --fail-under=8 ./datahubirodsruleset/
+          pylint --max-line-length=120 --exit-zero ./datahubirodsruleset/
       - name: Report Status to Dean
         if: ${{ always() && github.event.pusher.name == 'deanlinssen' }}
         uses: ravsamhq/notify-slack-action@master

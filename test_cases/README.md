@@ -31,7 +31,7 @@ cd /rules/test_cases
 ./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
-/var/lib/irods/.local/bin/pytest -v -s .
+/var/lib/irods/.local/bin/pytest -v -s -p no:cacheprovider .
 ```
 
 # How to run a single test file

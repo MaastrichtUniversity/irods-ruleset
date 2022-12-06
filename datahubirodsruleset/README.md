@@ -16,7 +16,7 @@ See ``tests/README.md`` for more details
 
 ## Installation
 
-This package needs to me installed as the irods user.
+This package needs to be installed as the irods user.
 It can be done by executing the Makefile, it will take care of the pip install from the local source files.
 
 Inside the docker container:

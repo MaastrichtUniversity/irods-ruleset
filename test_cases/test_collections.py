@@ -164,9 +164,7 @@ class TestCollections:
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
-        rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{},{}"'.format(
-            user_to_check, collection_path
-        )
+        rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{},{}"'.format(user_to_check, collection_path)
         subprocess.check_call(rule, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
@@ -199,14 +197,14 @@ class TestCollections:
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
-        rule_open = 'irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r "*project=\'{}\'" "*projectCollection=\'{}\'" "*user=\'{}\'" "*rights=\'own\'"'.format(
+        rule_open = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" \"*user='{}'\" \"*rights='own'\"".format(
             self.project_id, self.collection_id, user_to_check
         )
         subprocess.check_call(rule_open, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
 
-        rule_close = 'irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r "*project=\'{}\'" "*projectCollection=\'{}\'" '.format(
+        rule_close = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" ".format(
             self.project_id, self.collection_id
         )
         subprocess.check_call(rule_close, shell=True)

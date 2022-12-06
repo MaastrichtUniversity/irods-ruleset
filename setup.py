@@ -27,7 +27,7 @@ setuptools.setup(
         "requests==2.25.1",
         "requests_cache==0.5.2",
         "elasticsearch==7.17.6",
-        "pytest"
+        "pytest",
     ],
     # tests_requires=["pytest"],
 )

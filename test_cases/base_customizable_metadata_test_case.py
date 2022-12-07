@@ -12,6 +12,7 @@ from test_cases.utils import (
     remove_project,
     revert_latest_project_number,
     wait_for_set_acl_for_metadata_snapshot_to_finish,
+    run_index_all_project_collections_metadata,
 )
 
 
@@ -57,6 +58,8 @@ class BaseTestCaseCustomizableMetadata:
         cls.add_metadata_files_to_dropzone(cls.token)
         start_and_wait_for_ingest(cls)
 
+        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
+        run_index_all_project_collections_metadata()
         cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
         cls.edit_collection_metadata()
 

@@ -5,7 +5,12 @@ from os import path
 from dhpythonirodsutils import formatters
 
 from test_cases.base_customizable_metadata_test_case import BaseTestCaseCustomizableMetadata
-from test_cases.utils import add_metadata_files_to_direct_dropzone, get_instance, TMP_INSTANCE_PATH
+from test_cases.utils import (
+    add_metadata_files_to_direct_dropzone,
+    get_instance,
+    get_project_collection_instance_in_elastic,
+    TMP_INSTANCE_PATH,
+)
 
 
 class TestEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
@@ -49,6 +54,11 @@ class TestEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
 
             collection_title = tmp_instance["3_Title"]["title"]["@value"]
             assert collection_title == self.new_collection_title
+
+    def test_elastic_index_update(self):
+        instance = get_project_collection_instance_in_elastic(self.project_id)
+        collection_title = instance["3_Title"]["title"]["@value"]
+        assert collection_title == self.new_collection_title
 
     def test_collection_schema_version(self):
         tmp_schema_path = "/tmp/tmp_schema.json"

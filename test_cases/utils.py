@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import time
 import uuid
@@ -249,3 +250,34 @@ def check_if_key_value_in_dict_list(dictionaries_list, key, value):
         if dictionary[key] == value:
             found = True
     return found
+
+
+def run_index_all_project_collections_metadata():
+    rule = "/rules/tests/run_test.sh -r index_all_project_collections_metadata -u service-disqover"
+    subprocess.check_call(rule, shell=True)
+
+
+def get_project_collection_instance_in_elastic(project_id):
+    elastic_host = os.environ.get("ENV_ELASTIC_HOST")
+    elastic_port = os.environ.get("ENV_ELASTIC_PORT")
+    elastic_password = os.environ.get("ENV_ELASTIC_PASSWORD")
+    search_url = "{}:{}/collection_metadata/_doc/_search".format(elastic_host, elastic_port)
+    query = "curl -u elastic:{} {}?q={}".format(elastic_password, search_url, project_id)
+
+    instance = ""
+    # The AVU 'ingested' is set before calling index_add_single_project_collection_metadata in finish_ingest.py
+    # test_elastic_index_update might be called before index_add_single_project_collection_metadata is done
+    fail_safe = 30
+    while fail_safe != 0:
+        try:
+            ret = subprocess.check_output(query, shell=True)
+            result = json.loads(ret)
+            instance = result["hits"]["hits"][0]["_source"]
+            fail_safe = 0
+        except IndexError:
+            fail_safe = fail_safe - 1
+            time.sleep(3)
+
+    assert instance
+
+    return instance

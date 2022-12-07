@@ -1,6 +1,8 @@
 import json
 import subprocess
 
+from dhpythonirodsutils import formatters
+
 from test_cases.utils import (
     revert_latest_project_number,
     remove_project,
@@ -35,6 +37,8 @@ class BaseTestCaseIngest:
 
     dropzone_type = ""
     token = ""
+    dropzone_total_size = ""
+    dropzone_num_files = ""
 
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
     collection_title = "collection_title"
@@ -175,3 +179,18 @@ class BaseTestCaseIngest:
 
         collection_id = instance["collection_id"]
         assert collection_id == self.collection_id
+
+    def test_dropzone_pre_ingest_avu(self):
+        """This test asserts that the dropzone AVUs set with the rule 'save_dropzone_pre_ingest_info' are correct."""
+
+        query = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}' \""
+        dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
+
+        run_iquest = query.format(dropzone_path, "totalSize")
+        total_size = subprocess.check_output(run_iquest, shell=True).strip()
+
+        run_iquest = query.format(dropzone_path, "numFiles")
+        num_files = subprocess.check_output(run_iquest, shell=True).strip()
+
+        assert total_size == self.dropzone_total_size
+        assert num_files == self.dropzone_num_files

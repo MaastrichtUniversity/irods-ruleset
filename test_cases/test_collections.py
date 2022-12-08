@@ -164,9 +164,7 @@ class TestCollections:
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
-        rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{},{}"'.format(
-            user_to_check, collection_path
-        )
+        rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{},{}"'.format(user_to_check, collection_path)
         subprocess.check_call(rule, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
@@ -199,16 +197,33 @@ class TestCollections:
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
-        rule_open = 'irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r "*project=\'{}\'" "*projectCollection=\'{}\'" "*user=\'{}\'" "*rights=\'own\'"'.format(
+        rule_open = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" \"*user='{}'\" \"*rights='own'\"".format(
             self.project_id, self.collection_id, user_to_check
         )
         subprocess.check_call(rule_open, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
 
-        rule_close = 'irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r "*project=\'{}\'" "*projectCollection=\'{}\'" '.format(
+        rule_close = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" ".format(
             self.project_id, self.collection_id
         )
         subprocess.check_call(rule_close, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
+
+    def test_checksum_collection(self):
+        project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
+        set_acl = "ichmod -rM write rods {}".format(project_collection_path)
+        subprocess.check_call(set_acl, shell=True)
+
+        rule = '/rules/tests/run_test.sh -r checksum_collection -a "{},{}"'.format(self.project_id, self.collection_id)
+        ret = subprocess.check_output(rule, shell=True)
+        results = json.loads(ret)
+        for path, checksum in results.items():
+            ils = "ils -L {}".format(path)
+            ret = subprocess.check_output(ils, shell=True)
+            # 2 => number of replica with the correct checksum
+            assert ret.count(checksum) == 2
+
+        set_acl = "ichmod -rM read rods {}".format(project_collection_path)
+        subprocess.check_call(set_acl, shell=True)

@@ -32,7 +32,7 @@ def checksum_collection(ctx, project_id, collection_id):
         "DATA_NAME, COLL_NAME", "COLL_NAME LIKE '{}%'".format(project_collection_path), AS_LIST, ctx.callback
     ):
         virtual_path = row[1] + "/" + row[0]
-        checksum = ctx.callback.msiDataObjChksum(virtual_path, "forceChksum=", "")["arguments"][2]
+        checksum = ctx.callback.msiDataObjChksum(virtual_path, "ChksumAll=++++forceChksum=", "")["arguments"][2]
         formatted_checksum = checksum.replace("sha2:", "")
         output[virtual_path] = formatted_checksum
 

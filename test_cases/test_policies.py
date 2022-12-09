@@ -128,11 +128,22 @@ class TestPolicies:
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
 
     def test_pre_proc_for_modify_avu_metadata(self):
-        """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
-        check = "export clientUserName={} && imeta {} -C /nlmumc/projects/{} enableArchive false"
-        with pytest.raises(subprocess.CalledProcessError) as e_info:
-            subprocess.check_call(check.format("service-pid", "set", self.project_id), shell=True)
-        subprocess.check_call(check.format(self.manager1, "set", self.project_id), shell=True)
+        """ This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
+        list_avu_to_check = [
+            "responsibleCostCenter",
+            "enableArchive",
+            "enableUnarchive",
+            "enableOpenAccessExport",
+            "collectionMetadataSchemas",
+            "enableContributorEditMetadata",
+            # "enableDropzoneSharing", triggers acPostProcForModifyAVUMetadata
+            "description"
+        ]
+        for avu in list_avu_to_check:
+            check = "export clientUserName={} && imeta set -C /nlmumc/projects/{} {} false"
+            with pytest.raises(subprocess.CalledProcessError) as e_info:
+                subprocess.check_call(check.format("service-pid", self.project_id, avu), shell=True)
+            subprocess.check_call(check.format(self.manager1, self.project_id, avu), shell=True)
 
     def test_pre_proc_for_coll_create_first(self):
         """This tests if a user is allowed to make a dir in a direct dropzone that is already ingesting (they should not be)"""

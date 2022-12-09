@@ -7,6 +7,8 @@ keycloak needs to have run
 sram-sync needs to have run
 
 epicpid needs to be up (Error-post ingestion)
+
+elasticsearch needs to be up
 ```
 # Prevent pytest cache warnings
 ```

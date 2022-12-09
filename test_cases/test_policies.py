@@ -113,6 +113,12 @@ class TestPolicies:
             self.destination_resource, TMP_INSTANCE_PATH, collection_path
         )
         subprocess.check_call(put_instance, shell=True)
+        # The policy assumes 3 replicas for direct ingest sizeIngested to be triggered (0-stagingresc, 1 and 2).
+        # Therefor an extra replica on rootResc is created 
+        repl_instance = "irepl -R {} {}/instance.json".format(
+            "rootResc", collection_path
+        )
+        subprocess.check_call(repl_instance, shell=True)
         # Test sizeIngested AVU
         get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(
             collection_path

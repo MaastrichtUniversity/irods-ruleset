@@ -12,6 +12,9 @@ epicpid needs to be up (Error-post ingestion)
 ```
 Make sure the irods user has write access to the test_cases folder (inside ires-hnas-um container)
 chmod 777 /rules/test_cases
+or
+add the argument -p no:cacheprovider
+/var/lib/irods/.local/bin/pytest -v -p no:cacheprovider .
 ```
 
 # How to run all the test cases
@@ -20,6 +23,7 @@ chmod 777 /rules/test_cases
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v .
+/var/lib/irods/.local/bin/pytest -v -p no:cacheprovider .
 ```
 
 # How to run all the test cases with print enabled
@@ -27,7 +31,7 @@ cd /rules/test_cases
 ./rit.sh exec ires-hnas-um
 su irods
 cd /rules/test_cases
-/var/lib/irods/.local/bin/pytest -v -s .
+/var/lib/irods/.local/bin/pytest -v -s -p no:cacheprovider .
 ```
 
 # How to run a single test file

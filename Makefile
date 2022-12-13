@@ -15,6 +15,7 @@ $(RULEDIRS):
 
 # pip install the DataHub iRODS ruleset
 pip-install:
+	echo "from datahubirodsruleset import *\n" > /etc/irods/core.py
 	pip install --user .
 
 .PHONY: subdirs $(RULEDIRS)

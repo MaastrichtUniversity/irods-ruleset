@@ -1,47 +1,23 @@
 pipeline {
     agent any
+    environment {
+        GIT_TOKEN     = credentials('datahub-git-token')
+    }
     stages {
         stage('Checkout docker repositories'){
             steps{
                 sh "echo 'Pulling...  $GIT_BRANCH'"
                 sh "printenv"
 //                 cleanWs()
-                sh "mkdir docker-common"
-                dir('docker-common'){
-                    git branch: 'develop', url: 'https://github.com/MaastrichtUniversity/docker-common.git'
-                }
                 sh "mkdir docker-dev"
                 dir('docker-dev'){
-                    git branch: 'develop', url: 'https://github.com/MaastrichtUniversity/docker-dev.git'
+                    git branch: '2022.3', url: 'https://github.com/MaastrichtUniversity/docker-dev.git'
                 }
-                withCredentials([
-                    file(credentialsId: 'lib-dh', variable: 'libdh')]) {
-                       sh "cp \$libdh ./lib-dh.sh"
-                }
+//                 withCredentials([
+//                     file(credentialsId: 'lib-dh', variable: 'libdh')]) {
+//                        sh "cp \$libdh ./lib-dh.sh"
+//                 }
                 sh "ls -ll"
-            }
-        }
-         stage('Clone docker-common externals'){
-            steps{
-                dir('docker-common'){
-                    sh "./rit.sh externals clone"
-                }
-                dir('docker-common/externals'){
-                    sh """
-                    mkdir nagios-docker
-                    mkdir elastalert-docker
-                    mkdir dh-mailer
-                    mkdir dh-fail2ban
-                    touch dh-fail2ban/fail2ban.env
-                    """
-                }
-            }
-        }
-        stage('Start proxy'){
-            steps{
-                dir('docker-common'){
-                    sh "#./rit.sh up -d proxy"
-                }
             }
         }
         stage('Clone docker-dev externals'){
@@ -64,13 +40,16 @@ pipeline {
                     """
                 }
                 dir('docker-dev/externals/irods-helper-cmd'){
-                	git branch: 'develop', url:'https://github.com/MaastrichtUniversity/irods-helper-cmd.git'
+                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-helper-cmd.git'
                 }
                 dir('docker-dev/externals/irods-microservices'){
-                	git branch: 'develop', url:'https://github.com/MaastrichtUniversity/irods-microservices.git'
+                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-microservices.git'
+                }
+                dir('docker-dev/externals/epicpid-microservice'){
+                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/epicpid-microservice.git'
                 }
                 dir('docker-dev/externals/irods-ruleset'){
-                	git branch: "${GIT_BRANCH}", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'
+                	git branch: "${GIT_BRANCH}", url:'https://$GIT_TOKEN@github.com/MaastrichtUniversity/irods-ruleset.git'
                 }
 //                 dir('docker-dev/externals/irods-ruleset'){
 //                     // Checkout the trigger build git branch or the default develop
@@ -91,11 +70,17 @@ pipeline {
 //                     sh 'ls -all'
 //                 }
                 dir('docker-dev/externals/sram-sync'){
-                	git branch: 'develop', url: 'https://github.com/MaastrichtUniversity/sram-sync.git'
+                	git branch: '2022.3', url: 'https://github.com/MaastrichtUniversity/sram-sync.git'
                 }
                 withCredentials([
-                    file(credentialsId: 'irods.secrets.cfg', variable: 'cfg')]) {
-                   sh "cp \$cfg docker-dev/irods.secrets.cfg"
+                    file(credentialsId: 'irods_secrets', variable: 'cfg'),
+                    file(credentialsId: 'certificate-only', variable: 'cert'),
+                    file(credentialsId: 'private-key', variable: 'pk'),
+                    file(credentialsId: 'my-credentials-test', variable: 'creds')]) {
+                    sh "cp \$cfg docker-dev/irods.secrets.cfg"
+                    sh "cp \$cert docker-dev/externals/epicpid-microservice/credentials/305_21_T12996_USER01_UM_certificate_only.pem"
+                    sh "cp \$pk docker-dev/externals/epicpid-microservice/credentials/305_21_T12996_USER01_UM_privkey.pem"
+                    sh "cp \$creds docker-dev/externals/epicpid-microservice/my_credentials_test.json"
                 }
             }
         }
@@ -103,35 +88,35 @@ pipeline {
             steps{
                 dir('docker-dev'){
                     // Checkout the trigger build git branch or the default develop
-                    sh returnStatus: true, script:'''
-                    git ls-remote --exit-code --heads https://github.com/MaastrichtUniversity/docker-dev.git ${GIT_BRANCH} &> /dev/null
-                    if [ $? -eq 0 ]
-                    then
-                      echo ${GIT_BRANCH}
-                      git checkout ${GIT_BRANCH}
-                      exit 0
-                    fi
-
-                    echo "develop"
-                    git checkout develop
-                    exit 0
-                    '''
+//                     sh returnStatus: true, script:'''
+//                     git ls-remote --exit-code --heads https://github.com/MaastrichtUniversity/docker-dev.git ${GIT_BRANCH} &> /dev/null
+//                     if [ $? -eq 0 ]
+//                     then
+//                       echo ${GIT_BRANCH}
+//                       git checkout ${GIT_BRANCH}
+//                       exit 0
+//                     fi
+//
+//                     echo "2022.3"
+//                     git checkout 2022.3
+//                     exit 0
+//                     '''
                     //sh "git checkout ${GIT_BRANCH}"
                     sh 'git status'
                     sh 'ls -all'
-                    sh returnStatus: true, script: './rit.sh down'
                     sh 'echo "Stop existing docker-dev"'
+                    sh returnStatus: true, script: './rit.sh down'
                     sh '''echo "Start iRODS dev environnement"
-                        ./rit.sh build irods ires sram-sync
-                        ./rit.sh up -d ires sram-sync
+                        ./rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid
+                        ./rit.sh up -d icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl
 
-                        until docker logs --tail 15 corpus_ires_1 2>&1 | grep -q "Config OK";
+                        until docker logs --tail 15 corpus_ires-hnas-um_1 2>&1 | grep -q "Config OK";
                         do
-                          echo "Waiting for ires"
+                          echo "Waiting for ires to finish"
                           sleep 10
                         done
-                        echo "ires is Done"
-
+                        echo "ires is Done!"
+                        ./rit.sh up -d sram-sync
                         until docker logs --tail 1 corpus_sram-sync_1 2>&1 | grep -q "Sleeping for 300 seconds";
                         do
                           echo "Waiting for sram-sync"
@@ -143,7 +128,7 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh "docker exec -t -u irods corpus_irods_1 /var/lib/irods/.local/bin/pytest /rules/tests"
+                sh "docker exec -t -u irods corpus_ires-hnas-um_1 /var/lib/irods/.local/bin/pytest -v -s -p no:cacheprovider /rules/test_cases"
             }
         }
         stage('CleanUp') {

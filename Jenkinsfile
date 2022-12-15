@@ -25,20 +25,20 @@ pipeline {
                 dir('docker-dev'){
                     sh "./rit.sh externals clone"
                 }
-                dir('docker-dev/externals'){
-                    sh """
-                    mkdir dh-faker
-                    mkdir dh-mdr
-                    mkdir -p epicpid-microservice/docker
-                    mkdir irods-frontend
-                    mkdir irods-helper-cmd
-                    mkdir irods-microservices
-                    mkdir irods-open-access-repo
-                    mkdir irods-ruleset
-                    mkdir rit-davrods
-                    mkdir sram-sync
-                    """
-                }
+//                 dir('docker-dev/externals'){
+//                     sh """
+//                     mkdir dh-faker
+//                     mkdir dh-mdr
+//                     mkdir -p epicpid-microservice/docker
+//                     mkdir irods-frontend
+//                     mkdir irods-helper-cmd
+//                     mkdir irods-microservices
+//                     mkdir irods-open-access-repo
+//                     mkdir irods-ruleset
+//                     mkdir rit-davrods
+//                     mkdir sram-sync
+//                     """
+//                 }
                 dir('docker-dev/externals/irods-helper-cmd'){
                 	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-helper-cmd.git'
                 }

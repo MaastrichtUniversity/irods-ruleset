@@ -50,8 +50,12 @@ pipeline {
 //                 }
                 dir('docker-dev/externals'){
                     sh "git clone https://${GIT_TOKEN}@github.com/MaastrichtUniversity/epicpid-microservice.git"
+                    sh "git clone https://${GIT_TOKEN}@github.com/MaastrichtUniversity/dh-irods.git"
                 }
                 dir('docker-dev/externals/epicpid-microservice'){
+                    sh "git checkout 2022.3"
+                }
+                dir('docker-dev/externals/dh-irods'){
                     sh "git checkout 2022.3"
                 }
                 dir('docker-dev/externals/irods-ruleset'){

@@ -13,10 +13,10 @@ pipeline {
                 dir('docker-dev'){
                     git branch: '2022.3', url: 'https://github.com/MaastrichtUniversity/docker-dev.git'
                 }
-//                 withCredentials([
-//                     file(credentialsId: 'lib-dh', variable: 'libdh')]) {
-//                        sh "cp \$libdh ./lib-dh.sh"
-//                 }
+                withCredentials([
+                    file(credentialsId: 'lib-dh', variable: 'libdh')]) {
+                       sh "cp \$libdh ./lib-dh.sh"
+                }
                 sh "ls -ll"
             }
         }

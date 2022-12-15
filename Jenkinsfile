@@ -54,7 +54,7 @@ pipeline {
                         extensions: scm.extensions,
                         userRemoteConfigs: [[
                             url: 'https://github.com/MaastrichtUniversity/epicpid-microservice.git',
-                            credentialsId: 'datahub-git-token'
+                            credentialsId: 'dean-github'
                         ]]
                     ])
                 }

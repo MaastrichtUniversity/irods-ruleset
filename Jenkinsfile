@@ -67,32 +67,22 @@ pipeline {
                 }
             }
         }
+        stage('Build iRODS dev env'){
+            steps{
+                dir('docker-dev'){
+                    sh 'git status'
+                    sh 'ls -all'
+                    sh './rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid'
+                }
+            }
+        }
         stage('Start iRODS dev env'){
             steps{
                 dir('docker-dev'){
-                    // Checkout the trigger build git branch or the default develop
-//                     sh returnStatus: true, script:'''
-//                     git ls-remote --exit-code --heads https://github.com/MaastrichtUniversity/docker-dev.git ${GIT_BRANCH} &> /dev/null
-//                     if [ $? -eq 0 ]
-//                     then
-//                       echo ${GIT_BRANCH}
-//                       git checkout ${GIT_BRANCH}
-//                       exit 0
-//                     fi
-//
-//                     echo "2022.3"
-//                     git checkout 2022.3
-//                     exit 0
-//                     '''
-                    //sh "git checkout ${GIT_BRANCH}"
-                    sh 'git status'
-                    sh 'ls -all'
                     sh 'echo "Stop existing docker-dev"'
                     sh returnStatus: true, script: './rit.sh down'
                     sh '''echo "Start iRODS dev environnement"
-                        ./rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid
                         ./rit.sh up -d icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl
-
                         until docker logs --tail 15 corpus_ires-hnas-um_1 2>&1 | grep -q "Config OK";
                         do
                           echo "Waiting for ires to finish"
@@ -105,6 +95,7 @@ pipeline {
                           echo "Waiting for sram-sync"
                           sleep 5
                         done
+                        ./rit.sh up -d epicpid
                     '''
                 }
             }
@@ -117,8 +108,8 @@ pipeline {
         stage('CleanUp') {
             steps {
                 dir('docker-dev') {
-                    sh returnStatus: true, script: './rit.sh down'
                     sh 'echo "Stop docker-dev containers"'
+                    sh returnStatus: true, script: './rit.sh down'
                 }
                 cleanWs()
             }

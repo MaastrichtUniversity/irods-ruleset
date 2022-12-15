@@ -55,7 +55,7 @@ pipeline {
                     sh "git checkout 2022.3"
                 }
                 dir('docker-dev/externals/irods-ruleset'){
-                	git branch: "${GIT_BRANCH}", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'
+                	git branch: "automated_rule_tests", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'
                 }
 //                 dir('docker-dev/externals/irods-ruleset'){
 //                     // Checkout the trigger build git branch or the default develop

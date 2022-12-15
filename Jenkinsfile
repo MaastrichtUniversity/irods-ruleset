@@ -8,7 +8,7 @@ pipeline {
             steps{
                 sh "echo 'Pulling...  $GIT_BRANCH'"
                 sh "printenv"
-//                 cleanWs()
+                cleanWs()
                 sh "mkdir docker-dev"
                 dir('docker-dev'){
                     git branch: '2022.3', url: 'https://github.com/MaastrichtUniversity/docker-dev.git'

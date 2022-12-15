@@ -46,7 +46,7 @@ pipeline {
                 	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-microservices.git'
                 }
                 dir('docker-dev/externals/epicpid-microservice'){
-                	git branch: '2022.3', url:'https://\${GIT_TOKEN}@github.com/MaastrichtUniversity/epicpid-microservice.git'
+                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/epicpid-microservice.git', credentialsId: 'datahub-github'
                 }
                 dir('docker-dev/externals/irods-ruleset'){
                 	git branch: "${GIT_BRANCH}", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'

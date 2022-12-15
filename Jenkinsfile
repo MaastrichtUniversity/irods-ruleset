@@ -29,14 +29,11 @@ pipeline {
                     sh """
                     mkdir -p dh-faker
                     mkdir -p dh-mdr
-                    mkdir -p epicpid-microservice/docker
                     mkdir -p irods-frontend
                     mkdir -p irods-helper-cmd
                     mkdir -p irods-microservices
                     mkdir -p irods-open-access-repo
-                    mkdir -p irods-ruleset
                     mkdir -p rit-davrods
-                    mkdir -p sram-sync
                     """
                 }
                 dir('docker-dev/externals/irods-helper-cmd'){

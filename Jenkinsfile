@@ -45,8 +45,18 @@ pipeline {
                 dir('docker-dev/externals/irods-microservices'){
                 	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-microservices.git'
                 }
+//                 dir('docker-dev/externals/epicpid-microservice'){
+//                 	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/epicpid-microservice.git', credentialsId: 'datahub-github'
+//                 }
                 dir('docker-dev/externals/epicpid-microservice'){
-                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/epicpid-microservice.git', credentialsId: 'datahub-github'
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: '*/2022.3' ]],
+                        extensions: scm.extensions,
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/MaastrichtUniversity/epicpid-microservice.git',
+                            credentialsId: 'datahub-git-token'
+                        ]]
+                    ])
                 }
                 dir('docker-dev/externals/irods-ruleset'){
                 	git branch: "${GIT_BRANCH}", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'

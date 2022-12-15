@@ -1,16 +1,22 @@
 # Makefile to build and install the iRODS ruleset
 #
-#   make - combine rules and copy it to the "/etc/irods" dir
+#   make - 1) combine rules and copy it to the "/etc/irods" dir
+#          2) (Re-)Install the package datahub-irods-ruleset for the irods user
 #
 
 # The rule dirs to be processed
-RULEDIRS = ingest misc policies projects projectCollection tapeArchive python
+RULEDIRS = native_irods_ruleset
 
 # The make target
-all: $(RULEDIRS)
+all: $(RULEDIRS) pip-install
 
 $(RULEDIRS):
 	$(MAKE) -C $(@:build-%=%)
+
+# pip install the DataHub iRODS ruleset
+pip-install:
+	echo "from datahubirodsruleset import *\n" > /etc/irods/core.py
+	pip install --user .
 
 .PHONY: subdirs $(RULEDIRS)
 .PHONY: all

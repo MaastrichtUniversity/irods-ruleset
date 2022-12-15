@@ -13,7 +13,8 @@ from test_cases.utils import (
     create_dropzone,
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
-    set_irods_collection_avu, create_data_steward,
+    set_irods_collection_avu,
+    create_data_steward,
 )
 
 """
@@ -107,7 +108,7 @@ class TestProjects:
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_list_projects(self):
-        rule = '/rules/tests/run_test.sh -r optimized_list_projects -u {}'.format(self.depositor)
+        rule = "/rules/tests/run_test.sh -r optimized_list_projects -u {}".format(self.depositor)
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
 
@@ -179,6 +180,7 @@ class TestProjects:
         assert project["respCostCenter"] == self.budget_number
         assert project["storageQuotaGiB"] == "0"
         assert project["has_financial_view_access"]
+        assert project["description"] == ""
 
     def test_projects_finance(self):
         # setup
@@ -189,7 +191,7 @@ class TestProjects:
         start_and_wait_for_ingest(self)
 
         # asserts
-        rule = '/rules/tests/run_test.sh -r get_projects_finance -u {}'.format(self.depositor)
+        rule = "/rules/tests/run_test.sh -r get_projects_finance -u {}".format(self.depositor)
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
 
@@ -440,7 +442,7 @@ class TestProjects:
         subprocess.check_call(run_ichmod, shell=True)
 
     def test_list_projects_minimal(self):
-        rule = '/rules/tests/run_test.sh -r list_projects_minimal -u {}'.format(self.depositor)
+        rule = "/rules/tests/run_test.sh -r list_projects_minimal -u {}".format(self.depositor)
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
         assert len(projects) == self.number_of_projects
@@ -460,7 +462,7 @@ class TestProjects:
 
     @staticmethod
     def update_resource_availability(resource, availability):
-        run_imeta = 'iadmin modresc {} status {}'.format(resource, availability)
+        run_imeta = "iadmin modresc {} status {}".format(resource, availability)
         subprocess.check_call(run_imeta, shell=True)
 
     @staticmethod

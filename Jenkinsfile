@@ -29,33 +29,7 @@ pipeline {
                     sh "echo \"echo username=datahub-deployment\" >> /tmp/git_creds.sh"
                     sh "echo \"echo password=$GIT_TOKEN\" >> /tmp/git_creds.sh"
                     sh "./rit.sh externals clone"
-                }
-                dir('docker-dev/externals'){
-                    sh """
-                    mkdir -p dh-faker
-                    mkdir -p dh-mdr
-                    mkdir -p irods-frontend
-                    mkdir -p irods-helper-cmd
-                    mkdir -p irods-microservices
-                    mkdir -p irods-open-access-repo
-                    mkdir -p rit-davrods
-                    """
-                }
-                dir('docker-dev/externals/irods-helper-cmd'){
-                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-helper-cmd.git'
-                }
-                dir('docker-dev/externals/irods-microservices'){
-                	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/irods-microservices.git'
-                }
-//                 dir('docker-dev/externals/epicpid-microservice'){
-//                 	git branch: '2022.3', url:'https://github.com/MaastrichtUniversity/epicpid-microservice.git', credentialsId: 'datahub-github'
-//                 }
-                dir('docker-dev/externals'){
-                    sh "git clone https://${GIT_TOKEN}@github.com/MaastrichtUniversity/epicpid-microservice.git"
-                    sh "git clone https://${GIT_TOKEN}@github.com/MaastrichtUniversity/dh-irods.git"
-                }
-                dir('docker-dev/externals/epicpid-microservice'){
-                    sh "git checkout 2022.3"
+                    sh "./rit.sh externals checkout 2022.3"
                 }
                 dir('docker-dev/externals/dh-irods'){
                     sh "git checkout DHDO-633"
@@ -81,9 +55,6 @@ pipeline {
 //                     sh 'git status'
 //                     sh 'ls -all'
 //                 }
-                dir('docker-dev/externals/sram-sync'){
-                	git branch: '2022.3', url: 'https://github.com/MaastrichtUniversity/sram-sync.git'
-                }
                 withCredentials([
                     file(credentialsId: 'irods_secrets', variable: 'cfg'),
                     file(credentialsId: 'certificate-only', variable: 'cert'),

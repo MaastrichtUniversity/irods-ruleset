@@ -23,6 +23,11 @@ pipeline {
         stage('Clone docker-dev externals'){
             steps{
                 dir('docker-dev'){
+                    sh "git config --global credential.helper \"/bin/bash /tmp/git_creds.sh\""
+                    sh "echo '#!/bin/bash' > /tmp/git_creds.sh"
+                    sh "echo \"sleep 1\" >> /tmp/git_creds.sh"
+                    sh "echo \"echo username=datahub-deployment\" >> /tmp/git_creds.sh"
+                    sh "echo \"echo password=$GIT_TOKEN\" >> /tmp/git_creds.sh"
                     sh "./rit.sh externals clone"
                 }
                 dir('docker-dev/externals'){
@@ -53,7 +58,7 @@ pipeline {
                     sh "git checkout 2022.3"
                 }
                 dir('docker-dev/externals/dh-irods'){
-                    sh "git checkout 2022.3"
+                    sh "git checkout DHDO-633"
                 }
                 dir('docker-dev/externals/irods-ruleset'){
                 	git branch: "automated_rule_tests", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'

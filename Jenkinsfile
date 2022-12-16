@@ -64,13 +64,20 @@ pipeline {
                     sh 'echo "Stop existing docker-dev"'
                     sh returnStatus: true, script: './rit.sh down'
                     sh '''echo "Start iRODS dev environnement"
-                        ./rit.sh up -d icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl
+                        ./rit.sh up -d icat 
+                        until docker logs --tail 15 corpus_icat_1 2>&1 | grep -q "Config OK";
+                        do
+                        echo "Waiting for iCAT to finish"
+                        sleep 10
+                        done
+                        echo "iCAT is Done!"
+                        ./rit.sh up -d ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl
                         until docker logs --tail 15 corpus_ires-hnas-um_1 2>&1 | grep -q "Config OK";
                         do
-                          echo "Waiting for ires to finish"
+                          echo "Waiting for iRES to finish"
                           sleep 10
                         done
-                        echo "ires is Done!"
+                        echo "iRES is Done!"
                         ./rit.sh up -d sram-sync
                         until docker logs --tail 1 corpus_sram-sync_1 2>&1 | grep -q "Sleeping for 300 seconds";
                         do

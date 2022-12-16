@@ -37,24 +37,6 @@ pipeline {
                 dir('docker-dev/externals/irods-ruleset'){
                 	git branch: "automated_rule_tests", url:'https://github.com/MaastrichtUniversity/irods-ruleset.git'
                 }
-//                 dir('docker-dev/externals/irods-ruleset'){
-//                     // Checkout the trigger build git branch or the default develop
-//                     sh returnStatus: true, script:'''
-//                     git ls-remote --exit-code --heads https://github.com/MaastrichtUniversity/irods-ruleset ${GIT_BRANCH} &> /dev/null
-//                     if [ $? -eq 0 ]
-//                     then
-//                       echo ${GIT_BRANCH}
-//                       git checkout ${GIT_BRANCH}
-//                       exit 0
-//                     fi
-//
-//                     echo "develop"
-//                     git checkout develop
-//                     exit 0
-//                     '''
-//                     sh 'git status'
-//                     sh 'ls -all'
-//                 }
                 withCredentials([
                     file(credentialsId: 'irods_secrets', variable: 'cfg'),
                     file(credentialsId: 'certificate-only', variable: 'cert'),
@@ -105,14 +87,14 @@ pipeline {
                 sh "docker exec -t -u irods corpus_ires-hnas-um_1 /var/lib/irods/.local/bin/pytest -v -s -p no:cacheprovider /rules/test_cases"
             }
         }
-        stage('CleanUp') {
-            steps {
-                dir('docker-dev') {
+    }
+    post {
+        always {
+            dir('docker-dev') {
                     sh 'echo "Stop docker-dev containers"'
                     sh returnStatus: true, script: './rit.sh down'
                 }
-                cleanWs()
-            }
+            cleanWs()
         }
     }
 }

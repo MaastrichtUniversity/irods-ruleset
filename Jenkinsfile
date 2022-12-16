@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    options {
+        ansiColor('xterm')
+    }
     environment {
         GIT_TOKEN     = credentials('datahub-git-token')
     }

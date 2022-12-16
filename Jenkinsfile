@@ -54,7 +54,7 @@ pipeline {
                 dir('docker-dev'){
                     sh 'git status'
                     sh 'ls -all'
-                    sh './rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid'
+                    sh './rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid keycloak'
                 }
             }
         }
@@ -64,7 +64,7 @@ pipeline {
                     sh 'echo "Stop existing docker-dev"'
                     sh returnStatus: true, script: './rit.sh down'
                     sh '''echo "Start iRODS dev environnement"
-                        ./rit.sh up -d icat 
+                        ./rit.sh up -d icat keycloak
                         until docker logs --tail 15 corpus_icat_1 2>&1 | grep -q "Config OK";
                         do
                         echo "Waiting for iCAT to finish"

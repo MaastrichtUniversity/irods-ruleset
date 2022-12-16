@@ -42,7 +42,7 @@ pipeline {
                     file(credentialsId: 'certificate-only', variable: 'cert'),
                     file(credentialsId: 'private-key', variable: 'pk'),
                     file(credentialsId: 'my-credentials-test', variable: 'creds')]) {
-                    sh "cp \$cfg docker-dev/irods.secrets.cfg"
+                    sh "cp \$cfg docker-dev/irods.secrets.cfg && chmod 664 docker-dev/irods.secrets.cfg"
                     sh "cp \$cert docker-dev/externals/epicpid-microservice/credentials/305_21_T12996_USER01_UM_certificate_only.pem"
                     sh "cp \$pk docker-dev/externals/epicpid-microservice/credentials/305_21_T12996_USER01_UM_privkey.pem"
                     sh "cp \$creds docker-dev/externals/epicpid-microservice/my_credentials_test.json"
@@ -54,7 +54,7 @@ pipeline {
                 dir('docker-dev'){
                     sh 'git status'
                     sh 'ls -all'
-                    sh './rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid keycloak'
+                    sh './rit.sh build icat ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl sram-sync epicpid keycloak elastic'
                 }
             }
         }

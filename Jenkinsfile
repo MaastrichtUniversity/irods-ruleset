@@ -71,7 +71,7 @@ pipeline {
             steps{
                 dir('docker-dev'){
                     sh 'echo "Start iRODS dev environnement"'
-                    sh './rit.sh up -d icat keycloak elastic'
+                    sh './rit.sh up -d icat keycloak elastic epicpid'
 
                     sh '''until docker logs --tail 15 corpus_icat_1 2>&1 | grep -q "Config OK";
                         do
@@ -101,7 +101,6 @@ pipeline {
                           sleep 5
                         done    
                         '''  
-                    sh './rit.sh up -d epicpid'
                 }
             }
         }

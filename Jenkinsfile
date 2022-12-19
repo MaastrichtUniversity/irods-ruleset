@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+       label "fhml-srv020"
+    }
     options {
         ansiColor('xterm')
     }
@@ -88,6 +90,12 @@ pipeline {
                         done
                         echo "iRES is Done!"
                         '''
+                    sh '''until docker logs --tail 1 corpus_keycloak_1 2>&1 | grep -q "Done syncing LDAP";
+                        do
+                          echo "Waiting for keycloak to finally finish"
+                          sleep 5
+                        done
+                        '''
                     sh './rit.sh up -d sram-sync'
                     sh '''until docker logs --tail 1 corpus_sram-sync_1 2>&1 | grep -q "Sleeping for 300 seconds";
                         do
@@ -95,12 +103,6 @@ pipeline {
                           sleep 5
                         done
                         '''
-                    sh '''until docker logs --tail 1 corpus_keycloak_1 2>&1 | grep -q "Done syncing LDAP";
-                        do
-                          echo "Waiting for keycloak to finally finish"
-                          sleep 5
-                        done    
-                        '''  
                 }
             }
         }

@@ -11,7 +11,9 @@ pipeline {
     stages {
         stage('Build docker-dev'){
             steps{
-                build job: 'build-docker-dev'
+                build job: 'build-docker-dev', parameters: [
+                    string(name: 'workspace', value: "${WORKSPACE}")
+                ]
             }
         }
         stage('Down any remaining iRODS environment'){

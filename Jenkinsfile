@@ -15,7 +15,7 @@ pipeline {
         stage('Build docker-dev'){
             steps{
                 build job: 'build-docker-dev', parameters: [
-                    string(name: 'TARGET_BRANCH', value: params.TARGET_BRANCH})
+                    string(name: 'TARGET_BRANCH', value: params.TARGET_BRANCH)
                 ]
                 copyArtifacts projectName: 'build-docker-dev'
             }

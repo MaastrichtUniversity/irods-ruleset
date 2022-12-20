@@ -14,6 +14,7 @@ pipeline {
                 build job: 'build-docker-dev', parameters: [
                     string(name: 'workspace', value: "${WORKSPACE}")
                 ]
+                copyArtifacts projectName: 'build-docker-dev'
             }
         }
         stage('Down any remaining iRODS environment'){

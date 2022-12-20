@@ -2,6 +2,9 @@ pipeline {
     agent {
        label "fhml-srv020"
     }
+    parameters {
+        string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'The branch to build')
+    }
     options {
         ansiColor('xterm')
     }
@@ -12,7 +15,7 @@ pipeline {
         stage('Build docker-dev'){
             steps{
                 build job: 'build-docker-dev', parameters: [
-                    string(name: 'workspace', value: "${WORKSPACE}")
+                    string(name: 'TARGET_BRANCH', value: params.TARGET_BRANCH})
                 ]
                 copyArtifacts projectName: 'build-docker-dev'
             }

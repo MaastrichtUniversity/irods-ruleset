@@ -3,7 +3,9 @@ pipeline {
        label "fhml-srv020"
     }
     parameters {
-        string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'The branch to build')
+        string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'The branch to deploy')
+        string(name: 'FALLBACK_BRANCH', defaultValue: 'main', description: 'The branch to fall back on if the target branch does not exist')
+        string(name: 'TARGET_MACHINE', defaultValue: 'fhml-srv020', description: 'The machine to build on')
     }
     options {
         ansiColor('xterm')
@@ -15,7 +17,9 @@ pipeline {
         stage('Build docker-dev'){
             steps{
                 build job: 'build-docker-dev', parameters: [
-                    string(name: 'TARGET_BRANCH', value: params.TARGET_BRANCH)
+                    string(name: 'TARGET_BRANCH', value: params.TARGET_BRANCH),
+                    string(name: 'FALLBACK_BRANCH', value: params.FALLBACK_BRANCH),
+                    string(name: 'TARGET_MACHINE', value: params.TARGET_MACHINE)
                 ]
                 copyArtifacts projectName: 'build-docker-dev'
             }

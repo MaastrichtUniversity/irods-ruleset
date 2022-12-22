@@ -26,8 +26,10 @@ pipeline {
         }
         stage('Down any remaining iRODS environment'){
             steps{
-                sh 'echo "Stop existing docker-dev"'
-                sh returnStatus: true, script: './rit.sh down'
+                dir('docker-dev'){
+                    sh 'echo "Stop existing docker-dev"'
+                    sh returnStatus: true, script: './rit.sh down'
+                }
             }
         }
         stage('Set sram-sync and epicpid to run as jenkins user'){

@@ -30,6 +30,16 @@ pipeline {
                 sh returnStatus: true, script: './rit.sh down'
             }
         }
+        stage('Set sram-sync and epicpid to run as jenkins user'){
+            steps {
+                dir('docker-dev'){
+                        sh """#!/bin/bash
+                            sed -i '/externals\\/epicpid-microservice\\/docker.*/a \\ \\ \\ \\ user: 1000:1000' docker-compose.yml
+                            sed -i '/sram-sync:\${ENV_TAG}.*/a \\ \\ \\ \\ user: 1000:1000' docker-compose.yml
+                        """
+                }
+            }
+        }
         stage('Start iRODS dev env'){
             steps{
                 dir('docker-dev'){

@@ -123,7 +123,6 @@ def json_arrayops_add(ctx, json_str, item):
     if not item in json_obj:
         json_obj.append(item)
     size = len(json_obj)
-    print(size)
     return json_obj, size
 
 

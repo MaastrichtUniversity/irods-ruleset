@@ -1,3 +1,4 @@
+import json
 import irods_types  # pylint: disable=import-error
 import session_vars  # pylint: disable=import-error
 from dhpythonirodsutils import formatters, loggers
@@ -84,6 +85,137 @@ def get_env(ctx, key, fatal="false"):
     return value
 
 
+@make(inputs=[0, 1], outputs=[0, 2], handler=Output.STORE)
+def json_arrayops_add(ctx, json_str, item):
+    """
+    Add item to stringified json array
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        initial json array
+    item : str
+        item to be added to the json array
+
+    Returns
+    -------
+    json_obj : str
+        updated json array
+    size : str
+        size of the updated json array
+    """
+    if not json_str:
+        json_str = "[]"
+    json_obj = json.loads(json_str)
+    if item == "null":
+        size = len(json_obj)
+        return json_obj, int(size)
+    elif item == "false":
+        item = False
+    elif item == "true":
+        item = True
+    else:
+        try:
+            item = json.loads(item)
+        except ValueError:
+            item = str(item)
+    if not item in json_obj:
+        json_obj.append(item)
+    size = len(json_obj)
+    print(size)
+    return json_obj, size
+
+
+@make(inputs=[0, 1], outputs=[0, 2], handler=Output.STORE)
+def json_arrayops_get(ctx, json_str, index):
+    """
+    get item from stringified json array at the specified index
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        json array
+    index : str
+        index of the item to be returned
+
+    Returns
+    -------
+    json_obj : str
+        update json array
+    object : str
+        object in json_str at specified index
+    """
+    if not json_str:
+        json_str = "[]"
+    json_obj = json.loads(json_str)
+    index = int(index)
+    object = json_obj[index]
+    return json_obj, object
+
+@make(inputs=[0], outputs=[0, 1], handler=Output.STORE)
+def json_arrayops_size(ctx, json_str):
+    """
+    get size of stringified json array
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        json array
+    Returns
+    -------
+    json_obj : str
+        update json array
+    size : str
+        size of json array
+    """
+    if not json_str:
+        json_str = "[]"
+    json_obj = json.loads(json_str)
+    size = len(json_obj)
+    return json_obj, size
+
+@make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
+def json_objops_add(ctx, json_str, kvp):
+    if not json_str:
+        json_str = "{}"
+    json_obj = json.loads(json_str)
+    pairs = kvp.split("++++")
+    for key_value_pair in pairs:
+        print(key_value_pair)
+        pair = key_value_pair.split("=")
+        key = pair[0]
+        value = pair[1]
+        try:
+            value = json.loads(value)
+        except ValueError:
+            value = str(value)
+        json_obj[key] = value
+    return json_obj
+
+@make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
+def json_objops_set(ctx, json_str, kvp):
+    if not json_str:
+        json_str = "{}"
+    json_obj = json.loads(json_str)
+    pairs = kvp.split("++++")
+    for key_value_pair in pairs:
+        print(key_value_pair)
+        pair = key_value_pair.split("=")
+        key = pair[0]
+        value = pair[1]
+        try:
+            value = json.loads(value)
+        except ValueError:
+            value = str(value)
+        json_obj[key] = value
+    return json_obj
+
+
+
+
 def read_data_object_from_irods(ctx, path):
     """This rule gets a JSON schema stored as an iRODS object
     :param ctx:  iRODS context
@@ -95,7 +227,7 @@ def read_data_object_from_irods(ctx, path):
     file_desc = ret_val["arguments"][1]
 
     # Read iRODS file
-    ret_val = ctx.callback.msiDataObjRead(file_desc, 2**31 - 1, irods_types.BytesBuf())
+    ret_val = ctx.callback.msiDataObjRead(file_desc, 2 ** 31 - 1, irods_types.BytesBuf())
     read_buf = ret_val["arguments"][2]
 
     # Convert BytesBuffer to string

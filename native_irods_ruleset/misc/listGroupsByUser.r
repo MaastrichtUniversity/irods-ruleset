@@ -9,18 +9,16 @@ irule_dummy() {
 
 IRULE_listGroupsByUser(*result) {
     *result = '[]';
-    *size2 = 0;
     foreach ( *Row in SELECT USER_NAME, USER_ID WHERE USER_TYPE ='rodsgroup' ) {
        *groups = '';
        *json_str = '[]';
-       *size = 0;
        *groupName = *Row.USER_NAME;
        *groupID = *Row.USER_ID;
        #User rodsadmin crashes rest of scripts
        if (*groupName != 'rodsadmin') {
             # Query the users inside the current *groupName and add its display name in *json_str
             foreach ( *Row2 in SELECT USER_NAME, META_USER_ATTR_VALUE where USER_GROUP_NAME  = *groupName AND USER_NAME != *groupName AND META_USER_ATTR_NAME = 'displayName' ) {
-                 msi_json_arrayops(*json_str, *Row2.META_USER_ATTR_VALUE, "add", *size);
+                 json_arrayops_add(*json_str, *Row2.META_USER_ATTR_VALUE, "");
             }
             *displayName = *groupName;
             *description = "";
@@ -35,7 +33,7 @@ IRULE_listGroupsByUser(*result) {
             }
 
             *details = '{ "GroupName": "*groupName", "DisplayName": "*displayName", "Description": "*description", "Users": *json_str}';
-            msi_json_arrayops(*result,  *details, "add", *size2);
+            json_arrayops_add(*result,  *details, "");
        }
     }
 }

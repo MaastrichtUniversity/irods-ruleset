@@ -27,7 +27,6 @@ IRULE_listActiveDropZones(*report, *result) {
     }
 
     *json_str = '[]';
-    *size = 0;
 
     *param = "COLL_NAME, order_desc(COLL_MODIFY_TIME), COLL_PARENT_NAME";
     *cond = "COLL_ACCESS_NAME = 'own' and COLL_PARENT_NAME in (*dropzoneQuery)";
@@ -214,7 +213,7 @@ IRULE_listActiveDropZones(*report, *result) {
 
         msi_json_objops(*o, *kvp, "set");
 
-        msi_json_arrayops(*json_str, *o, "add", *size)
+        json_arrayops_add(*json_str, *o, "")
     }
 
     *result = *json_str;

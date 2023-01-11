@@ -1,5 +1,5 @@
 # Call with
-# irule -F getCollectionAVUTriple.r "*path='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getCollectionAVUTriple.r "*path='/nlmumc/ingest/direct/enchanting-ibis'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
 #
 # Return a JSON array with a triplet Attribute Value Unit for each matching input attribute to the collection
 #
@@ -18,18 +18,18 @@ irule_dummy() {
 IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result) {
     *value = "";
     *arrayops = '[]';
-    *arraySize = 0;
+    *arraySize = "0";
     *result = '';
     foreach (*avu in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS WHERE COLL_NAME == "*path") {
         if ( *avu.META_COLL_ATTR_NAME == *attribute) {
             *value = *avu.META_COLL_ATTR_VALUE;
             *unit = *avu.META_COLL_ATTR_UNITS;
             *output = '{"attribute": "*attribute", "value": "*value", "unit": "*unit"}'
-			msi_json_arrayops(*arrayops, *output, "add", *arraySize);
+			json_arrayops_add(*arrayops, *output, *arraySize);
         }
     }
     *result = *arrayops;
-    if (*arraySize == 0) {
+    if (*arraySize == "0") {
         if (*fatal == "true") {
             failmsg(-1, "ERROR: The attribute '*attribute' of collection '*path' has no value in iCAT");
         } else {

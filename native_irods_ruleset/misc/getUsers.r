@@ -9,7 +9,6 @@ irule_dummy() {
 
 IRULE_getUsers(*showServiceAccounts,*result) {
     *users = '[]';
-    *usersSize = 0;
 
     foreach ( *Row in select USER_NAME, USER_ID where USER_TYPE = 'rodsuser') {
         *objectName = *Row.USER_NAME;
@@ -28,13 +27,13 @@ IRULE_getUsers(*showServiceAccounts,*result) {
 
         if ( str(*showServiceAccounts) == "false" ) {
            if ( strlen(*Row.USER_NAME) < 8 ) {
-                msi_json_arrayops(*users, *userObject, "add", *usersSize);
+                json_arrayops_add(*users, *userObject, "");
            } else if ( substr(*Row.USER_NAME, 0, 8) != "service-" ) {
-                msi_json_arrayops(*users, *userObject, "add", *usersSize);
+                json_arrayops_add(*users, *userObject, "");
            }
         }
         else{
-            msi_json_arrayops(*users, *userObject, "add", *usersSize);
+            json_arrayops_add(*users, *userObject, "");
         }
     }
 

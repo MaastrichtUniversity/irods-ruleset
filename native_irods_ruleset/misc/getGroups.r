@@ -9,7 +9,6 @@ irule_dummy() {
 
 IRULE_getGroups(*showSpecialGroups, *result) {
     *groups = '[]';
-    *groupsSize = 0;
 
     foreach ( *Row in select USER_NAME, USER_ID where USER_TYPE = 'rodsgroup') {
         *objectName = *Row.USER_NAME;
@@ -30,10 +29,10 @@ IRULE_getGroups(*showSpecialGroups, *result) {
 
         if ( str(*showSpecialGroups) == "false" ) {
             if ( *Row.USER_NAME != "public" &&  *Row.USER_NAME != "rodsadmin" && *Row.USER_NAME != "DH-ingest" && *Row.USER_NAME != "DH-project-admins" ) {
-                msi_json_arrayops(*groups, *groupObject, "add", *groupsSize);
+                json_arrayops_add(*groups, *groupObject, "");
             }
          } else {
-            msi_json_arrayops(*groups, *groupObject, "add", *groupsSize);
+            json_arrayops_add(*groups, *groupObject, "");
          }
     }
 

@@ -10,7 +10,6 @@ irule_dummy() {
 IRULE_getUsersInGroup(*groupId, *result) {
  #   writeLine("serverLog", "searching users in group: *group");	
     *result = "[]";
-    *resultSize = 0;
     foreach ( *Row in select order(USER_NAME), USER_ID where USER_TYPE = 'rodsuser' and USER_GROUP_ID = *groupId ) {
         *objectName = *Row.USER_NAME;
         *objectID = *Row.USER_ID;
@@ -25,7 +24,7 @@ IRULE_getUsersInGroup(*groupId, *result) {
         }
 
         *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
-        msi_json_arrayops(*result, *userObject, "add", *resultSize);
+        json_arrayops_add(*result, *userObject, "");
     }
 }
 

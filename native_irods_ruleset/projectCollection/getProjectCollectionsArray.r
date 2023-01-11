@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F getProjectCollectionsArray.r "*project='P000000001'" "*inherited='false'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/getProjectCollectionsArray.r "*project='P000000001'" "*inherited='false'"
 #
 # This is an optimized and combined version of 'detailsProject.r' and 'detailsProjectCollection.r'.
 # It is specifically optimized for the pacman portal to render the listing of collections in a project.
@@ -53,7 +53,6 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
     *collection = '{}';
     # JSON array to store all the collections of the input project
     *collectionsArray = '[]';
-    *collectionsArraySize = 0;
     # Flag variable to keep the last COLL_NAME inserted into *collectionsArray
     # Warning: expected first default value. Need a more robust check
     *previousCollection = "/nlmumc/projects/*project/C000000001";
@@ -113,7 +112,7 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
                 msiAddKeyVal(*kvp, "collection", *collectionId);
                 msi_json_objops(*collection, *kvp, "add");
                 # Append *collection in *collectionsArray
-                msi_json_arrayops(*collectionsArray, *collection, "add", *collectionsArraySize);
+                json_arrayops_add(*collectionsArray, *collection, "");
 
                 # Reset *collection and *validation
                 *collection = '{}';
@@ -170,7 +169,7 @@ IRULE_getProjectCollectionsArray(*project, *inherited, *result) {
         msiAddKeyVal(*kvp, "collection", *collectionId);
         msi_json_objops(*collection, *kvp, "add");
         # Append *collection in *collectionsArray
-        msi_json_arrayops(*collectionsArray, *collection, "add", *collectionsArraySize);
+        json_arrayops_add(*collectionsArray, *collection, "");
     }
 
     #######################################

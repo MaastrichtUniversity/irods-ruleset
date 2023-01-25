@@ -252,8 +252,8 @@ class TestUserGroups:
         subprocess.check_output(rule, shell=True)
 
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
-             self.manager1, field_name
-         )
+            self.manager1, field_name
+        )
         field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
         assert field_value_return == field_value
 
@@ -261,7 +261,9 @@ class TestUserGroups:
         subprocess.check_output(imeta, shell=True)
 
     def test_get_expanded_user_group_information(self):
-        rule = '/rules/tests/run_test.sh -r get_expanded_user_group_information -a "{};{}"'.format(self.manager2, self.group)
+        rule = '/rules/tests/run_test.sh -r get_expanded_user_group_information -a "{};{}"'.format(
+            self.manager2, self.group
+        )
         ret = subprocess.check_output(rule, shell=True)
         output = json.loads(ret)
         assert self.manager1 in output

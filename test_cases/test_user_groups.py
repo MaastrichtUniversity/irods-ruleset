@@ -260,6 +260,17 @@ class TestUserGroups:
         imeta = "imeta rm -u {} {} {}".format(self.manager1, field_name, field_value)
         subprocess.check_output(imeta, shell=True)
 
+    def test_get_expanded_user_group_information(self):
+        rule = '/rules/tests/run_test.sh -r get_expanded_user_group_information -a "{};{}"'.format(
+            self.manager2, self.group
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        output = json.loads(ret)
+        assert self.manager1 in output
+        assert self.manager2 in output
+        assert self.group in output
+        assert output[self.manager1]["email"] == "{}@maastrichtuniversity.nl".format(self.manager1)
+
     def test_get_data_stewards(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDataStewards.r"
         ret = subprocess.check_output(rule, shell=True)

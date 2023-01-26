@@ -114,10 +114,8 @@ class TestPolicies:
         )
         subprocess.check_call(put_instance, shell=True)
         # The policy assumes 3 replicas for direct ingest sizeIngested to be triggered (0-stagingresc, 1 and 2).
-        # Therefor an extra replica on rootResc is created 
-        repl_instance = "irepl -R {} {}/instance.json".format(
-            "rootResc", collection_path
-        )
+        # Therefor an extra replica on rootResc is created
+        repl_instance = "irepl -R {} {}/instance.json".format("rootResc", collection_path)
         subprocess.check_call(repl_instance, shell=True)
         # Test sizeIngested AVU
         get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(
@@ -134,7 +132,7 @@ class TestPolicies:
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
 
     def test_pre_proc_for_modify_avu_metadata(self):
-        """ This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
+        """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
         list_avu_to_check = [
             "responsibleCostCenter",
             "enableArchive",
@@ -143,7 +141,7 @@ class TestPolicies:
             "collectionMetadataSchemas",
             "enableContributorEditMetadata",
             # "enableDropzoneSharing", triggers acPostProcForModifyAVUMetadata
-            "description"
+            "description",
         ]
         for avu in list_avu_to_check:
             check = "export clientUserName={} && imeta set -C /nlmumc/projects/{} {} false"

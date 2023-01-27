@@ -1,10 +1,16 @@
 # /rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true" -j
 import json
 
-from dhpythonirodsutils.formatters import format_string_to_boolean
+from dhpythonirodsutils.formatters import (
+    format_string_to_boolean,
+    get_project_id_from_project_collection_path,
+    get_collection_id_from_project_collection_path,
+    get_project_path_from_project_collection_path,
+)
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
@@ -36,7 +42,7 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_export
     if query_drop_zones:
         drop_zones = get_list_active_drop_zones(ctx)
 
-    archive_state = {}
+    archive_state = []
     exporter_state = {}
     if query_archive and query_export:
         archive_state, exporter_state = get_list_active_project_processes(ctx)
@@ -60,13 +66,13 @@ def get_list_active_drop_zones(ctx):
 
 
 def get_list_active_project_processes(ctx):
-    archive_state = {}
-    exporter_state = {}
+    archive_state = []
+    exporter_state = []
     archive_state_attribute = "archiveState"
     exporter_state_attribute = "exporterState"
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME in ('archiveState', 'exporterState') "
+    conditions = "META_COLL_ATTR_NAME in ('{}', '{}') ".format(archive_state_attribute, exporter_state_attribute)
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         collection = result[0]
@@ -74,38 +80,49 @@ def get_list_active_project_processes(ctx):
         value = result[2]
 
         if attribute == archive_state_attribute:
-            archive_state[collection] = value
+            archive_state.append(get_process_information(ctx, collection, "SURFSara Tape", value))
         elif attribute == exporter_state_attribute:
-            exporter_state[collection] = value
+            state_split = value.split(":")
+            exporter_state.append(get_process_information(ctx, collection, state_split[0], state_split[1]))
 
     return archive_state, exporter_state
 
 
 def get_list_active_exports(ctx):
-    exporter_state = {}
-    # exporter_state_attribute = "exporterState"
+    exporter_state = []
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
     conditions = "META_COLL_ATTR_NAME = 'exporterState' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        collection = result[0]
         value = result[2]
-        exporter_state[collection] = value
+        state_split = value.split(":")
+        exporter_state.append(get_process_information(ctx, result[0], state_split[0], state_split[1]))
 
     return exporter_state
 
 
 def get_list_active_archives(ctx):
-    archive_state = {}
-    # archive_state_attribute = "archiveState"
+    archive_state = []
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
     conditions = "META_COLL_ATTR_NAME = 'archiveState' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        collection = result[0]
-        value = result[2]
-        archive_state[collection] = value
+        archive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))
 
     return archive_state
+
+
+def get_process_information(ctx, project_collection_path, repository, state):
+    project_path = get_project_path_from_project_collection_path(project_collection_path)
+    return {
+        "project": get_project_id_from_project_collection_path(project_collection_path),
+        "collection": get_collection_id_from_project_collection_path(project_collection_path),
+        "project_title": ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2],
+        "title": ctx.callback.getCollectionAVU(project_collection_path, "title", "", "", TRUE_AS_STRING)["arguments"][
+            2
+        ],
+        "state": state,
+        "repository": repository,
+    }

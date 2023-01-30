@@ -1,7 +1,11 @@
 # /rules/tests/run_test.sh -r create_ingest_metadata_snapshot -a "P000000010,C000000001,/nlmumc/ingest/zones/crazy-frog,false" -u jmelius -j
+from subprocess import check_call, CalledProcessError
+
 import irods_types  # pylint: disable=import-error
 from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ProjectAVUs
 
+from datahubirodsruleset import read_data_object_from_irods, TRUE_AS_STRING
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import (
     format_schema_versioned_collection_path,
@@ -9,6 +13,7 @@ from datahubirodsruleset.formatters import (
     format_instance_collection_path,
     format_metadata_versions_path,
     format_instance_versioned_collection_path,
+    format_project_path,
 )
 
 
@@ -56,16 +61,29 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
 
     destination_schema = format_schema_versioned_collection_path(ctx, project_id, collection_id, "1")
     destination_instance = format_instance_versioned_collection_path(ctx, project_id, collection_id, "1")
-
     force_flag = ""
     if formatters.format_string_to_boolean(overwrite_flag):
         force_flag = "forceFlag="
 
     # Copy current metadata json files to /.metadata_versions
     try:
-        ctx.callback.msiDataObjCopy(source_schema, destination_schema, force_flag, 0)
-        ctx.callback.msiDataObjCopy(source_instance, destination_instance, force_flag, 0)
+        icp_wrapper(ctx, source_schema, destination_schema, project_id)
+        icp_wrapper(ctx, source_instance, destination_instance, project_id)
     except RuntimeError:
         ctx.callback.set_post_ingestion_error_avu(
             project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
         )
+
+
+def icp_wrapper(ctx, source, destination, project_id):
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+
+    try:
+        return_code = check_call(["icp", "-R", destination_resource, source, destination], shell=False)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: irsync: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        return_code = 1
+
+    return return_code

@@ -112,8 +112,12 @@ def read_data_object_from_irods(ctx, path):
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + path, 0)
     file_desc = ret_val["arguments"][1]
 
+    ret_stats = ctx.callback.msiObjStat(path, irods_types.RodsObjStat())
+    stats = ret_stats["arguments"][1]
+    size = int(stats.objSize)
+
     # Read iRODS file
-    ret_val = ctx.callback.msiDataObjRead(file_desc, 2**31 - 1, irods_types.BytesBuf())
+    ret_val = ctx.callback.msiDataObjRead(file_desc, size, irods_types.BytesBuf())
     read_buf = ret_val["arguments"][2]
 
     # Convert BytesBuffer to string

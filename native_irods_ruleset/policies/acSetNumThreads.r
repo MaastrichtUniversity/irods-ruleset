@@ -9,13 +9,5 @@ acSetNumThreads {
     # It errors, but doesn't affect the outcome of the replication.
     # Note: The ERROR is catched below and thus suppressed from the rodsLog
 
-    *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));
-
-    if ( *error == 0 ) {
-        if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
-            msiSetNumThreads("default","0","default");
-        } else {
-            msiSetNumThreads("default","16","default");
-        }
-    }
+    msiSetNumThreads("default","8","default");
 }

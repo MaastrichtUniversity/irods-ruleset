@@ -41,28 +41,28 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
     query_unarchive = format_string_to_boolean(query_unarchive)
     query_export = format_string_to_boolean(query_export)
 
-    drop_zones = {}
+    drop_zones = []
     if query_drop_zones:
         drop_zones = get_list_active_drop_zones(ctx)
 
     archive_state = []
     unarchive_state = []
-    exporter_state = {}
+    exporter_state = []
     if query_archive and query_unarchive and query_export:
         archive_state, unarchive_state, exporter_state = get_list_active_project_processes(ctx)
     elif query_archive and query_unarchive and not query_export:
         archive_state = get_list_active_archives(ctx)
-        unarchive_state = get_list_active_unarchives()
+        unarchive_state = get_list_active_unarchives(ctx)
     elif query_archive and not query_unarchive and query_export:
         archive_state = get_list_active_archives(ctx)
         exporter_state = get_list_active_exports(ctx)
     elif not query_archive and query_unarchive and query_export:
-        unarchive_state = get_list_active_unarchives()
+        unarchive_state = get_list_active_unarchives(ctx)
         exporter_state = get_list_active_exports(ctx)
     elif query_archive and not query_unarchive and not query_export:
         archive_state = get_list_active_archives(ctx)
     elif not query_archive and not query_unarchive and not query_export:
-        unarchive_state = get_list_active_unarchives()
+        unarchive_state = get_list_active_unarchives(ctx)
     elif not query_archive and not query_unarchive and query_export:
         exporter_state = get_list_active_exports(ctx)
 

@@ -28,7 +28,7 @@ tapeUnArchive(*count, *archColl){
     getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
 
     *isMoved=0;                 #Number of files moved counter
-    *stateAttrName = "archiveState";
+    *stateAttrName = "unArchiveState";
 
     msiGetObjType(*archColl, *inputType);
     if (*inputType like '-d'){
@@ -66,7 +66,7 @@ tapeUnArchive(*count, *archColl){
                 *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
                 *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-                setCollectionAVU(*projectCollectionPath, "archiveState",*value);
+                setCollectionAVU(*projectCollectionPath, *stateAttrName, *value);
 
                 # We do not pass any options, this way we get the existing checksum, which should always exist for
                 # archived files. If a failure occurs, the replication is stopped, no trimming happens
@@ -114,7 +114,7 @@ tapeUnArchive(*count, *archColl){
                 *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
                 *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-                setCollectionAVU(*projectCollectionPath, "archiveState",*value);
+                setCollectionAVU(*projectCollectionPath, *stateAttrName, *value);
 
                 # We do not pass any options, this way we get the existing checksum, which should always exist for
                 # archived files. If a failure occurs, the replication is stopped, no trimming happens
@@ -148,7 +148,7 @@ tapeUnArchive(*count, *archColl){
     }
     # Update state AVU to done
     *value = "unarchive-done";
-    setCollectionAVU(*projectCollectionPath, "archiveState",*value)
+    setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
     msiWriteRodsLog("DEBUG: surfArchiveScanner found *isMoved files", 0);
 
     # Delete status AVU

@@ -13,8 +13,8 @@ from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
-@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def get_user_active_processes(ctx, query_drop_zones, query_archive, query_export):
+@make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
+def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarchive, query_export):
     """
     Query all the active process status (ingest, tape archive & DataverseNL export) of the user.
 
@@ -25,7 +25,9 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_export
     query_drop_zones: str
         'true'/'false' expected; If true, query the list of active drop_zones & ingest processes
     query_archive: str
-        'true'/'false' expected; If true, query the list of active archive & un-archive processes
+        'true'/'false' expected; If true, query the list of active archive processes
+    query_unarchive: str
+        'true'/'false' expected; If true, query the list of active un-archive processes
     query_export: str
         'true'/'false' expected; If true, query the list of active export (to DataverseNl) processes
 
@@ -36,6 +38,7 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_export
     """
     query_drop_zones = format_string_to_boolean(query_drop_zones)
     query_archive = format_string_to_boolean(query_archive)
+    query_unarchive = format_string_to_boolean(query_unarchive)
     query_export = format_string_to_boolean(query_export)
 
     drop_zones = {}
@@ -43,17 +46,30 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_export
         drop_zones = get_list_active_drop_zones(ctx)
 
     archive_state = []
+    unarchive_state = []
     exporter_state = {}
-    if query_archive and query_export:
-        archive_state, exporter_state = get_list_active_project_processes(ctx)
-    elif query_archive and not query_export:
+    if query_archive and query_unarchive and query_export:
+        archive_state, unarchive_state, exporter_state = get_list_active_project_processes(ctx)
+    elif query_archive and query_unarchive and not query_export:
         archive_state = get_list_active_archives(ctx)
-    elif not query_archive and query_export:
+        unarchive_state = get_list_active_unarchives()
+    elif query_archive and not query_unarchive and query_export:
+        archive_state = get_list_active_archives(ctx)
+        exporter_state = get_list_active_exports(ctx)
+    elif not query_archive and query_unarchive and query_export:
+        unarchive_state = get_list_active_unarchives()
+        exporter_state = get_list_active_exports(ctx)
+    elif query_archive and not query_unarchive and not query_export:
+        archive_state = get_list_active_archives(ctx)
+    elif not query_archive and not query_unarchive and not query_export:
+        unarchive_state = get_list_active_unarchives()
+    elif not query_archive and not query_unarchive and query_export:
         exporter_state = get_list_active_exports(ctx)
 
     output = {
         "drop_zones": drop_zones,
         "archive": archive_state,
+        "unarchive": unarchive_state,
         "export": exporter_state,
     }
 
@@ -67,12 +83,16 @@ def get_list_active_drop_zones(ctx):
 
 def get_list_active_project_processes(ctx):
     archive_state = []
+    unarchive_state = []
     exporter_state = []
     archive_state_attribute = "archiveState"
+    unarchive_state_attribute = "unArchiveState"
     exporter_state_attribute = "exporterState"
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}') ".format(archive_state_attribute, exporter_state_attribute)
+    conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') ".format(
+        archive_state_attribute, unarchive_state_attribute, exporter_state_attribute
+    )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         collection = result[0]
@@ -81,11 +101,13 @@ def get_list_active_project_processes(ctx):
 
         if attribute == archive_state_attribute:
             archive_state.append(get_process_information(ctx, collection, "SURFSara Tape", value))
+        if attribute == unarchive_state_attribute:
+            unarchive_state.append(get_process_information(ctx, collection, "SURFSara Tape", value))
         elif attribute == exporter_state_attribute:
             state_split = value.split(":")
             exporter_state.append(get_process_information(ctx, collection, state_split[0], state_split[1]))
 
-    return archive_state, exporter_state
+    return archive_state, unarchive_state, exporter_state
 
 
 def get_list_active_exports(ctx):
@@ -112,6 +134,18 @@ def get_list_active_archives(ctx):
         archive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))
 
     return archive_state
+
+
+def get_list_active_unarchives(ctx):
+    unarchive_state = []
+
+    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
+    conditions = "META_COLL_ATTR_NAME = 'unArchiveState' "
+
+    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        unarchive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))
+
+    return unarchive_state
 
 
 def get_process_information(ctx, project_collection_path, repository, state):

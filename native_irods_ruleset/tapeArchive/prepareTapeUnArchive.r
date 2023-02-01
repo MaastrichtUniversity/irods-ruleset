@@ -35,7 +35,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
     # rodsadmin user running the rule
     # get this from avu set on archive
     getResourceAVU(*resc,"service-account",*aclChange,"N/A","true");
-    *stateAttrName = "archiveState";
+    *stateAttrName = "unArchiveState";
 
      # Log statements
      msiWriteRodsLog("INFO: UnArchival worklow started for *archColl", 0);
@@ -44,13 +44,12 @@ IRULE_prepareTapeUnArchive(*archColl) {
 
     # Retrieve archiveState
     *archiveState = "";
-    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*archColl" AND META_COLL_ATTR_NAME == "archiveState") {
+    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = "*archColl" AND META_COLL_ATTR_NAME in ("'archiveState', 'unArchiveState'")) {
         *archiveState = *av.META_COLL_ATTR_VALUE;
     }
 
     # Check for valid state to start archiving
-    if ( *archiveState != "no-state-set" && *archiveState != "archive-done"  && *archiveState != ""
-            && *archiveState not like  "Number of files offline:*"  && *archiveState not like  "Caching files countdown:*") {
+    if ( *archiveState != "") {
         failmsg(-1, "Invalid state(*archiveState) to start process.");
     }
 

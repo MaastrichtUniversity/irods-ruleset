@@ -149,6 +149,6 @@ def get_process_information(ctx, project_collection_path, repository, state):
         "title": ctx.callback.getCollectionAVU(project_collection_path, "title", "", "", TRUE_AS_STRING)["arguments"][
             2
         ],
-        "state": state,
+        "state": state.strip(),
         "repository": repository,
     }

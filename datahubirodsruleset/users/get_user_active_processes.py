@@ -50,21 +50,13 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
     exporter_state = []
     if query_archive and query_unarchive and query_export:
         archive_state, unarchive_state, exporter_state = get_list_active_project_processes(ctx)
-    elif query_archive and query_unarchive and not query_export:
-        archive_state = get_list_active_archives(ctx)
-        unarchive_state = get_list_active_unarchives(ctx)
-    elif query_archive and not query_unarchive and query_export:
-        archive_state = get_list_active_archives(ctx)
-        exporter_state = get_list_active_exports(ctx)
-    elif not query_archive and query_unarchive and query_export:
-        unarchive_state = get_list_active_unarchives(ctx)
-        exporter_state = get_list_active_exports(ctx)
-    elif query_archive and not query_unarchive and not query_export:
-        archive_state = get_list_active_archives(ctx)
-    elif not query_archive and not query_unarchive and not query_export:
-        unarchive_state = get_list_active_unarchives(ctx)
-    elif not query_archive and not query_unarchive and query_export:
-        exporter_state = get_list_active_exports(ctx)
+    else:
+        if query_archive:
+            archive_state = get_list_active_archives(ctx)
+        if query_unarchive:
+            unarchive_state = get_list_active_unarchives(ctx)
+        if query_export:
+            exporter_state = get_list_active_exports(ctx)
 
     output = {
         "drop_zones": drop_zones,
@@ -90,7 +82,7 @@ def get_list_active_project_processes(ctx):
     exporter_state_attribute = "exporterState"
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') ".format(
+    conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
         archive_state_attribute, unarchive_state_attribute, exporter_state_attribute
     )
 
@@ -114,7 +106,7 @@ def get_list_active_exports(ctx):
     exporter_state = []
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = 'exporterState' "
+    conditions = "META_COLL_ATTR_NAME = 'exporterState' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         value = result[2]
@@ -128,7 +120,7 @@ def get_list_active_archives(ctx):
     archive_state = []
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = 'archiveState' "
+    conditions = "META_COLL_ATTR_NAME = 'archiveState' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         archive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))
@@ -140,7 +132,7 @@ def get_list_active_unarchives(ctx):
     unarchive_state = []
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = 'unArchiveState' "
+    conditions = "META_COLL_ATTR_NAME = 'unArchiveState' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         unarchive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))

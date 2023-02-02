@@ -44,8 +44,23 @@ class BaseTestCaseIngest:
     collection_title = "collection_title"
     collection_id = "C000000001"
 
+    # iRODS seems to have 3 different ways/protocols to transfer data, depending on the file size:
+    # * 0     < X < 4  MB
+    # * 4 MB  < X < 32 MB
+    # * 32 MB < X
+    files_per_protocol = {
+        "0bytes.file": 0,
+        "50K.file": 50000,
+        "15M.file": 15000000,
+        "45M.file": 45000000,
+    }
+
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):
+        pass
+
+    @classmethod
+    def add_data_to_dropzone(cls):
         pass
 
     @classmethod
@@ -59,6 +74,7 @@ class BaseTestCaseIngest:
         cls.project_id = project["project_id"]
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
+        cls.add_data_to_dropzone()
         start_and_wait_for_ingest(cls)
         print("End {}.setup_class".format(cls.__name__))
 
@@ -84,8 +100,8 @@ class BaseTestCaseIngest:
         assert collection_detail["creator"] == self.collection_creator
         assert collection_detail["collection"] == self.collection_id
         assert collection_detail["title"] == self.collection_title
-        assert int(collection_detail["numFiles"]) == 4
-        assert int(collection_detail["byteSize"]) == 550514
+        assert int(collection_detail["numFiles"]) == 8
+        assert int(collection_detail["byteSize"]) == 60600514
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 

@@ -1,4 +1,5 @@
-from subprocess import check_call, CalledProcessError
+# TODO explain the nosec
+from subprocess import check_call, CalledProcessError  # nosec
 
 import irods_types  # pylint: disable=import-error
 import session_vars  # pylint: disable=import-error

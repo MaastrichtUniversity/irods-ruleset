@@ -1,10 +1,13 @@
+from subprocess import check_call, CalledProcessError
+
 import irods_types  # pylint: disable=import-error
 import session_vars  # pylint: disable=import-error
 from dhpythonirodsutils import formatters, loggers
-from dhpythonirodsutils.enums import DropzoneState, AuditTailTopics
+from dhpythonirodsutils.enums import DropzoneState, AuditTailTopics, ProjectAVUs
 from genquery import *  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_project_path
 
 # Global vars
 COLLECTION_METADATA_INDEX = "collection_metadata"
@@ -144,3 +147,18 @@ def get_elastic_search_connection(ctx):
     )
 
     return es
+
+
+def icp_wrapper(ctx, source, destination, project_id):
+    # TODO add force parameter
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+
+    try:
+        return_code = check_call(["icp", "-f", "-R", destination_resource, source, destination], shell=False)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: irsync: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        return_code = 1
+
+    return return_code

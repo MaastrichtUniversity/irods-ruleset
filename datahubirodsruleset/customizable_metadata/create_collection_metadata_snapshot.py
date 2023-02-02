@@ -14,7 +14,7 @@ from datahubirodsruleset.formatters import (
     format_instance_versioned_collection_path,
     format_project_path,
 )
-from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING, icp_wrapper
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -105,8 +105,8 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
 
     # Copy current metadata json files to /.metadata_versions
     try:
-        ctx.callback.msiDataObjCopy(source_schema, destination_schema, "", 0)
-        ctx.callback.msiDataObjCopy(source_instance, destination_instance, "", 0)
+        icp_wrapper(ctx, source_schema, destination_schema, project_id)
+        icp_wrapper(ctx, source_instance, destination_instance, project_id)
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
 

@@ -1,12 +1,10 @@
 # /rules/tests/run_test.sh -r replace_metadata_placeholder_files -a "handsome-snake,P000000019,C000000001,dlinssen" -u "dlinssen"
-from subprocess import check_call, CalledProcessError
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProjectAVUs
 
-from datahubirodsruleset import TRUE_AS_STRING
+from datahubirodsruleset import icp_wrapper
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.formatters import format_dropzone_path, format_project_path
+from datahubirodsruleset.formatters import format_dropzone_path
 
 
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
@@ -83,21 +81,5 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     ctx.callback.msiDataObjUnlink("objPath=" + pc_instance_path + "++++forceFlag=", 0)
     ctx.callback.msiDataObjUnlink("objPath=" + pc_schema_path + "++++forceFlag=", 0)
 
-    # ctx.callback.msiDataObjCopy(dropzone_instance_path, pc_instance_path, "forceFlag=", 0)
-    # ctx.callback.msiDataObjCopy(dropzone_schema_path, pc_schema_path, "forceFlag=", 0)
     icp_wrapper(ctx, dropzone_instance_path, pc_instance_path, project_id)
     icp_wrapper(ctx, dropzone_schema_path, pc_schema_path, project_id)
-
-
-def icp_wrapper(ctx, source, destination, project_id):
-    destination_resource = ctx.callback.getCollectionAVU(
-        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
-
-    try:
-        return_code = check_call(["icp", "-f", "-R", destination_resource, source, destination], shell=False)
-    except CalledProcessError as err:
-        ctx.callback.msiWriteRodsLog("ERROR: irsync: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
-        return_code = 1
-
-    return return_code

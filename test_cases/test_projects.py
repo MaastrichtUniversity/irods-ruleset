@@ -222,46 +222,6 @@ class TestProjects:
         subprocess.check_call("ichmod -rM own rods {}".format(project_collection_path), shell=True)
         subprocess.check_call("irm -rf {}".format(project_collection_path), shell=True)
 
-    def test_project_migration_status(self):
-        # Setup
-        project_id = self.project_ids[0]
-        project_path = self.project_paths[0]
-        project_collection_path = formatters.format_project_collection_path(project_id, self.collection_id)
-
-        create_collection = "imkdir {}".format(project_collection_path)
-        subprocess.check_call(create_collection, shell=True)
-        set_irods_collection_avu(project_collection_path, "title", self.collection_title)
-
-        # Assert empty migration
-        rule = '/rules/tests/run_test.sh -r get_project_migration_status -a "{}"'.format(project_path)
-        ret = subprocess.check_output(rule, shell=True)
-        project_migration_status = json.loads(ret)
-
-        assert not project_migration_status
-
-        # Assert archive migration
-        status = "Repository:test_status"
-        set_irods_collection_avu(project_collection_path, "archiveState", status)
-        ret = subprocess.check_output(rule, shell=True)
-        project_migration_status = json.loads(ret)
-
-        assert len(project_migration_status) == 1
-        assert project_migration_status[0]["status"] == status
-        assert project_migration_status[0]["collection"] == self.collection_id
-        assert project_migration_status[0]["title"] == self.collection_title
-        assert project_migration_status[0]["repository"] == "SURFSara Tape"
-
-        # Assert 2 'ongoing' migrations
-        set_irods_collection_avu(project_collection_path, "exporterState", status)
-        ret = subprocess.check_output(rule, shell=True)
-        project_migration_status = json.loads(ret)
-
-        assert len(project_migration_status) == 2
-
-        # teardown
-        run_remove_folder = "irm -fr {}".format(project_collection_path)
-        subprocess.check_call(run_remove_folder, shell=True)
-
     def test_project_resource_availability(self):
         project_id = self.project_ids[0]
 

@@ -7,9 +7,10 @@ acSetNumThreads {
     # Session variables $rescName and $KVPairs are not always present and their existence needs to be checked first.
     # For instance, during replication it only exists for one of the two resources.
     # It errors, but doesn't affect the outcome of the replication.
-    # Note: The ERROR is catched below and thus suppressed from the rodsLog
+    # Note: The ERROR is caught below and thus suppressed from the rodsLog
 
     *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));
+
     if ( *error == 0 ) {
         if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
             msiSetNumThreads("default","0","default");

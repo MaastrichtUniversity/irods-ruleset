@@ -34,11 +34,11 @@ IRULE_prepareTapeArchive(*archColl) {
 
     # Query *stateAttrName value
     *stateValue = "";
-    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*archColl" AND META_COLL_ATTR_NAME == *stateAttrName) {
+    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = "*archColl" AND META_COLL_ATTR_NAME in ("'archiveState', 'unArchiveState'")) {
         *stateValue = *av.META_COLL_ATTR_VALUE;
     }
     # Check for valid state to start archiving
-    if ( *stateValue != "no-state-set" && *stateValue != "archive-done"  && *stateValue != "" ) {
+    if ( *stateValue != "" ) {
         failmsg(-1, "Invalid state to start archiving.");
     }
 

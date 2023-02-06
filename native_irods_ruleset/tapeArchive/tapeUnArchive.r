@@ -62,40 +62,38 @@ tapeUnArchive(*count, *archColl){
                   AND DATA_NAME = '*dataName'
                   AND DATA_RESC_NAME = '*archiveResc'
         ){
-            remote(*resourceLocation,""){
-                *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
+            *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
-                *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-                setCollectionAVU(*projectCollectionPath, *stateAttrName, *value);
+            *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
+            setCollectionAVU(*projectCollectionPath, *stateAttrName, *value);
 
-                # We do not pass any options, this way we get the existing checksum, which should always exist for
-                # archived files. If a failure occurs, the replication is stopped, no trimming happens
-                msiDataObjChksum(*ipath,"",*chksum);
-                msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
+            # We do not pass any options, this way we get the existing checksum, which should always exist for
+            # archived files. If a failure occurs, the replication is stopped, no trimming happens
+            msiDataObjChksum(*ipath,"",*chksum);
+            msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
 
-                # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
-                # will automatically also include a checksum check on the destination
-                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
-                *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
-                msiWriteRodsLog("DEBUG: moveError *moveError", 0);
-                if ( *moveError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
-                }
-
-                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
-                *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
-                msiWriteRodsLog("DEBUG: trimError *trimError", 0);
-                if ( *trimError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
-                }
-
-                *isMoved=*isMoved+1;
-                # Debug
-                msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
-                msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
-                msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
+            # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
+            # will automatically also include a checksum check on the destination
+            # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+            *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
+            msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+            if ( *moveError != 0 ) {
+                   setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
             }
+
+            # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+            *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
+            msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+            if ( *trimError != 0 ) {
+                   setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
+            }
+
+            *isMoved=*isMoved+1;
+            # Debug
+            msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
+            msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+            msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
+            msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
         }
     }
 
@@ -110,40 +108,38 @@ tapeUnArchive(*count, *archColl){
                       COLL_NAME = '*archColl' || like '*archColl/%'
                   AND DATA_RESC_NAME = '*archiveResc'
         ){
-            remote(*resourceLocation,""){
-                *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
+            *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
-                *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-                setCollectionAVU(*projectCollectionPath, *stateAttrName, *value);
+            *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
+            setCollectionAVU(*projectCollectionPath, *stateAttrName, *value);
 
-                # We do not pass any options, this way we get the existing checksum, which should always exist for
-                # archived files. If a failure occurs, the replication is stopped, no trimming happens
-                msiDataObjChksum(*ipath,"",*chksum);
-                msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
+            # We do not pass any options, this way we get the existing checksum, which should always exist for
+            # archived files. If a failure occurs, the replication is stopped, no trimming happens
+            msiDataObjChksum(*ipath,"",*chksum);
+            msiWriteRodsLog("DEBUG: surfArchiveScanner archived file *ipath", 0);
 
-                # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
-                # will automatically also include a checksum check on the destination
-                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
-                *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
-                msiWriteRodsLog("DEBUG: moveError *moveError", 0);
-                if ( *moveError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
-                }
-
-                # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
-                *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
-                msiWriteRodsLog("DEBUG: trimError *trimError", 0);
-                if ( *trimError != 0 ) {
-                       setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
-                }
-
-                *isMoved=*isMoved+1;
-                # Debug
-                msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
-                msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
-                msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
-                msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
+            # Checksum verification is implicit here, because we calculated the checksum already, msiDataObjRepl
+            # will automatically also include a checksum check on the destination
+            # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+            *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
+            msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+            if ( *moveError != 0 ) {
+                   setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
             }
+
+            # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
+            *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
+            msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+            if ( *trimError != 0 ) {
+                   setTapeErrorAVU(*archColl, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
+            }
+
+            *isMoved=*isMoved+1;
+            # Debug
+            msiWriteRodsLog("DEBUG: \t\tiCAT checksum *ScanColl.DATA_CHECKSUM" , 0);
+            msiWriteRodsLog("DEBUG: \t\tchksum done *chksum", 0);
+            msiWriteRodsLog("DEBUG: \t\tsurfArchiveScanner found *ipath", 0);
+            msiWriteRodsLog("DEBUG: \t\tReplicate from *archiveResc to *projectResource", 0);
         }
     }
     # Update state AVU to done

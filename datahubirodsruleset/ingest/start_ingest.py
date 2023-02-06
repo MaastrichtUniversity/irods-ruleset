@@ -11,7 +11,7 @@ from datahubirodsruleset.formatters import format_dropzone_path
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def start_ingest(ctx, username, token, dropzone_type):
     """
-    Start an ingest
+    Start to ingest
        Irods pre-ingest checks
        Metadata pre-ingest checks
         If those went well, call perform ingest
@@ -51,7 +51,7 @@ def start_ingest(ctx, username, token, dropzone_type):
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_INGESTION.value)
 
         ctx.delayExec(
-            "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF>",
+            "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
             "perform_{}_ingest('{}', '{}', '{}', '{}')".format(dropzone_type, project_id, title, username, token),
             "",
         )

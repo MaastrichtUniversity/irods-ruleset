@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -F detailsProject.r "*project='P000000001'" "*inherited='false'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/projects/detailsProject.r "*project='P000000010'" "*inherited='false'" | jq .
 #
 # Role inheritance
 # *inherited='true' cumulates authorizations to designate the role. i.e. A contributor has OWN or WRITE access

@@ -41,6 +41,24 @@ def get_client_username(ctx):
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
+def get_project_id_from_project_collection_path(ctx, objectpath):
+    project_id = formatters.get_project_id_from_project_collection_path(objectpath)
+    return project_id
+
+
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def get_collection_id_from_project_collection_path(ctx, objectpath):
+    collection_id = formatters.get_collection_id_from_project_collection_path(objectpath)
+    return collection_id
+
+
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
+def get_project_collection_path(ctx, project_id, collection_id):
+    project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
+    return project_collection_path
+
+
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
 def is_dropzone_state_ingestable(ctx, state):
     ingestable = False
     if type(state) == str:

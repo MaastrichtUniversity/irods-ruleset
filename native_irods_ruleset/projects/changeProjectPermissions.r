@@ -1,6 +1,6 @@
 # Call with
 #
-# irule -s -F changeProjectPermissions.r *project="P000000016" *users="p.vanschayck@maastrichtuniversity.nl:read m.coonen@maastrichtuniversity.nl:write"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -s -F /rules/projects/changeProjectPermissions.r *project="P000000016" *users="pvanschay2:read mcoonen:write scannexus:read"
 #
 # Change immediately the ACL on the project level.
 # Then in the delay queue, change recursively all the collections under the project.
@@ -45,7 +45,7 @@ IRULE_changeProjectPermissions(*project, *users){
         }
     }
 
-    delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF>") {
+    delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
         foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
             *projectCollection = *Row.COLL_NAME;
 

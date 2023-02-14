@@ -11,27 +11,17 @@ acPostProcForPut {
          # Get the creator AVU from the collection, if it exists, that means the collection already is fully ingested
          getCollectionAVU("/nlmumc/projects/*project/*collection","creator",*creator,"","false");
          if(*creator == ""){
-             # If the connection option is irsync, this means we are in a mounted ingest
-             if($connectOption == "irsync") {
-                 getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
-                 if( *resource == $rescName ) {
-                     getCollectionAVU("/nlmumc/projects/*project/*collection","sizeIngested",*sizeIngested,"","false");
-                     *sizeIngested = *sizeIngested + double($dataSize);
-                     msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
-                     msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C");
-                 }
-             }
-             else {
-                 # We are in a direct ingest, that means that there are 3 copies of the data in total (0-stagingresc, 1 and 2)
-                 # We only need to count one of these three replicas towards the sizeIngested total
-                 if(str($replNum) == "2") {
-                     *creator = "";
-                     getCollectionAVU("/nlmumc/projects/*project/*collection","sizeIngested",*sizeIngested,"","false");
-                     *sizeIngested = *sizeIngested + double($dataSize);
-                     msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
-                     msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C");
-                 }
-             }
+              # This policy will fire twice for every file (replicated resources)
+              # For direct ingest, that will be replNum 1 and 2, because 0 is on stagingResc01
+              # For mounted ingest, that will be replNum 0 and 1, because these are the first copies of the data
+              # Both will fire with replNum = 1, so that is why we choose that one here
+              if(str($replNum) == "1") {
+                   *creator = "";
+                   getCollectionAVU("/nlmumc/projects/*project/*collection","sizeIngested",*sizeIngested,"","false");
+                   *sizeIngested = *sizeIngested + double($dataSize);
+                   msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));
+                   msiSetKeyValuePairsToObj(*metaKV, "/nlmumc/projects/*project/*collection", "-C")
+              }
         }
     }
 

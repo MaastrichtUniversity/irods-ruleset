@@ -100,7 +100,7 @@ def get_list_active_project_processes(ctx):
     unarchive_state = []
     exporter_state = []
 
-    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
+    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
         ActiveProcessAttribute.ARCHIVE.value,
         ActiveProcessAttribute.UNARCHIVE.value,
@@ -108,41 +108,42 @@ def get_list_active_project_processes(ctx):
     )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        collection = result[0]
         attribute = result[1]
-        value = result[2]
 
         if attribute == ActiveProcessAttribute.ARCHIVE.value:
-            archive_state.append(get_process_information(ctx, collection, ARCHIVAL_REPOSITORY_NAME, value))
+            archive_state.append(get_process_information(ctx, result, ProcessType.ARCHIVAL))
         if attribute == ActiveProcessAttribute.UNARCHIVE.value:
-            unarchive_state.append(get_process_information(ctx, collection, ARCHIVAL_REPOSITORY_NAME, value))
+            unarchive_state.append(get_process_information(ctx, result, ProcessType.ARCHIVAL))
         elif attribute == ActiveProcessAttribute.EXPORTER.value:
-            exporter_state.append(parse_export_state(ctx, result))
+            exporter_state.append(get_process_information(ctx, result, ProcessType.EXPORT))
 
     return archive_state, unarchive_state, exporter_state
 
 
 def get_list_active_project_process(ctx, attribute, process_type):
     output = []
-    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = '' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(attribute.value)
+    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
+    conditions = "META_COLL_ATTR_NAME = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(attribute.value)
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        if process_type is ProcessType.ARCHIVAL:
-            output.append(get_process_information(ctx, result[0], ARCHIVAL_REPOSITORY_NAME, result[2]))
-        elif process_type is ProcessType.EXPORT:
-            output.append(parse_export_state(ctx, result))
+        output.append(get_process_information(ctx, result, process_type))
 
     return output
 
 
-def parse_export_state(ctx, result):
-    value = result[2]
-    state_split = value.split(":")
-    return get_process_information(ctx, result[0], state_split[0], state_split[1])
+def get_process_information(ctx, result, process_type):
+    project_collection_path = result[0]
+    state = result[2]
+    process_id = result[3]
+    repository = ""
 
+    if process_type is ProcessType.ARCHIVAL:
+        repository = ARCHIVAL_REPOSITORY_NAME
+    elif process_type is ProcessType.EXPORT:
+        state_split = result[2].split(":")
+        repository = state_split[0]
+        state = state_split[1]
 
-def get_process_information(ctx, project_collection_path, repository, state):
     project_path = get_project_path_from_project_collection_path(project_collection_path)
     return {
         "project_id": get_project_id_from_project_collection_path(project_collection_path),
@@ -153,4 +154,5 @@ def get_process_information(ctx, project_collection_path, repository, state):
         ][2],
         "state": state.strip(),
         "repository": repository,
+        "process_id": process_id,
     }

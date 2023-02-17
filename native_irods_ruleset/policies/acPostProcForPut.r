@@ -16,7 +16,6 @@ acPostProcForPut {
               # For mounted ingest, that will be replNum 0 and 1, because these are the first copies of the data
               # Both will fire with replNum = 1, so that is why we choose that one here
               if(str($replNum) == "1") {
-                   *creator = "";
                    getCollectionAVU("/nlmumc/projects/*project/*collection","sizeIngested",*sizeIngested,"","false");
                    *sizeIngested = *sizeIngested + double($dataSize);
                    msiAddKeyVal(*metaKV,  'sizeIngested', str(*sizeIngested));

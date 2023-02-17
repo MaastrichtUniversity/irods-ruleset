@@ -1,5 +1,6 @@
 # /rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u dlinssen -j
 import json
+from enum import Enum
 
 from dhpythonirodsutils.formatters import (
     format_string_to_boolean,
@@ -11,6 +12,25 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
+
+
+class ActiveProcessAttribute(Enum):
+    """Enumerate all active process attribute names"""
+
+    ARCHIVE = "archiveState"
+    UNARCHIVE = "unArchiveState"
+    EXPORTER = "exporterState"
+    # INGEST = "State"
+
+
+class ProcessType(Enum):
+    """Enumerate the type of project collection process type"""
+
+    ARCHIVAL = "archival"
+    EXPORT = "export"
+
+
+ARCHIVAL_REPOSITORY_NAME = "SURFSara Tape"
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
@@ -52,11 +72,13 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
         archive_state, unarchive_state, exporter_state = get_list_active_project_processes(ctx)
     else:
         if query_archive:
-            archive_state = get_list_active_archives(ctx)
+            archive_state = get_list_active_project_process(ctx, ActiveProcessAttribute.ARCHIVE, ProcessType.ARCHIVAL)
         if query_unarchive:
-            unarchive_state = get_list_active_unarchives(ctx)
+            unarchive_state = get_list_active_project_process(
+                ctx, ActiveProcessAttribute.UNARCHIVE, ProcessType.ARCHIVAL
+            )
         if query_export:
-            exporter_state = get_list_active_exports(ctx)
+            exporter_state = get_list_active_project_process(ctx, ActiveProcessAttribute.EXPORTER, ProcessType.EXPORT)
 
     output = {
         "drop_zones": drop_zones,
@@ -77,13 +99,12 @@ def get_list_active_project_processes(ctx):
     archive_state = []
     unarchive_state = []
     exporter_state = []
-    archive_state_attribute = "archiveState"
-    unarchive_state_attribute = "unArchiveState"
-    exporter_state_attribute = "exporterState"
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
     conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
-        archive_state_attribute, unarchive_state_attribute, exporter_state_attribute
+        ActiveProcessAttribute.ARCHIVE.value,
+        ActiveProcessAttribute.UNARCHIVE.value,
+        ActiveProcessAttribute.EXPORTER.value,
     )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
@@ -91,64 +112,45 @@ def get_list_active_project_processes(ctx):
         attribute = result[1]
         value = result[2]
 
-        if attribute == archive_state_attribute:
-            archive_state.append(get_process_information(ctx, collection, "SURFSara Tape", value))
-        if attribute == unarchive_state_attribute:
-            unarchive_state.append(get_process_information(ctx, collection, "SURFSara Tape", value))
-        elif attribute == exporter_state_attribute:
-            state_split = value.split(":")
-            exporter_state.append(get_process_information(ctx, collection, state_split[0], state_split[1]))
+        if attribute == ActiveProcessAttribute.ARCHIVE.value:
+            archive_state.append(get_process_information(ctx, collection, ARCHIVAL_REPOSITORY_NAME, value))
+        if attribute == ActiveProcessAttribute.UNARCHIVE.value:
+            unarchive_state.append(get_process_information(ctx, collection, ARCHIVAL_REPOSITORY_NAME, value))
+        elif attribute == ActiveProcessAttribute.EXPORTER.value:
+            exporter_state.append(parse_export_state(ctx, result))
 
     return archive_state, unarchive_state, exporter_state
 
 
-def get_list_active_exports(ctx):
-    exporter_state = []
-
+def get_list_active_project_process(ctx, attribute, process_type):
+    output = []
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = 'exporterState' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
+    conditions = "META_COLL_ATTR_NAME = '' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(attribute.value)
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        value = result[2]
-        state_split = value.split(":")
-        exporter_state.append(get_process_information(ctx, result[0], state_split[0], state_split[1]))
+        if process_type is ProcessType.ARCHIVAL:
+            output.append(get_process_information(ctx, result[0], ARCHIVAL_REPOSITORY_NAME, result[2]))
+        elif process_type is ProcessType.EXPORT:
+            output.append(parse_export_state(ctx, result))
 
-    return exporter_state
-
-
-def get_list_active_archives(ctx):
-    archive_state = []
-
-    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = 'archiveState' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
-
-    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        archive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))
-
-    return archive_state
+    return output
 
 
-def get_list_active_unarchives(ctx):
-    unarchive_state = []
-
-    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = 'unArchiveState' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
-
-    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        unarchive_state.append(get_process_information(ctx, result[0], "SURFSara Tape", result[2]))
-
-    return unarchive_state
+def parse_export_state(ctx, result):
+    value = result[2]
+    state_split = value.split(":")
+    return get_process_information(ctx, result[0], state_split[0], state_split[1])
 
 
 def get_process_information(ctx, project_collection_path, repository, state):
     project_path = get_project_path_from_project_collection_path(project_collection_path)
     return {
-        "project": get_project_id_from_project_collection_path(project_collection_path),
-        "collection": get_collection_id_from_project_collection_path(project_collection_path),
+        "project_id": get_project_id_from_project_collection_path(project_collection_path),
+        "collection_id": get_collection_id_from_project_collection_path(project_collection_path),
         "project_title": ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2],
-        "title": ctx.callback.getCollectionAVU(project_collection_path, "title", "", "", TRUE_AS_STRING)["arguments"][
-            2
-        ],
+        "collection_title": ctx.callback.getCollectionAVU(project_collection_path, "title", "", "", TRUE_AS_STRING)[
+            "arguments"
+        ][2],
         "state": state.strip(),
         "repository": repository,
     }

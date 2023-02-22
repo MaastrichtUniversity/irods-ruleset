@@ -61,6 +61,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         "date": "",
         "token": token,
         "type": dropzone_type,
+        "process_type": "drop_zone",
         "resourceStatus": "",
         "totalSize": "0",
         "destination": "",

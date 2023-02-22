@@ -14,20 +14,31 @@ from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
-class ActiveProcessAttribute(Enum):
+class ProcessAttribute(Enum):
     """Enumerate all active process attribute names"""
 
     ARCHIVE = "archiveState"
     UNARCHIVE = "unArchiveState"
     EXPORTER = "exporterState"
-    # INGEST = "State"
+    # INGEST = "state"
 
 
 class ProcessType(Enum):
     """Enumerate the type of project collection process type"""
 
-    ARCHIVAL = "archival"
+    ARCHIVE = "archive"
+    DROP_ZONE = "drop_zone"
     EXPORT = "export"
+    UNARCHIVE = "unarchive"
+
+
+class ProcessState(Enum):
+    """Enumerate the type of project collection process type"""
+
+    COMPLETED = "completed"
+    ERROR = "error"
+    IN_PROGRESS = "in_progress"
+    OPEN = "open"
 
 
 ARCHIVAL_REPOSITORY_NAME = "SURFSara Tape"
@@ -61,72 +72,96 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
     query_unarchive = format_string_to_boolean(query_unarchive)
     query_export = format_string_to_boolean(query_export)
 
-    drop_zones = []
-    if query_drop_zones:
-        drop_zones = get_list_active_drop_zones(ctx)
+    output = {
+        ProcessState.COMPLETED.value: [],
+        ProcessState.ERROR.value: [],
+        ProcessState.IN_PROGRESS.value: [],
+        ProcessState.OPEN.value: [],
+    }
 
-    archive_state = []
-    unarchive_state = []
-    exporter_state = []
+    if query_drop_zones:
+        get_list_active_drop_zones(ctx, output)
+
     if query_archive and query_unarchive and query_export:
-        archive_state, unarchive_state, exporter_state = get_list_active_project_processes(ctx)
+        get_list_active_project_processes(ctx, output)
     else:
         if query_archive:
-            archive_state = get_list_active_project_process(ctx, ActiveProcessAttribute.ARCHIVE, ProcessType.ARCHIVAL)
+            get_list_active_project_process(ctx, ProcessAttribute.ARCHIVE, ProcessType.ARCHIVE, output)
         if query_unarchive:
-            unarchive_state = get_list_active_project_process(
-                ctx, ActiveProcessAttribute.UNARCHIVE, ProcessType.ARCHIVAL
-            )
+            get_list_active_project_process(ctx, ProcessAttribute.UNARCHIVE, ProcessType.UNARCHIVE, output)
         if query_export:
-            exporter_state = get_list_active_project_process(ctx, ActiveProcessAttribute.EXPORTER, ProcessType.EXPORT)
-
-    output = {
-        "drop_zones": drop_zones,
-        "archive": archive_state,
-        "unarchive": unarchive_state,
-        "export": exporter_state,
-    }
+            get_list_active_project_process(ctx, ProcessAttribute.EXPORTER, ProcessType.EXPORT, output)
 
     return output
 
 
-def get_list_active_drop_zones(ctx):
+def get_list_active_drop_zones(ctx, output):
+    """
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    output: dict
+    """
     ret = ctx.callback.listActiveDropZones("false", "")["arguments"][1]
-    return json.loads(ret)
+    drop_zones = json.loads(ret)
+
+    for drop_zone in drop_zones:
+        drop_zone["process_type"] = ProcessType.DROP_ZONE.value
+        if drop_zone["state"] == "open":
+            output[ProcessState.OPEN.value].append(drop_zone)
+        elif drop_zone["state"] == "ingested":
+            output[ProcessState.COMPLETED.value].append(drop_zone)
+        elif "error" in drop_zone["state"]:
+            output[ProcessState.ERROR.value].append(drop_zone)
+        else:
+            output[ProcessState.IN_PROGRESS.value].append(drop_zone)
 
 
-def get_list_active_project_processes(ctx):
+def parse_process_type(process, output):
+    completed_state = ["unarchive-done", "archive-done", "exported"]
+    if process["state"] in completed_state:
+        output[ProcessState.COMPLETED.value].append(process)
+    elif "error" in process["state"]:
+        output[ProcessState.ERROR.value].append(process)
+    else:
+        output[ProcessState.IN_PROGRESS.value].append(process)
+
+
+def get_list_active_project_processes(ctx, output):
     archive_state = []
     unarchive_state = []
     exporter_state = []
 
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
-        ActiveProcessAttribute.ARCHIVE.value,
-        ActiveProcessAttribute.UNARCHIVE.value,
-        ActiveProcessAttribute.EXPORTER.value,
+        ProcessAttribute.ARCHIVE.value,
+        ProcessAttribute.UNARCHIVE.value,
+        ProcessAttribute.EXPORTER.value,
     )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         attribute = result[1]
-
-        if attribute == ActiveProcessAttribute.ARCHIVE.value:
-            archive_state.append(get_process_information(ctx, result, ProcessType.ARCHIVAL))
-        if attribute == ActiveProcessAttribute.UNARCHIVE.value:
-            unarchive_state.append(get_process_information(ctx, result, ProcessType.ARCHIVAL))
-        elif attribute == ActiveProcessAttribute.EXPORTER.value:
-            exporter_state.append(get_process_information(ctx, result, ProcessType.EXPORT))
+        process = None
+        if attribute == ProcessAttribute.ARCHIVE.value:
+            process = get_process_information(ctx, result, ProcessType.ARCHIVE)
+        if attribute == ProcessAttribute.UNARCHIVE.value:
+            process = get_process_information(ctx, result, ProcessType.UNARCHIVE)
+        elif attribute == ProcessAttribute.EXPORTER.value:
+            process = get_process_information(ctx, result, ProcessType.EXPORT)
+        parse_process_type(process, output)
 
     return archive_state, unarchive_state, exporter_state
 
 
-def get_list_active_project_process(ctx, attribute, process_type):
-    output = []
+def get_list_active_project_process(ctx, attribute, process_type, output):
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = "META_COLL_ATTR_NAME = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(attribute.value)
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        output.append(get_process_information(ctx, result, process_type))
+        process = get_process_information(ctx, result, process_type)
+        parse_process_type(process, output)
 
     return output
 
@@ -137,7 +172,7 @@ def get_process_information(ctx, result, process_type):
     process_id = result[3]
     repository = ""
 
-    if process_type is ProcessType.ARCHIVAL:
+    if process_type is ProcessType.ARCHIVE or process_type is ProcessType.UNARCHIVE:
         repository = ARCHIVAL_REPOSITORY_NAME
     elif process_type is ProcessType.EXPORT:
         state_split = result[2].split(":")
@@ -155,4 +190,5 @@ def get_process_information(ctx, result, process_type):
         "state": state.strip(),
         "repository": repository,
         "process_id": process_id,
+        "process_type": process_type.value,
     }

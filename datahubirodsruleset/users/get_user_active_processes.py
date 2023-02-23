@@ -4,6 +4,7 @@ from enum import Enum
 
 from dhpythonirodsutils.formatters import (
     format_string_to_boolean,
+    format_project_collection_path,
     get_project_id_from_project_collection_path,
     get_collection_id_from_project_collection_path,
     get_project_path_from_project_collection_path,
@@ -95,6 +96,22 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
     return output
 
 
+def get_drop_zone_percentage_ingested(ctx, drop_zone):
+    percentage = 0
+    if not drop_zone["destination"]:
+        return percentage
+
+    collection_path = format_project_collection_path(drop_zone["project"], drop_zone["destination"])
+    ret = ctx.callback.get_collection_attribute_value(collection_path, "sizeIngested", "")["arguments"][2]
+    size_ingested = json.loads(ret)["value"]
+    if drop_zone["state"] == "ingested":
+        percentage = 100
+    elif size_ingested and int(drop_zone["totalSize"]) > 0:
+        percentage = round(float(size_ingested) / float(drop_zone["totalSize"]) * 100, 0)
+
+    return percentage
+
+
 def get_list_active_drop_zones(ctx, output):
     """
 
@@ -109,6 +126,7 @@ def get_list_active_drop_zones(ctx, output):
 
     for drop_zone in drop_zones:
         drop_zone["process_type"] = ProcessType.DROP_ZONE.value
+        drop_zone["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, drop_zone)
         if drop_zone["state"] == "open":
             output[ProcessState.OPEN.value].append(drop_zone)
         elif drop_zone["state"] == "ingested":
@@ -119,7 +137,7 @@ def get_list_active_drop_zones(ctx, output):
             output[ProcessState.IN_PROGRESS.value].append(drop_zone)
 
 
-def parse_process_type(process, output):
+def parse_process_state(process, output):
     completed_state = ["unarchive-done", "archive-done", "exported"]
     if process["state"] in completed_state:
         output[ProcessState.COMPLETED.value].append(process)
@@ -130,10 +148,6 @@ def parse_process_type(process, output):
 
 
 def get_list_active_project_processes(ctx, output):
-    archive_state = []
-    unarchive_state = []
-    exporter_state = []
-
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
         ProcessAttribute.ARCHIVE.value,
@@ -150,9 +164,7 @@ def get_list_active_project_processes(ctx, output):
             process = get_process_information(ctx, result, ProcessType.UNARCHIVE)
         elif attribute == ProcessAttribute.EXPORTER.value:
             process = get_process_information(ctx, result, ProcessType.EXPORT)
-        parse_process_type(process, output)
-
-    return archive_state, unarchive_state, exporter_state
+        parse_process_state(process, output)
 
 
 def get_list_active_project_process(ctx, attribute, process_type, output):
@@ -161,9 +173,7 @@ def get_list_active_project_process(ctx, attribute, process_type, output):
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         process = get_process_information(ctx, result, process_type)
-        parse_process_type(process, output)
-
-    return output
+        parse_process_state(process, output)
 
 
 def get_process_information(ctx, result, process_type):

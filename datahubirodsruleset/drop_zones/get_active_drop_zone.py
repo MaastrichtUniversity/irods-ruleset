@@ -7,6 +7,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_path
+from datahubirodsruleset.users.get_user_active_processes import get_drop_zone_percentage_ingested
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
@@ -105,5 +106,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         # Query the resource status
         for resc_result in row_iterator("RESC_STATUS", "RESC_NAME = '{}'".format(resource), AS_LIST, ctx.callback):
             avu["resourceStatus"] = resc_result[0]
+
+    avu["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, avu)
 
     return avu

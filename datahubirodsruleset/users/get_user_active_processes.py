@@ -5,6 +5,7 @@ from dhpythonirodsutils.enums import (
     ProcessAttribute,
     ProcessType,
     ProcessState,
+    DropzoneState,
 )
 
 from dhpythonirodsutils.formatters import (
@@ -97,7 +98,7 @@ def get_drop_zone_percentage_ingested(ctx, drop_zone):
     collection_path = format_project_collection_path(drop_zone["project"], drop_zone["destination"])
     ret = ctx.callback.get_collection_attribute_value(collection_path, "sizeIngested", "")["arguments"][2]
     size_ingested = json.loads(ret)["value"]
-    if drop_zone["state"] == "ingested":
+    if drop_zone["state"] == DropzoneState.INGESTED.value:
         percentage = 100
     elif size_ingested and int(drop_zone["totalSize"]) > 0:
         percentage = round(float(size_ingested) / float(drop_zone["totalSize"]) * 100, 0)
@@ -188,8 +189,8 @@ def add_process_to_output(process, output):
     output: dict
         The rule output to extend
     """
-    completed_state = ["ingested", "unarchive-done", "archive-done", "exported"]
-    if process["state"] == "open":
+    completed_state = [DropzoneState.INGESTED.value, "unarchive-done", "archive-done", "exported"]
+    if process["state"] in [DropzoneState.OPEN.value, DropzoneState.WARNING_VALIDATION_INCORRECT.value]:
         output[ProcessState.OPEN.value].append(process)
     elif process["state"] in completed_state:
         output[ProcessState.COMPLETED.value].append(process)

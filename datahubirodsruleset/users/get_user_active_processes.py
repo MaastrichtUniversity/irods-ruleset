@@ -1,6 +1,11 @@
 # /rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u dlinssen -j
 import json
-from enum import Enum
+
+from dhpythonirodsutils.enums import (
+    ProcessAttribute,
+    ProcessType,
+    ProcessState,
+)
 
 from dhpythonirodsutils.formatters import (
     format_string_to_boolean,
@@ -13,33 +18,6 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
-
-
-class ProcessAttribute(Enum):
-    """Enumerate all active process attribute names"""
-
-    ARCHIVE = "archiveState"
-    UNARCHIVE = "unArchiveState"
-    EXPORTER = "exporterState"
-    # INGEST = "state"
-
-
-class ProcessType(Enum):
-    """Enumerate the type of project collection process type"""
-
-    ARCHIVE = "archive"
-    DROP_ZONE = "drop_zone"
-    EXPORT = "export"
-    UNARCHIVE = "unarchive"
-
-
-class ProcessState(Enum):
-    """Enumerate the type of project collection process type"""
-
-    COMPLETED = "completed"
-    ERROR = "error"
-    IN_PROGRESS = "in_progress"
-    OPEN = "open"
 
 
 ARCHIVAL_REPOSITORY_NAME = "SURFSara Tape"

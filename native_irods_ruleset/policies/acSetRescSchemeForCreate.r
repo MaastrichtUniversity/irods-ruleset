@@ -33,7 +33,21 @@ acSetRescSchemeForCreate {
         }
     } else {
         # We are not in a projectfolder at all
-        msiSetDefaultResc("rootResc","null");
+        if($objPath like regex "^/nlmumc/home/rods/tmp.{6,8}demoResc$") {
+            # setup_irods.py will test_put() a temporary file, we reroute to
+            # demoResc instead of rootResc as the latter has not been created
+            # yet at that stage. For iRES(es), setup_irods.py will mkresc its
+            # default resource before doing test_put(). Only iCAT test file
+            # ends in "demoResc".
+            # See: https://github.com/irods/irods/blob/4.2.11/scripts/setup_irods.py#L145
+            #      https://github.com/python/cpython/blob/v2.7/Lib/tempfile.py#L134 (python3 is 8!)
+            # Note: ^ $ seem to be implicit anyway
+            msiWriteRodsLog("acSetRescSchemeForCreate: iCAT setup_irods.py::test_put() detected '$objPath'", 0);
+            msiSetDefaultResc("demoResc","null");
+        } else {
+            # For other files, we set rootResc as the default, as we did before.
+            msiSetDefaultResc("rootResc","null");
+        }
     }
 
     ### Policy to prevent file creation directly in direct ingest folder ###

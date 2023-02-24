@@ -97,6 +97,21 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
 
 
 def get_drop_zone_percentage_ingested(ctx, drop_zone):
+    """
+    Calculate the current percentage of data ingested towards the project collection destination.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    drop_zone: dict
+        A drop-zone object item from listActiveDropZones
+
+    Returns
+    -------
+    float
+        The drop-zone percentage ingested
+    """
     percentage = 0
     if not drop_zone["destination"]:
         return percentage
@@ -114,12 +129,14 @@ def get_drop_zone_percentage_ingested(ctx, drop_zone):
 
 def get_list_active_drop_zones(ctx, output):
     """
+    Query the list of active drop-zones, add extra information and put the drop-zones to the output dictionary.
 
     Parameters
     ----------
     ctx : Context
         Combined type of callback and rei struct.
     output: dict
+        The rule output to extend
     """
     ret = ctx.callback.listActiveDropZones("false", "")["arguments"][1]
     drop_zones = json.loads(ret)
@@ -127,27 +144,20 @@ def get_list_active_drop_zones(ctx, output):
     for drop_zone in drop_zones:
         drop_zone["process_type"] = ProcessType.DROP_ZONE.value
         drop_zone["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, drop_zone)
-        if drop_zone["state"] == "open":
-            output[ProcessState.OPEN.value].append(drop_zone)
-        elif drop_zone["state"] == "ingested":
-            output[ProcessState.COMPLETED.value].append(drop_zone)
-        elif "error" in drop_zone["state"]:
-            output[ProcessState.ERROR.value].append(drop_zone)
-        else:
-            output[ProcessState.IN_PROGRESS.value].append(drop_zone)
-
-
-def parse_process_state(process, output):
-    completed_state = ["unarchive-done", "archive-done", "exported"]
-    if process["state"] in completed_state:
-        output[ProcessState.COMPLETED.value].append(process)
-    elif "error" in process["state"]:
-        output[ProcessState.ERROR.value].append(process)
-    else:
-        output[ProcessState.IN_PROGRESS.value].append(process)
+        add_process_to_output(drop_zone, output)
 
 
 def get_list_active_project_processes(ctx, output):
+    """
+    Query the list of all active project processes, add extra information and put the processes to the output dict.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    output: dict
+        The rule output to extend
+    """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
         ProcessAttribute.ARCHIVE.value,
@@ -159,38 +169,105 @@ def get_list_active_project_processes(ctx, output):
         attribute = result[1]
         process = None
         if attribute == ProcessAttribute.ARCHIVE.value:
-            process = get_process_information(ctx, result, ProcessType.ARCHIVE)
+            process = get_project_process_information(ctx, result, ProcessType.ARCHIVE)
         if attribute == ProcessAttribute.UNARCHIVE.value:
-            process = get_process_information(ctx, result, ProcessType.UNARCHIVE)
+            process = get_project_process_information(ctx, result, ProcessType.UNARCHIVE)
         elif attribute == ProcessAttribute.EXPORTER.value:
-            process = get_process_information(ctx, result, ProcessType.EXPORT)
-        parse_process_state(process, output)
+            process = get_project_process_information(ctx, result, ProcessType.EXPORT)
+        add_process_to_output(process, output)
 
 
 def get_list_active_project_process(ctx, attribute, process_type, output):
+    """
+    Query the list of all active project processes, add extra information and put the processes to the output dict.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    attribute: ProcessAttribute
+        The active process attribute to query
+    process_type: ProcessType
+    output: dict
+        The rule output to extend
+    """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = "META_COLL_ATTR_NAME = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(attribute.value)
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        process = get_process_information(ctx, result, process_type)
-        parse_process_state(process, output)
+        process = get_project_process_information(ctx, result, process_type)
+        add_process_to_output(process, output)
 
 
-def get_process_information(ctx, result, process_type):
-    project_collection_path = result[0]
-    state = result[2]
-    process_id = result[3]
+def add_process_to_output(process, output):
+    """
+    Based on the process state, append the item to the correct output list.
+
+    Parameters
+    ----------
+    process: dict
+        The process object to add to the output dict
+    output: dict
+        The rule output to extend
+    """
+    completed_state = ["ingested", "unarchive-done", "archive-done", "exported"]
+    if process["state"] == "open":
+        output[ProcessState.OPEN.value].append(process)
+    elif process["state"] in completed_state:
+        output[ProcessState.COMPLETED.value].append(process)
+    elif "error" in process["state"]:
+        output[ProcessState.ERROR.value].append(process)
+    else:
+        output[ProcessState.IN_PROGRESS.value].append(process)
+
+
+def get_process_repository_and_state(query_result, process_type):
+    """
+    For export process type, the repository and state values are both concatenated into the collection metadata
+    attribute value, separated by ":".
+    This function takes care of handling the different parsing method.
+
+    Parameters
+    ----------
+    query_result: list[str]
+        The active project process query result.
+    process_type: ProcessType
+    """
+    state = query_result[2]
     repository = ""
 
-    if process_type is ProcessType.ARCHIVE or process_type is ProcessType.UNARCHIVE:
+    if process_type in [ProcessType.ARCHIVE, ProcessType.UNARCHIVE]:
         repository = ARCHIVAL_REPOSITORY_NAME
     elif process_type is ProcessType.EXPORT:
-        state_split = result[2].split(":")
+        state_split = query_result[2].split(":")
         repository = state_split[0]
         state = state_split[1]
 
+    return repository, state
+
+
+def get_project_process_information(ctx, query_result, process_type):
+    """
+    Gather the project process information, then create and return a project process dictionary.
+
+    Parameters
+    ----------
+    ctx
+    query_result: list[str]
+        The active project process query result.
+    process_type: ProcessType
+
+    Returns
+    -------
+    dict
+        project process information
+    """
+    project_collection_path = query_result[0]
+    process_id = query_result[3]
+    repository, state = get_process_repository_and_state(query_result, process_type)
     project_path = get_project_path_from_project_collection_path(project_collection_path)
-    return {
+
+    process = {
         "project_id": get_project_id_from_project_collection_path(project_collection_path),
         "collection_id": get_collection_id_from_project_collection_path(project_collection_path),
         "project_title": ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2],
@@ -202,3 +279,5 @@ def get_process_information(ctx, result, process_type):
         "process_id": process_id,
         "process_type": process_type.value,
     }
+
+    return process

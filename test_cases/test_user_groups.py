@@ -2,6 +2,8 @@ import subprocess
 import json
 import os
 
+from dhpythonirodsutils.enums import ProcessState, ProcessType
+
 from test_cases.utils import (
     remove_project,
     revert_latest_project_number,
@@ -256,63 +258,66 @@ class TestUserGroups:
             self.manager1
         )
         all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["repository"] == "SURFSara Tape"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["collection_title"] == "title number 1"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["collection_id"] == "C000000001"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["state"] == "archiving 1/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
 
-        assert all_processes_output["archive"][0]["repository"] == "SURFSara Tape"
-        assert all_processes_output["archive"][0]["title"] == "title number 1"
-        assert all_processes_output["archive"][0]["collection"] == "C000000001"
-        assert all_processes_output["archive"][0]["state"] == "archiving 1/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["repository"] == "SURFSara Tape"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["collection_title"] == "title number 2"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["collection_id"] == "C000000002"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["state"] == "unarchiving 4/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
 
-        assert all_processes_output["unarchive"][0]["repository"] == "SURFSara Tape"
-        assert all_processes_output["unarchive"][0]["title"] == "title number 2"
-        assert all_processes_output["unarchive"][0]["collection"] == "C000000002"
-        assert all_processes_output["unarchive"][0]["state"] == "unarchiving 4/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["repository"] == "dataverseNL"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_title"] == "title number 3"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_id"] == "C000000003"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["state"] == "exporting 3/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
 
-        assert all_processes_output["export"][0]["repository"] == "dataverseNL"
-        assert all_processes_output["export"][0]["title"] == "title number 3"
-        assert all_processes_output["export"][0]["collection"] == "C000000003"
-        assert all_processes_output["export"][0]["state"] == "exporting 3/4"
-
-        assert all_processes_output["drop_zones"][0]["validateState"] == "N/A"
-        assert all_processes_output["drop_zones"][0]["title"] == self.collection_title
-        assert all_processes_output["drop_zones"][0]["type"] == self.dropzone_type
-        assert all_processes_output["drop_zones"][0]["token"] == token
-        assert all_processes_output["drop_zones"][0]["state"] == "open"
+        assert all_processes_output[ProcessState.OPEN.value][0]["validateState"] == "N/A"
+        assert all_processes_output[ProcessState.OPEN.value][0]["title"] == self.collection_title
+        assert all_processes_output[ProcessState.OPEN.value][0]["type"] == self.dropzone_type
+        assert all_processes_output[ProcessState.OPEN.value][0]["token"] == token
+        assert all_processes_output[ProcessState.OPEN.value][0]["state"] == "open"
 
         no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(
             self.manager1
         )
         no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
-        assert len(no_archival_output["archive"]) == 0
-        assert len(no_archival_output["unarchive"]) != 0
-        assert len(no_archival_output["export"]) != 0
-        assert len(no_archival_output["drop_zones"]) != 0
+        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_archival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.UNARCHIVE.value
+        assert no_archival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_archival_output[ProcessState.OPEN.value]) == 1
 
         no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(
             self.manager1
         )
         no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
-        assert len(no_unarchival_output["archive"]) != 0
-        assert len(no_unarchival_output["unarchive"]) == 0
-        assert len(no_unarchival_output["export"]) != 0
-        assert len(no_unarchival_output["drop_zones"]) != 0
+        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_unarchival_output[ProcessState.OPEN.value]) == 1
 
         no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(
             self.manager1
         )
         no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
-        assert len(no_export_output["archive"]) != 0
-        assert len(no_export_output["unarchive"]) != 0
-        assert len(no_export_output["export"]) == 0
-        assert len(no_export_output["drop_zones"]) != 0
+        assert len(no_export_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_export_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_export_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+        assert len(no_export_output[ProcessState.OPEN.value]) == 1
 
         no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(
             self.manager1
         )
         no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
-        assert len(no_dropzones_output["archive"]) != 0
-        assert len(no_dropzones_output["unarchive"]) != 0
-        assert len(no_dropzones_output["export"]) != 0
-        assert len(no_dropzones_output["drop_zones"]) == 0
+        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 3
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_dropzones_output[ProcessState.OPEN.value]) == 0
 
         remove_dropzone = "irm -rf /nlmumc/ingest/direct/{}".format(token)
         subprocess.check_call(remove_dropzone, shell=True)

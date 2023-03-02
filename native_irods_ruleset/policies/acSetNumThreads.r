@@ -15,7 +15,7 @@ acSetNumThreads {
         if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL") {
             msiSetNumThreads("default","0","default");
         } else {
-            msiSetNumThreads("default","16","default");
+            msiSetNumThreads("default","4","default");
         }
     }
 }

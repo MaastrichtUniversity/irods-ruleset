@@ -1,12 +1,12 @@
 def getGitBranchName() {
-    DEPLOY_BRANCH = scm.branches[0].name
+    return scm.branches[0].name
 }
 pipeline {
     agent {
        label "fhml-srv020"
     }
     parameters {
-        string(name: 'TARGET_BRANCH', defaultValue: DEPLOY_BRANCH, description: 'The branch to deploy')
+        string(name: 'TARGET_BRANCH', defaultValue: getGitBranchName(), description: 'The branch to deploy')
         string(name: 'FALLBACK_BRANCH', defaultValue: 'main', description: 'The branch to fall back on if the target branch does not exist')
         string(name: 'TARGET_MACHINE', defaultValue: 'fhml-srv020', description: 'The machine to build on')
     }

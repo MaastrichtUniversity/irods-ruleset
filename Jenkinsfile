@@ -31,7 +31,7 @@ pipeline {
             steps{
                 dir('docker-dev'){
                     sh 'echo "Stop existing docker-dev"'
-                    sh returnStatus: true, script: './rit.sh --profile full down'
+                    sh returnStatus: true, script: './rit.sh down'
                 }
             }
         }
@@ -49,36 +49,7 @@ pipeline {
             steps{
                 dir('docker-dev'){
                     sh 'echo "Start iRODS dev environnement"'
-                    sh './rit.sh up -d icat keycloak elastic epicpid'
-
-                    sh '''until docker logs --tail 20 dev-icat-1 2>&1 | grep -q "Executing bootstrap_irods.sh";
-                        do
-                        echo "Waiting for iCAT to finish"
-                        sleep 10
-                        done
-                        echo "iCAT is Done!"
-                        '''
-                    sh './rit.sh up -d ires-hnas-um ires-hnas-azm ires-ceph-ac ires-ceph-gl'
-                    sh '''until docker logs --tail 15 dev-ires-hnas-um-1 2>&1 | grep -q "INFO: Running persistent foreground process";
-                        do
-                          echo "Waiting for iRES to finish"
-                          sleep 10
-                        done
-                        echo "iRES is Done!"
-                        '''
-                    sh '''until docker logs --tail 1 dev-keycloak-1 2>&1 | grep -q "Done syncing LDAP";
-                        do
-                          echo "Waiting for keycloak to finally finish"
-                          sleep 5
-                        done
-                        '''
-                    sh './rit.sh up -d sram-sync'
-                    sh '''until docker logs --tail 1 dev-sram-sync-1 2>&1 | grep -q "Sleeping for 300 seconds";
-                        do
-                          echo "Waiting for sram-sync"
-                          sleep 5
-                        done
-                        '''
+                    sh './rit.sh backend'
                 }
             }
         }
@@ -94,7 +65,7 @@ pipeline {
             sh 'echo "Cleaning up workspace and remaining containers"'
             dir('docker-dev') {
                     sh 'echo "Stop docker-dev containers"'
-                    sh returnStatus: true, script: './rit.sh --profile full down'
+                    sh returnStatus: true, script: './rit.sh down'
                 }
             cleanWs()
         }

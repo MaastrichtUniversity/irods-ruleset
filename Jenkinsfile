@@ -49,6 +49,7 @@ pipeline {
             steps{
                 dir('docker-dev'){
                     sh 'echo "Start iRODS dev environnement"'
+                    sh 'mkdir -p ./staging-data/direct-ingest ./staging-data/zones'
                     sh './rit.sh backend'
                 }
             }

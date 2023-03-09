@@ -2,7 +2,7 @@
 def getGitBranchName() {
     if (params.TARGET_BRANCH == '') {
         echo 'INFO: Build seems to be automatically triggered, using pushed branch as target branch'
-        return env.GIT_BRANCH
+        return env.GIT_BRANCH.split('/')[1]
     } else {
         echo 'INFO: Build seems to be manually triggered, defined branch as target branch'
         return params.TARGET_BRANCH

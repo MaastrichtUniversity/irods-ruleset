@@ -47,7 +47,7 @@ pipeline {
                 dir('docker-dev'){
                         sh """#!/bin/bash
                             sed -i '/externals\\/epicpid-microservice\\/docker.*/a \\ \\ \\ \\ user: 1000:1000' docker-compose.yml
-                            sed -i '/sram-sync:\${ENV_TAG}.*/a \\ \\ \\ \\ user: 1000:1000' docker-compose.yml
+                            sed -i '/\\/sram-sync:.*/a \\ \\ \\ \\ user: 1000:1000' docker-compose.yml
                         """
                 }
             }

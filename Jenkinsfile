@@ -2,6 +2,7 @@
 def getGitBranchName() {
     if (params.TARGET_BRANCH == '') {
         echo 'INFO: Build seems to be automatically triggered, using pushed branch as target branch'
+        // Splitting the GIT_BRANCH here to remove the 'origin/' prefix 
         return env.GIT_BRANCH.split('/')[1]
     } else {
         echo 'INFO: Build seems to be manually triggered, defined branch as target branch'
@@ -26,6 +27,7 @@ pipeline {
     }
     stages {
         stage('Build docker-dev'){
+            echo "INFO: Building docker-dev with target_branch = '${env.TARGET_BRANCH}' and fallback_branch = '${params.FALLBACK_BRANCH}'"
             steps{
                 build job: 'build-docker-dev', parameters: [
                     string(name: 'TARGET_BRANCH', value: env.TARGET_BRANCH),

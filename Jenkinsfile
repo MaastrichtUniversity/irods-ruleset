@@ -27,8 +27,8 @@ pipeline {
     }
     stages {
         stage('Build docker-dev'){
-            echo "INFO: Building docker-dev with target_branch = '${env.TARGET_BRANCH}' and fallback_branch = '${params.FALLBACK_BRANCH}'"
             steps{
+                echo "INFO: Building docker-dev with target_branch = '${env.TARGET_BRANCH}' and fallback_branch = '${params.FALLBACK_BRANCH}'"
                 build job: 'build-docker-dev', parameters: [
                     string(name: 'TARGET_BRANCH', value: env.TARGET_BRANCH),
                     string(name: 'FALLBACK_BRANCH', value: params.FALLBACK_BRANCH),

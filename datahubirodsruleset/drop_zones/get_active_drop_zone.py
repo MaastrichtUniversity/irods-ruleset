@@ -2,7 +2,7 @@
 import irods_types
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProjectAVUs
+from dhpythonirodsutils.enums import ProjectAVUs, ProcessType
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
@@ -62,7 +62,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         "date": "",
         "token": token,
         "type": dropzone_type,
-        "process_type": "drop_zone",
+        "process_type": ProcessType.DROP_ZONE.value,
         "resourceStatus": "",
         "totalSize": "0",
         "destination": "",

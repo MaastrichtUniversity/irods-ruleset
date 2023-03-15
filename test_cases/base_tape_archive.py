@@ -82,7 +82,7 @@ class BaseTestTapeArchive:
         cls.large_file_logical_path = "{}/large_file".format(cls.project_collection_path)
 
         cls.run_ichmod = "ichmod -rM own {} {}".format(cls.service_account, cls.project_collection_path)
-        cls.rule_status = '/rules/tests/run_test.sh -r get_project_migration_status -a "{}"'.format(cls.project_path)
+        cls.rule_status = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,false"'
         cls.check_small_file_resource = "ils -l {}/instance.json".format(cls.project_collection_path)
         cls.check_large_file_resource = "ils -l {}".format(cls.large_file_logical_path)
         print("End {}.setup_class".format(cls.__name__))
@@ -142,10 +142,10 @@ class BaseTestTapeArchive:
         subprocess.check_call(rule_archive, shell=True)
 
         ret = subprocess.check_output(self.rule_status, shell=True)
-        project_migration_status = json.loads(ret)
+        active_processes = json.loads(ret)
 
-        self.assert_project_migration_output(project_migration_status)
-        self.wait_for_migration(self.rule_status, project_migration_status)
+        self.assert_active_processes_output(active_processes, "archive")
+        self.wait_for_active_processes(self.rule_status, active_processes, "archive")
 
         # Assert archive
         output = subprocess.check_output(self.check_small_file_resource, shell=True)
@@ -163,10 +163,10 @@ class BaseTestTapeArchive:
         subprocess.check_call(rule_un_archive, shell=True)
 
         ret = subprocess.check_output(self.rule_status, shell=True)
-        project_migration_status = json.loads(ret)
+        active_processes = json.loads(ret)
 
-        self.assert_project_migration_output(project_migration_status)
-        self.wait_for_migration(self.rule_status, project_migration_status)
+        self.assert_active_processes_output(active_processes, "unarchive")
+        self.wait_for_active_processes(self.rule_status, active_processes, "unarchive")
 
         # Assert un-archive
         output = subprocess.check_output(self.check_small_file_resource, shell=True)
@@ -178,24 +178,24 @@ class BaseTestTapeArchive:
     # endregion
 
     # region helper functions
-    def assert_project_migration_output(self, project_migration_status):
-        assert project_migration_status[0]["repository"] == "SURFSara Tape"
-        assert project_migration_status[0]["title"] == self.collection_title
-        assert project_migration_status[0]["collection"] == self.collection_id
-        assert project_migration_status[0]["status"]
+    def assert_active_processes_output(self, active_processes, active_process_type):
+        assert active_processes[active_process_type][0]["repository"] == "SURFSara Tape"
+        assert active_processes[active_process_type][0]["title"] == self.collection_title
+        assert active_processes[active_process_type][0]["collection"] == self.collection_id
+        assert active_processes[active_process_type][0]["state"]
 
     @staticmethod
-    def wait_for_migration(rule_status, project_migration_status):
+    def wait_for_active_processes(rule_status, active_processes, active_process_type):
         fail_safe = 30
         while fail_safe != 0:
             ret = subprocess.check_output(rule_status, shell=True)
 
-            project_migration_status = json.loads(ret)
-            if not project_migration_status:
+            active_processes = json.loads(ret)
+            if not active_processes[active_process_type]:
                 fail_safe = 0
             else:
                 fail_safe = fail_safe - 1
                 time.sleep(2)
-        assert not project_migration_status
+        assert not active_processes[active_process_type]
 
     # endregion

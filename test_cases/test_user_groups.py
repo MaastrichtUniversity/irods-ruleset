@@ -15,6 +15,7 @@ from test_cases.utils import (
     remove_user_from_group,
     set_user_avu,
     check_if_key_value_in_dict_list,
+    create_dropzone,
 )
 
 """
@@ -97,6 +98,9 @@ class TestUserGroups:
     data_steward = manager2
     group = "test_group"
     service_account = "service-test"
+
+    collection_creator = "jonathan.melius@maastrichtuniversity.nl"
+    collection_title = "collection_title"
 
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
@@ -220,6 +224,79 @@ class TestUserGroups:
         assert user["givenName"] == "test_data_steward"
         assert user["familyName"] == "LastName"
 
+    def test_get_user_active_processes(self):
+        self.dropzone_type = "direct"
+        token = create_dropzone(self)
+        collection_path = "/nlmumc/projects/{project_id}/C00000000{{collection_number}}".format(project_id=self.project_id)
+        for i in range(1, 4):
+            collection_path_formatted = collection_path.format(collection_number=i)
+            create_collection = "imkdir {}".format(collection_path_formatted)
+            set_collection_title = "imeta set -C {} title 'title number {}'".format(collection_path_formatted, i)
+            subprocess.check_call(create_collection, shell=True)
+            subprocess.check_call(set_collection_title, shell=True)
+
+        set_archive_state = "imeta set -C /nlmumc/projects/{}/C000000001 archiveState 'archiving 1/4'".format(self.project_id)
+        set_unarchive_state = "imeta set -C /nlmumc/projects/{}/C000000002 unArchiveState 'unarchiving 4/4'".format(self.project_id)
+        set_exporter_state = "imeta set -C /nlmumc/projects/{}/C000000003 exporterState 'dataverseNL: exporting 3/4'".format(self.project_id)
+        subprocess.check_call(set_archive_state, shell=True)
+        subprocess.check_call(set_unarchive_state, shell=True)
+        subprocess.check_call(set_exporter_state, shell=True)
+
+        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u {}'.format(self.manager1)
+        all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
+
+        assert all_processes_output["archive"][0]["repository"] == "SURFSara Tape"
+        assert all_processes_output["archive"][0]["title"] == "title number 1"
+        assert all_processes_output["archive"][0]["collection"] == "C000000001"
+        assert all_processes_output["archive"][0]["state"] == "archiving 1/4"
+
+        assert all_processes_output["unarchive"][0]["repository"] == "SURFSara Tape"
+        assert all_processes_output["unarchive"][0]["title"] == "title number 2"
+        assert all_processes_output["unarchive"][0]["collection"] == "C000000002"
+        assert all_processes_output["unarchive"][0]["state"] == "unarchiving 4/4"
+
+        assert all_processes_output["export"][0]["repository"] == "dataverseNL"
+        assert all_processes_output["export"][0]["title"] == "title number 3"
+        assert all_processes_output["export"][0]["collection"] == "C000000003"
+        assert all_processes_output["export"][0]["state"] == "exporting 3/4"
+
+        assert all_processes_output["drop_zones"][0]["validateState"] == "N/A"
+        assert all_processes_output["drop_zones"][0]["title"] == self.collection_title
+        assert all_processes_output["drop_zones"][0]["type"] == self.dropzone_type
+        assert all_processes_output["drop_zones"][0]["token"] == token
+        assert all_processes_output["drop_zones"][0]["state"] == "open"
+
+        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(self.manager1)
+        no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
+        assert len(no_archival_output["archive"]) == 0
+        assert len(no_archival_output["unarchive"]) != 0
+        assert len(no_archival_output["export"]) != 0
+        assert len(no_archival_output["drop_zones"]) != 0
+
+        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(self.manager1)
+        no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
+        assert len(no_unarchival_output["archive"]) != 0
+        assert len(no_unarchival_output["unarchive"]) == 0
+        assert len(no_unarchival_output["export"]) != 0
+        assert len(no_unarchival_output["drop_zones"]) != 0
+
+        no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(self.manager1)
+        no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
+        assert len(no_export_output["archive"]) != 0
+        assert len(no_export_output["unarchive"]) != 0
+        assert len(no_export_output["export"]) == 0
+        assert len(no_export_output["drop_zones"]) != 0
+
+        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(self.manager1)
+        no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
+        assert len(no_dropzones_output["archive"]) != 0
+        assert len(no_dropzones_output["unarchive"]) != 0
+        assert len(no_dropzones_output["export"]) != 0
+        assert len(no_dropzones_output["drop_zones"]) == 0
+
+        remove_dropzone = "irm -rf /nlmumc/ingest/direct/{}".format(token)
+        subprocess.check_call(remove_dropzone, shell=True)
+
     def test_get_user_or_group_by_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
         user_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
@@ -259,6 +336,17 @@ class TestUserGroups:
 
         imeta = "imeta rm -u {} {} {}".format(self.manager1, field_name, field_value)
         subprocess.check_output(imeta, shell=True)
+
+    def test_get_expanded_user_group_information(self):
+        rule = '/rules/tests/run_test.sh -r get_expanded_user_group_information -a "{};{}"'.format(
+            self.manager2, self.group
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        output = json.loads(ret)
+        assert self.manager1 in output
+        assert self.manager2 in output
+        assert self.group in output
+        assert output[self.manager1]["email"] == "{}@maastrichtuniversity.nl".format(self.manager1)
 
     def test_get_data_stewards(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDataStewards.r"

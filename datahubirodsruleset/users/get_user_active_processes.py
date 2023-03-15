@@ -158,8 +158,8 @@ def get_list_active_project_processes(ctx, output):
 
 def get_list_active_project_process(ctx, attribute, process_type, output):
     """
-    Query the list of all active project processes, add extra information and put the processes to the output dict.
-
+    Query the list for specific (as specified by the parameter) active project processes,
+    add extra information and put the processes to the output dict.
     Parameters
     ----------
     ctx : Context

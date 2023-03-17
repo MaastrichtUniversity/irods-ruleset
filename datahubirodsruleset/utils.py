@@ -150,16 +150,35 @@ def get_elastic_search_connection(ctx):
     return es
 
 
-def icp_wrapper(ctx, source, destination, project_id):
-    # TODO add force parameter
+def icp_wrapper(ctx, source, destination, project_id, overwrite):
+    """
+    Workaround wrapper function to execute iRODS data object copy.
+    Execute an 'icp' with a sub-process instead of msiDataObjCopy.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    source: str
+        Full absolute iRODS logical source path
+    destination: str
+        Full absolute iRODS logical destination path
+    project_id: str
+        e.g: P000000010
+    overwrite: bool
+        write data-object even it exists already; overwrite it
+    """
     destination_resource = ctx.callback.getCollectionAVU(
         format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
 
-    try:
-        return_code = check_call(["icp", "-f", "-R", destination_resource, source, destination], shell=False)
-    except CalledProcessError as err:
-        ctx.callback.msiWriteRodsLog("ERROR: irsync: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
-        return_code = 1
+    icp_cmd = ["icp", "-R", destination_resource, source, destination]
+    if overwrite:
+        icp_cmd = ["icp", "-f", "-R", destination_resource, source, destination]
 
-    return return_code
+    try:
+        check_call(["ichmod", "-M", "own", "rods", source], shell=False)
+        check_call(icp_cmd, shell=False)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: icp: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))

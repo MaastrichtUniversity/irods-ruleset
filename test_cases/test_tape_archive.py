@@ -4,6 +4,7 @@ import time
 
 import pytest
 from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ProcessState
 
 from test_cases.utils import (
     create_dropzone,
@@ -143,8 +144,8 @@ class TestTapeArchive:
         ret = subprocess.check_output(self.rule_status, shell=True)
         active_processes = json.loads(ret)
 
-        self.assert_active_processes_output(active_processes, "archive")
-        self.wait_for_active_processes(self.rule_status, active_processes, "archive")
+        self.assert_active_processes_output(active_processes)
+        self.wait_for_active_processes(self.rule_status, active_processes)
 
         # Assert archive
         output = subprocess.check_output(self.check_small_file_resource, shell=True)
@@ -164,8 +165,8 @@ class TestTapeArchive:
         ret = subprocess.check_output(self.rule_status, shell=True)
         active_processes = json.loads(ret)
 
-        self.assert_active_processes_output(active_processes, "unarchive")
-        self.wait_for_active_processes(self.rule_status, active_processes, "unarchive")
+        self.assert_active_processes_output(active_processes)
+        self.wait_for_active_processes(self.rule_status, active_processes)
 
         # Assert un-archive
         output = subprocess.check_output(self.check_small_file_resource, shell=True)
@@ -177,25 +178,24 @@ class TestTapeArchive:
     # endregion
 
     # region helper functions
-    def assert_active_processes_output(self, active_processes, active_process_type):
-        assert active_processes[active_process_type][0]["repository"] == "SURFSara Tape"
-        assert active_processes[active_process_type][0]["title"] == self.collection_title
-        assert active_processes[active_process_type][0]["collection"] == self.collection_id
-        assert active_processes[active_process_type][0]["state"]
-
+    def assert_active_processes_output(self, active_processes):
+        assert active_processes[ProcessState.IN_PROGRESS.value][0]["repository"] == "SURFSara Tape"
+        assert active_processes[ProcessState.IN_PROGRESS.value][0]["collection_title"] == self.collection_title
+        assert active_processes[ProcessState.IN_PROGRESS.value][0]["collection_id"] == self.collection_id
+        assert active_processes[ProcessState.IN_PROGRESS.value][0]["state"]
 
     @staticmethod
-    def wait_for_active_processes(rule_status, active_processes, active_process_type):
+    def wait_for_active_processes(rule_status, active_processes):
         fail_safe = 30
         while fail_safe != 0:
             ret = subprocess.check_output(rule_status, shell=True)
 
             active_processes = json.loads(ret)
-            if not active_processes[active_process_type]:
+            if not active_processes[ProcessState.IN_PROGRESS.value]:
                 fail_safe = 0
             else:
                 fail_safe = fail_safe - 1
                 time.sleep(2)
-        assert not active_processes[active_process_type]
+        assert not active_processes[ProcessState.IN_PROGRESS.value]
 
     # endregion

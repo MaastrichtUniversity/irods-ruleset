@@ -20,28 +20,27 @@ from test_cases.utils import (
 """
 iRODS native rules usage summary:
 - changeProjectPermissions: valid
-- detailsProject: IN RW, not in MDR
-- getProjectCost: IN detailsProject
-
-- listManagingProjects: not in RW, not in MDR
-- listContributingProjects: not in RW, not in MDR
-- listViewingProjects: not in RW, not in MDR
+- detailsProject: 
+    * IN RW, not in MDR
+    * IN RS (reportProjects)
+- getProjectCost: IN RS (detailsProject)
 
 
 - listProjectManagers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN getProjectCollectionsArray, detailsProject 
 
 - listProjectContributors: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN getProjectCollectionsArray, detailsProject
 
 - listProjectViewers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN getProjectCollectionsArray, detailsProject
 
-- listProjectsByUser: IN RW, not in MDR
-- reportProjects: not in RW, not in MDR
+- reportProjects:
+    * used in disk_use_email.py -> docker-reporting
+    * not in RW, not in MDR
 
 iRODS python rules usage summary:
 - list_projects: IN RW, not in MDR

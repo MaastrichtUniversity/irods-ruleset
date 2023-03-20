@@ -26,7 +26,6 @@ Native rules:
 - getIngestResources: used in MDR/RW (createProject)
 - getResourceAVU: used in tapeUnarchive, prepareTapeUnarchive, prepareTapeArchive
 - getResourcesInCollection: used in calcCollectionSizeAcrossResc and thus in setCollectionSize
-- resourceExists: NOT USED
 """
 
 

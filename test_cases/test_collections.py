@@ -14,19 +14,44 @@ from test_cases.utils import (
 
 """
 iRODS native rules usage summary:
-closeProjectCollection:
-    IN RW, not in MDR
-    Used in RS (ingest & tape)
-createProjectCollection
-    Used in RS (perform_ingest_pre_hook)
-detailsProjectCollection
-    Used in RW and MDR
-openProjectCollection
-    IN RW, not in MDR
-    Used in RS (prepareExportProjectCollection & tape)
-prepareExportProjectCollection
-    Used in RW and MDR
-
+projectCollection:
+    closeProjectCollection:
+        IN RW, not in MDR
+        Used in RS (ingest & tape)
+    createProjectCollection
+        Used in RS (perform_ingest_pre_hook)
+    detailsProjectCollection
+        Used in RW and MDR
+    openProjectCollection
+        IN RW, not in MDR
+        Used in RS (prepareExportProjectCollection & tape)
+    prepareExportProjectCollection
+        Used in RW and MDR
+misc:
+    calcCollectionFiles
+        In RS (setCollectionSize)
+        Not in MDR and RW
+    calcCollectionSize
+        In RS (setCollectionSize)
+        Not in MDR and RW
+    getCollectionAVU
+        In RS (a lot)
+        Not in MDR and RW
+    getCollectionAVUTriple
+        In RS (detailsProjectCollection)
+        Not in MDR and RW
+    getCollectionSize
+        In RS (detailsProjectCollection, detailsProjectCollection, getProjectCost, calcCollectionSize)
+        Not in MDR and RW
+    setCollectionAVU
+        In RS (a lot)
+        In MDR and RW
+    setCollectionSize
+        In RS (a lot) & RW (-> dh-utils : irodsConvertMetadataXMLToJSONLD)
+        Not in MDR
+    setErrorAVU
+        In RS (ingest rules)
+        Not in MDR and RW
 
 iRODS Python rules usage summary:
 get_collection_attribute_value

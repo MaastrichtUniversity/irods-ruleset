@@ -21,16 +21,11 @@ createProjectCollection
     Used in RS (perform_ingest_pre_hook)
 detailsProjectCollection
     Used in RW and MDR
-getProjectCollectionsArray
-    Obsolete
 openProjectCollection
     IN RW, not in MDR
     Used in RS (prepareExportProjectCollection & tape)
 prepareExportProjectCollection
     Used in RW and MDR
-requestExportProjectCollection
-    Used in RW
-    Not used in MDR
 
 
 iRODS Python rules usage summary:

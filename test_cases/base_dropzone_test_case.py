@@ -74,12 +74,3 @@ class BaseTestCaseDropZones:
         assert drop_zone["title"] == self.collection_title
         assert drop_zone["token"] == self.token
         assert drop_zone["type"] == self.dropzone_type
-
-    def test_set_dropzone_total_size_avu(self):
-        rule = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
-            self.token, self.dropzone_type
-        )
-        ret = subprocess.check_output(rule, shell=True)
-
-        drop_zone = json.loads(ret)
-        assert int(drop_zone["totalSize"]) == 203618

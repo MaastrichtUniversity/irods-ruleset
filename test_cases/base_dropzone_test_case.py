@@ -76,11 +76,6 @@ class BaseTestCaseDropZones:
         assert drop_zone["type"] == self.dropzone_type
 
     def test_set_dropzone_total_size_avu(self):
-        rule_set_size = '/rules/tests/run_test.sh -r set_dropzone_total_size_avu -a "{},{}"'.format(
-            self.token, self.dropzone_type
-        )
-        subprocess.check_call(rule_set_size, shell=True)
-
         rule = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
             self.token, self.dropzone_type
         )

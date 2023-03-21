@@ -41,9 +41,6 @@ iRODS native rules usage summary:
 - reportProjects:
     * used in disk_use_email.py -> docker-reporting
     * not in RW, not in MDR
-
-iRODS python rules usage summary:
-- list_projects: IN RW, not in MDR
 """
 
 

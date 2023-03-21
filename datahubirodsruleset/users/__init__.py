@@ -1,7 +1,6 @@
 """This sub-package contains the rules related to iRODS users & groups"""
 # Public rules
 from datahubirodsruleset.users.get_user_active_processes import get_user_active_processes
-from datahubirodsruleset.users.get_contributing_project import get_contributing_project
 from datahubirodsruleset.users.get_groups import get_groups
 from datahubirodsruleset.users.get_temporary_password_lifetime import get_temporary_password_lifetime
 from datahubirodsruleset.users.get_user_attribute_value import get_user_attribute_value

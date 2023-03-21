@@ -1,6 +1,7 @@
 """This sub-package contains the rules related to DataHub projects"""
 # Public rules
 from datahubirodsruleset.projects.create_new_project import create_new_project
+from datahubirodsruleset.projects.get_contributing_project import get_contributing_project
 from datahubirodsruleset.projects.get_project_acl_for_manager import get_project_acl_for_manager
 from datahubirodsruleset.projects.get_project_contributor_metadata import get_project_contributors_metadata
 from datahubirodsruleset.projects.get_project_details import get_project_details

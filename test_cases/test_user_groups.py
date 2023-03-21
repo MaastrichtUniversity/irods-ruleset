@@ -31,9 +31,6 @@ get_all_users_groups_memberships
 get_all_users_id
     Not used in MDR, RW
     Used in RS (optimized_list_projects)
-get_contributing_project
-    Not used in RS
-    Used in MDR, RW
 get_groups
     Not used in RS
     Used in MDR, RW

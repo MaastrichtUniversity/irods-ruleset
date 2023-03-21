@@ -10,6 +10,7 @@ from datahubirodsruleset.decorator import make, Output
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_resource_size_for_all_collections(ctx):
     """
+    OPS rule for report.
     HAS TO BE CALLED AS RODSADMIN.
 
     Parameters

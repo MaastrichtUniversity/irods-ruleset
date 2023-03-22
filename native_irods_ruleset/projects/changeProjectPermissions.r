@@ -36,6 +36,10 @@ IRULE_changeProjectPermissions(*project, *users){
             *users = ""
         }
 
+        if (*rights == "remove"){
+            *rights  = "null"
+        }
+
         msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
 
         *count = *count-1;
@@ -76,7 +80,7 @@ IRULE_changeProjectPermissions(*project, *users){
                 }
 
                 # Always set rights to read, unless they are removed
-                if (*rights == "null"){
+                if (*rights == "remove"){
                     *collection_rights = "null";
                 } else {
                     *collection_rights = "read";

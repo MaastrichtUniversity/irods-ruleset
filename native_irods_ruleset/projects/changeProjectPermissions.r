@@ -1,9 +1,10 @@
 # Call with
 #
-# irule -r irods_rule_engine_plugin-irods_rule_language-instance -s -F /rules/projects/changeProjectPermissions.r *project="P000000016" *users="pvanschay2:read mcoonen:write scannexus:read"
-#
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance "changeProjectPermissions('P000000007','psuppers:remove')" null  ruleExecOut
+# Remove user rights by using the "remove" keyword
 # Change immediately the ACL on the project level.
 # Then in the delay queue, change recursively all the collections under the project.
+# DOES NOT WORK WITH irule -r irods_rule_engine_plugin-irods_rule_language-instance -s -F /rules/projects/changeProjectPermissions.r *project="P000000016" *users="pvanschay2:read mcoonen:write scannexus:read"
 
 irule_dummy() {
     IRULE_changeProjectPermissions(*project, *users);

@@ -118,7 +118,9 @@ class TestPolicies:
         repl_instance = "irepl -R {} {}/instance.json".format("rootResc", collection_path)
         subprocess.check_call(repl_instance, shell=True)
         # Test sizeIngested AVU
-        get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(collection_path)
+        get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(
+            collection_path
+        )
         size_ingested = subprocess.check_output(get_size_ingested, shell=True).rstrip("\n")
         assert int(size_ingested) == 12521
         # Test metadata file ACL

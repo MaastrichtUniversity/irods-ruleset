@@ -183,7 +183,6 @@ class TestTapeArchive:
         assert active_processes[active_process_type][0]["collection"] == self.collection_id
         assert active_processes[active_process_type][0]["state"]
 
-
     @staticmethod
     def wait_for_active_processes(rule_status, active_processes, active_process_type):
         fail_safe = 30

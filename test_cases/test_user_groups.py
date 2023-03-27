@@ -227,7 +227,9 @@ class TestUserGroups:
     def test_get_user_active_processes(self):
         self.dropzone_type = "direct"
         token = create_dropzone(self)
-        collection_path = "/nlmumc/projects/{project_id}/C00000000{{collection_number}}".format(project_id=self.project_id)
+        collection_path = "/nlmumc/projects/{project_id}/C00000000{{collection_number}}".format(
+            project_id=self.project_id
+        )
         for i in range(1, 4):
             collection_path_formatted = collection_path.format(collection_number=i)
             create_collection = "imkdir {}".format(collection_path_formatted)
@@ -235,14 +237,24 @@ class TestUserGroups:
             subprocess.check_call(create_collection, shell=True)
             subprocess.check_call(set_collection_title, shell=True)
 
-        set_archive_state = "imeta set -C /nlmumc/projects/{}/C000000001 archiveState 'archiving 1/4'".format(self.project_id)
-        set_unarchive_state = "imeta set -C /nlmumc/projects/{}/C000000002 unArchiveState 'unarchiving 4/4'".format(self.project_id)
-        set_exporter_state = "imeta set -C /nlmumc/projects/{}/C000000003 exporterState 'dataverseNL: exporting 3/4'".format(self.project_id)
+        set_archive_state = "imeta set -C /nlmumc/projects/{}/C000000001 archiveState 'archiving 1/4'".format(
+            self.project_id
+        )
+        set_unarchive_state = "imeta set -C /nlmumc/projects/{}/C000000002 unArchiveState 'unarchiving 4/4'".format(
+            self.project_id
+        )
+        set_exporter_state = (
+            "imeta set -C /nlmumc/projects/{}/C000000003 exporterState 'dataverseNL: exporting 3/4'".format(
+                self.project_id
+            )
+        )
         subprocess.check_call(set_archive_state, shell=True)
         subprocess.check_call(set_unarchive_state, shell=True)
         subprocess.check_call(set_exporter_state, shell=True)
 
-        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u {}'.format(self.manager1)
+        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u {}'.format(
+            self.manager1
+        )
         all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
 
         assert all_processes_output["archive"][0]["repository"] == "SURFSara Tape"
@@ -266,28 +278,36 @@ class TestUserGroups:
         assert all_processes_output["drop_zones"][0]["token"] == token
         assert all_processes_output["drop_zones"][0]["state"] == "open"
 
-        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(self.manager1)
+        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(
+            self.manager1
+        )
         no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
         assert len(no_archival_output["archive"]) == 0
         assert len(no_archival_output["unarchive"]) != 0
         assert len(no_archival_output["export"]) != 0
         assert len(no_archival_output["drop_zones"]) != 0
 
-        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(self.manager1)
+        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(
+            self.manager1
+        )
         no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
         assert len(no_unarchival_output["archive"]) != 0
         assert len(no_unarchival_output["unarchive"]) == 0
         assert len(no_unarchival_output["export"]) != 0
         assert len(no_unarchival_output["drop_zones"]) != 0
 
-        no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(self.manager1)
+        no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(
+            self.manager1
+        )
         no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
         assert len(no_export_output["archive"]) != 0
         assert len(no_export_output["unarchive"]) != 0
         assert len(no_export_output["export"]) == 0
         assert len(no_export_output["drop_zones"]) != 0
 
-        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(self.manager1)
+        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(
+            self.manager1
+        )
         no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
         assert len(no_dropzones_output["archive"]) != 0
         assert len(no_dropzones_output["unarchive"]) != 0

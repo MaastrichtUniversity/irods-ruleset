@@ -36,7 +36,9 @@ IRULE_changeProjectPermissions(*project, *users){
             # Signal end of loop
             *users = ""
         }
-
+        # WORKAROUND:
+        # Using the correct value "null" triggers some json parsing error during the rule execution in iRODS.
+        # This is only have been identify for rule with delay block.
         if (*rights == "remove"){
             *rights  = "null"
         }

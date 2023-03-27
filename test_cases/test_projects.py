@@ -16,7 +16,8 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     set_irods_collection_avu,
     create_data_steward,
-    wait_for_change_project_permissions_to_finish, get_project_collection_instance_in_elastic,
+    wait_for_change_project_permissions_to_finish,
+    get_project_collection_instance_in_elastic,
 )
 
 """

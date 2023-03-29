@@ -1,9 +1,9 @@
 #!/usr/bin/env groovy
 def getGitBranchName() {
-    if (params.TARGET_BRANCH == '') {
+    if ('refs' in params.TARGET_BRANCH.split('/')) {
         echo 'INFO: Build seems to be automatically triggered, using pushed branch as target branch'
-        // Splitting the GIT_BRANCH here to remove the 'origin/' prefix 
-        return env.GIT_BRANCH.split('/')[1]
+        // Splitting the TARGET_BRANCH here to remove the 'refs/heads/' prefix
+        return params.TARGET_BRANCH.split('/')[2]
     } else {
         echo 'INFO: Build seems to be manually triggered, defined branch as target branch'
         return params.TARGET_BRANCH
@@ -24,6 +24,26 @@ pipeline {
     environment {
         GIT_TOKEN         = credentials('datahub-git-token')
         TARGET_BRANCH     = getGitBranchName()
+    }
+    triggers {
+       GenericTrigger(
+        genericVariables: [
+        [key: 'TARGET_BRANCH', value: '$.ref']
+        ],
+
+        causeString: 'Triggered on $TARGET_BRANCH',
+
+        token: '',
+        tokenCredentialId: 'github-jenkins-token',
+
+        printContributedVariables: true,
+        printPostContent: true,
+
+        silentResponse: false,
+        shouldNotFlattern: false,
+        regexpFilterText: '$TARGET_BRANCH',
+        regexpFilterExpression: "^refs/heads/(202.*..*|main)\$"
+       )
     }
     stages {
         stage('Build docker-dev'){

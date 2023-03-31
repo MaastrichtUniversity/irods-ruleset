@@ -1,5 +1,6 @@
 # /rules/tests/run_test.sh -r get_versioned_pids -a "P000000014,C000000001,2" -u jmelius -j
 import json
+import time
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_collection_path
@@ -47,46 +48,73 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
     if version:
         request_json["VERSION"] = version
 
-    try:
-        response = requests.post(
-            epicpid_url,
-            json=request_json,
-            auth=(epicpid_user, epicpid_password),
-        )
-        if response.ok:
-            handle = json.loads(response.text)
+    # Add simple retry retrieving PID
+    RETRY_MAX_NUMBER = 5
+    RETRY_SLEEP_NUMBER = 30
+    retry_counter = RETRY_MAX_NUMBER
+    return_code = 0
+
+    while retry_counter > 0:
+        try:
+            response = requests.post(
+                epicpid_url,
+                json=request_json,
+                auth=(epicpid_user, epicpid_password),
+            )
+            if response.ok:
+                handle = json.loads(response.text)
+                return_code = 0
+            else:
+                ctx.callback.msiWriteRodsLog("ERROR: Response EpicPID not HTTP OK: '{}'".format(response.status_code), 0)
+                return_code = 1
+
+        except requests.exceptions.RequestException as e:
+            ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
+            return_code = 1
+        except KeyError as e:
+            ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
+            return_code = 1
+
+        destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
+        if not handle:
+            ctx.callback.msiWriteRodsLog(
+                "Retrieving multiple PID's failed for {}, leaving blank".format(destination_project_collection_path), 0
+            )
+            return_code = 1
+        if "collection" not in handle or handle["collection"]["handle"] == "":
+            ctx.callback.msiWriteRodsLog(
+                "Retrieving PID for root collection failed for {}, leaving blank".format(
+                    destination_project_collection_path
+                ),
+                0,
+            )
+            return_code = 1
+        if "schema" not in handle or handle["schema"]["handle"] == "":
+            ctx.callback.msiWriteRodsLog(
+                "Retrieving PID for root collection schema failed for {}, leaving blank".format(
+                    destination_project_collection_path
+                ),
+                0,
+            )
+            return_code = 1
+        if "instance" not in handle or handle["instance"]["handle"] == "":
+            ctx.callback.msiWriteRodsLog(
+                "Retrieving PID for root collection instance failed for {}, leaving blank".format(
+                    destination_project_collection_path
+                ),
+                0,
+            )
+            return_code = 1
+
+        if return_code != 0:
+            retry_counter -= 1
+            ctx.callback.msiWriteRodsLog("DEBUG: Decrement retry_counter: {}".format(str(retry_counter)), 0)
+            time.sleep(RETRY_SLEEP_NUMBER)
         else:
-            ctx.callback.msiWriteRodsLog("ERROR: Response EpicPID not HTTP OK: '{}'".format(response.status_code), 0)
-    except requests.exceptions.RequestException as e:
-        ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
-    except KeyError as e:
-        ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
+            retry_counter = 0
+            ctx.callback.msiWriteRodsLog("INFO: Retrieving PID was successful", 0)
+            return handle
 
-    destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
-    if not handle:
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving multiple PID's failed for {}, leaving blank".format(destination_project_collection_path), 0
-        )
-    if "collection" not in handle or handle["collection"]["handle"] == "":
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection failed for {}, leaving blank".format(
-                destination_project_collection_path
-            ),
-            0,
-        )
-    if "schema" not in handle or handle["schema"]["handle"] == "":
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection schema failed for {}, leaving blank".format(
-                destination_project_collection_path
-            ),
-            0,
-        )
-    if "instance" not in handle or handle["instance"]["handle"] == "":
-        ctx.callback.msiWriteRodsLog(
-            "Retrieving PID for root collection instance failed for {}, leaving blank".format(
-                destination_project_collection_path
-            ),
-            0,
-        )
-
-    return handle
+    if return_code != 0:
+        ctx.callback.msiWriteRodsLog("ERROR: Requesting PID, max retries exceeded", 0)
+        return handle

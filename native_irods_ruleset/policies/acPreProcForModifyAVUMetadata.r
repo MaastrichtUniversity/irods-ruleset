@@ -27,11 +27,14 @@ modifyProjectAVUMetadataPolicy(*ItemName,*AName,*AValue) {
         if(*AName == "description" || *AName == "enableArchive" || *AName == "enableUnarchive"
         || *AName == "enableOpenAccessExport" || *AName == "collectionMetadataSchemas"
         || *AName == "enableContributorEditMetadata" || *AName == "enableDropzoneSharing") {
-            msiCheckAccess(*ItemName,"own",*Result);
+            *hasAccess = 0;
+            # msiCheckAccess will fail if the $userNameClient is not currently part the *ItemName ACL
+            # So errorcode() is used to catch the error and *hasAccess is initialize as false (=0)
+            errorcode(msiCheckAccess(*ItemName,"own",*hasAccess));
             *isAdmin = ""
             get_user_admin_status($userNameClient, *isAdmin);
             *authorized = 0
-            if(*Result == 1 || $userNameClient == "rods" || *isAdmin == "true") {
+            if(*hasAccess == 1 || $userNameClient == "rods" || *isAdmin == "true") {
                 *authorized = 1
             }
             modifyProjectAVUMetadataController(*authorized,*ItemName,*AName,*AValue)

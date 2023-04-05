@@ -20,4 +20,10 @@ def set_acl(ctx, mode, access_level, username, irods_collection_path):
     irods_collection_path : str
         The absolute path of the collection
     """
+    # WORKAROUND:
+    # Using the correct value "null" triggers some json parsing error during the rule execution in iRODS.
+    # This is only have been identified for rule with delay block (e.g: changeProjectPermissions).
+    if access_level == "remove":
+        access_level = "null"
+
     ctx.callback.msiSetACL(mode, access_level, username, irods_collection_path)

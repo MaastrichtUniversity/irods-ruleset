@@ -99,5 +99,9 @@ pipeline {
                 }
             cleanWs()
         }
+        failure {
+            slackSend color: 'danger',
+                  message: "The pipeline for the iRODS ruleset testcases #${env.BUILD_NUMBER} on TARGET_BRANCH ${env.TARGET_BRANCH} has failed."
+        }
     }
 }

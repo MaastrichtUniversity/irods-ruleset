@@ -31,9 +31,6 @@ get_all_users_groups_memberships
 get_all_users_id
     Not used in MDR, RW
     Used in RS (optimized_list_projects)
-get_contributing_project
-    Not used in RS
-    Used in MDR, RW
 get_groups
     Not used in RS
     Used in MDR, RW
@@ -71,21 +68,11 @@ iRODS Rule language rules
 getDataStewards
     Not used in RS
     Used in MDR, RW
-getDisplayNameForAccount
-    Not used in MDR, RW
-    Used in RS(getProjectCollectionsArray)
-getEmailForAccount
-    Not used MDR, RW or RS. 
-getGroups
-    Not used MDR, RW or RS. 
 getUsers
     Used in MDR, RW and RS (get_all_users_groups_memberships)
 getUsersInGroup
     Not used in RS
     Used in MDR, RW
-listGroupsByUser
-    Used in RW
-    Not used in MDR and RS
 """
 
 
@@ -145,15 +132,6 @@ class TestUserGroups:
         ret = subprocess.check_output(rule, shell=True)
         user_ids = json.loads(ret)
         assert user_ids[user_id] == user_id
-
-    def test_get_contributing_project(self):
-        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
-            self.project_id, self.manager1
-        )
-        ret = subprocess.check_output(rule, shell=True)
-        project = json.loads(ret)
-        assert project["id"] == self.project_id
-        assert project["title"] == self.project_title
 
     def test_get_groups(self):
         rule = '/rules/tests/run_test.sh -r get_groups -a "false"'
@@ -379,26 +357,6 @@ class TestUserGroups:
         data_stewards = json.loads(ret)
         assert check_if_key_value_in_dict_list(data_stewards, "userName", self.data_steward)
 
-    def test_get_display_name_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(
-            self.manager1
-        )
-        display_name = subprocess.check_output(rule, shell=True).rstrip("\n")
-        assert display_name == "{} LastName".format(self.manager1)
-
-    def test_get_email_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getEmailForAccount.r \"*account='{}'\"".format(
-            self.manager1
-        )
-        email = subprocess.check_output(rule, shell=True).rstrip("\n")
-        assert email == "{}@maastrichtuniversity.nl".format(self.manager1)
-
-    def test_get_groups_rule_language(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getGroups.r \"*showSpecialGroups='false'\""
-        ret = subprocess.check_output(rule, shell=True)
-        groups = json.loads(ret)
-        assert check_if_key_value_in_dict_list(groups, "userName", self.group)
-
     def test_get_users(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsers.r \"*showServiceAccounts='false'\""
         ret = subprocess.check_output(rule, shell=True)
@@ -417,12 +375,3 @@ class TestUserGroups:
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
         assert not check_if_key_value_in_dict_list(users, "userName", self.manager2)
-
-    def test_list_groups_by_user(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/listGroupsByUser.r"
-        ret = subprocess.check_output(rule, shell=True)
-        groups = json.loads(ret)
-        for group in groups:
-            if group["GroupName"] == self.group:
-                assert "{} LastName".format(self.manager1) in group["Users"]
-                assert not "{} LastName".format(self.manager2) in group["Users"]

@@ -15,7 +15,6 @@ from test_cases.utils import (
 
 """
 Python rules:
-- list_destination_resources_status: valid, used in irods-rule-wrapper, but not MDR
 - get_resource_size_for_all_collections: valid, used by DevOps to calculate how much data is in iRODS in total
 
 
@@ -26,7 +25,6 @@ Native rules:
 - getIngestResources: used in MDR/RW (createProject)
 - getResourceAVU: used in tapeUnarchive, prepareTapeUnarchive, prepareTapeArchive
 - getResourcesInCollection: used in calcCollectionSizeAcrossResc and thus in setCollectionSize
-- resourceExists: NOT USED
 """
 
 
@@ -77,23 +75,6 @@ class TestResources:
         remove_dropzone(cls.token, cls.dropzone_type)
         revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
-
-    def test_list_destination_resources_status(self):
-        rule = "/rules/tests/run_test.sh -r list_destination_resources_status"
-        rule_output = subprocess.check_output(rule, shell=True)
-        json.loads(rule_output)
-        assert "replRescAZM01" in rule_output
-        assert "replRescUM01" in rule_output
-        assert "replRescUMCeph01" in rule_output
-        change_status = "iadmin modresc replRescAZM01 status {}"
-        subprocess.check_call(change_status.format("down"), shell=True)
-        second_time_output = subprocess.check_output(rule, shell=True)
-        assert "replRescAZM01" in rule_output
-        rule_parsed = json.loads(second_time_output)
-        for item in rule_parsed:
-            if item["name"] == "replRescAZM01":
-                assert not item["available"]
-        subprocess.check_call(change_status.format("up"), shell=True)
 
     def test_calc_collection_files_across_resc(self):
         resc_found = False

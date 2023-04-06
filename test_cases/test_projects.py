@@ -518,14 +518,16 @@ class TestProjects:
             assert projects[project_index]["id"] == self.project_ids[project_index]
             assert projects[project_index]["title"] == self.project_titles[project_index]
 
-    def test_get_contributing_project(self):
+    def test_get_contributing_project(self, project_index=0):
+        project_id = self.project_ids[project_index]
+        project_title = self.project_titles[project_index]
         rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
-            self.project_id, self.manager1
+            project_id, self.manager1
         )
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
-        assert project["id"] == self.project_id
-        assert project["title"] == self.project_title
+        assert project["id"] == project_id
+        assert project["title"] == project_title
 
     def assert_project_avu(self, project, project_index=0):
         assert project["collectionMetadataSchemas"] == self.schema_name

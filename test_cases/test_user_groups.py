@@ -73,9 +73,6 @@ getUsers
 getUsersInGroup
     Not used in RS
     Used in MDR, RW
-listGroupsByUser
-    Used in RW
-    Not used in MDR and RS
 """
 
 
@@ -135,15 +132,6 @@ class TestUserGroups:
         ret = subprocess.check_output(rule, shell=True)
         user_ids = json.loads(ret)
         assert user_ids[user_id] == user_id
-
-    def test_get_contributing_project(self):
-        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
-            self.project_id, self.manager1
-        )
-        ret = subprocess.check_output(rule, shell=True)
-        project = json.loads(ret)
-        assert project["id"] == self.project_id
-        assert project["title"] == self.project_title
 
     def test_get_groups(self):
         rule = '/rules/tests/run_test.sh -r get_groups -a "false"'

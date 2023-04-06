@@ -28,15 +28,15 @@ iRODS native rules usage summary:
 
 - listProjectManagers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject 
+    * obsolete: IN detailsProject 
 
 - listProjectContributors: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject
+    * obsolete: IN detailsProject
 
 - listProjectViewers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject
+    * obsolete: IN detailsProject
 
 - reportProjects:
     * used in disk_use_email.py -> docker-reporting
@@ -405,6 +405,15 @@ class TestProjects:
         for project_index in range(self.number_of_projects):
             assert projects[project_index]["id"] == self.project_ids[project_index]
             assert projects[project_index]["title"] == self.project_titles[project_index]
+
+    def test_get_contributing_project(self):
+        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
+            self.project_id, self.manager1
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        project = json.loads(ret)
+        assert project["id"] == self.project_id
+        assert project["title"] == self.project_title
 
     def assert_project_avu(self, project, project_index=0):
         assert project["collectionMetadataSchemas"] == self.schema_name

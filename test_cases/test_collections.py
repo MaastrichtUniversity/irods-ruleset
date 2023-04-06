@@ -41,7 +41,7 @@ misc:
         In RS (detailsProjectCollection)
         Not in MDR and RW
     getCollectionSize
-        In RS (detailsProjectCollection, detailsProjectCollection, getProjectCost, calcCollectionSize)
+        In RS (detailsProjectCollection, getProjectCost, calcCollectionSize)
         Not in MDR and RW
     setCollectionAVU
         In RS (a lot)

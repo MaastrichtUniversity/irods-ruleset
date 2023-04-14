@@ -1,5 +1,6 @@
 import json
 import subprocess
+import time
 
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
@@ -15,36 +16,34 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     set_irods_collection_avu,
     create_data_steward,
+    wait_for_change_project_permissions_to_finish,
+    get_project_collection_instance_in_elastic,
 )
 
 """
 iRODS native rules usage summary:
 - changeProjectPermissions: valid
-- detailsProject: IN RW, not in MDR
-- getProjectCost: IN detailsProject
-
-- listManagingProjects: not in RW, not in MDR
-- listContributingProjects: not in RW, not in MDR
-- listViewingProjects: not in RW, not in MDR
+- detailsProject: 
+    * IN RW, not in MDR
+    * IN RS (reportProjects)
+- getProjectCost: IN RS (detailsProject)
 
 
 - listProjectManagers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject 
 
 - listProjectContributors: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject
 
 - listProjectViewers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject
 
-- listProjectsByUser: IN RW, not in MDR
-- reportProjects: not in RW, not in MDR
-
-iRODS python rules usage summary:
-- list_projects: IN RW, not in MDR
+- reportProjects:
+    * used in disk_use_email.py -> docker-reporting
+    * not in RW, not in MDR
 """
 
 
@@ -134,6 +133,115 @@ class TestProjects:
             # check if the list members are user ids, not usernames
             for manager in projects[project_index]["managers"]:
                 assert manager.isnumeric()
+
+    def test_change_project_permissions(self):
+        # setup
+        self.project_id = self.project_ids[0]
+        project_path = self.project_paths[0]
+        project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
+        self.token = create_dropzone(self)
+        add_metadata_files_to_direct_dropzone(self.token)
+        start_and_wait_for_ingest(self)
+
+        change_project_permissions_rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
+
+        # Check that new user has no rights on the project
+        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
+            project_path, self.depositor
+        )
+        ret = subprocess.check_output(rule_project_details, shell=True)
+        project = json.loads(ret)
+        assert self.new_user not in project["managers"]["users"]
+        assert self.new_user not in project["contributors"]["users"]
+        assert self.new_user not in project["viewers"]["users"]
+
+        # Add own rights for new user to the project
+        subprocess.check_output(
+            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "own"), shell=True
+        )
+
+        # Check that new user is in project managers
+        ret = subprocess.check_output(rule_project_details, shell=True)
+        project = json.loads(ret)
+        assert self.new_user in project["managers"]["users"]
+        assert self.new_user not in project["contributors"]["users"]
+        assert self.new_user not in project["viewers"]["users"]
+
+        wait_for_change_project_permissions_to_finish()
+
+        # Check that new user has been added to the collection ACL with read rights
+        acl = "ils -A {}".format(project_collection_path)
+        ret_acl = subprocess.check_output(acl, shell=True)
+        assert "{}#nlmumc:read".format(self.new_user) in ret_acl
+
+        # Check that the elastic search document also includes new user
+        instance = get_project_collection_instance_in_elastic(self.project_id)
+        assert self.new_user in instance["user_access"]
+
+        # Update rights for new user to write on the project
+        subprocess.check_output(
+            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "write"), shell=True
+        )
+
+        # Check that new user is in project contributors
+        ret = subprocess.check_output(rule_project_details, shell=True)
+        project = json.loads(ret)
+        assert self.new_user not in project["managers"]["users"]
+        assert self.new_user in project["contributors"]["users"]
+        assert self.new_user not in project["viewers"]["users"]
+
+        wait_for_change_project_permissions_to_finish()
+
+        # Check that new user has been added to the collection ACL with read rights
+        acl = "ils -A {}".format(project_collection_path)
+        ret_acl = subprocess.check_output(acl, shell=True)
+        assert "{}#nlmumc:read".format(self.new_user) in ret_acl
+
+        # Update rights for new user to read on the project
+        subprocess.check_output(
+            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "read"), shell=True
+        )
+
+        # Check that new user is in project viewers
+        ret = subprocess.check_output(rule_project_details, shell=True)
+        project = json.loads(ret)
+        assert self.new_user not in project["managers"]["users"]
+        assert self.new_user not in project["contributors"]["users"]
+        assert self.new_user in project["viewers"]["users"]
+
+        wait_for_change_project_permissions_to_finish()
+
+        # Check that new user has been added to the collection ACL with read rights
+        acl = "ils -A {}".format(project_collection_path)
+        ret_acl = subprocess.check_output(acl, shell=True)
+        assert "{}#nlmumc:read".format(self.new_user) in ret_acl
+
+        # Remove all new user right from the project
+        subprocess.check_output(
+            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "remove"), shell=True
+        )
+
+        # Check that new user has no rights anymore on the project
+        ret = subprocess.check_output(rule_project_details, shell=True)
+        project = json.loads(ret)
+        assert self.new_user not in project["managers"]["users"]
+        assert self.new_user not in project["contributors"]["users"]
+        assert self.new_user not in project["viewers"]["users"]
+
+        wait_for_change_project_permissions_to_finish()
+
+        # Check that new user has no rights anymore on the collection
+        acl = "ils -A {}".format(project_collection_path)
+        ret_acl = subprocess.check_output(acl, shell=True)
+        assert self.new_user not in ret_acl
+
+        # Check that new user has been removed from the elastic search document
+        instance = get_project_collection_instance_in_elastic(self.project_id)
+        assert self.new_user not in instance["user_access"]
+
+        # teardown
+        subprocess.check_call("ichmod -rM own rods {}".format(project_collection_path), shell=True)
+        subprocess.check_call("irm -rf {}".format(project_collection_path), shell=True)
 
     def test_project_manager_access(self):
         cmd = '/rules/tests/run_test.sh -r get_project_acl_for_manager -a "{},false" -u {}'
@@ -409,6 +517,17 @@ class TestProjects:
         for project_index in range(self.number_of_projects):
             assert projects[project_index]["id"] == self.project_ids[project_index]
             assert projects[project_index]["title"] == self.project_titles[project_index]
+
+    def test_get_contributing_project(self, project_index=0):
+        project_id = self.project_ids[project_index]
+        project_title = self.project_titles[project_index]
+        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
+            project_id, self.manager1
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        project = json.loads(ret)
+        assert project["id"] == project_id
+        assert project["title"] == project_title
 
     def assert_project_avu(self, project, project_index=0):
         assert project["collectionMetadataSchemas"] == self.schema_name

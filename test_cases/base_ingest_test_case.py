@@ -19,6 +19,26 @@ from test_cases.utils import (
 # TODO Test for trigger pre ingest error validation with corrupt metadata
 # TODO Test for trigger post ingest with missing dropzone creator email
 
+"""
+iRODS Rule language rules
+
+checkDropZoneACL:
+    *   In RS (create_drop_zone, get_active_drop_zone, validate_dropzone & listActiveDropZones)
+
+createRemoteDirectory:
+    *   In RS (create_drop_zone)
+
+delayRemoveDropzone:
+    *   In RS (finish_ingest)
+
+editIngest:
+    *   In MDR, RW
+
+listActiveDropZones:
+    *   NOT in RW, MDR
+    *   In RS (get_user_active_processes)
+"""
+
 
 class BaseTestCaseIngest:
     project_path = ""

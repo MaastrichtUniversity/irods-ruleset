@@ -1,6 +1,8 @@
 # Call with
 #
-# irule -F closeDropZone.r "*token='bla-token'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/ingest/closeDropZone.r "*token='bla-token'"
+#
+# OPS rule for "SOP_Beheer [iRODS] Remove dropzone"
 
 irule_dummy() {
     IRULE_closeDropZone(*token)

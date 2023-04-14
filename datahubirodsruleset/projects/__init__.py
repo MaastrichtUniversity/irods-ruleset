@@ -1,8 +1,8 @@
 """This sub-package contains the rules related to DataHub projects"""
 # Public rules
 from datahubirodsruleset.projects.create_new_project import create_new_project
+from datahubirodsruleset.projects.get_contributing_project import get_contributing_project
 from datahubirodsruleset.projects.get_project_acl_for_manager import get_project_acl_for_manager
-from datahubirodsruleset.projects.get_project_collection_tape_estimate import get_project_collection_tape_estimate
 from datahubirodsruleset.projects.get_project_contributor_metadata import get_project_contributors_metadata
 from datahubirodsruleset.projects.get_project_details import get_project_details
 from datahubirodsruleset.projects.get_project_resource_availability import get_project_resource_availability
@@ -20,4 +20,3 @@ from datahubirodsruleset.projects.get_project_user_members import get_project_us
 from datahubirodsruleset.projects.list_project_contributors import list_project_contributors
 from datahubirodsruleset.projects.list_project_managers import list_project_managers
 from datahubirodsruleset.projects.list_project_viewers import list_project_viewers
-from datahubirodsruleset.projects.list_projects import list_projects

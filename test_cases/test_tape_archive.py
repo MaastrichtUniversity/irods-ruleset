@@ -1,7 +1,6 @@
 import subprocess
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProcessState
 
 from test_cases.base_tape_archive import BaseTestTapeArchive
 from test_cases.utils import (

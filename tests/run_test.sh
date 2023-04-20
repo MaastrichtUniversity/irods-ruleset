@@ -16,7 +16,6 @@
 #./run_test.sh -r check_edit_metadata_permission -a "/nlmumc/projects/P000000015"
 #./run_test.sh -r check_edit_metadata_permission -a "/nlmumc/projects/P000000015" -u psuppers
 
-#./run_test.sh -r getGroups -a "true" -j
 
 while getopts "r:a::u::jd" opt; do
   case $opt in

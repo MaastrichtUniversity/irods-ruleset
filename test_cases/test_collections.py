@@ -14,24 +14,44 @@ from test_cases.utils import (
 
 """
 iRODS native rules usage summary:
-closeProjectCollection:
-    IN RW, not in MDR
-    Used in RS (ingest & tape)
-createProjectCollection
-    Used in RS (perform_ingest_pre_hook)
-detailsProjectCollection
-    Used in RW and MDR
-getProjectCollectionsArray
-    Obsolete
-openProjectCollection
-    IN RW, not in MDR
-    Used in RS (prepareExportProjectCollection & tape)
-prepareExportProjectCollection
-    Used in RW and MDR
-requestExportProjectCollection
-    Used in RW
-    Not used in MDR
-
+projectCollection:
+    closeProjectCollection:
+        IN RW, not in MDR
+        Used in RS (ingest & tape)
+    createProjectCollection
+        Used in RS (perform_ingest_pre_hook)
+    detailsProjectCollection
+        Used in RW and MDR
+    openProjectCollection
+        IN RW, not in MDR
+        Used in RS (prepareExportProjectCollection & tape)
+    prepareExportProjectCollection
+        Used in RW and MDR
+misc:
+    calcCollectionFiles
+        In RS (setCollectionSize)
+        Not in MDR and RW
+    calcCollectionSize
+        In RS (setCollectionSize)
+        Not in MDR and RW
+    getCollectionAVU
+        In RS (a lot)
+        Not in MDR and RW
+    getCollectionAVUTriple
+        In RS (detailsProjectCollection)
+        Not in MDR and RW
+    getCollectionSize
+        In RS (detailsProjectCollection, getProjectCost, calcCollectionSize)
+        Not in MDR and RW
+    setCollectionAVU
+        In RS (a lot)
+        In MDR and RW
+    setCollectionSize
+        In RS (a lot) & RW (-> dh-utils : irodsConvertMetadataXMLToJSONLD)
+        Not in MDR
+    setErrorAVU
+        In RS (ingest rules)
+        Not in MDR and RW
 
 iRODS Python rules usage summary:
 get_collection_attribute_value
@@ -210,20 +230,3 @@ class TestCollections:
         subprocess.check_call(rule_close, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
-
-    def test_checksum_collection(self):
-        project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
-        set_acl = "ichmod -rM write rods {}".format(project_collection_path)
-        subprocess.check_call(set_acl, shell=True)
-
-        rule = '/rules/tests/run_test.sh -r checksum_collection -a "{},{}"'.format(self.project_id, self.collection_id)
-        ret = subprocess.check_output(rule, shell=True)
-        results = json.loads(ret)
-        for path, checksum in results.items():
-            ils = "ils -L {}".format(path)
-            ret = subprocess.check_output(ils, shell=True)
-            # 2 => number of replica with the correct checksum
-            assert ret.count(checksum) == 2
-
-        set_acl = "ichmod -rM read rods {}".format(project_collection_path)
-        subprocess.check_call(set_acl, shell=True)

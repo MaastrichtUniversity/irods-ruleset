@@ -10,6 +10,8 @@ from test_cases.utils import (
     create_project,
     create_dropzone,
     add_metadata_files_to_direct_dropzone,
+    create_user,
+    remove_user,
 )
 
 
@@ -133,8 +135,26 @@ class TestPolicies:
 
     def test_pre_proc_for_modify_avu_metadata(self):
         """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
-        list_avu_to_check = [
-            "responsibleCostCenter",
+        # Setup: Add a non-admin manager to the project
+        test_manager = "test_manager"
+        create_user(test_manager)
+        mod_acl = "ichmod own {} /nlmumc/projects/{}".format(test_manager, self.project_id)
+        subprocess.check_call(mod_acl, shell=True)
+
+        financial_manager = self.manager1
+        contributor = "service-pid"
+        check = "export clientUserName={} && imeta set -C /nlmumc/projects/{} {} false"
+
+        # Financial => Only Principal Investigator or Data steward
+        financial_avu_to_check = "responsibleCostCenter"
+        with pytest.raises(subprocess.CalledProcessError) as e_info:
+            subprocess.check_call(check.format(contributor, self.project_id, financial_avu_to_check), shell=True)
+        with pytest.raises(subprocess.CalledProcessError) as e_info:
+            subprocess.check_call(check.format(test_manager, self.project_id, financial_avu_to_check), shell=True)
+        subprocess.check_call(check.format(financial_manager, self.project_id, financial_avu_to_check), shell=True)
+
+        # Project settings => only project managers, Principal Investigator or Data steward
+        list_project_setting_avu_to_check = [
             "enableArchive",
             "enableUnarchive",
             "enableOpenAccessExport",
@@ -143,11 +163,14 @@ class TestPolicies:
             # "enableDropzoneSharing", triggers acPostProcForModifyAVUMetadata
             "description",
         ]
-        for avu in list_avu_to_check:
-            check = "export clientUserName={} && imeta set -C /nlmumc/projects/{} {} false"
+        for avu in list_project_setting_avu_to_check:
             with pytest.raises(subprocess.CalledProcessError) as e_info:
-                subprocess.check_call(check.format("service-pid", self.project_id, avu), shell=True)
-            subprocess.check_call(check.format(self.manager1, self.project_id, avu), shell=True)
+                subprocess.check_call(check.format(contributor, self.project_id, avu), shell=True)
+            subprocess.check_call(check.format(test_manager, self.project_id, avu), shell=True)
+            subprocess.check_call(check.format(financial_manager, self.project_id, financial_avu_to_check), shell=True)
+
+        # Teardown
+        remove_user(test_manager)
 
     def test_pre_proc_for_coll_create_first(self):
         """This tests if a user is allowed to make a dir in a direct dropzone that is already ingesting (they should not be)"""

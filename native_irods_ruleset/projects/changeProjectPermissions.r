@@ -38,12 +38,8 @@ IRULE_changeProjectPermissions(*project, *users){
         }
         # WORKAROUND:
         # Using the correct value "null" triggers some json parsing error during the rule execution in iRODS.
-        # This is only have been identify for rule with delay block.
-        if (*rights == "remove"){
-            *rights  = "null"
-        }
-
-        msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
+        # This is only have been identified for rule with delay block.
+        set_acl("default", "*rights", "*account", '/nlmumc/projects/*project');
 
         *count = *count-1;
 
@@ -83,13 +79,14 @@ IRULE_changeProjectPermissions(*project, *users){
                 }
 
                 # Always set rights to read, unless they are removed
-                if (*rights == "remove"){
-                    *collection_rights = "null";
-                } else {
+                if (*rights != "remove"){
                     *collection_rights = "read";
                 }
+                else{
+                    *collection_rights = *rights
+                }
 
-                msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
+                set_acl("recursive", "*collection_rights", "*account", "*projectCollection");
 
                 *count = *count - 1;
 

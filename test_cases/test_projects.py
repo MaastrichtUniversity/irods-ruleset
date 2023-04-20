@@ -23,31 +23,27 @@ from test_cases.utils import (
 """
 iRODS native rules usage summary:
 - changeProjectPermissions: valid
-- detailsProject: IN RW, not in MDR
-- getProjectCost: IN detailsProject
-
-- listManagingProjects: not in RW, not in MDR
-- listContributingProjects: not in RW, not in MDR
-- listViewingProjects: not in RW, not in MDR
+- detailsProject: 
+    * IN RW, not in MDR
+    * IN RS (reportProjects)
+- getProjectCost: IN RS (detailsProject)
 
 
 - listProjectManagers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject 
 
 - listProjectContributors: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject
 
 - listProjectViewers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject
 
-- listProjectsByUser: IN RW, not in MDR
-- reportProjects: not in RW, not in MDR
-
-iRODS python rules usage summary:
-- list_projects: IN RW, not in MDR
+- reportProjects:
+    * used in disk_use_email.py -> docker-reporting
+    * not in RW, not in MDR
 """
 
 
@@ -521,6 +517,17 @@ class TestProjects:
         for project_index in range(self.number_of_projects):
             assert projects[project_index]["id"] == self.project_ids[project_index]
             assert projects[project_index]["title"] == self.project_titles[project_index]
+
+    def test_get_contributing_project(self, project_index=0):
+        project_id = self.project_ids[project_index]
+        project_title = self.project_titles[project_index]
+        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
+            project_id, self.manager1
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        project = json.loads(ret)
+        assert project["id"] == project_id
+        assert project["title"] == project_title
 
     def assert_project_avu(self, project, project_index=0):
         assert project["collectionMetadataSchemas"] == self.schema_name

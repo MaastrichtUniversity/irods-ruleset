@@ -2,6 +2,8 @@ import subprocess
 import json
 import os
 
+from dhpythonirodsutils.enums import ProcessState, ProcessType
+
 from test_cases.utils import (
     remove_project,
     revert_latest_project_number,
@@ -29,9 +31,6 @@ get_all_users_groups_memberships
 get_all_users_id
     Not used in MDR, RW
     Used in RS (optimized_list_projects)
-get_contributing_project
-    Not used in RS
-    Used in MDR, RW
 get_groups
     Not used in RS
     Used in MDR, RW
@@ -69,21 +68,11 @@ iRODS Rule language rules
 getDataStewards
     Not used in RS
     Used in MDR, RW
-getDisplayNameForAccount
-    Not used in MDR, RW
-    Used in RS(getProjectCollectionsArray)
-getEmailForAccount
-    Not used MDR, RW or RS. 
-getGroups
-    Not used MDR, RW or RS. 
 getUsers
     Used in MDR, RW and RS (get_all_users_groups_memberships)
 getUsersInGroup
     Not used in RS
     Used in MDR, RW
-listGroupsByUser
-    Used in RW
-    Not used in MDR and RS
 """
 
 
@@ -143,15 +132,6 @@ class TestUserGroups:
         ret = subprocess.check_output(rule, shell=True)
         user_ids = json.loads(ret)
         assert user_ids[user_id] == user_id
-
-    def test_get_contributing_project(self):
-        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
-            self.project_id, self.manager1
-        )
-        ret = subprocess.check_output(rule, shell=True)
-        project = json.loads(ret)
-        assert project["id"] == self.project_id
-        assert project["title"] == self.project_title
 
     def test_get_groups(self):
         rule = '/rules/tests/run_test.sh -r get_groups -a "false"'
@@ -256,63 +236,66 @@ class TestUserGroups:
             self.manager1
         )
         all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["repository"] == "SURFSara Tape"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["collection_title"] == "title number 1"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["collection_id"] == "C000000001"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["state"] == "archiving 1/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
 
-        assert all_processes_output["archive"][0]["repository"] == "SURFSara Tape"
-        assert all_processes_output["archive"][0]["title"] == "title number 1"
-        assert all_processes_output["archive"][0]["collection"] == "C000000001"
-        assert all_processes_output["archive"][0]["state"] == "archiving 1/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["repository"] == "SURFSara Tape"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["collection_title"] == "title number 2"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["collection_id"] == "C000000002"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["state"] == "unarchiving 4/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
 
-        assert all_processes_output["unarchive"][0]["repository"] == "SURFSara Tape"
-        assert all_processes_output["unarchive"][0]["title"] == "title number 2"
-        assert all_processes_output["unarchive"][0]["collection"] == "C000000002"
-        assert all_processes_output["unarchive"][0]["state"] == "unarchiving 4/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["repository"] == "dataverseNL"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_title"] == "title number 3"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_id"] == "C000000003"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["state"] == "exporting 3/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
 
-        assert all_processes_output["export"][0]["repository"] == "dataverseNL"
-        assert all_processes_output["export"][0]["title"] == "title number 3"
-        assert all_processes_output["export"][0]["collection"] == "C000000003"
-        assert all_processes_output["export"][0]["state"] == "exporting 3/4"
-
-        assert all_processes_output["drop_zones"][0]["validateState"] == "N/A"
-        assert all_processes_output["drop_zones"][0]["title"] == self.collection_title
-        assert all_processes_output["drop_zones"][0]["type"] == self.dropzone_type
-        assert all_processes_output["drop_zones"][0]["token"] == token
-        assert all_processes_output["drop_zones"][0]["state"] == "open"
+        assert all_processes_output[ProcessState.OPEN.value][0]["validateState"] == "N/A"
+        assert all_processes_output[ProcessState.OPEN.value][0]["title"] == self.collection_title
+        assert all_processes_output[ProcessState.OPEN.value][0]["type"] == self.dropzone_type
+        assert all_processes_output[ProcessState.OPEN.value][0]["token"] == token
+        assert all_processes_output[ProcessState.OPEN.value][0]["state"] == "open"
 
         no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(
             self.manager1
         )
         no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
-        assert len(no_archival_output["archive"]) == 0
-        assert len(no_archival_output["unarchive"]) != 0
-        assert len(no_archival_output["export"]) != 0
-        assert len(no_archival_output["drop_zones"]) != 0
+        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_archival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.UNARCHIVE.value
+        assert no_archival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_archival_output[ProcessState.OPEN.value]) == 1
 
         no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(
             self.manager1
         )
         no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
-        assert len(no_unarchival_output["archive"]) != 0
-        assert len(no_unarchival_output["unarchive"]) == 0
-        assert len(no_unarchival_output["export"]) != 0
-        assert len(no_unarchival_output["drop_zones"]) != 0
+        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_unarchival_output[ProcessState.OPEN.value]) == 1
 
         no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(
             self.manager1
         )
         no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
-        assert len(no_export_output["archive"]) != 0
-        assert len(no_export_output["unarchive"]) != 0
-        assert len(no_export_output["export"]) == 0
-        assert len(no_export_output["drop_zones"]) != 0
+        assert len(no_export_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_export_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_export_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+        assert len(no_export_output[ProcessState.OPEN.value]) == 1
 
         no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(
             self.manager1
         )
         no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
-        assert len(no_dropzones_output["archive"]) != 0
-        assert len(no_dropzones_output["unarchive"]) != 0
-        assert len(no_dropzones_output["export"]) != 0
-        assert len(no_dropzones_output["drop_zones"]) == 0
+        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 3
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_dropzones_output[ProcessState.OPEN.value]) == 0
 
         remove_dropzone = "irm -rf /nlmumc/ingest/direct/{}".format(token)
         subprocess.check_call(remove_dropzone, shell=True)
@@ -374,26 +357,6 @@ class TestUserGroups:
         data_stewards = json.loads(ret)
         assert check_if_key_value_in_dict_list(data_stewards, "userName", self.data_steward)
 
-    def test_get_display_name_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(
-            self.manager1
-        )
-        display_name = subprocess.check_output(rule, shell=True).rstrip("\n")
-        assert display_name == "{} LastName".format(self.manager1)
-
-    def test_get_email_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getEmailForAccount.r \"*account='{}'\"".format(
-            self.manager1
-        )
-        email = subprocess.check_output(rule, shell=True).rstrip("\n")
-        assert email == "{}@maastrichtuniversity.nl".format(self.manager1)
-
-    def test_get_groups_rule_language(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getGroups.r \"*showSpecialGroups='false'\""
-        ret = subprocess.check_output(rule, shell=True)
-        groups = json.loads(ret)
-        assert check_if_key_value_in_dict_list(groups, "userName", self.group)
-
     def test_get_users(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsers.r \"*showServiceAccounts='false'\""
         ret = subprocess.check_output(rule, shell=True)
@@ -412,12 +375,3 @@ class TestUserGroups:
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
         assert not check_if_key_value_in_dict_list(users, "userName", self.manager2)
-
-    def test_list_groups_by_user(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/listGroupsByUser.r"
-        ret = subprocess.check_output(rule, shell=True)
-        groups = json.loads(ret)
-        for group in groups:
-            if group["GroupName"] == self.group:
-                assert "{} LastName".format(self.manager1) in group["Users"]
-                assert not "{} LastName".format(self.manager2) in group["Users"]

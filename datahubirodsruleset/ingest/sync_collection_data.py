@@ -71,6 +71,10 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
         "",
     )
 
+    state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
+    if state == DropzoneState.ERROR_INGESTION.value:
+        ctx.callback.msiExit("-1", "Stop sync_collection_data for {}'".format(dropzone_path))
+
     ctx.callback.replace_metadata_placeholder_files(token, project_id, collection_id, depositor)
 
     if ingest_restart:

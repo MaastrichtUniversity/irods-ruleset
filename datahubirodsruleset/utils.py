@@ -1,10 +1,14 @@
+# TODO explain the nosec
+from subprocess import check_call, CalledProcessError  # nosec
+
 import irods_types  # pylint: disable=import-error
 import session_vars  # pylint: disable=import-error
 from dhpythonirodsutils import formatters, loggers
-from dhpythonirodsutils.enums import DropzoneState, AuditTailTopics
+from dhpythonirodsutils.enums import DropzoneState, AuditTailTopics, ProjectAVUs
 from genquery import *  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.formatters import format_project_path
 
 # Global vars
 COLLECTION_METADATA_INDEX = "collection_metadata"
@@ -112,8 +116,12 @@ def read_data_object_from_irods(ctx, path):
     ret_val = ctx.callback.msiDataObjOpen("objPath=" + path, 0)
     file_desc = ret_val["arguments"][1]
 
+    ret_stats = ctx.callback.msiObjStat(path, irods_types.RodsObjStat())
+    stats = ret_stats["arguments"][1]
+    size = int(stats.objSize)
+
     # Read iRODS file
-    ret_val = ctx.callback.msiDataObjRead(file_desc, 2**31 - 1, irods_types.BytesBuf())
+    ret_val = ctx.callback.msiDataObjRead(file_desc, size, irods_types.BytesBuf())
     read_buf = ret_val["arguments"][2]
 
     # Convert BytesBuffer to string
@@ -140,3 +148,37 @@ def get_elastic_search_connection(ctx):
     )
 
     return es
+
+
+def icp_wrapper(ctx, source, destination, project_id, overwrite):
+    """
+    Workaround wrapper function to execute iRODS data object copy.
+    Execute an 'icp' with a sub-process instead of msiDataObjCopy.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    source: str
+        Full absolute iRODS logical source path
+    destination: str
+        Full absolute iRODS logical destination path
+    project_id: str
+        e.g: P000000010
+    overwrite: bool
+        write data-object even it exists already; overwrite it
+    """
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+
+    icp_cmd = ["icp", "-R", destination_resource, source, destination]
+    if overwrite:
+        icp_cmd = ["icp", "-f", "-R", destination_resource, source, destination]
+
+    try:
+        check_call(["ichmod", "-M", "own", "rods", source], shell=False)
+        check_call(icp_cmd, shell=False)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: icp: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))

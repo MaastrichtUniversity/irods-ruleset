@@ -13,11 +13,8 @@ from test_cases.utils import (
 )
 
 
-class TestEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
+class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
     dropzone_type = "direct"
-
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
 
     new_collection_title = "Test edit title"
     num_files = 6
@@ -69,3 +66,13 @@ class TestEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
             pid = tmp_instance["@id"]
             assert pid.startswith("https://hdl.handle.net/")
             assert pid.endswith("{}{}schema.2".format(self.project_id, self.collection_id))
+
+
+class TestEditCollectionMetadataUM(BaseEditCollectionMetadata):
+    ingest_resource = "ires-hnas-umResource"
+    destination_resource = "replRescUM01"
+
+
+class TestEditCollectionMetadataS3(BaseEditCollectionMetadata):
+    ingest_resource = "ires-hnas-umResource"
+    destination_resource = "replRescUMCeph01"

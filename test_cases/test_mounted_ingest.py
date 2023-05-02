@@ -8,12 +8,20 @@ class BaseTestCaseMountedIngest(BaseTestCaseIngest):
     # This is why dropzone_total_size = 0
     # The metadata files are stored in the logical dropzone folder in the resource 'stagingResc01'
     # e.g schema.json /nlmumc/ingest/zones/*token/schema.json -> /mnt/stagingResc01/ingest/zones/*token/schema.json
-    dropzone_total_size = "0"
-    dropzone_num_files = "2"
+    dropzone_total_size = "60050000"
+    dropzone_num_files = "6"
 
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):
         add_metadata_files_to_mounted_dropzone(token)
+
+    @classmethod
+    def add_data_to_dropzone(cls):
+        for filename, size in cls.files_per_protocol.items():
+            file_path = "/mnt/ingest/zones/{}/{}".format(cls.token, filename)
+
+            with open(file_path, "wb") as file_buffer:
+                file_buffer.write("0" * size)
 
 
 class TestMountedIngestUM(BaseTestCaseMountedIngest):

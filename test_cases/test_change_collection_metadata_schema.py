@@ -8,11 +8,8 @@ from test_cases.base_customizable_metadata_test_case import BaseTestCaseCustomiz
 from test_cases.utils import add_metadata_files_to_direct_dropzone, get_schema, TMP_SCHEMA_PATH
 
 
-class TestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
+class BaseTestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
     dropzone_type = "direct"
-
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
 
     new_schema_name = "New DataHub General Schema"
     new_collection_title = "collection_title"
@@ -60,3 +57,13 @@ class TestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
 
             schema_name = tmp_schema["schema:name"]
             assert schema_name == self.new_schema_name
+
+
+class TestChangeCollectionMetadataSchemaUM(BaseTestChangeCollectionMetadataSchema):
+    ingest_resource = "ires-hnas-umResource"
+    destination_resource = "replRescUM01"
+
+
+class TestChangeCollectionMetadataSchemaS3(BaseTestChangeCollectionMetadataSchema):
+    ingest_resource = "ires-hnas-umResource"
+    destination_resource = "replRescUMCeph01"

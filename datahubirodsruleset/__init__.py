@@ -7,6 +7,7 @@ from datahubirodsruleset.customizable_metadata import *
 from datahubirodsruleset.drop_zones import *
 from datahubirodsruleset.index_metadata import *
 from datahubirodsruleset.ingest import *
+from datahubirodsruleset.misc import *
 from datahubirodsruleset.projects import *
 from datahubirodsruleset.resources import *
 from datahubirodsruleset.users import *

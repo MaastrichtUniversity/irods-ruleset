@@ -3,17 +3,18 @@ from datahubirodsruleset.decorator import make, Output
 # /rules/tests/run_test.sh -r submit_ingest_error_automated_support_request -a "email@example.org,P000000001,token-token,LOL" -j
 
 
-@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
+@make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
 def submit_ingest_error_automated_support_request(ctx, email, project_id, token, error_message):
 
     description = (
         "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
         "available".format(token, project_id)
     )
-    ctx.callback.submit_automated_support_request(email, description, error_message)
+    issue_key = ctx.callback.submit_automated_support_request(email, description, error_message, "")["arguments"][3]
+    return issue_key
 
 
-@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
+@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def submit_automated_support_request(ctx, email, description, error_message):
     import requests
     from datetime import datetime
@@ -32,6 +33,7 @@ def submit_automated_support_request(ctx, email, description, error_message):
         "error_timestamp": error_timestamp,
         "error_message": error_message,
     }
+    issue_key = ""
     try:
         response = requests.post(
             help_center_request_endpoint,
@@ -47,3 +49,5 @@ def submit_automated_support_request(ctx, email, description, error_message):
             )
     except requests.exceptions.RequestException as e:
         ctx.callback.msiWriteRodsLog("Exception while requesting Support ticket after process error '{}'".format(e), 0)
+
+    return issue_key

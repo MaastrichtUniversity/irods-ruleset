@@ -7,6 +7,28 @@ from datahubirodsruleset.decorator import make, Output
 
 @make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
 def submit_ingest_error_automated_support_request(ctx, username, project_id, token, error_message):
+    """
+    This rule submits an automated support request to the Jira Service Desk Cloud instance through
+    our help center backend, specific for an ingest error.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    username: str
+        irods username
+    project_id: str
+        The project id, e.g: P00000010
+    token: str
+        The token of the dropzone
+    error_message: str
+        Error message to display in Jira Service Desk
+
+    Returns
+    -------
+    str
+        Jira Service desk issue key for newly created ticket
+    """
     import json
 
     ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
@@ -22,6 +44,25 @@ def submit_ingest_error_automated_support_request(ctx, username, project_id, tok
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def submit_automated_support_request(ctx, email, description, error_message):
+    """
+    This rule submits an automated support request to the Jira Service Desk Cloud instance through
+    our help center backend.
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    email: str
+        Email address of the user which gets email about the ticket
+    description: str
+       Description to be shown in the ticket
+    error_message: str
+        Error message to display in Jira Service Desk
+
+    Returns
+    -------
+    str
+        Jira Service desk issue key for newly created ticket
+    """
     import requests
     from datetime import datetime
 

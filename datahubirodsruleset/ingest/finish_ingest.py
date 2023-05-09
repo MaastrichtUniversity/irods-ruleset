@@ -72,6 +72,9 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         # Setting the PID as AVU on the project collection
         ctx.callback.setCollectionAVU(destination_project_collection_path, "PID", handle_pids["collection"]["handle"])
     else:
+        ctx.callback.submit_ingest_error_automated_support_request(
+            username, project_id, token, "Unable to register PID's for root", ""
+        )
         ctx.callback.set_post_ingestion_error_avu(
             project_id, collection_id, dropzone_path, "Unable to register PID's for root"
         )
@@ -83,8 +86,14 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         # Fill the instance.json and schema.json with the information needed in that instance (e.g: handle PID) and schema version 1
         ctx.callback.update_metadata_during_ingest(project_id, collection_id, handle_pids["collection"]["handle"], "1")
     except KeyError:
+        ctx.callback.submit_ingest_error_automated_support_request(
+            username, project_id, token, "Failed to update instance", ""
+        )
         ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
     except RuntimeError:
+        ctx.callback.submit_ingest_error_automated_support_request(
+            username, project_id, token, "Failed to update instance", ""
+        )
         ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
 
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
@@ -93,7 +102,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     if state == DropzoneState.ERROR_POST_INGESTION.value:
         overwrite_flag = TRUE_AS_STRING
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
-    ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag)
+    ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag, username)
 
     # Set latest version number to 1 for metadata latest version
     ctx.callback.setCollectionAVU(destination_project_collection_path, "latest_version_number", "1")

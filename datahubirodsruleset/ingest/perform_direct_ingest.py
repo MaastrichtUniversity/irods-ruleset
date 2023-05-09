@@ -45,7 +45,7 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     before = time.time()
 
     retry_counter = RETRY_MAX_NUMBER
-    status = 0
+    status = 5
     while retry_counter > 0:
         ret = ctx.callback.ingest_collection_data(dropzone_path, destination_collection, project_id, "")
         status = int(ret["arguments"][3])
@@ -58,6 +58,9 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(dropzone_path), 0)
 
     if status != 0:
+        ctx.callback.submit_ingest_error_automated_support_request(
+            username, project_id, token, "Error copying ingest zone", ""
+        )
         ctx.callback.setErrorAVU(
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
         )

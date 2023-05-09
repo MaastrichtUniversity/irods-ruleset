@@ -41,6 +41,9 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         collection_id = ctx.callback.createProjectCollection(project_id, "", title)["arguments"][1]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating projectCollection", 0)
+        ctx.callback.submit_ingest_error_automated_support_request(
+            depositor, project_id, token, "Error creating projectCollection", ""
+        )
         ctx.callback.setErrorAVU(
             dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error creating projectCollection"
         )
@@ -79,6 +82,9 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         )["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating dropzone pre-ingest information", 0)
+        ctx.callback.submit_ingest_error_automated_support_request(
+            depositor, project_id, token, "Failed creating dropzone pre-ingest information", ""
+        )
         ctx.callback.setErrorAVU(
             dropzone_path,
             "state",

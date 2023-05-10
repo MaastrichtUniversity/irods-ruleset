@@ -29,5 +29,7 @@ def set_post_ingestion_error_avu(ctx, project_id, collection_id, dropzone_path, 
     ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
     ctx.callback.msiWriteRodsLog(message, 0)
     ctx.callback.closeProjectCollection(project_id, collection_id)
-    ctx.callback.submit_ingest_error_automated_support_request(username, project_id, dropzone_path, message)
+    ctx.callback.submit_ingest_error_automated_support_request(
+        username, project_id, dropzone_path, "{}: {}".format(value, message)
+    )
     ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))

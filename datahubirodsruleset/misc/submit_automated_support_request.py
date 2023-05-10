@@ -33,6 +33,8 @@ def submit_ingest_error_automated_support_request(ctx, username, project_id, tok
 
     ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
     email = json.loads(ret)["value"]
+    if email == "":
+        email = "datahub-support@maastrichtuniversity.nl"
 
     description = (
         "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
@@ -79,7 +81,6 @@ def submit_automated_support_request(ctx, email, description, error_message):
         "error_timestamp": error_timestamp,
         "error_message": error_message,
     }
-    issue_key = ""
     try:
         response = requests.post(
             help_center_request_endpoint,

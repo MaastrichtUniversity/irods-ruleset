@@ -45,7 +45,7 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
     before = time.time()
 
     retry_counter = RETRY_MAX_NUMBER
-    status = 5
+    status = 0
     while retry_counter > 0:
         ret = ctx.callback.ingest_collection_data(dropzone_path, destination_collection, project_id, "")
         status = int(ret["arguments"][3])

@@ -40,7 +40,37 @@ def submit_ingest_error_automated_support_request(ctx, username, project_id, tok
         "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
         "available".format(token, project_id)
     )
-    ctx.callback.submit_automated_support_request(email, description, error_message, "")["arguments"][3]
+    ctx.callback.submit_automated_support_request(email, description, error_message)
+
+
+@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
+def submit_tape_error(ctx, username, description, error_message):
+    """
+    This rule submits an automated support request to the Jira Service Desk Cloud instance through
+    our help center backend, specific for an ingest error.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    username: str
+        irods username
+    description: str
+        Describe the failed process
+    error_message: str
+        Error message to display in Jira Service Desk
+
+    Returns
+    -------
+    str
+        Jira Service desk issue key for newly created ticket
+    """
+    import json
+
+    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
+    email = json.loads(ret)["value"]
+
+    ctx.callback.submit_automated_support_request(email, description, error_message)
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)

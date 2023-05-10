@@ -57,7 +57,11 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(dropzone_creator)
+            project_id,
+            collection_id,
+            dropzone_path,
+            "User '{}' doesn't have an email AVU".format(dropzone_creator),
+            username,
         )
     ctx.callback.setCollectionAVU(destination_project_collection_path, "creator", email)
 
@@ -72,11 +76,8 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         # Setting the PID as AVU on the project collection
         ctx.callback.setCollectionAVU(destination_project_collection_path, "PID", handle_pids["collection"]["handle"])
     else:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, token, "Unable to register PID's for root", ""
-        )
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path, "Unable to register PID's for root"
+            project_id, collection_id, dropzone_path, "Unable to register PID's for root", username
         )
 
     # Requesting PID's for Project Collection version 1 (includes instance and schema)
@@ -86,15 +87,13 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         # Fill the instance.json and schema.json with the information needed in that instance (e.g: handle PID) and schema version 1
         ctx.callback.update_metadata_during_ingest(project_id, collection_id, handle_pids["collection"]["handle"], "1")
     except KeyError:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, token, "Failed to update instance", ""
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, dropzone_path, "Failed to update instance", username
         )
-        ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
     except RuntimeError:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, token, "Failed to update instance", ""
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, dropzone_path, "Failed to update instance", username
         )
-        ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
 
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]

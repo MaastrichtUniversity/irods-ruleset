@@ -51,10 +51,6 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     pc_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
 
     if depositor != ctx.callback.get_client_username("")["arguments"][0]:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            depositor, project_id, token, "Abort replace_metadata_placeholder_files", ""
-        )
-
         ctx.callback.set_post_ingestion_error_avu(
             project_id,
             collection_id,
@@ -62,6 +58,7 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
             "Abort replace_metadata_placeholder_files: Rule client user '{}' is not the depositor '{}'".format(
                 project_id, collection_id
             ),
+            depositor,
         )
 
     try:
@@ -70,14 +67,12 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
         check_call(["ichmod", "own", depositor, pc_schema_path], shell=False)
         ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_schema_path), 0)
     except CalledProcessError:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            depositor, project_id, token, "Update metadata files ACL failed", ""
-        )
         ctx.callback.set_post_ingestion_error_avu(
             project_id,
             collection_id,
             dropzone_path,
             "Update metadata files ACL failed for '{}/{}'".format(project_id, collection_id),
+            depositor,
         )
 
     dropzone_instance_path = formatters.format_instance_dropzone_path(token, dropzone_type)

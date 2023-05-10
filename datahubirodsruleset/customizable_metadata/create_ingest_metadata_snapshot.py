@@ -49,11 +49,8 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
             ctx.callback.msiCollCreate(metadata_folder_path, 0, 0)
             ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
         except RuntimeError:
-            ctx.callback.submit_ingest_error_automated_support_request(
-                username, project_id, source_collection, "Failed to create metadata ingest snapshot", ""
-            )
             ctx.callback.set_post_ingestion_error_avu(
-                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
+                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", username
             )
 
     source_schema = format_schema_collection_path(ctx, project_id, collection_id)
@@ -71,9 +68,6 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
         ctx.callback.msiDataObjCopy(source_schema, destination_schema, force_flag, 0)
         ctx.callback.msiDataObjCopy(source_instance, destination_instance, force_flag, 0)
     except RuntimeError:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, source_collection, "Failed to create metadata ingest snapshot", ""
-        )
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
+            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", username
         )

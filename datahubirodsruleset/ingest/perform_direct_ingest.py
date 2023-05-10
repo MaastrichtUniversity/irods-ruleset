@@ -57,7 +57,6 @@ def perform_direct_ingest(ctx, project_id, title, username, token):
             retry_counter = 0
             ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(dropzone_path), 0)
 
-    status = 5
     if status != 0:
         ctx.callback.set_ingestion_error_avu(dropzone_path, "Error copying ingest zone", project_id, username)
 

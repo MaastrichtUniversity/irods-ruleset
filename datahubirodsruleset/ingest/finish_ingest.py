@@ -147,9 +147,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
             try:
                 ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
             except RuntimeError:
-                ctx.callback.setErrorAVU(
-                    dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
-                )
+                ctx.callback.set_ingestion_error_avu(dropzone_path, "Error unmounting", project_id, username)
 
     if dropzone_type == "direct":
         ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]

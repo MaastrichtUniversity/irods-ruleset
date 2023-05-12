@@ -15,10 +15,10 @@ IRULE_setTapeErrorAVU(*projectCollection, *initiator, *attribute, *value, *messa
 
     if (*value == "error-archive-failed"){
         *description = "Archival failed for collection *collectionID in project *projectID"
-        submit_tape_error(*initiator, *description, *message)
+        submit_automated_support_request(*initiator, *description, *message)
     } else if (*value == "error-unarchive-failed"){
         *description = "Un-archival failed for collection *collectionID in project *projectID"
-        submit_tape_error(*initiator, *description, *message)
+        submit_automated_support_request(*initiator, *description, *message)
     }
 
     failmsg(-1, "*message for *projectCollection");

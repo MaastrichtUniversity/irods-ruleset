@@ -1,4 +1,4 @@
-from datahubirodsruleset import FALSE_AS_STRING, TRUE_AS_STRING
+from datahubirodsruleset import FALSE_AS_STRING
 from datahubirodsruleset.decorator import make, Output
 
 # /rules/tests/run_test.sh -r submit_ingest_error_automated_support_request -a "jmelius,P000000001,token-token,LOL"
@@ -29,52 +29,15 @@ def submit_ingest_error_automated_support_request(ctx, username, project_id, tok
     str
         Jira Service desk issue key for newly created ticket
     """
-    import json
-
-    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
-    email = json.loads(ret)["value"]
-    if email == "":
-        email = "datahub-support@maastrichtuniversity.nl"
-
     description = (
         "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
         "available".format(token, project_id)
     )
-    ctx.callback.submit_automated_support_request(email, description, error_message)
+    ctx.callback.submit_automated_support_request(username, description, error_message)
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def submit_tape_error(ctx, username, description, error_message):
-    """
-    This rule submits an automated support request to the Jira Service Desk Cloud instance through
-    our help center backend, specific for an ingest error.
-
-    Parameters
-    ----------
-    ctx : Context
-        Combined type of callback and rei struct.
-    username: str
-        irods username
-    description: str
-        Describe the failed process
-    error_message: str
-        Error message to display in Jira Service Desk
-
-    Returns
-    -------
-    str
-        Jira Service desk issue key for newly created ticket
-    """
-    import json
-
-    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
-    email = json.loads(ret)["value"]
-
-    ctx.callback.submit_automated_support_request(email, description, error_message)
-
-
-@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def submit_automated_support_request(ctx, email, description, error_message):
+def submit_automated_support_request(ctx, username, description, error_message):
     """
     This rule submits an automated support request to the Jira Service Desk Cloud instance through
     our help center backend.
@@ -82,8 +45,8 @@ def submit_automated_support_request(ctx, email, description, error_message):
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    email: str
-        Email address of the user which gets email about the ticket
+    username: str
+        irods user who started the process to receive an email about the ticket
     description: str
        Description to be shown in the ticket
     error_message: str
@@ -95,7 +58,13 @@ def submit_automated_support_request(ctx, email, description, error_message):
         Jira Service desk issue key for newly created ticket
     """
     import requests
+    import json
     from datetime import datetime
+
+    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
+    email = json.loads(ret)["value"]
+    if email == "":
+        email = "datahub-support@maastrichtuniversity.nl"
 
     # Get the Help Center Backend url
     help_center_backend_base = ctx.callback.get_env("HC_BACKEND_URL", TRUE_AS_STRING, "")["arguments"][2]

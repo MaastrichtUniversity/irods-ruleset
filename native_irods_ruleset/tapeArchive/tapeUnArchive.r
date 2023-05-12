@@ -78,14 +78,14 @@ tapeUnArchive(*count, *archColl, *initiator){
             *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
             msiWriteRodsLog("DEBUG: moveError *moveError", 0);
             if ( *moveError != 0 ) {
-                   setTapeErrorAVU(*archColl, *initiator, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
+                   setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
             }
 
             # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
             *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
             msiWriteRodsLog("DEBUG: trimError *trimError", 0);
             if ( *trimError != 0 ) {
-                   setTapeErrorAVU(*archColl, *initiator, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
+                   setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
             }
 
             *isMoved=*isMoved+1;
@@ -124,14 +124,14 @@ tapeUnArchive(*count, *archColl, *initiator){
             *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
             msiWriteRodsLog("DEBUG: moveError *moveError", 0);
             if ( *moveError != 0 ) {
-                   setTapeErrorAVU(*archColl, *initiator, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
+                   setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
             }
 
             # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
             *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
             msiWriteRodsLog("DEBUG: trimError *trimError", 0);
             if ( *trimError != 0 ) {
-                   setTapeErrorAVU(*archColl, *initiator, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
+                   setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
             }
 
             *isMoved=*isMoved+1;

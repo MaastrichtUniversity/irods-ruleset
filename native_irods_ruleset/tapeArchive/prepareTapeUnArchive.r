@@ -154,5 +154,5 @@ IRULE_prepareTapeUnArchive(*archColl, *initiator) {
     }
 }
 
-INPUT *archColl=""
+INPUT *archColl="", *initiator=""
 OUTPUT ruleExecOut

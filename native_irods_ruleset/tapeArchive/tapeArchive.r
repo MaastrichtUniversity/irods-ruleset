@@ -2,7 +2,7 @@
 #
 # NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within prepareTapeArchive.r rule
 
-tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescParentsName){
+tapeArchive(*archColl, *initiator, *counter, *rescParentsLocation, *dataPerResources, *rescParentsName){
      *stateAttrName = "archiveState";
 
      # split the *archColl into *project and *projectCollection
@@ -58,7 +58,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                 *moveError = errorcode(msiDataObjRepl(*dataPath, "destRescName=*archiveResc", *moveStatus));
                 msiWriteRodsLog("DEBUG: moveError *moveError", 0);
                 if ( *moveError != 0 ) {
-                   setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Replication of *dataPath from *coordResourceName to *archiveResc FAILED.")
+                   setTapeErrorAVU(*archColl, *initiator, *stateAttrName, "error-archive-failed", "Replication of *dataPath from *coordResourceName to *archiveResc FAILED.")
                 }
 
                 # Trim data from *coordResourceName
@@ -66,7 +66,7 @@ tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescP
                 *trimError = errorcode(msiDataObjTrim(*dataPath, *coordResourceName, "null", "1", "null", *trimStatus));
                 msiWriteRodsLog("DEBUG: trimError *trimError", 0);
                 if ( *trimError != 0 ) {
-                   setTapeErrorAVU(*archColl, *stateAttrName, "error-archive-failed", "Trim *dataPath from *coordResourceName FAILED.")
+                   setTapeErrorAVU(*archColl, *initiator, *stateAttrName, "error-archive-failed", "Trim *dataPath from *coordResourceName FAILED.")
                 }
 
                 # Update counter

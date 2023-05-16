@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct"
+# /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct,jmelius"
 
 from datahubirodsruleset import formatters
 from datahubirodsruleset.decorator import make, Output

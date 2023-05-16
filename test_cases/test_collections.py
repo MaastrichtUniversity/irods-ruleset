@@ -49,9 +49,6 @@ misc:
     setCollectionSize
         In RS (a lot) & RW (-> dh-utils : irodsConvertMetadataXMLToJSONLD)
         Not in MDR
-    setErrorAVU
-        In RS (ingest rules)
-        Not in MDR and RW
 
 iRODS Python rules usage summary:
 get_collection_attribute_value

@@ -56,6 +56,9 @@ def start_ingest(ctx, username, token, dropzone_type):
             "",
         )
     else:
-        ctx.callback.setErrorAVU(
-            dropzone_path, "state", DropzoneState.WARNING_VALIDATION_INCORRECT.value, "Metadata is incorrect"
-        )
+        message = "Metadata is incorrect"
+        value = DropzoneState.WARNING_VALIDATION_INCORRECT.value
+        ctx.callback.setCollectionAVU(dropzone_path, "state", value)
+        ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
+        ctx.callback.msiWriteRodsLog(message, 0)
+        ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))

@@ -45,12 +45,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     try:
         ctx.callback.sync_collection_data(token, destination_collection, username)
     except RuntimeError:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, token, "Error copying ingest zone", ""
-        )
-        ctx.callback.setErrorAVU(
-            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
-        )
+        ctx.callback.set_ingestion_error_avu(dropzone_path, "Error copying ingest zone", project_id, username)
 
     after = time.time()
     difference = float(after - before) + 1

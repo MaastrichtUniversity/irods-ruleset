@@ -1,7 +1,5 @@
 import json
 
-from dhpythonirodsutils.enums import DropzoneState
-
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
@@ -50,7 +48,9 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, dropzone_type, str(difference))
+    ctx.callback.perform_ingest_post_hook(
+        project_id, collection_id, dropzone_path, dropzone_type, str(difference), username
+    )
 
     # Handle post ingestion operations
     ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, dropzone_type)

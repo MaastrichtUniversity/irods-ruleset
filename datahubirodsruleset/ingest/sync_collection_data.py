@@ -80,5 +80,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     if ingest_restart:
         after = time.time()
         difference = float(after - before) + 1
-        ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, dropzone_type, str(difference))
+        ctx.callback.perform_ingest_post_hook(
+            project_id, collection_id, dropzone_path, dropzone_type, str(difference), depositor
+        )
         ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type)

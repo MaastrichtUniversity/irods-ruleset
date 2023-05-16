@@ -1,5 +1,4 @@
 from dhpythonirodsutils.enums import DropzoneState
-
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -31,8 +30,10 @@ def set_post_ingestion_error_avu(ctx, project_id, collection_id, dropzone_path, 
     ctx.callback.closeProjectCollection(project_id, collection_id)
     # if this go wrong always continue
     try:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, dropzone_path, "{}: {}".format(value, message)
+        description = (
+            "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
+            "available".format(dropzone_path, project_id)
         )
+        ctx.callback.submit_automated_support_request(username, description, "{}: {}".format(value, message))
     finally:
         ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))

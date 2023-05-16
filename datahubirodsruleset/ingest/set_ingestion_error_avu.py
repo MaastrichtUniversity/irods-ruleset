@@ -29,8 +29,10 @@ def set_ingestion_error_avu(ctx, path, message, project_id, username):
     ctx.callback.msiWriteRodsLog(message, 0)
     # if this go wrong always continue
     try:
-        ctx.callback.submit_ingest_error_automated_support_request(
-            username, project_id, path, "{}: {}".format(value, message)
+        description = (
+            "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
+            "available".format(path, project_id)
         )
+        ctx.callback.submit_automated_support_request(username, description, "{}: {}".format(value, message))
     finally:
         ctx.callback.msiExit("-1", "{} for {}".format(message, path))

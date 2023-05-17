@@ -24,7 +24,7 @@ def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, 
     difference: str
         Time difference between the start and the end of the data ingestion.
     depositor: str
-        The user who started the ingestion
+        The iRODS username of the user who started the ingestion
     """
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Calculate and set the byteSize and numFiles AVU. false/false because collection

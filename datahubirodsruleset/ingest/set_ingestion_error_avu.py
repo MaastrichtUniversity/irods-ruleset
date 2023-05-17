@@ -5,7 +5,7 @@ from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
-def set_ingestion_error_avu(ctx, dropzone_path, message, project_id, username):
+def set_ingestion_error_avu(ctx, dropzone_path, message, project_id, depositor):
     """
     Set an ingestion error AVU, create a jira service desk ticket and exit.
 
@@ -19,8 +19,8 @@ def set_ingestion_error_avu(ctx, dropzone_path, message, project_id, username):
         message to write to rodslog, The reason for the failure. (e.g: "Unable to register PID's for root")
     project_id: str
         The project to that the collection that needs to be closed is part of (e.g: P000000010)
-    username: str
-        The user who started the ingestion
+    depositor: str
+        The iRODS username of the user who started the ingestion
     """
     value = DropzoneState.ERROR_INGESTION.value
     ctx.callback.setCollectionAVU(dropzone_path, "state", value)
@@ -34,6 +34,6 @@ def set_ingestion_error_avu(ctx, dropzone_path, message, project_id, username):
             "available".format(dropzone_token, project_id)
         )
         error_message = "{} set to {} because of: {}".format(dropzone_path, value, message)
-        ctx.callback.submit_automated_support_request(username, description, error_message)
+        ctx.callback.submit_automated_support_request(depositor, description, error_message)
     finally:
         ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))

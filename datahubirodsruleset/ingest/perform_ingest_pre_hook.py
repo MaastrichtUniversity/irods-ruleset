@@ -25,7 +25,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     token: str
         The token of the dropzone
     depositor: str
-        The person requesting the ingestion
+        The iRODS username of the user who started the ingestion
     dropzone_type: str
         The type of dropzone
 

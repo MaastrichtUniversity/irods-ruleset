@@ -21,7 +21,7 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
     depositor: str
-        The user who started the ingestion
+        The iRODS username of the user who started the ingestion
     """
 
     # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.

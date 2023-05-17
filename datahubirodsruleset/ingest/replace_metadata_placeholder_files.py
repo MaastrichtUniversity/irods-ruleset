@@ -34,7 +34,7 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     collection_id: str
         The collection ID e.g: C000000001
     depositor: str
-        The user who started the ingestion
+        The iRODS username of the user who started the ingestion
     """
     # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
     # subprocess is only use for subprocess.check_call to execute ichmod.

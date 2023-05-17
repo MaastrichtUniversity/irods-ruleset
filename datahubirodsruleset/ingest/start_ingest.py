@@ -9,7 +9,7 @@ from datahubirodsruleset.formatters import format_dropzone_path
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def start_ingest(ctx, username, token, dropzone_type):
+def start_ingest(ctx, depositor, token, dropzone_type):
     """
     Start to ingest
        Irods pre-ingest checks
@@ -20,8 +20,8 @@ def start_ingest(ctx, username, token, dropzone_type):
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    username: str
-        The username, eg 'dlinssen'
+    depositor: str
+        The iRODS username of the user who started the ingestion, e.g: 'dlinssen'
     token: str
         The token, eg 'crazy-frog'
     dropzone_type: str
@@ -30,7 +30,7 @@ def start_ingest(ctx, username, token, dropzone_type):
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     pre_ingest_tasks = json.loads(
-        ctx.callback.validate_dropzone(dropzone_path, username, dropzone_type, "")["arguments"][3]
+        ctx.callback.validate_dropzone(dropzone_path, depositor, dropzone_type, "")["arguments"][3]
     )
     project_id = pre_ingest_tasks["project_id"]
     title = pre_ingest_tasks["title"]
@@ -38,7 +38,7 @@ def start_ingest(ctx, username, token, dropzone_type):
 
     # Python2.7 default encoding is ASCII, so we need to enforce UFT-8 encoding
     title = title.encode("utf-8")
-    username = username.encode("utf-8")
+    depositor = depositor.encode("utf-8")
     token = token.encode("utf-8")
 
     if formatters.format_string_to_boolean(validation_result):
@@ -52,7 +52,7 @@ def start_ingest(ctx, username, token, dropzone_type):
 
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "perform_{}_ingest('{}', '{}', '{}', '{}')".format(dropzone_type, project_id, title, username, token),
+            "perform_{}_ingest('{}', '{}', '{}', '{}')".format(dropzone_type, project_id, title, depositor, token),
             "",
         )
     else:

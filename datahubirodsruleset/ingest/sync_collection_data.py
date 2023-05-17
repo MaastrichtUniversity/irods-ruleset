@@ -30,7 +30,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
     depositor: str
-        The user who started the ingestion
+        The iRODS username of the user who started the ingestion
     """
     import time
 

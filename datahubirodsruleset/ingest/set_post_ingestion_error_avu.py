@@ -22,7 +22,6 @@ def set_post_ingestion_error_avu(ctx, project_id, collection_id, dropzone_path, 
     username: str
         iRODS username
     """
-
     value = DropzoneState.ERROR_POST_INGESTION.value
     ctx.callback.setCollectionAVU(dropzone_path, "state", value)
     ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
@@ -30,10 +29,12 @@ def set_post_ingestion_error_avu(ctx, project_id, collection_id, dropzone_path, 
     ctx.callback.closeProjectCollection(project_id, collection_id)
     # if this go wrong always continue
     try:
+        dropzone_token = dropzone_path.split("/")[-1]
         description = (
-            "Ingest for dropzone {} (Project {}) has failed, we will contact you when we have more information "
-            "available".format(dropzone_path, project_id)
+            'Ingest for dropzone "{}" (Project {}) has failed, we will contact you when we have more information '
+            "available".format(dropzone_token, project_id)
         )
-        ctx.callback.submit_automated_support_request(username, description, "{}: {}".format(value, message))
+        error_message = "{} set to {} because of: {}".format(dropzone_path, value, message)
+        ctx.callback.submit_automated_support_request(username, description, error_message)
     finally:
         ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))

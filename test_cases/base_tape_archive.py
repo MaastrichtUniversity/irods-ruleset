@@ -137,8 +137,8 @@ class BaseTestTapeArchive:
         # Setup Archive
         subprocess.check_call(self.run_ichmod, shell=True)
 
-        rule_archive = "export clientUserName={} && irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeArchive.r \"*archColl='{}'\"".format(
-            self.service_account, self.project_collection_path
+        rule_archive = "export clientUserName={} && irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeArchive.r \"*archColl='{}'\" \"*initiator='{}'\" ".format(
+            self.service_account, self.project_collection_path, self.manager1
         )
         subprocess.check_call(rule_archive, shell=True)
 
@@ -158,8 +158,8 @@ class BaseTestTapeArchive:
     def run_un_archive(self, un_archive_path):
         # Setup Un-archive
         subprocess.check_call(self.run_ichmod, shell=True)
-        rule_un_archive = "export clientUserName={} && irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeUnArchive.r \"*archColl='{}'\"".format(
-            self.service_account, un_archive_path
+        rule_un_archive = "export clientUserName={} && irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeUnArchive.r \"*archColl='{}'\" \"*initiator='{}'\" ".format(
+            self.service_account, un_archive_path, self.manager1
         )
         subprocess.check_call(rule_un_archive, shell=True)
 

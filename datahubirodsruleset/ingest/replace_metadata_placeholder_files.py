@@ -1,6 +1,8 @@
 # /rules/tests/run_test.sh -r replace_metadata_placeholder_files -a "handsome-snake,P000000019,C000000001,dlinssen" -u "dlinssen"
+
 from dhpythonirodsutils import formatters
 
+from datahubirodsruleset import icp_wrapper
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
@@ -81,5 +83,8 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     ctx.callback.msiDataObjUnlink("objPath=" + pc_instance_path + "++++forceFlag=", 0)
     ctx.callback.msiDataObjUnlink("objPath=" + pc_schema_path + "++++forceFlag=", 0)
 
-    ctx.callback.msiDataObjCopy(dropzone_instance_path, pc_instance_path, "forceFlag=", 0)
-    ctx.callback.msiDataObjCopy(dropzone_schema_path, pc_schema_path, "forceFlag=", 0)
+    try:
+        icp_wrapper(ctx, dropzone_instance_path, pc_instance_path, project_id, True)
+        icp_wrapper(ctx, dropzone_schema_path, pc_schema_path, project_id, True)
+    except RuntimeError:
+        ctx.callback.msiExit("-1", "ERROR: Couldn't replace the metadata placeholder files")

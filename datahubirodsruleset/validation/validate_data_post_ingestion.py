@@ -1,12 +1,12 @@
-# /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct"
-from dhpythonirodsutils.enums import DropzoneState
+# /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct,jmelius"
 
+from datahubirodsruleset import formatters
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
-@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_type):
+@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
+def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_type, depositor):
     """
     This rule is part the ingestion workflow.
     It compares the size and number of files from the dropzone to the newly ingested project collection.
@@ -27,6 +27,8 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
         The collection id, e.g: /nlmumc/ingest/direct/angry-elephant
     dropzone_type: str
         The type of dropzone: direct or mounted.
+    depositor: str
+        The user who started the ingestion
     """
     collection_num_files = ctx.callback.getCollectionAVU(project_collection, "numFiles", "", "", TRUE_AS_STRING)[
         "arguments"
@@ -104,4 +106,5 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     )
 
     if match_size is False or match_num_files is False:
-        ctx.callback.setErrorAVU(dropzone, "state", DropzoneState.ERROR_INGESTION.value, "Error copying data")
+        project_id = formatters.get_project_id_from_project_collection_path(project_collection)
+        ctx.callback.set_ingestion_error_avu(dropzone, "Error copying data", project_id, depositor)

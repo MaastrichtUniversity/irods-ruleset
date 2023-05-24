@@ -3,8 +3,8 @@ from datahubirodsruleset.formatters import format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
-@make(inputs=[0, 1, 2, 3, 4], outputs=[], handler=Output.STORE)
-def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, dropzone_type, difference):
+@make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
+def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, dropzone_type, difference, depositor):
     """
     This rule is part the ingestion workflow.
     Perform the common tasks for both 'mounted' and 'direct' post-ingest.
@@ -23,6 +23,8 @@ def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, 
         The type of dropzone: direct or mounted.
     difference: str
         Time difference between the start and the end of the data ingestion.
+    depositor: str
+        The iRODS username of the user who started the ingestion
     """
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Calculate and set the byteSize and numFiles AVU. false/false because collection
@@ -44,4 +46,6 @@ def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, 
     ctx.callback.msiWriteRodsLog("{} : Sync took {} seconds".format(source_collection, difference), 0)
     ctx.callback.msiWriteRodsLog("{} : AVG speed was {} MiB/s".format(source_collection, avg_speed), 0)
 
-    ctx.callback.validate_data_post_ingestion(destination_project_collection_path, source_collection, dropzone_type)
+    ctx.callback.validate_data_post_ingestion(
+        destination_project_collection_path, source_collection, dropzone_type, depositor
+    )

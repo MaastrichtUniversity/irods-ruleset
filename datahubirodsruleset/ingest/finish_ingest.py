@@ -9,7 +9,7 @@ from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
-def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resource_host, dropzone_type):
+def finish_ingest(ctx, project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type):
     """
     Actions to be performed after an ingestion is completed
         Setting AVUs
@@ -36,8 +36,8 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         The project id, e.g: P00000010
     collection_id: str
         The collection id, e.g: C00000004
-    username: str
-        The username of the person requesting the ingest
+    depositor: str
+        The iRODS username of the user who started the ingestion
     ingest_resource_host: str
         The remote host that was ingested to, e.g: 'ires-dh.local
     dropzone_type: str
@@ -57,12 +57,16 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     email = json.loads(ret)["value"]
     if email == "":
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path, "User '{}' doesn't have an email AVU".format(dropzone_creator)
+            project_id,
+            collection_id,
+            dropzone_path,
+            "User '{}' doesn't have an email AVU".format(dropzone_creator),
+            depositor,
         )
     ctx.callback.setCollectionAVU(destination_project_collection_path, "creator", email)
 
     # Set the Depositor (=person who started th ingest) AVU
-    ctx.callback.setCollectionAVU(destination_project_collection_path, "depositor", username)
+    ctx.callback.setCollectionAVU(destination_project_collection_path, "depositor", depositor)
 
     # Requesting a PID via epicPID for version 0 (root version)
     handle_pids = ctx.callback.get_versioned_pids(project_id, collection_id, "", "")["arguments"][3]
@@ -73,7 +77,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         ctx.callback.setCollectionAVU(destination_project_collection_path, "PID", handle_pids["collection"]["handle"])
     else:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, dropzone_path, "Unable to register PID's for root"
+            project_id, collection_id, dropzone_path, "Unable to register PID's for root", depositor
         )
 
     # Requesting PID's for Project Collection version 1 (includes instance and schema)
@@ -83,9 +87,13 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
         # Fill the instance.json and schema.json with the information needed in that instance (e.g: handle PID) and schema version 1
         ctx.callback.update_metadata_during_ingest(project_id, collection_id, handle_pids["collection"]["handle"], "1")
     except KeyError:
-        ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, dropzone_path, "Failed to update instance", depositor
+        )
     except RuntimeError:
-        ctx.callback.set_post_ingestion_error_avu(project_id, collection_id, dropzone_path, "Failed to update instance")
+        ctx.callback.set_post_ingestion_error_avu(
+            project_id, collection_id, dropzone_path, "Failed to update instance", depositor
+        )
 
     # Query drop-zone state AVU and create 'overwrite flag' variable to copy the metadata json files
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
@@ -93,7 +101,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
     if state == DropzoneState.ERROR_POST_INGESTION.value:
         overwrite_flag = TRUE_AS_STRING
     # Create metadata_versions and copy schema and instance from root to that folder as version 1
-    ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag)
+    ctx.callback.create_ingest_metadata_snapshot(project_id, collection_id, dropzone_path, overwrite_flag, depositor)
 
     # Set latest version number to 1 for metadata latest version
     ctx.callback.setCollectionAVU(destination_project_collection_path, "latest_version_number", "1")
@@ -139,9 +147,7 @@ def finish_ingest(ctx, project_id, username, token, collection_id, ingest_resour
             try:
                 ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
             except RuntimeError:
-                ctx.callback.setErrorAVU(
-                    dropzone_path, "state", DropzoneState.ERROR_POST_INGESTION.value, "Error unmounting"
-                )
+                ctx.callback.set_ingestion_error_avu(dropzone_path, "Error unmounting", project_id, depositor)
 
     if dropzone_type == "direct":
         ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]

@@ -30,7 +30,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
     depositor: str
-        The user who started the ingestion
+        The iRODS username of the user who started the ingestion
     """
     import time
 
@@ -67,7 +67,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     ctx.remoteExec(
         ingest_resource_host,
         "",
-        "perform_irsync('{}', '{}', '{}')".format(destination_resource, token, destination_collection),
+        "perform_irsync('{}', '{}', '{}', '{}')".format(destination_resource, token, destination_collection, depositor),
         "",
     )
 
@@ -80,5 +80,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     if ingest_restart:
         after = time.time()
         difference = float(after - before) + 1
-        ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, dropzone_type, str(difference))
+        ctx.callback.perform_ingest_post_hook(
+            project_id, collection_id, dropzone_path, dropzone_type, str(difference), depositor
+        )
         ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type)

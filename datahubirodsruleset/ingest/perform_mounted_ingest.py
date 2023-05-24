@@ -1,13 +1,11 @@
 import json
 
-from dhpythonirodsutils.enums import DropzoneState
-
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
 
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
-def perform_mounted_ingest(ctx, project_id, title, username, token):
+def perform_mounted_ingest(ctx, project_id, title, depositor, token):
     """
     Perform a mounted (physical directory to logical collection) ingest operation.
 
@@ -19,8 +17,8 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
         The project id, e.g: P00000010
     title: str
         The title of the dropzone / new collection
-    username: str
-        The username of the person requesting the ingestion
+    depositor: str
+        The iRODS username of the user who started the ingestion
     token: str
         The token of the dropzone to be ingested
     """
@@ -30,7 +28,7 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     pre_ingest_results = json.loads(
-        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, token, username, dropzone_type, "")[
+        ctx.callback.perform_ingest_pre_hook(project_id, title, dropzone_path, token, depositor, dropzone_type, "")[
             "arguments"
         ][6]
     )
@@ -43,16 +41,16 @@ def perform_mounted_ingest(ctx, project_id, title, username, token):
 
     # Ingest the files from local directory on resource server to iRODS collection
     try:
-        ctx.callback.sync_collection_data(token, destination_collection, username)
+        ctx.callback.sync_collection_data(token, destination_collection, depositor)
     except RuntimeError:
-        ctx.callback.setErrorAVU(
-            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error copying ingest zone"
-        )
+        ctx.callback.set_ingestion_error_avu(dropzone_path, "Error copying ingest zone", project_id, depositor)
 
     after = time.time()
     difference = float(after - before) + 1
 
-    ctx.callback.perform_ingest_post_hook(project_id, collection_id, dropzone_path, dropzone_type, str(difference))
+    ctx.callback.perform_ingest_post_hook(
+        project_id, collection_id, dropzone_path, dropzone_type, str(difference), depositor
+    )
 
     # Handle post ingestion operations
-    ctx.callback.finish_ingest(project_id, username, token, collection_id, ingest_resource_host, dropzone_type)
+    ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type)

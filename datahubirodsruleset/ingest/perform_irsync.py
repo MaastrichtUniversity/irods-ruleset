@@ -1,11 +1,11 @@
-from dhpythonirodsutils.enums import DropzoneState
+from dhpythonirodsutils import formatters
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
 
-@make(inputs=range(3), outputs=[], handler=Output.STORE)
-def perform_irsync(ctx, destination_resource, token, destination_collection):
+@make(inputs=range(4), outputs=[], handler=Output.STORE)
+def perform_irsync(ctx, destination_resource, token, destination_collection, depositor):
     """
     This rule is part the mounted ingest workflow.
     It takes care of actually copying (syncing) the content of the physical drop-zone into the destination collection.
@@ -20,6 +20,8 @@ def perform_irsync(ctx, destination_resource, token, destination_collection):
         The dropzone token, to locate the source collection; e.g: 'handsome-snake'
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
+    depositor: str
+        The iRODS username of the user who started the ingestion
     """
 
     # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
@@ -73,13 +75,13 @@ def perform_irsync(ctx, destination_resource, token, destination_collection):
 
     if return_code != 0:
         # Re-set the user CIFS ACL on the mounted network dropzone folder
-        ctx.callback.set_dropzone_cifs_acl(ctx, token, "write")
-
-        ctx.callback.setErrorAVU(
+        ctx.callback.set_dropzone_cifs_acl(token, "write")
+        project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
+        ctx.callback.set_ingestion_error_avu(
             dropzone_path,
-            "state",
-            DropzoneState.ERROR_INGESTION.value,
             "Error while performing perform_irsync towards '{}:{}'".format(
                 destination_collection, destination_resource
             ),
+            project_id,
+            depositor,
         )

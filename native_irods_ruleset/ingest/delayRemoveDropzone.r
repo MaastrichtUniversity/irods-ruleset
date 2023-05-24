@@ -8,9 +8,9 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
 
      delay("<PLUSET>*irodsIngestRemoveDelay</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
-
         if ( *error < 0 ) {
-            setErrorAVU(*srcColl,"state", "error-post-ingestion","Error removing Dropzone-collection");
+            msiWriteRodsLog("Ingest failed of *srcColl with error status 'error-post-ingestion'", 0);
+            msiWriteRodsLog("Error removing Dropzone-collection", 0);
         }
 
         remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server

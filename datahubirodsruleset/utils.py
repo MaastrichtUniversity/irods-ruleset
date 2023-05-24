@@ -106,6 +106,72 @@ def get_env(ctx, key, fatal="false"):
     return value
 
 
+@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
+def submit_automated_support_request(ctx, username, description, error_message):
+    """
+    This rule submits an automated support request to the Jira Service Desk Cloud instance through
+    our help center backend.
+
+    /rules/tests/run_test.sh -r submit_automated_support_request -a "email@example.org,description,error"
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    username: str
+        irods user who started the process to receive an email about the ticket
+    description: str
+       Description to be shown in the ticket
+    error_message: str
+        Error message to display in Jira Service Desk
+
+    Returns
+    -------
+    str
+        Jira Service desk issue key for newly created ticket
+    """
+    import requests
+    import json
+    from datetime import datetime
+
+    ret = ctx.get_user_attribute_value(username, "email", FALSE_AS_STRING, "result")["arguments"][3]
+    email = json.loads(ret)["value"]
+    if email == "":
+        email = "datahub-support@maastrichtuniversity.nl"
+
+    # Get the Help Center Backend url
+    help_center_backend_base = ctx.callback.get_env("HC_BACKEND_URL", TRUE_AS_STRING, "")["arguments"][2]
+    help_center_request_endpoint = "{}/help_backend/submit_request/automated_process_support".format(
+        help_center_backend_base
+    )
+
+    error_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    request_json = {
+        "email": email,
+        "description": description,
+        "error_timestamp": error_timestamp,
+        "error_message": error_message,
+    }
+    try:
+        response = requests.post(
+            help_center_request_endpoint,
+            json=request_json,
+        )
+        if response.ok:
+            issue_key = response.json()["issueKey"]
+            ctx.callback.msiWriteRodsLog("Support ticket '{}' created after process error".format(issue_key), 0)
+
+        else:
+            ctx.callback.msiWriteRodsLog(
+                "ERROR: Response Help center backend not HTTP OK: '{}'".format(response.status_code), 0
+            )
+    except requests.exceptions.RequestException as e:
+        ctx.callback.msiWriteRodsLog(
+            "ERROR: Exception while requesting Support ticket after process error '{}'".format(e), 0
+        )
+
+
 def read_data_object_from_irods(ctx, path):
     """This rule gets a JSON schema stored as an iRODS object
     :param ctx:  iRODS context

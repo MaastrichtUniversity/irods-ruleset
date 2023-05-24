@@ -1,5 +1,4 @@
-# /rules/tests/run_test.sh -r create_ingest_metadata_snapshot -a "P000000010,C000000001,/nlmumc/ingest/zones/crazy-frog,false" -u jmelius -j
-
+# /rules/tests/run_test.sh -r create_ingest_metadata_snapshot -a "P000000010,C000000001,/nlmumc/ingest/zones/crazy-frog,false,jmelius" -u jmelius -j
 import irods_types  # pylint: disable=import-error
 from dhpythonirodsutils import formatters
 
@@ -14,8 +13,8 @@ from datahubirodsruleset.formatters import (
 )
 
 
-@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
-def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_collection, overwrite_flag):
+@make(inputs=[0, 1, 2, 3, 4], outputs=[], handler=Output.STORE)
+def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_collection, overwrite_flag, username):
     """
     Create a snapshot of the collection metadata files (schema & instance):
         * Check if the snapshot folder (.metadata_versions) already exists, if not create it
@@ -33,6 +32,8 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
         The drop-zone absolute path (e.g: /nlmumc/ingest/zones/crazy-frog)
     overwrite_flag: str
         'true'/'false' expected; If true, the copy overwrites possible existing schema.1.json & instance.1.json files
+    username: str
+        The username of the person requesting the ingest
     """
 
     metadata_folder_path = format_metadata_versions_path(ctx, project_id, collection_id)
@@ -50,7 +51,7 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
             ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
         except RuntimeError:
             ctx.callback.set_post_ingestion_error_avu(
-                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
+                project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", username
             )
 
     source_schema = format_schema_collection_path(ctx, project_id, collection_id)
@@ -66,5 +67,5 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
         icp_wrapper(ctx, source_instance, destination_instance, project_id, force_flag)
     except RuntimeError:
         ctx.callback.set_post_ingestion_error_avu(
-            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot"
+            project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", username
         )

@@ -4,7 +4,9 @@ on: [ push, workflow_dispatch ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    container:
+        image: python:2.7.18-buster
     strategy:
       fail-fast: false
       matrix:

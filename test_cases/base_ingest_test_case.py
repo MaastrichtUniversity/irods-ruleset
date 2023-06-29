@@ -70,9 +70,9 @@ class BaseTestCaseIngest:
     # * 32 MB < X
     files_per_protocol = {
         "0bytes.file": 0,
-        "50K.file": 50000,
-        "15M.file": 15000000,
-        "45M.file": 45000000,
+        "50K.file": 51200,
+        "15M.file": 15728640,
+        "45M.file": 47185920,
     }
 
     @classmethod
@@ -121,7 +121,7 @@ class BaseTestCaseIngest:
         assert collection_detail["collection"] == self.collection_id
         assert collection_detail["title"] == self.collection_title
         assert int(collection_detail["numFiles"]) == 8
-        assert int(collection_detail["byteSize"]) == 60600514
+        assert int(collection_detail["byteSize"]) == 63516274
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 

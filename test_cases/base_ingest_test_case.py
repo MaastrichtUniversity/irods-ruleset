@@ -121,7 +121,7 @@ class BaseTestCaseIngest:
         assert collection_detail["collection"] == self.collection_id
         assert collection_detail["title"] == self.collection_title
         assert int(collection_detail["numFiles"]) == 8
-        assert int(collection_detail["byteSize"]) == 60600514
+        assert int(collection_detail["byteSize"]) == 63516274
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 

@@ -70,9 +70,9 @@ class BaseTestCaseIngest:
     # * 32 MB < X
     files_per_protocol = {
         "0bytes.file": 0,
-        "50K.file": 50000,
-        "15M.file": 15000000,
-        "45M.file": 45000000,
+        "50K.file": 51200,
+        "15M.file": 15728640,
+        "45M.file": 47185920,
     }
 
     @classmethod

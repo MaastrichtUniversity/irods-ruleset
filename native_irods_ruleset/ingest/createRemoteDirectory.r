@@ -14,7 +14,7 @@ createRemoteDirectory(*project, *token, *voPersonExternalID) {
     }
 
     # Enabling the ingest zone needs to be done on the remote server
-    remote(*ingestResourceHost,"") {
+    remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
         *phyDir = "/mnt/ingest/zones/" ++ *token;
         msiExecCmd("enable-ingest-zone.sh", *voPersonExternalID ++ " " ++ *phyDir, "null", "null", "null", *status);
     }

@@ -65,7 +65,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     try:
         ctx.remoteExec(
             ingest_resource_host,
-            "",
+            "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
             "save_dropzone_pre_ingest_info('{}', '{}', '{}', '{}')".format(
                 token, collection_id, depositor, dropzone_type
             ),

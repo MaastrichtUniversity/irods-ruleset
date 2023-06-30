@@ -34,7 +34,7 @@ IRULE_closeDropZone(*token) {
         msiRmColl(*srcColl, "forceFlag=", *OUT);
 
         # Disabling the ingest zone needs to be executed on remote ires server
-        remote(*ingestResourceHost,"") {
+        remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
             msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
         }
     }

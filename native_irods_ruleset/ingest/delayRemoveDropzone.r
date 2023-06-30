@@ -13,7 +13,8 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
             msiWriteRodsLog("Error removing Dropzone-collection", 0);
         }
 
-        remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
+        # Disabling the ingest zone needs to be executed on remote ires server
+        remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
            if ( *dropzoneType == "mounted" ){
               msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
            }

@@ -2,18 +2,36 @@
 #
 # irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/ingest/closeDropZone.r "*token='bla-token'"
 #
-# OPS rule for "SOP_Beheer [iRODS] Remove dropzone"
+# This is also an OPS rule for "SOP_Beheer [iRODS] Remove dropzone"
 
 irule_dummy() {
     IRULE_closeDropZone(*token)
 }
 
 IRULE_closeDropZone(*token) {
+    *srcColl = "";
+    *dropzoneType = "";
 
-    *srcColl = "/nlmumc/ingest/zones/*token"
+    # Check if the dropzone exists
+    *mountedPath = "/nlmumc/ingest/zones/*token";
+    foreach ( *Row in SELECT COLL_NAME WHERE COLL_NAME == *mountedPath) {
+        *srcColl = *Row.COLL_NAME;
+        *dropzoneType = "mounted";
+    }
 
-    getCollectionAVU(*srcColl,"project",*project,"","true");
-    getCollectionAVU("/nlmumc/projects/*project","ingestResource",*ingestResource,"","true");
+    *directPath = "/nlmumc/ingest/direct/*token"
+    foreach ( *Row in SELECT COLL_NAME WHERE COLL_NAME == *directPath) {
+        *srcColl = *Row.COLL_NAME;
+        *dropzoneType = "direct";
+    }
+
+    if ( *srcColl == "" ) {
+        # -814000 CAT_UNKNOWN_COLLECTION
+        msiExit("-814000", "Unknown dropzone *token");
+    }
+
+    getCollectionAVU(*srcColl, "project", *project, "", "true");
+    getCollectionAVU("/nlmumc/projects/*project", "ingestResource", *ingestResource, "", "true");
 
     # Obtain the resource host from the specified ingest resource
     foreach (*r in select RESC_LOC where RESC_NAME = *ingestResource) {
@@ -22,20 +40,37 @@ IRULE_closeDropZone(*token) {
 
     msiWriteRodsLog("Closing dropzone *token from project *project on resource host *ingestResourceHost", 0);
 
-    # TODO: Handle errors
-    # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token is done.
-    # This is because of a bug in the unmount. This is kept in memory for
-    # the remaining of the irodsagent session.
-    # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
-    *code = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+    if (*dropzoneType == "mounted") {
+        getCollectionAVU(*srcColl, "legacy", *legacyDropzone, "false", "false")
+        msiWriteRodsLog("DEBUG: *srcColl is a legacy dropzone: *legacyDropzone", 0)
 
-    delay("<PLUSET>1s</PLUSET>") {
+        if (*legacyDropzone == "true") {
+            # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token
+            # is done.
+            # This is because of a bug in the unmount. This is kept in memory for
+            # the remaining of the irodsagent session.
+            # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
+            *codeUnmount = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
+            if ( *codeUnmount < 0 ) {
+                msiWriteRodsLog("Error: msiPhyPathReg failed for *srcColl", 0);
+            }
+        }
+    }
 
-        msiRmColl(*srcColl, "forceFlag=", *OUT);
+    delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
+        *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
+        if ( *error < 0 ) {
+            msiWriteRodsLog("Error: Failed to remove Dropzone-collection: *srcColl", 0);
+        }
 
         # Disabling the ingest zone needs to be executed on remote ires server
-        remote(*ingestResourceHost,"") {
-            msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+        remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
+           if ( *dropzoneType == "mounted" ){
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);
+           }
+           else if ( *dropzoneType == "direct" ){
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/direct/" ++ *token, "null", "null", "null", *ExecOUT);
+           }
         }
     }
 }

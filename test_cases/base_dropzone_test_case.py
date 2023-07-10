@@ -1,5 +1,8 @@
 import json
 import subprocess
+import time
+
+from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
     remove_project,
@@ -74,3 +77,50 @@ class BaseTestCaseDropZones:
         assert drop_zone["title"] == self.collection_title
         assert drop_zone["token"] == self.token
         assert drop_zone["type"] == self.dropzone_type
+
+    def test_delete_dropzone(self):
+        new_token = create_dropzone(self)
+        self.add_metadata_files_to_dropzone(new_token)
+        dropzone_path = formatters.format_dropzone_path(new_token, self.dropzone_type)
+
+        # Make sure rods has own access
+        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "recursive,admin:own,{},{}"'.format(
+            "rods", dropzone_path
+        )
+        subprocess.check_call(rule_set_acl, shell=True)
+
+        # Check that the depositor lost access on the dropzone collection (not all files)
+        acl = "ils -A {}".format(dropzone_path)
+        ret_acl = subprocess.check_output(acl, shell=True)
+        # 3 => dropzone collection, instance.json & schema.json
+        assert ret_acl.count(self.depositor) == 3
+
+        rule_remove_acl = '/rules/tests/run_test.sh -r remove_users_dropzone_acl -a "{}"'.format(dropzone_path)
+        subprocess.check_call(rule_remove_acl, shell=True)
+
+        ret_acl = subprocess.check_output(acl, shell=True)
+        # 2 => instance.json & schema.json
+        assert ret_acl.count(self.depositor) == 2
+
+        # Put the dropzone deletion to the queue
+        rule_remove_dropzone = (
+            "irule -r irods_rule_engine_plugin-irods_rule_language-instance "
+            "-F /rules/native_irods_ruleset/ingest/closeDropZone.r \"*token='{}'\"".format(new_token)
+        )
+        subprocess.check_call(rule_remove_dropzone, shell=True)
+
+        # Check the deletion
+        run_iquest = 'iquest "%s" "SELECT COLL_NAME WHERE COLL_NAME = \'{}\' "'.format(dropzone_path)
+
+        fail_safe = 100
+        while fail_safe != 0:
+            field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
+            if "CAT_NO_ROWS_FOUND" in field_value_return:
+                fail_safe = 0
+            else:
+                fail_safe = fail_safe - 1
+                time.sleep(3)
+
+        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
+        # TODO Update CAT_NO_ROWS_FOUND check after 4.2.12
+        assert "CAT_NO_ROWS_FOUND" in field_value_return

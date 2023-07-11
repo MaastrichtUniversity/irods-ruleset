@@ -76,3 +76,8 @@ class TestEditCollectionMetadataUM(BaseEditCollectionMetadata):
 class TestEditCollectionMetadataS3(BaseEditCollectionMetadata):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUMCeph01"
+
+
+class TestEditCollectionMetadataAZM(BaseEditCollectionMetadata):
+    ingest_resource = "ires-hnas-azmResource"
+    destination_resource = "replRescAZM01"

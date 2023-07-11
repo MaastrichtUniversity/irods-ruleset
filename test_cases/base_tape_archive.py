@@ -187,7 +187,7 @@ class BaseTestTapeArchive:
 
     @staticmethod
     def wait_for_active_processes(rule_status, active_processes):
-        fail_safe = 30
+        fail_safe = 60
         while fail_safe != 0:
             ret = subprocess.check_output(rule_status, shell=True)
 

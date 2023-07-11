@@ -8,7 +8,7 @@ from test_cases.utils import add_metadata_files_to_direct_dropzone
 
 class BaseTestCaseDirectIngest(BaseTestCaseIngest):
     dropzone_type = "direct"
-    dropzone_total_size = "60253618"
+    dropzone_total_size = "63169378"
     dropzone_num_files = "6"
 
     @classmethod

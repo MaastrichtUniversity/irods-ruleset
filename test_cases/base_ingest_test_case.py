@@ -63,6 +63,8 @@ class BaseTestCaseIngest:
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
     collection_title = "collection_title"
     collection_id = "C000000001"
+    collection_number_files = 8
+    collection_total_size = 63516274
 
     # iRODS seems to have 3 different ways/protocols to transfer data, depending on the file size:
     # * 0     < X < 4  MB
@@ -70,9 +72,9 @@ class BaseTestCaseIngest:
     # * 32 MB < X
     files_per_protocol = {
         "0bytes.file": 0,
-        "50K.file": 50000,
-        "15M.file": 15000000,
-        "45M.file": 45000000,
+        "50K.file": 51200,
+        "15M.file": 15728640,
+        "45M.file": 47185920,
     }
 
     @classmethod
@@ -120,8 +122,8 @@ class BaseTestCaseIngest:
         assert collection_detail["creator"] == self.collection_creator
         assert collection_detail["collection"] == self.collection_id
         assert collection_detail["title"] == self.collection_title
-        assert int(collection_detail["numFiles"]) == 8
-        assert int(collection_detail["byteSize"]) == 60600514
+        assert int(collection_detail["numFiles"]) == self.collection_number_files
+        assert int(collection_detail["byteSize"]) == self.collection_total_size
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 
@@ -158,7 +160,7 @@ class BaseTestCaseIngest:
     def test_project_acl(self):
         acl = "ils -A {}".format(self.project_path)
         ret = subprocess.check_output(acl, shell=True)
-        assert "rods#nlmumc:own".format(self.manager1) in ret
+        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager2) in ret
 

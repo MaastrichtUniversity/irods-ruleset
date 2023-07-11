@@ -51,11 +51,12 @@ class BaseTestTapeArchiveMounted(BaseTestTapeArchive):
 
     @classmethod
     def add_archive_data_to_mounted_dropzone(cls):
-        large_file_path = "/mnt/ingest/zones/{}/large_file".format(cls.token)
-
-        with open(large_file_path, "wb") as large_file:
-            num_chars = 262144001
-            large_file.write("0" * num_chars)
+        run_iquest = 'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{}\'"'.format(cls.ingest_resource)
+        remote_resource = subprocess.check_output(run_iquest, shell=True).strip()
+        rule = "irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeTapeFile.r '*dropzonePath=\"/mnt/ingest/zones/{}\"' '*remoteResource=\"{}\"'".format(
+            cls.token, remote_resource
+        )
+        subprocess.check_call(rule, shell=True)
 
 
 class TestTapeArchiveS3Direct(BaseTestTapeArchiveDirect):
@@ -76,3 +77,13 @@ class TestTapeArchiveUMDirect(BaseTestTapeArchiveDirect):
 class TestTapeArchiveUMMounted(BaseTestTapeArchiveMounted):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
+
+
+class TestTapeArchiveAZMDirect(BaseTestTapeArchiveDirect):
+    ingest_resource = "ires-hnas-azmResource"
+    destination_resource = "replRescAZM01"
+
+
+class TestTapeArchiveAZMMounted(BaseTestTapeArchiveMounted):
+    ingest_resource = "ires-hnas-azmResource"
+    destination_resource = "replRescAZM01"

@@ -53,8 +53,11 @@ class BaseTestTapeArchiveMounted(BaseTestTapeArchive):
     def add_archive_data_to_mounted_dropzone(cls):
         run_iquest = 'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{}\'"'.format(cls.ingest_resource)
         remote_resource = subprocess.check_output(run_iquest, shell=True).strip()
-        rule = "irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeTapeFile.r '*dropzonePath=\"/mnt/ingest/zones/{}\"' '*remoteResource=\"{}\"'".format(cls.token, remote_resource)
+        rule = "irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeTapeFile.r '*dropzonePath=\"/mnt/ingest/zones/{}\"' '*remoteResource=\"{}\"'".format(
+            cls.token, remote_resource
+        )
         subprocess.check_call(rule, shell=True)
+
 
 class TestTapeArchiveS3Direct(BaseTestTapeArchiveDirect):
     ingest_resource = "ires-hnas-umResource"

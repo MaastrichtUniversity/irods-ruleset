@@ -38,7 +38,9 @@ IRULE_closeDropZone(*token) {
         *ingestResourceHost = *r.RESC_LOC;
     }
 
-    msiWriteRodsLog("Closing dropzone *token from project *project on resource host *ingestResourceHost", 0);
+    *directIngestResourceHost = "";
+    get_direct_ingest_resource_host(*directIngestResourceHost);
+    msiWriteRodsLog("INFO: Closing dropzone *token from project *project on direct resource host *directIngestResourceHost", 0);
 
     if (*dropzoneType == "mounted") {
         getCollectionAVU(*srcColl, "legacy", *legacyDropzone, "false", "false")
@@ -52,7 +54,7 @@ IRULE_closeDropZone(*token) {
             # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
             *codeUnmount = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
             if ( *codeUnmount < 0 ) {
-                msiWriteRodsLog("Error: msiPhyPathReg failed for *srcColl", 0);
+                msiWriteRodsLog("ERROR: msiPhyPathReg failed for *srcColl", 0);
             }
         }
     }
@@ -63,11 +65,20 @@ IRULE_closeDropZone(*token) {
             msiWriteRodsLog("Error: Failed to remove Dropzone-collection: *srcColl", 0);
         }
 
-        # Disabling the ingest zone needs to be executed on remote ires server
-        remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
-           if ( *dropzoneType == "mounted" ){
+        # Disabling the network mounted ingest zone needs to be executed on remote ires server
+        if ( *dropzoneType == "mounted" ){
+            msiWriteRodsLog("INFO: Closing dropzone *token from project *project on ingest resource host *ingestResourceHost", 0);
+            remote(*ingestResourceHost,"") {
               msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);
+            }
+        }
+
+        remote(*directIngestResourceHost,"") {
+           # Only the metadata files exist on stagingResc01 and need to be deleted
+           if ( *dropzoneType == "mounted" ){
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);
            }
+           # Disabling the ingest zone needs to be executed on remote ires server
            else if ( *dropzoneType == "direct" ){
               msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/direct/" ++ *token, "null", "null", "null", *ExecOUT);
            }

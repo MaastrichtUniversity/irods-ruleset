@@ -14,10 +14,20 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
             msiWriteRodsLog("Error removing Dropzone-collection", 0);
         }
 
-        remote(*ingestResourceHost,"") { # Disabling the ingest zone needs to be executed on remote ires server
-           if ( *dropzoneType == "mounted" ){
+        # Disabling the network mounted ingest zone needs to be executed on remote ires server
+        if ( *dropzoneType == "mounted" ){
+            remote(*ingestResourceHost,"") {
               msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+            }
+        }
+        *directIngestResourceHost = "";
+        get_direct_ingest_resource_host(*directIngestResourceHost);
+        remote(*directIngestResourceHost,"") {
+           # Only the metadata files exist on stagingResc01 and need to be deleted
+           if ( *dropzoneType == "mounted" ){
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
            }
+           # Disabling the ingest zone needs to be executed on remote ires server
            else if ( *dropzoneType == "direct" ){
               msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/direct/" ++ *token, "null", "null", "null", *OUT);
            }

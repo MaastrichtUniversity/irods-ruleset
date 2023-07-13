@@ -95,6 +95,7 @@ class TestResources:
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for resc in rule_parsed["numFilesPerResc"]:
             if resc["resourceID"] == iquest_result:
                 assert resc["numFiles"] == "1"
@@ -123,6 +124,7 @@ class TestResources:
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for resc in rule_parsed["sizePerResc"]:
             if resc["resourceID"] == iquest_result:
                 assert resc["dataSize"] == "13"
@@ -136,6 +138,7 @@ class TestResources:
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDestinationResources.r"
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for item in rule_parsed:
             assert item["name"] in ["replRescAZM01", "replRescUM01", "replRescUMCeph01"]
 
@@ -143,6 +146,7 @@ class TestResources:
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getIngestResources.r"
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for item in rule_parsed:
             assert item["name"] in [
                 "ires-hnas-azmResource",

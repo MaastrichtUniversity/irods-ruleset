@@ -4,6 +4,7 @@ from datahubirodsruleset.utils import *
 
 from datahubirodsruleset.collections import *
 from datahubirodsruleset.customizable_metadata import *
+from datahubirodsruleset.data_deletion import *
 from datahubirodsruleset.drop_zones import *
 from datahubirodsruleset.index_metadata import *
 from datahubirodsruleset.ingest import *

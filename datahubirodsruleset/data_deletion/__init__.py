@@ -1,0 +1,6 @@
+"""This sub-package contains the rules related to DataHub data deletion"""
+# Public rules
+from datahubirodsruleset.data_deletion.restore_project_access import restore_project_access
+from datahubirodsruleset.data_deletion.revoke_project_access import revoke_project_access
+from datahubirodsruleset.data_deletion.restore_project_collection_access import restore_project_collection_access
+from datahubirodsruleset.data_deletion.revoke_project_collection_access import revoke_project_collection_access

@@ -16,7 +16,7 @@ IRULE_createProjectCollection(*project, *projectCollection, *title) {
     *error = -1;
 
     # Try to create the dstColl. Exit the loop on success (error = 0) or after too many retries.
-    # The while loop adds compatibility for usage in parallellized runs of the delayed rule engine.
+    # The while loop adds compatibility for usage in parallelized runs of the delayed rule engine.
     while ( *error < 0 && *retry < 10) {
         *max = 0;
 

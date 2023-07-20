@@ -9,6 +9,7 @@ from datahubirodsruleset.decorator import make, Output
 def revoke_project_access(ctx, user_project):
     backup_project = "/nlmumc/trash" + user_project.replace("/nlmumc", "")
 
+    # TODO Set 'deletion metadata' AVUs
     try:
         ctx.callback.msiCollCreate(backup_project, 1, 0)
     except RuntimeError:

@@ -49,12 +49,25 @@ IRULE_changeProjectPermissions(*project, *users){
     }
 
     delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
-        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
-            *projectCollection = *Row.COLL_NAME;
+        *activeProjectCollections = list();
+        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project') {
+            *activeProjectCollection = *Row.COLL_NAME;
 
+            *deletionState = "";
+            foreach ( *RowDeletion in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '*activeProjectCollection' AND META_COLL_ATTR_NAME == "deletionState") {
+                *deletionState = *RowDeletion.META_COLL_ATTR_VALUE;
+            }
+            if (*deletionState == "") {
+                # Add the value to the list object
+                *activeProjectCollections = cons(*activeProjectCollection, *activeProjectCollections);
+            }
+        }
+        msiWriteRodsLog("DEBUG: activeProjectCollections - *activeProjectCollections", 0);
+
+        foreach ( *projectCollection in *activeProjectCollections ) {
             # Reset user list to original input value
             *delay_users = *input_users;
-            *count = 100;    
+            *count = 100;
 
             # Open the collection to be able to modify the collection ACL
             msiSetACL("recursive", "admin:own", "rods", "*projectCollection");

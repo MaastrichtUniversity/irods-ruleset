@@ -27,6 +27,8 @@ def restore_project_access(ctx, user_project):
     ctx.callback.msiRmColl(backup_project, "forceFlag=", 0)
     ctx.callback.msiWriteRodsLog("Deleted backup project '{}'".format(backup_project), 0)
 
+    # TODO Remove 'deletion metadata' AVUs
+
 
 def convert_acl_to_access_right(account_access):
     user_access = account_access

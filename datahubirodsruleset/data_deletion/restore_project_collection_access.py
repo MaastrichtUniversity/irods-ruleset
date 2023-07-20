@@ -23,3 +23,10 @@ def restore_project_collection_access(ctx, user_project_collection):
 
     ctx.callback.msiWriteRodsLog("Users ACL restored  for '{}'".format(user_project_collection), 0)
     ctx.callback.msiSetACL("recursive", "admin:read", "rods", user_project_collection)
+
+    project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
+    collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)
+
+    ctx.callback.index_update_single_project_collection_metadata(project_id, collection_id, "")
+    message = "INFO: Restore to Elasticsearch index the metadata of {}".format(user_project_collection)
+    ctx.callback.msiWriteRodsLog(message, 0)

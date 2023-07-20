@@ -1,6 +1,8 @@
 # /rules/tests/run_test.sh -r revoke_project_collection_access -a "/nlmumc/projects/P000000002/C000000001"
+from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST
 
+from datahubirodsruleset import get_elastic_search_connection, COLLECTION_METADATA_INDEX
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -24,3 +26,20 @@ def revoke_project_collection_access(ctx, user_project_collection):
 
     ctx.callback.msiWriteRodsLog("Users ACL revoked  for '{}'".format(user_project_collection), 0)
     ctx.callback.msiSetACL("recursive", "admin:read", "rods", user_project_collection)
+
+    from elasticsearch import ElasticsearchException
+
+    es = get_elastic_search_connection(ctx)
+
+    project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
+    collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)
+
+    try:
+        es.delete(index=COLLECTION_METADATA_INDEX, id=project_id + "_" + collection_id, ignore=[400, 404])
+    except ElasticsearchException:
+        ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised during document deletion", 0)
+        error_message = "ERROR: Elasticsearch update index failed for {}".format(user_project_collection)
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+
+    message = "INFO: Remove from Elasticsearch index the metadata of {}".format(user_project_collection)
+    ctx.callback.msiWriteRodsLog(message, 0)

@@ -69,6 +69,16 @@ def index_project_collection(ctx, es, project_collection_path):
     project_path = formatters.format_project_path(project_id)
     instance_path = formatters.format_instance_collection_path(project_id, collection_id)
 
+    ret = ctx.callback.get_collection_attribute_value(project_collection_path, "deletionState", "")["arguments"][2]
+    deletion_state = json.loads(ret)["value"]
+
+    if deletion_state != "":
+        message = "DEBUG: Skip metadata index update, deletionState '{}' for '{}'".format(
+            deletion_state, project_collection_path
+        )
+        ctx.callback.msiWriteRodsLog(message, 0)
+        return True
+
     try:
         ctx.callback.msiObjStat(instance_path, irods_types.RodsObjStat())
     except RuntimeError:

@@ -1,6 +1,7 @@
 # /rules/tests/run_test.sh -r restore_project_access -a "/nlmumc/projects/P000000011"
 from genquery import row_iterator, AS_LIST
 
+from datahubirodsruleset.data_deletion.restore_project_collection_access import apply_batch_collection_avu_operation
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -27,7 +28,8 @@ def restore_project_access(ctx, user_project):
     ctx.callback.msiRmColl(backup_project, "forceFlag=", 0)
     ctx.callback.msiWriteRodsLog("Deleted backup project '{}'".format(backup_project), 0)
 
-    # TODO Remove 'deletion metadata' AVUs
+    # Remove 'deletion metadata' AVUs
+    apply_batch_collection_avu_operation(ctx, user_project, "remove")
 
 
 def convert_acl_to_access_right(account_access):

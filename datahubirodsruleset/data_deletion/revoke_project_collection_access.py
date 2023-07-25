@@ -12,12 +12,6 @@ def revoke_project_collection_access(ctx, user_project_collection):
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
     # Set 'deletion metadata' AVUs
     apply_batch_collection_avu_operation(ctx, user_project_collection, "add")
-    message = "INFO: Set deletion metadata for {}".format(user_project_collection)
-    ctx.callback.msiWriteRodsLog(message, 0)
-    # ctx.callback.setCollectionAVU(user_project_collection, "deletionReason", "deletionReason")
-    # ctx.callback.setCollectionAVU(user_project_collection, "deletionReasonDescription", "deletionReasonDescription")
-    # ctx.callback.setCollectionAVU(user_project_collection, "deletionScheduleDate", "2023-12-24")
-    # ctx.callback.setCollectionAVU(user_project_collection, "deletionState", "pending-for-deletion")
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",

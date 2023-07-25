@@ -2,6 +2,7 @@
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset.data_deletion.restore_project_access import convert_acl_to_access_right
+from datahubirodsruleset.data_deletion.restore_project_collection_access import apply_batch_collection_avu_operation
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -15,7 +16,8 @@ def revoke_project_access(ctx, user_project):
     except RuntimeError:
         print("ERROR: msiCollCreate")
 
-    ctx.callback.msiWriteRodsLog("Backup project ACL created '{}'".format(backup_project), 0)
+    ctx.callback.msiWriteRodsLog("Create ACL backup for project '{}'".format(backup_project), 0)
+    apply_batch_collection_avu_operation(ctx, user_project, "add")
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",

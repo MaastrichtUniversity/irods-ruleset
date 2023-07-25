@@ -37,4 +37,11 @@ def revoke_project_access(ctx, user_project):
             if account_type != "rodsadmin" and "service-" not in account_name:
                 ctx.callback.msiSetACL("default", "null", account_name, user_project)
 
-    ctx.callback.msiWriteRodsLog("Users ACL revoked  for '{}'".format(user_project), 0)
+    ctx.callback.msiWriteRodsLog("Users ACL revoked for project '{}'".format(user_project), 0)
+
+    # TODO
+    # * Revoke collections ACL synchronously
+    # * Recursive revoke data ACL call in the delay queue
+    ctx.callback.msiWriteRodsLog("Recursively revoke users collections ACL in project '{}'".format(user_project), 0)
+    for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(user_project), AS_LIST, ctx.callback):
+        ctx.revoke_project_collection_access(proj_coll[0])

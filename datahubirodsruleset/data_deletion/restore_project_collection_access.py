@@ -11,6 +11,19 @@ from datahubirodsruleset.decorator import make, Output
 def restore_project_collection_access(ctx, user_project_collection):
     user_project = formatters.get_project_path_from_project_collection_path(user_project_collection)
 
+    deletion_state = ""
+    for value in row_iterator(
+        "META_COLL_ATTR_VALUE",
+        "COLL_NAME = '{}' AND META_COLL_ATTR_NAME = 'deletionState' ".format(user_project),
+        AS_LIST,
+        ctx.callback,
+    ):
+        deletion_state = value[0]
+
+    if deletion_state != "":
+        ctx.callback.msiExit("-1", "Project deletion sate is not valid {}".format(deletion_state))
+        return
+
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",
         "COLL_NAME = '{}'".format(user_project),

@@ -74,7 +74,12 @@ def make(inputs=None, outputs=None, transform=lambda x: x, handler=Output.STORE)
     def deco(f):
         def r(rule_args, callback, rei):
             a = rule_args if inputs is None else [rule_args[i] for i in inputs]
-            result = f(Context(callback, rei), *a)
+
+            result = None
+            try:
+                result = f(Context(callback, rei), *a)
+            except RuntimeError as err:
+                callback.msiWriteRodsLog("DEBUG: Rule decorator error: {}".format(repr(err)), 0)
 
             if result is None:
                 return

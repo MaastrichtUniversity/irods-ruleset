@@ -75,7 +75,7 @@ def check_active_dropzone_by_project_id(ctx, project_id):
 
 
 def check_active_processes_by_project_id(ctx, project_id):
-    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
+    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
     conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
         ProcessAttribute.ARCHIVE.value,
         ProcessAttribute.UNARCHIVE.value,

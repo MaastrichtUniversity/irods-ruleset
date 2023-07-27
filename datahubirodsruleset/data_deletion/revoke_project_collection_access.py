@@ -4,11 +4,21 @@ from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import get_elastic_search_connection, COLLECTION_METADATA_INDEX
 from datahubirodsruleset.data_deletion.restore_project_collection_access import apply_batch_collection_avu_operation
+from datahubirodsruleset.data_deletion.revoke_project_access import check_active_processes_by_project_id
 from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0], outputs=[], handler=Output.STORE)
 def revoke_project_collection_access(ctx, user_project_collection):
+    project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
+    has_active_processes = check_active_processes_by_project_id(ctx, project_id)
+
+    if has_active_processes:
+        ctx.callback.msiExit(
+            "-1", "Stop execution, active proces(ses) found for collection {}".format(user_project_collection)
+        )
+        return
+
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
     # Set 'deletion metadata' AVUs
     apply_batch_collection_avu_operation(ctx, user_project_collection, "add")

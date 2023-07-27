@@ -21,7 +21,7 @@ def restore_project_collection_access(ctx, user_project_collection):
         deletion_state = value[0]
 
     if deletion_state != "":
-        ctx.callback.msiExit("-1", "Project deletion sate is not valid {}".format(deletion_state))
+        ctx.callback.msiExit("-1", "Project deletion state is not valid {}".format(deletion_state))
         return
 
     for result in row_iterator(
@@ -36,7 +36,7 @@ def restore_project_collection_access(ctx, user_project_collection):
             account_name = account[0]
             ctx.callback.msiSetACL("recursive", "admin:read", account_name, user_project_collection)
 
-    ctx.callback.msiWriteRodsLog("Users ACL restored  for '{}'".format(user_project_collection), 0)
+    ctx.callback.msiWriteRodsLog("INFO: Users ACL restored  for '{}'".format(user_project_collection), 0)
 
     project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)

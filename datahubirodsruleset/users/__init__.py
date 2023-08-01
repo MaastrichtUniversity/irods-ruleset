@@ -13,6 +13,7 @@ from datahubirodsruleset.users.set_user_attribute_value import set_user_attribut
 # Private rules
 from datahubirodsruleset.users.get_all_user_groups_membership import get_all_users_groups_memberships
 from datahubirodsruleset.users.get_all_users_id import get_all_users_id
+from datahubirodsruleset.users.get_all_users_email import get_all_users_email
 from datahubirodsruleset.users.get_group_members import get_group_members
 from datahubirodsruleset.users.get_service_accounts_id import get_service_accounts_id
 from datahubirodsruleset.users.get_user_admin_status import get_user_admin_status

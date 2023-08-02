@@ -10,7 +10,9 @@ def delete_project_collection_data(ctx, user_project_collection, commit):
     ctx.callback.writeLine("stdout", "")
     ctx.callback.writeLine("stdout", "* Running delete_project_collection_data with commit mode as '{}'".format(commit))
 
-    output = ctx.get_collection_attribute_value(user_project_collection, "deletionState", "result")["arguments"][2]
+    output = ctx.callback.get_collection_attribute_value(user_project_collection, "deletionState", "result")[
+        "arguments"
+    ][2]
     deletion_state = json.loads(output)["value"]
 
     if deletion_state != "pending-for-deletion":

@@ -21,7 +21,7 @@ acPostProcForCollCreate {
         *latest = 0;
         # Query project path
         foreach ( *Row in SELECT COLL_PARENT_NAME WHERE COLL_NAME = $collName ) {
-            *projectPath = *Row .COLL_PARENT_NAME
+            *projectPath = *Row.COLL_PARENT_NAME
         }
         # Find out the current max project collection number
         foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = *projectPath ) {

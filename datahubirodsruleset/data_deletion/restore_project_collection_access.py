@@ -11,6 +11,7 @@ from datahubirodsruleset.decorator import make, Output
 def restore_project_collection_access(ctx, user_project_collection):
     user_project = formatters.get_project_path_from_project_collection_path(user_project_collection)
 
+    # Make sure we don't restore a collection to a project that is pending-for-deletion
     deletion_state = ""
     for value in row_iterator(
         "META_COLL_ATTR_VALUE",
@@ -23,6 +24,8 @@ def restore_project_collection_access(ctx, user_project_collection):
     if deletion_state != "":
         ctx.callback.msiExit("-1", "Project deletion state is not valid {}".format(deletion_state))
         return
+
+    # TODO: Add pending-for-deletion check in collection
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",

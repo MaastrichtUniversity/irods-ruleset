@@ -41,6 +41,9 @@ def delete_project_data(ctx, user_project, commit):
 
         delete_collection_data(ctx, collection_path, commit)
 
+    # TODO: Remove project from /nlmumc/trash
+    # TODO: Update deletionState to deleted????
+
 
 def delete_collection_data(ctx, collection_path, commit):
     set_metadata_files_acl_to_read(ctx, collection_path, commit)
@@ -83,6 +86,7 @@ def delete_collection_data(ctx, collection_path, commit):
         else:
             ctx.callback.writeLine("stdout", "\t\t+ Keep data file\t\t\t\t: {}".format(data_path))
 
+    # TODO Update deletionState to deleted????
     count_project_collection_number_of_files(ctx, collection_path)
 
 

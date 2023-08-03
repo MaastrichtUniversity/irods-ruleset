@@ -87,6 +87,7 @@ def delete_collection_data(ctx, collection_path, commit):
             ctx.callback.writeLine("stdout", "\t\t+ Keep data file\t\t\t\t: {}".format(data_path))
 
     # TODO Update deletionState to deleted????
+    # TODO Recalculate colelction size and number of files (setCollectionSize.r?)
     count_project_collection_number_of_files(ctx, collection_path)
 
 

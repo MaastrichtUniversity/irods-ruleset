@@ -1,6 +1,6 @@
 from dhpythonirodsutils.enums import ProjectAVUs, DropzoneState
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
-
+import json
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path, format_human_bytes, format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING
@@ -50,6 +50,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
 
     if dropzone_type == "direct":
         ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
+        ingest_resource_host = json.loads(ingest_resource_host)["value"]
     else:
         ingest_resource = ctx.callback.getCollectionAVU(
             format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING

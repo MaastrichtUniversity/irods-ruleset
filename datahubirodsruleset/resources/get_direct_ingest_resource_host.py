@@ -14,6 +14,7 @@ def get_direct_ingest_resource_host(ctx):
     str:
         The direct ingest resource host
     """
+    direct_ingest_resource_host = ""
     # Obtain the resource host from the specified ingest resource
     for row in row_iterator(
         "RESC_LOC, META_RESC_ATTR_NAME, META_RESC_ATTR_VALUE",
@@ -22,5 +23,5 @@ def get_direct_ingest_resource_host(ctx):
         ctx.callback,
     ):
         direct_ingest_resource_host = row[0]
-
-    return direct_ingest_resource_host
+    return {"value": direct_ingest_resource_host}
+ 

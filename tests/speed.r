@@ -64,9 +64,9 @@ def map_access_level_name_to_role(access):
     role = ""
     if access == "own":
         role = "managers"
-    elif access == "modify object":
+    elif access == "modify_object":
         role = "contributors"
-    elif access == "read object":
+    elif access == "read_object":
         role = "viewers"
 
     return role

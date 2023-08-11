@@ -123,7 +123,7 @@ def get_contributors_for_project_or_dropzone(ctx, path):
     list[str]
         List of the project's contributors usernames.
     """
-    criteria = "'own', 'modify object'"
+    criteria = "'own', 'modify_object'"
     output = []
     for result in row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",

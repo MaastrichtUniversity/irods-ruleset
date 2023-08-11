@@ -127,7 +127,7 @@ class TestCollections:
             assert list_collections[collection_index]["creator"] == "jonathan.melius@maastrichtuniversity.nl"
             assert list_collections[collection_index]["numUserFiles"] == 0
             assert list_collections[collection_index]["numFiles"] == 4
-            assert list_collections[collection_index]["size"] == 550514.0
+            assert list_collections[collection_index]["size"] == 544610.0
             collection_id = self.collection_id[:-1] + str(collection_index + 1)
             assert list_collections[collection_index]["id"] == collection_id
             pid_suffix = "{}{}".format(self.project_id, collection_id)
@@ -151,7 +151,7 @@ class TestCollections:
         assert collection_detail["exporterState"] == "no-state-set"
 
         assert int(collection_detail["numFiles"]) == 4
-        assert int(collection_detail["byteSize"]) == 550514
+        assert int(collection_detail["byteSize"]) == 544610
 
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
@@ -205,7 +205,7 @@ class TestCollections:
             assert list_collections[collection_id][0]["relativeSize"] == 100.0
             assert list_collections[collection_id][0]["resourceId"].isnumeric()
             assert list_collections[collection_id][0]["resourceName"] == self.destination_resource
-            assert list_collections[collection_id][0]["size"] == "550514"
+            assert list_collections[collection_id][0]["size"] == "544610"
 
     def test_project_collection_acl_open_close_state(self):
         project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)

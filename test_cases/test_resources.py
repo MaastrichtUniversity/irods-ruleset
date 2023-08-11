@@ -112,7 +112,7 @@ class TestResources:
         )
         rule_output = subprocess.check_output(rule, shell=True, encoding="UTF-8")
         rule_parsed = json.loads(rule_output)
-        assert rule_parsed["sizePerResc"][0]["dataSize"] == "538"
+        assert rule_parsed["sizePerResc"][0]["dataSize"] == "532"
         assert rule_parsed["sizePerResc"][0]["resourceID"].isnumeric()
         subprocess.check_call(
             "iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(

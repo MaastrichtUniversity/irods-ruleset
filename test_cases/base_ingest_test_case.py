@@ -64,7 +64,7 @@ class BaseTestCaseIngest:
     collection_title = "collection_title"
     collection_id = "C000000001"
     collection_number_files = 8
-    collection_total_size = 63516274
+    collection_total_size = 63510370
 
     # iRODS seems to have 3 different ways/protocols to transfer data, depending on the file size:
     # * 0     < X < 4  MB

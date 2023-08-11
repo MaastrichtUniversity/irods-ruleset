@@ -171,7 +171,7 @@ class TestProjects:
 
         # Check that new user has been added to the collection ACL with read rights
         acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
         # TODO FIX Index
@@ -195,7 +195,7 @@ class TestProjects:
 
         # Check that new user has been added to the collection ACL with read rights
         acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
         # Update rights for new user to read on the project
@@ -214,7 +214,7 @@ class TestProjects:
 
         # Check that new user has been added to the collection ACL with read rights
         acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
         # Remove all new user right from the project
@@ -233,7 +233,7 @@ class TestProjects:
 
         # Check that new user has no rights anymore on the collection
         acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert self.new_user not in ret_acl
 
         # TODO FIX Index

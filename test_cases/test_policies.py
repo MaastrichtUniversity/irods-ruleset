@@ -74,16 +74,16 @@ class TestPolicies:
     def test_post_proc_for_modify_avu_metadata(self):
         """This tests whether toggling the 'enableDropzoneSharing' AVU sets properly the ACLs on the dropzones of the changed project"""
         run_ils = "ils -A /nlmumc/ingest/direct/{}".format(self.token)
-        first_ils_output = subprocess.check_output(run_ils, shell=True)
+        first_ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert self.manager2 in first_ils_output
         set_enable_sharing = "imeta set -C /nlmumc/projects/{project_id} enableDropzoneSharing {{value}}".format(
             project_id=self.project_id
         )
         subprocess.check_call(set_enable_sharing.format(value="false"), shell=True)
-        second_ils_output = subprocess.check_output(run_ils, shell=True)
+        second_ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert self.manager2 not in second_ils_output
         subprocess.check_call(set_enable_sharing.format(value="true"), shell=True)
-        third_ils_output = subprocess.check_output(run_ils, shell=True)
+        third_ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert self.manager2 in third_ils_output
 
     def test_post_proc_for_modify_access_control(self):
@@ -92,13 +92,13 @@ class TestPolicies:
             project_id=self.project_id
         )
         run_ils = "ils -A /nlmumc/ingest/direct/{}".format(self.token)
-        first_ils_output = subprocess.check_output(run_ils, shell=True)
+        first_ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert "dlinssen" not in first_ils_output
         subprocess.check_call(change_user_access_to_project.format(access="own"), shell=True)
-        second_ils_output = subprocess.check_output(run_ils, shell=True)
+        second_ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert "dlinssen" in second_ils_output
         subprocess.check_call(change_user_access_to_project.format(access="null"), shell=True)
-        third_ils_output = subprocess.check_output(run_ils, shell=True)
+        third_ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert "dlinssen" not in third_ils_output
 
     def test_pep_api_data_obj_put_post(self):
@@ -123,11 +123,11 @@ class TestPolicies:
         get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(
             collection_path
         )
-        size_ingested = subprocess.check_output(get_size_ingested, shell=True).rstrip("\n")
+        size_ingested = subprocess.check_output(get_size_ingested, shell=True, encoding="UTF-8").rstrip("\n")
         assert int(size_ingested) == 12521
         # Test metadata file ACL
         run_ils = "ils -A /nlmumc/ingest/direct/{}/instance.json".format(self.token)
-        ils_output = subprocess.check_output(run_ils, shell=True)
+        ils_output = subprocess.check_output(run_ils, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.manager1) in ils_output
         assert "{}#nlmumc:own".format(self.manager1) not in ils_output
         # Tear down
@@ -229,7 +229,7 @@ class TestPolicies:
         )
         subprocess.check_call(put_instance, shell=True)
         check_resource = "ils -l {}/instance.json".format(collection_path)
-        output = subprocess.check_output(check_resource, shell=True)
+        output = subprocess.check_output(check_resource, shell=True, encoding="UTF-8")
         assert self.destination_resource in output
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
 
@@ -254,7 +254,7 @@ class TestPolicies:
             subprocess.check_call(put_instance.format(path=""), shell=True)
         subprocess.check_call(put_instance.format(path=self.token + "/"), shell=True)
         output_ils = subprocess.check_output(
-            "ils -l /nlmumc/ingest/direct/{}/instance_test_3.json".format(self.token), shell=True
+            "ils -l /nlmumc/ingest/direct/{}/instance_test_3.json".format(self.token), shell=True, encoding="UTF-8"
         )
         assert "stagingResc01" in output_ils
         subprocess.check_call("irm -f /nlmumc/ingest/direct/{}/instance_test_3.json".format(self.token), shell=True)
@@ -273,7 +273,7 @@ class TestPolicies:
             subprocess.check_call(put_instance.format(path=""), shell=True)
         subprocess.check_call(put_instance.format(path=token + "/"), shell=True)
         output_ils = subprocess.check_output(
-            "ils -l /nlmumc/ingest/zones/{}/instance_test_3.json".format(token), shell=True
+            "ils -l /nlmumc/ingest/zones/{}/instance_test_3.json".format(token), shell=True, encoding="UTF-8"
         )
         assert "stagingResc01" in output_ils
 

@@ -152,14 +152,14 @@ class BaseTestCaseIngest:
         Check the project collection acl; assume that all members only have read access.
         """
         acl = "ils -A {}/{}".format(self.project_path, self.collection_id)
-        ret = subprocess.check_output(acl, shell=True)
+        ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "own" not in ret
-        assert "{}#nlmumc:read object".format(self.manager1) in ret
-        assert "{}#nlmumc:read object".format(self.manager2) in ret
+        assert "{}#nlmumc:read_object".format(self.manager1) in ret
+        assert "{}#nlmumc:read_object".format(self.manager2) in ret
 
     def test_project_acl(self):
         acl = "ils -A {}".format(self.project_path)
-        ret = subprocess.check_output(acl, shell=True)
+        ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager2) in ret
@@ -185,7 +185,7 @@ class BaseTestCaseIngest:
         query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
             self.project_path, self.collection_id
         )
-        ret = subprocess.check_output(query, shell=True)
+        ret = subprocess.check_output(query, shell=True, encoding="UTF-8")
         resources = ret.splitlines()
         assert len(resources) == 2
         assert self.destination_resource in resources[0]
@@ -226,10 +226,10 @@ class BaseTestCaseIngest:
         dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
 
         run_iquest = query.format(dropzone_path, "totalSize")
-        total_size = subprocess.check_output(run_iquest, shell=True).strip()
+        total_size = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
 
         run_iquest = query.format(dropzone_path, "numFiles")
-        num_files = subprocess.check_output(run_iquest, shell=True).strip()
+        num_files = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
 
         assert total_size == self.dropzone_total_size
         assert num_files == self.dropzone_num_files

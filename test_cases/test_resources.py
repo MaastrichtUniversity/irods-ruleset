@@ -93,7 +93,7 @@ class TestResources:
         )
         rule_output = subprocess.check_output(rule, shell=True)
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
-        iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
+        iquest_result = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
         for resc in rule_parsed["numFilesPerResc"]:
@@ -110,7 +110,7 @@ class TestResources:
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
             self.project_id, self.collection_id
         )
-        rule_output = subprocess.check_output(rule, shell=True)
+        rule_output = subprocess.check_output(rule, shell=True, encoding="UTF-8")
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["sizePerResc"][0]["dataSize"] == "538"
         assert rule_parsed["sizePerResc"][0]["resourceID"].isnumeric()
@@ -122,7 +122,7 @@ class TestResources:
         )
         rule_output = subprocess.check_output(rule, shell=True)
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
-        iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
+        iquest_result = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
         for resc in rule_parsed["sizePerResc"]:
@@ -157,11 +157,17 @@ class TestResources:
 
     def test_get_resource_avu(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""
-        rule_output = subprocess.check_output(rule.format("archiveDestResc", "", "true"), shell=True).strip()
+        rule_output = subprocess.check_output(
+            rule.format("archiveDestResc", "", "true"), shell=True, encoding="UTF-8"
+        ).strip()
         assert rule_output == "true"
-        rule_output = subprocess.check_output(rule.format("non_existing", "", "false"), shell=True).strip()
+        rule_output = subprocess.check_output(
+            rule.format("non_existing", "", "false"), shell=True, encoding="UTF-8"
+        ).strip()
         assert rule_output != "override"
-        rule_output = subprocess.check_output(rule.format("non_existing", "override", "false"), shell=True).strip()
+        rule_output = subprocess.check_output(
+            rule.format("non_existing", "override", "false"), shell=True, encoding="UTF-8"
+        ).strip()
         assert rule_output == "override"
         with pytest.raises(subprocess.CalledProcessError) as e_info:
             subprocess.check_call(rule.format("non_existing", "", "true"), shell=True)

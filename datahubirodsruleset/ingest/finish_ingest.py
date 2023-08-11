@@ -128,8 +128,9 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, ingest_resou
     # Close collection by making all access read only
     ctx.callback.closeProjectCollection(project_id, collection_id)
 
-    # Add metadata to elastic index
-    ctx.callback.index_add_single_project_collection_metadata(project_id, collection_id, "")
+    # TODO FIX Index
+    # # Add metadata to elastic index
+    # ctx.callback.index_add_single_project_collection_metadata(project_id, collection_id, "")
 
     if dropzone_type == "mounted":
         # Check if mounted dropzone is a legacy mounted dropzone

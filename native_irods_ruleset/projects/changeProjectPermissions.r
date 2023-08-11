@@ -100,8 +100,10 @@ IRULE_changeProjectPermissions(*project, *users){
         }
     }
 
-    # Update metadata for collection belonging to the project
-    index_update_single_project_metadata("*project")
+
+    # TODO FIX Index
+#     # Update metadata for collection belonging to the project
+#     index_update_single_project_metadata("*project")
 
 }
 

@@ -28,7 +28,7 @@ class BaseTestTapeArchiveDirect(BaseTestTapeArchive):
 
         with open(large_file_path, "wb") as large_file:
             num_chars = 262144001
-            large_file.write("0" * num_chars)
+            large_file.write(b"0" * num_chars)
         iput = "iput -R stagingResc01 {} {}".format(large_file_path, logical_path)
         subprocess.check_call(iput, shell=True)
 

@@ -36,11 +36,6 @@ def start_ingest(ctx, depositor, token, dropzone_type):
     title = pre_ingest_tasks["title"]
     validation_result = pre_ingest_tasks["validation_result"]
 
-    # Python2.7 default encoding is ASCII, so we need to enforce UFT-8 encoding
-    title = title.encode("utf-8")
-    depositor = depositor.encode("utf-8")
-    token = token.encode("utf-8")
-
     if formatters.format_string_to_boolean(validation_result):
         ctx.callback.msiWriteRodsLog(
             "Validation result OK {}. Setting status to '{}'".format(

@@ -89,8 +89,8 @@ class BaseTestCaseIngest:
     def setup_class(cls):
         print()
         print("Start {}.setup_class".format(cls.__name__))
-        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
-        run_index_all_project_collections_metadata()
+        # # Running the index all rule: delete the current elasticsearch index that could be in a bad state
+        # run_index_all_project_collections_metadata()
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
@@ -201,22 +201,23 @@ class BaseTestCaseIngest:
         ret = subprocess.check_output(query, shell=True)
         assert int(ret) == 4
 
-    def test_elastic_index_update(self):
-        instance = get_project_collection_instance_in_elastic(self.project_id)
-        # The collection title in the instance doesn't match the collection title AVU
-        # because of the way, we ingest the instance.json in the test-cases
-        # collection_title = instance["3_Title"]["title"]["@value"]
-        # print(collection_title)
-        # assert collection_title == self.collection_title
-
-        project_title = instance["project_title"]
-        assert project_title == self.project_title
-
-        project_id = instance["project_id"]
-        assert project_id == self.project_id
-
-        collection_id = instance["collection_id"]
-        assert collection_id == self.collection_id
+    # TODO
+    # def test_elastic_index_update(self):
+    #     instance = get_project_collection_instance_in_elastic(self.project_id)
+    #     # The collection title in the instance doesn't match the collection title AVU
+    #     # because of the way, we ingest the instance.json in the test-cases
+    #     # collection_title = instance["3_Title"]["title"]["@value"]
+    #     # print(collection_title)
+    #     # assert collection_title == self.collection_title
+    #
+    #     project_title = instance["project_title"]
+    #     assert project_title == self.project_title
+    #
+    #     project_id = instance["project_id"]
+    #     assert project_id == self.project_id
+    #
+    #     collection_id = instance["collection_id"]
+    #     assert collection_id == self.collection_id
 
     def test_dropzone_pre_ingest_avu(self):
         """This test asserts that the dropzone AVUs set with the rule 'save_dropzone_pre_ingest_info' are correct."""

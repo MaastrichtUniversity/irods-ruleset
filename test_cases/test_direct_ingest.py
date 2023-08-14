@@ -23,7 +23,7 @@ class BaseTestCaseDirectIngest(BaseTestCaseIngest):
             logical_path = "{}/{}".format(dropzone_path, filename)
 
             with open(file_path, "wb") as file_buffer:
-                file_buffer.write(b"0" * size)
+                file_buffer.write("0" * size)
             iput = "iput -R stagingResc01 {} {}".format(file_path, logical_path)
             subprocess.check_call(iput, shell=True)
 

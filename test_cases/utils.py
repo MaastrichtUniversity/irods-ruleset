@@ -20,7 +20,7 @@ def get_instance():
     response = requests.get(url)
 
     with open(TMP_INSTANCE_PATH, "w") as json_file:
-        json_file.write(response.text)
+        json_file.write(response.content)
 
 
 def get_schema():
@@ -31,7 +31,7 @@ def get_schema():
     response = requests.get(url)
 
     with open(TMP_SCHEMA_PATH, "w") as json_file:
-        json_file.write(response.text)
+        json_file.write(response.content)
 
 
 def add_metadata_files_to_dropzone(token, dropzone_type):

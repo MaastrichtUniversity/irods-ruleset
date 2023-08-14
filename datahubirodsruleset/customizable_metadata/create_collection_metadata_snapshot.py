@@ -113,8 +113,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     # Only set latest_version_number if everything went fine.
     ctx.callback.setCollectionAVU(project_collection_path, "latest_version_number", str(new_version))
 
-    # TODO FIX Index
-    # # Update the metadata in the elastic index
-    # ctx.callback.index_update_single_project_collection_metadata(project_id, collection_id, "", "")
+    # Update the metadata in the elastic index
+    ctx.callback.index_update_single_project_collection_metadata(project_id, collection_id, "", "")
 
     return pid_request_status

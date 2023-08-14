@@ -91,14 +91,14 @@ class BaseTestCaseDropZones:
 
         # Check that the depositor lost access on the dropzone collection (not all files)
         acl = "ils -A {}".format(dropzone_path)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         # 3 => dropzone collection, instance.json & schema.json
         assert ret_acl.count(self.depositor) == 3
 
         rule_remove_acl = '/rules/tests/run_test.sh -r remove_users_dropzone_acl -a "{}"'.format(dropzone_path)
         subprocess.check_call(rule_remove_acl, shell=True)
 
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         # 2 => instance.json & schema.json
         assert ret_acl.count(self.depositor) == 2
 
@@ -114,15 +114,13 @@ class BaseTestCaseDropZones:
 
         fail_safe = 100
         while fail_safe != 0:
-            field_value_return = subprocess.getoutput(run_iquest).strip()
+            field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
             if "CAT_NO_ROWS_FOUND" in field_value_return:
                 fail_safe = 0
             else:
                 fail_safe = fail_safe - 1
                 time.sleep(3)
 
-        # check_output -> If the exit code was non-zero it raises a CalledProcessError.
-        # So we use getoutput instead because CAT_NO_ROWS_FOUND exit with an exit-code 1
-        field_value_return = subprocess.getoutput(run_iquest).strip()
+        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
         # TODO Update CAT_NO_ROWS_FOUND check after 4.2.12
         assert "CAT_NO_ROWS_FOUND" in field_value_return

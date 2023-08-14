@@ -126,10 +126,10 @@ class TestUserGroups:
 
     def test_get_all_users_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
-        user_id = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_all_users_id"
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         user_ids = json.loads(ret)
         assert user_ids[user_id] == user_id
 
@@ -141,10 +141,10 @@ class TestUserGroups:
 
     def test_get_service_accounts_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.service_account)
-        user_id = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_service_accounts_id"
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         service_accounts = json.loads(ret)
         assert user_id in service_accounts
 
@@ -180,26 +180,26 @@ class TestUserGroups:
 
     def test_get_user_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
-        user_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = '/rules/tests/run_test.sh -r get_user_id -a "{}"'.format(self.manager1)
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         user_id_irule = json.loads(ret)
         assert int(user_id_iquest) == user_id_irule
 
     def test_get_user_internal_affiliation_status(self):
         rule = "/rules/tests/run_test.sh -r get_user_internal_affiliation_status -a {user}"
-        ret = subprocess.check_output(rule.format(user=self.manager1), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(user=self.manager1), shell=True)
         affiliation_status = json.loads(ret)
         assert affiliation_status
 
-        ret = subprocess.check_output(rule.format(user=self.manager2), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(user=self.manager2), shell=True)
         affiliation_status = json.loads(ret)
         assert not affiliation_status
 
     def test_get_user_metadata(self):
         rule = "/rules/tests/run_test.sh -r get_user_metadata -a {}".format(self.manager2)
-        ret = subprocess.check_output(rule.format(), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(), shell=True)
         user = json.loads(ret)
         assert user["givenName"] == "test_data_steward"
         assert user["familyName"] == "LastName"
@@ -302,17 +302,17 @@ class TestUserGroups:
 
     def test_get_user_or_group_by_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
-        user_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.group)
-        group_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_user_or_group_by_id -a {id}"
-        ret = subprocess.check_output(rule.format(id=user_id_iquest), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(id=user_id_iquest), shell=True)
         user = json.loads(ret)
         assert user["userName"] == self.manager1
 
-        ret = subprocess.check_output(rule.format(id=group_id_iquest), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(id=group_id_iquest), shell=True)
         group = json.loads(ret)
         assert group["groupName"] == self.group
 
@@ -323,7 +323,7 @@ class TestUserGroups:
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
             self.manager1, field_name
         )
-        field_value_return = subprocess.getoutput(run_iquest).strip()
+        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
         assert "CAT_NO_ROWS_FOUND" in field_value_return
 
         rule = '/rules/tests/run_test.sh -r set_user_attribute_value -a "{},{},{}"'.format(
@@ -334,7 +334,7 @@ class TestUserGroups:
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
             self.manager1, field_name
         )
-        field_value_return = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
         assert field_value_return == field_value
 
         imeta = "imeta rm -u {} {} {}".format(self.manager1, field_name, field_value)
@@ -366,12 +366,12 @@ class TestUserGroups:
 
     def test_get_users_in_group(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.group)
-        group_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsersInGroup.r \"*groupId='{}'\"".format(
             group_id_iquest
         )
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
         assert not check_if_key_value_in_dict_list(users, "userName", self.manager2)

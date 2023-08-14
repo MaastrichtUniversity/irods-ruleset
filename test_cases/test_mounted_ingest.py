@@ -19,7 +19,7 @@ class BaseTestCaseMountedIngest(BaseTestCaseIngest):
     @classmethod
     def add_data_to_dropzone(cls):
         run_iquest = 'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{}\'"'.format(cls.ingest_resource)
-        remote_resource = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        remote_resource = subprocess.check_output(run_iquest, shell=True).strip()
         rule = "irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeFiles.r '*dropzonePath=\"/mnt/ingest/zones/{}\"' '*remoteResource=\"{}\"'".format(
             cls.token, remote_resource
         )

@@ -149,10 +149,10 @@ class BaseTestTapeArchive:
         self.wait_for_active_processes(self.rule_status, active_processes)
 
         # Assert archive
-        output = subprocess.check_output(self.check_small_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_small_file_resource, shell=True)
         assert self.destination_resource in output
 
-        output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_large_file_resource, shell=True)
         assert "arcRescSURF01" in output
 
     def run_un_archive(self, un_archive_path):
@@ -170,10 +170,10 @@ class BaseTestTapeArchive:
         self.wait_for_active_processes(self.rule_status, active_processes)
 
         # Assert un-archive
-        output = subprocess.check_output(self.check_small_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_small_file_resource, shell=True)
         assert self.destination_resource in output
 
-        output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_large_file_resource, shell=True)
         assert self.destination_resource in output
 
     # endregion

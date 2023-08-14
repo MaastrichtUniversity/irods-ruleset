@@ -115,8 +115,8 @@ def gen_dict_extract(key, var):
     Iterator[str]
         List generator that return the values for the key given that occur in the input dict
     """
-    if hasattr(var, "items"):
-        for k, v in var.items():
+    if hasattr(var, "iteritems"):
+        for k, v in var.iteritems():
             if k == key:
                 yield v
             if isinstance(v, dict):

@@ -18,7 +18,7 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
 
     new_collection_title = "Test edit title"
     num_files = 6
-    byte_size = 816883
+    byte_size = 825739
 
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):

@@ -35,9 +35,9 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
     user_objects = []
 
     if formatters.format_string_to_boolean(inherited):
-        criteria = "'own', 'modify_object'"
+        criteria = "'own', 'modify object'"
     else:
-        criteria = "'modify_object'"
+        criteria = "'modify object'"
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",

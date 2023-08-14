@@ -27,9 +27,9 @@ IRULE_listProjectContributors(*project, *inherited, *result) {
     *userObjectsSize = 0;
 
     if ( *inherited == "true" ) {
-        *criteria = "'own', 'modify_object'"
+        *criteria = "'own', 'modify object'"
     } else {
-        *criteria = "'modify_object'"
+        *criteria = "'modify object'"
     }
 
     msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in (*criteria)  and COLL_NAME = '/nlmumc/projects/*project'", *Query);

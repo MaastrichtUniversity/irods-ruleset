@@ -30,7 +30,7 @@ IRULE_checkDropZoneACL(*user, *dropzoneType, *result) {
     }
 
     # Generate and execute SQL query
-    msiMakeGenQuery("count(COLL_NAME)", "COLL_NAME = '/nlmumc/ingest/*collectionToQuery' and COLL_ACCESS_NAME in ('own', 'modify_object') and COLL_ACCESS_USER_ID in (*groups)", *Query);
+    msiMakeGenQuery("count(COLL_NAME)", "COLL_NAME = '/nlmumc/ingest/*collectionToQuery' and COLL_ACCESS_NAME in ('own', 'modify object') and COLL_ACCESS_USER_ID in (*groups)", *Query);
     msiExecGenQuery(*Query, *QOut);
 
     # Check if SQL result was not empty and return true

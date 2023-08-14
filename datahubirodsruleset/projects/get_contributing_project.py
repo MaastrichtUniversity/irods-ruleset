@@ -47,7 +47,7 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
     # Get the collection size on each resources
     parameters = "COLL_NAME"
     conditions = (
-        "COLL_ACCESS_NAME in ('own', 'modify_object') "
+        "COLL_ACCESS_NAME in ('own', 'modify object') "
         "and COLL_ACCESS_USER_ID in ({}) "
         "and COLL_NAME = '{}'".format(groups, format_project_path(ctx, project_id))
     )

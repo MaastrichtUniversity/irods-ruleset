@@ -91,9 +91,7 @@ def index_project_collection(ctx, es, project_collection_path):
     ][2]
     project_access_info = json.loads(ctx.callback.get_project_user_members(project_id, "")["arguments"][1])
 
-    # For project title utf-8 decode is needed because getCollectionAVU is a native irods language rule
-    # and that output was not directly compatible with python 2.7
-    instance_object["project_title"] = project_title.decode("utf-8")
+    instance_object["project_title"] = project_title
     instance_object["project_id"] = project_id
     instance_object["collection_id"] = collection_id
     instance_object["user_access"] = project_access_info["users"]

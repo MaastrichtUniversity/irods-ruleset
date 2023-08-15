@@ -52,11 +52,10 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
             collection_title = tmp_instance["3_Title"]["title"]["@value"]
             assert collection_title == self.new_collection_title
 
-    # TODO FIX Index
-    # def test_elastic_index_update(self):
-    #     instance = get_project_collection_instance_in_elastic(self.project_id)
-    #     collection_title = instance["3_Title"]["title"]["@value"]
-    #     assert collection_title == self.new_collection_title
+    def test_elastic_index_update(self):
+        instance = get_project_collection_instance_in_elastic(self.project_id)
+        collection_title = instance["3_Title"]["title"]["@value"]
+        assert collection_title == self.new_collection_title
 
     def test_collection_schema_version(self):
         tmp_schema_path = "/tmp/tmp_schema.json"

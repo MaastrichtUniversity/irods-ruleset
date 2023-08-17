@@ -67,6 +67,15 @@ class TestChangeProjectPermissions:
         cls.token = create_dropzone(cls)
         add_metadata_files_to_direct_dropzone(cls.token)
         start_and_wait_for_ingest(cls)
+
+        cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
+
+        cls.change_project_permissions_rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
+
+        cls.rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
+            cls.project_path, cls.depositor
+        )
+
         print("End {}.setup_class".format(cls.__name__))
 
     @classmethod
@@ -81,28 +90,22 @@ class TestChangeProjectPermissions:
         remove_user(cls.data_steward)
         print("End {}.teardown_class".format(cls.__name__))
 
-    def test_change_project_permissions(self):
-        project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
-
-        change_project_permissions_rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
-
+    def test_new_user_has_no_access(self):
         # Check that new user has no rights on the project
-        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
-            self.project_path, self.depositor
-        )
-        ret = subprocess.check_output(rule_project_details, shell=True)
+        ret = subprocess.check_output(self.rule_project_details, shell=True)
         project = json.loads(ret)
         assert self.new_user not in project["managers"]["users"]
         assert self.new_user not in project["contributors"]["users"]
         assert self.new_user not in project["viewers"]["users"]
 
+    def test_new_user_has_own_access(self):
         # Add own rights for new user to the project
         subprocess.check_output(
-            change_project_permissions_rule.format(self.project_id, self.new_user, "own"), shell=True
+            self.change_project_permissions_rule.format(self.project_id, self.new_user, "own"), shell=True
         )
 
         # Check that new user is in project managers
-        ret = subprocess.check_output(rule_project_details, shell=True)
+        ret = subprocess.check_output(self.rule_project_details, shell=True)
         project = json.loads(ret)
         assert self.new_user in project["managers"]["users"]
         assert self.new_user not in project["contributors"]["users"]
@@ -111,7 +114,7 @@ class TestChangeProjectPermissions:
         wait_for_change_project_permissions_to_finish()
 
         # Check that new user has been added to the collection ACL with read rights
-        acl = "ils -A {}".format(project_collection_path)
+        acl = "ils -A {}".format(self.project_collection_path)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
@@ -119,13 +122,14 @@ class TestChangeProjectPermissions:
         instance = get_project_collection_instance_in_elastic(self.project_id)
         assert self.new_user in instance["user_access"]
 
+    def test_new_user_has_write_access(self):
         # Update rights for new user to write on the project
         subprocess.check_output(
-            change_project_permissions_rule.format(self.project_id, self.new_user, "write"), shell=True
+            self.change_project_permissions_rule.format(self.project_id, self.new_user, "write"), shell=True
         )
 
         # Check that new user is in project contributors
-        ret = subprocess.check_output(rule_project_details, shell=True)
+        ret = subprocess.check_output(self.rule_project_details, shell=True)
         project = json.loads(ret)
         assert self.new_user not in project["managers"]["users"]
         assert self.new_user in project["contributors"]["users"]
@@ -134,17 +138,18 @@ class TestChangeProjectPermissions:
         wait_for_change_project_permissions_to_finish()
 
         # Check that new user has been added to the collection ACL with read rights
-        acl = "ils -A {}".format(project_collection_path)
+        acl = "ils -A {}".format(self.project_collection_path)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
+    def test_new_user_has_read_access(self):
         # Update rights for new user to read on the project
         subprocess.check_output(
-            change_project_permissions_rule.format(self.project_id, self.new_user, "read"), shell=True
+            self.change_project_permissions_rule.format(self.project_id, self.new_user, "read"), shell=True
         )
 
         # Check that new user is in project viewers
-        ret = subprocess.check_output(rule_project_details, shell=True)
+        ret = subprocess.check_output(self.rule_project_details, shell=True)
         project = json.loads(ret)
         assert self.new_user not in project["managers"]["users"]
         assert self.new_user not in project["contributors"]["users"]
@@ -153,17 +158,18 @@ class TestChangeProjectPermissions:
         wait_for_change_project_permissions_to_finish()
 
         # Check that new user has been added to the collection ACL with read rights
-        acl = "ils -A {}".format(project_collection_path)
+        acl = "ils -A {}".format(self.project_collection_path)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
+    def test_new_user_has_access_removed(self):
         # Remove all new user right from the project
         subprocess.check_output(
-            change_project_permissions_rule.format(self.project_id, self.new_user, "remove"), shell=True
+            self.change_project_permissions_rule.format(self.project_id, self.new_user, "remove"), shell=True
         )
 
         # Check that new user has no rights anymore on the project
-        ret = subprocess.check_output(rule_project_details, shell=True)
+        ret = subprocess.check_output(self.rule_project_details, shell=True)
         project = json.loads(ret)
         assert self.new_user not in project["managers"]["users"]
         assert self.new_user not in project["contributors"]["users"]
@@ -172,13 +178,10 @@ class TestChangeProjectPermissions:
         wait_for_change_project_permissions_to_finish()
 
         # Check that new user has no rights anymore on the collection
-        acl = "ils -A {}".format(project_collection_path)
+        acl = "ils -A {}".format(self.project_collection_path)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert self.new_user not in ret_acl
 
         # Check that new user has been removed from the elastic search document
         instance = get_project_collection_instance_in_elastic(self.project_id)
-        print("instance")
-        print(instance["user_access"])
-        print(self.new_user)
         assert self.new_user not in instance["user_access"]

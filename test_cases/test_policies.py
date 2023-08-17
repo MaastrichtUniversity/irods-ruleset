@@ -12,6 +12,7 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     create_user,
     remove_user,
+    revert_latest_project_collection_number,
 )
 
 
@@ -130,8 +131,9 @@ class TestPolicies:
         ils_output = subprocess.check_output(run_ils, shell=True)
         assert "{}#nlmumc:read".format(self.manager1) in ils_output
         assert "{}#nlmumc:own".format(self.manager1) not in ils_output
-        # Tear down
+        # teardown
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_path)
 
     def test_pre_proc_for_modify_avu_metadata(self):
         """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
@@ -169,7 +171,7 @@ class TestPolicies:
             subprocess.check_call(check.format(test_manager, self.project_id, avu), shell=True)
             subprocess.check_call(check.format(financial_manager, self.project_id, financial_avu_to_check), shell=True)
 
-        # Teardown
+        # teardown
         remove_user(test_manager)
 
     def test_pre_proc_for_coll_create_first(self):
@@ -231,7 +233,9 @@ class TestPolicies:
         check_resource = "ils -l {}/instance.json".format(collection_path)
         output = subprocess.check_output(check_resource, shell=True)
         assert self.destination_resource in output
+        # teardown
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_path)
 
     def test_set_resc_scheme_for_create_second(self):
         """Test if a file put directly in a project is properly blocked"""

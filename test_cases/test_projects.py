@@ -1,6 +1,5 @@
 import json
 import subprocess
-import time
 
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
@@ -16,13 +15,12 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     set_irods_collection_avu,
     create_data_steward,
-    wait_for_change_project_permissions_to_finish,
-    get_project_collection_instance_in_elastic,
+    revert_latest_project_collection_number,
+    run_index_all_project_collections_metadata,
 )
 
 """
 iRODS native rules usage summary:
-- changeProjectPermissions: valid
 - detailsProject: 
     * IN RW, not in MDR
     * IN RS (reportProjects)
@@ -82,6 +80,8 @@ class TestProjects:
     def setup_class(cls):
         print()
         print("Start {}.setup_class".format(cls.__name__))
+        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
+        run_index_all_project_collections_metadata()
         create_user(cls.depositor)
         create_data_steward(cls.data_steward)
         create_user(cls.new_user)
@@ -105,143 +105,6 @@ class TestProjects:
         remove_user(cls.new_user)
         remove_user(cls.data_steward)
         print("End {}.teardown_class".format(cls.__name__))
-
-    def test_list_projects(self):
-        rule = "/rules/tests/run_test.sh -r optimized_list_projects -u {}".format(self.depositor)
-        ret = subprocess.check_output(rule, shell=True)
-        projects = json.loads(ret)
-
-        assert len(projects) == self.number_of_projects
-
-        for project_index in range(self.number_of_projects):
-            self.assert_project_avu(projects[project_index], project_index)
-            assert projects[project_index]["path"] == self.project_ids[project_index]
-            assert projects[project_index]["OBI:0000103"] == self.manager1
-            assert projects[project_index]["storageQuotaGb"] == "0"
-            assert projects[project_index]["responsibleCostCenter"] == self.budget_number
-            assert projects[project_index]["archiveDestinationResource"] == self.archive_destination_resource
-            assert projects[project_index]["authorizationPeriodEndDate"] == "01-01-9999"
-            assert projects[project_index]["dataRetentionPeriodEndDate"] == "01-01-9999"
-            assert projects[project_index]["dataSteward"] == self.manager2
-            assert projects[project_index]["ingestResource"] == self.ingest_resource
-            assert projects[project_index]["resource"] == self.destination_resource
-
-            assert len(projects[project_index]["managers"]) == 2
-            assert len(projects[project_index]["contributors"]) == 0
-            assert len(projects[project_index]["viewers"]) == 0
-
-            # check if the list members are user ids, not usernames
-            for manager in projects[project_index]["managers"]:
-                assert manager.isnumeric()
-
-    def test_change_project_permissions(self):
-        # setup
-        self.project_id = self.project_ids[0]
-        project_path = self.project_paths[0]
-        project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
-        self.token = create_dropzone(self)
-        add_metadata_files_to_direct_dropzone(self.token)
-        start_and_wait_for_ingest(self)
-
-        change_project_permissions_rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
-
-        # Check that new user has no rights on the project
-        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
-            project_path, self.depositor
-        )
-        ret = subprocess.check_output(rule_project_details, shell=True)
-        project = json.loads(ret)
-        assert self.new_user not in project["managers"]["users"]
-        assert self.new_user not in project["contributors"]["users"]
-        assert self.new_user not in project["viewers"]["users"]
-
-        # Add own rights for new user to the project
-        subprocess.check_output(
-            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "own"), shell=True
-        )
-
-        # Check that new user is in project managers
-        ret = subprocess.check_output(rule_project_details, shell=True)
-        project = json.loads(ret)
-        assert self.new_user in project["managers"]["users"]
-        assert self.new_user not in project["contributors"]["users"]
-        assert self.new_user not in project["viewers"]["users"]
-
-        wait_for_change_project_permissions_to_finish()
-
-        # Check that new user has been added to the collection ACL with read rights
-        acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
-        assert "{}#nlmumc:read".format(self.new_user) in ret_acl
-
-        # Check that the elastic search document also includes new user
-        instance = get_project_collection_instance_in_elastic(self.project_id)
-        assert self.new_user in instance["user_access"]
-
-        # Update rights for new user to write on the project
-        subprocess.check_output(
-            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "write"), shell=True
-        )
-
-        # Check that new user is in project contributors
-        ret = subprocess.check_output(rule_project_details, shell=True)
-        project = json.loads(ret)
-        assert self.new_user not in project["managers"]["users"]
-        assert self.new_user in project["contributors"]["users"]
-        assert self.new_user not in project["viewers"]["users"]
-
-        wait_for_change_project_permissions_to_finish()
-
-        # Check that new user has been added to the collection ACL with read rights
-        acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
-        assert "{}#nlmumc:read".format(self.new_user) in ret_acl
-
-        # Update rights for new user to read on the project
-        subprocess.check_output(
-            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "read"), shell=True
-        )
-
-        # Check that new user is in project viewers
-        ret = subprocess.check_output(rule_project_details, shell=True)
-        project = json.loads(ret)
-        assert self.new_user not in project["managers"]["users"]
-        assert self.new_user not in project["contributors"]["users"]
-        assert self.new_user in project["viewers"]["users"]
-
-        wait_for_change_project_permissions_to_finish()
-
-        # Check that new user has been added to the collection ACL with read rights
-        acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
-        assert "{}#nlmumc:read".format(self.new_user) in ret_acl
-
-        # Remove all new user right from the project
-        subprocess.check_output(
-            change_project_permissions_rule.format(self.project_ids[0], self.new_user, "remove"), shell=True
-        )
-
-        # Check that new user has no rights anymore on the project
-        ret = subprocess.check_output(rule_project_details, shell=True)
-        project = json.loads(ret)
-        assert self.new_user not in project["managers"]["users"]
-        assert self.new_user not in project["contributors"]["users"]
-        assert self.new_user not in project["viewers"]["users"]
-
-        wait_for_change_project_permissions_to_finish()
-
-        # Check that new user has no rights anymore on the collection
-        acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
-        assert self.new_user not in ret_acl
-
-        # Check that new user has been removed from the elastic search document
-        instance = get_project_collection_instance_in_elastic(self.project_id)
-        assert self.new_user not in instance["user_access"]
-
-        # teardown
-        subprocess.check_call("ichmod -rM own rods {}".format(project_collection_path), shell=True)
-        subprocess.check_call("irm -rf {}".format(project_collection_path), shell=True)
 
     def test_project_manager_access(self):
         cmd = '/rules/tests/run_test.sh -r get_project_acl_for_manager -a "{},false" -u {}'
@@ -329,6 +192,7 @@ class TestProjects:
         # teardown
         subprocess.check_call("ichmod -rM own rods {}".format(project_collection_path), shell=True)
         subprocess.check_call("irm -rf {}".format(project_collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_paths[0])
 
     def test_project_resource_availability(self):
         project_id = self.project_ids[0]

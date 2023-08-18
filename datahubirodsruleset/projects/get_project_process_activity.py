@@ -59,10 +59,10 @@ def check_active_processes_by_project_id(ctx, project_id):
     )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        name = result[0]
         process = result[1]
+        state = result[2]
         ctx.callback.msiWriteRodsLog(
-            "ERROR: Project '{}' has an active process '{}' with the value: '{}'".format(project_id, name, process), 0
+            "ERROR: Project '{}' has an active process '{}' with the value: '{}'".format(project_id, process, state), 0
         )
         return True
 

@@ -1,4 +1,5 @@
 # TODO explain the nosec
+import json
 from subprocess import check_call, CalledProcessError  # nosec
 
 import irods_types  # pylint: disable=import-error
@@ -248,3 +249,57 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
     except CalledProcessError as err:
         ctx.callback.msiWriteRodsLog("ERROR: icp: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
         ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))
+
+
+def apply_batch_collection_avu_operation(ctx, collection_path, operation_type, metadata):
+    """
+    Set all DataDeletionAttributes with the user input values.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    collection_path : str
+        The absolute path of iRODS collection
+    operation_type : str
+        'add' or 'remove'
+    metadata : dict
+        Contains the AVUs to apply. key: attribute; value: value
+    """
+    json_input = {
+        "entity_name": collection_path,
+        "entity_type": "collection",
+        "operations": create_metadata_operations(operation_type, metadata),
+    }
+    str_json_input = json.dumps(json_input)
+    ctx.msi_atomic_apply_metadata_operations(str_json_input, "")
+    message = "INFO: {} deletion metadata for {}".format(operation_type, collection_path)
+    ctx.callback.msiWriteRodsLog(message, 0)
+
+
+def create_metadata_operations(operation_type, metadata):
+    """
+    Format the metadata operations in the expected format of msi_atomic_apply_metadata_operations
+
+    Parameters
+    ----------
+    operation_type : str
+        'add' or 'remove'
+    metadata : dict
+        Contains the AVUs to apply. key: attribute; value: value
+
+    Returns
+    -------
+    list[dict]
+        The list of AVU operation in the expected format
+    """
+    operations = []
+    for attribute, value in metadata.items():
+        operation = {
+            "operation": operation_type,
+            "attribute": attribute,
+            "value": value,
+        }
+        operations.append(operation)
+
+    return operations

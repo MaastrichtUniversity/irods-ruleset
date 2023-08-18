@@ -1,6 +1,6 @@
 # /rules/tests/run_test.sh -r revoke_project_collection_user_access -a "/nlmumc/projects/P000000002/C000000001,reason42,description24"
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProcessAttribute, DataDeletionAttribute, DataDeletionState
+from dhpythonirodsutils.enums import DataDeletionAttribute, DataDeletionState
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import (
@@ -9,6 +9,7 @@ from datahubirodsruleset import (
     apply_batch_collection_avu_operation,
 )
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.projects.get_project_process_activity import check_active_processes_by_project_id
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -34,7 +35,10 @@ def revoke_project_collection_user_access(ctx, user_project_collection, reason, 
     project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)
 
-    check_active_processes_by_project_id(ctx, project_id)
+    if check_active_processes_by_project_id(ctx, project_id):
+        ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for project {}".format(project_id))
+        return
+
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
     set_collection_deletion_avus(ctx, user_project_collection, reason, description)
     revoke_project_collection_user_acl(ctx, user_project_collection)
@@ -124,33 +128,3 @@ def set_collection_deletion_avus(ctx, collection_path, reason, description):
         deletion_metadata[DataDeletionAttribute.DESCRIPTION.value] = description
 
     apply_batch_collection_avu_operation(ctx, collection_path, "add", deletion_metadata)
-
-
-def check_active_processes_by_project_id(ctx, project_id):
-    """
-    Query the input project for any active process (ARCHIVE, UNARCHIVE or EXPORTER). If one is found stop, the rule
-    execution.
-
-    Parameters
-    ----------
-    ctx : Context
-        Combined type of callback and rei struct.
-    project_id: str
-        e.g: P000000001
-    """
-    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
-        ProcessAttribute.ARCHIVE.value,
-        ProcessAttribute.UNARCHIVE.value,
-        ProcessAttribute.EXPORTER.value,
-        project_id,
-    )
-
-    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        name = result[0]
-        process = result[1]
-        ctx.callback.msiWriteRodsLog(
-            "ERROR: Project '{}' has an active process '{}' with the value: '{}'".format(project_id, name, process), 0
-        )
-        ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for project {}".format(project_id))
-        return

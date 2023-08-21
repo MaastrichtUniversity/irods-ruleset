@@ -9,8 +9,9 @@ from datahubirodsruleset import (
     apply_batch_collection_avu_operation,
 )
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.projects.get_project_process_activity import check_active_processes_by_project_id
-
+from datahubirodsruleset.collections.get_project_collection_process_activity import (
+    check_project_collection_process_activity,
+)
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def revoke_project_collection_user_access(ctx, user_project_collection, reason, description):
@@ -35,14 +36,15 @@ def revoke_project_collection_user_access(ctx, user_project_collection, reason, 
     project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)
 
-    if check_active_processes_by_project_id(ctx, project_id):
-        ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for project {}".format(project_id))
+    if check_project_collection_process_activity(ctx, user_project_collection):
+        ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for {}".format(user_project_collection))
         return
 
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
-    set_collection_deletion_avus(ctx, user_project_collection, reason, description)
+    set_collection_deletion_metadata(ctx, user_project_collection, reason, description)
     revoke_project_collection_user_acl(ctx, user_project_collection)
     delete_project_collection_metadata_from_index(ctx, project_id, collection_id)
+    ctx.callback.msiSetACL("default", "admin:read", "rods", user_project_collection)
 
 
 def delete_project_collection_metadata_from_index(ctx, project_id, collection_id):
@@ -104,7 +106,8 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
     ctx.callback.msiSetACL("recursive", "admin:read", "rods", user_project_collection)
 
 
-def set_collection_deletion_avus(ctx, collection_path, reason, description):
+
+def set_collection_deletion_metadata(ctx, collection_path, reason, description):
     """
     Set all DataDeletionAttributes with the user input values.
 

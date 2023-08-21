@@ -7,11 +7,13 @@ from datahubirodsruleset import (
     get_elastic_search_connection,
     COLLECTION_METADATA_INDEX,
     apply_batch_collection_avu_operation,
+    apply_batch_acl_operation,
 )
-from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.collections.get_project_collection_process_activity import (
     check_project_collection_process_activity,
 )
+from datahubirodsruleset.decorator import make, Output
+
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def revoke_project_collection_user_access(ctx, user_project_collection, reason, description):
@@ -87,6 +89,10 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
     user_project_collection: str
         Absolute iRODS collection path. e.g: /nlmumc/projects/P000000011/C000000001
     """
+    # The ACL changes on the project collection root are executed immediately
+    acl_operations = []
+    # But the recursive ACL changes are executed in the delay queue
+    delay_set_acl_rule_body = ""
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",
         "COLL_NAME = '{}'".format(user_project_collection),
@@ -100,11 +106,26 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
             account_type = account[1]
 
             if account_type != "rodsadmin" and "service-" not in account_name:
-                ctx.callback.msiSetACL("recursive", "admin:null", account_name, user_project_collection)
+                acl_operation = {
+                    "entity_name": account_name,
+                    "acl": "null",
+                }
+                acl_operations.append(acl_operation)
 
-    ctx.callback.msiWriteRodsLog("INFO: Users ACL revoked  for '{}'".format(user_project_collection), 0)
-    ctx.callback.msiSetACL("recursive", "admin:read", "rods", user_project_collection)
+                rule_body = "msiSetACL('recursive', 'admin:null', '{}', '{}');".format(
+                    account_name, user_project_collection
+                )
+                delay_set_acl_rule_body += rule_body
 
+    apply_batch_acl_operation(ctx, user_project_collection, acl_operations)
+    ctx.delayExec(
+        "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
+        delay_set_acl_rule_body,
+        "",
+    )
+    ctx.callback.msiWriteRodsLog(
+        "INFO: Users ACL revoked for project collection '{}'".format(user_project_collection), 0
+    )
 
 
 def set_collection_deletion_metadata(ctx, collection_path, reason, description):

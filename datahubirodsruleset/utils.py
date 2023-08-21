@@ -251,9 +251,32 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
         ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))
 
 
+def apply_batch_acl_operation(ctx, collection_path, acl_operations):
+    """
+    Apply the ACL operations in a single execution
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    collection_path : str
+        The absolute path of iRODS collection
+    acl_operations :  list[dict]
+        The list of ACL operations in the expected format
+    """
+    json_input = {
+        "logical_path": collection_path,
+        "operations": acl_operations,
+    }
+    str_json_input = json.dumps(json_input)
+    ctx.msi_atomic_apply_acl_operations(str_json_input, "")
+    message = "INFO: Apply batch ACL operations for {}".format(collection_path)
+    ctx.callback.msiWriteRodsLog(message, 0)
+
+
 def apply_batch_collection_avu_operation(ctx, collection_path, operation_type, metadata):
     """
-    Set all DataDeletionAttributes with the user input values.
+    Apply the AVU operations in a single execution
 
     Parameters
     ----------
@@ -291,7 +314,7 @@ def create_metadata_operations(operation_type, metadata):
     Returns
     -------
     list[dict]
-        The list of AVU operation in the expected format
+        The list of AVU operations in the expected format
     """
     operations = []
     for attribute, value in metadata.items():

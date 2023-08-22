@@ -203,6 +203,25 @@ def wait_for_change_project_permissions_to_finish():
     assert "changeProjectPermission" not in output
 
 
+def wait_for_revoke_project_collection_user_acl():
+    """
+    Wait for upto 90 seconds for the delay queue part of revoke_project_collection_user_acl to finish
+    Continue when completed in time
+    """
+    cmd = "iqstat -a | grep msiSetACL"
+    fail_safe = 30
+    output = ""
+    while fail_safe != 0:
+        try:
+            output = subprocess.check_output(cmd, shell=True)
+            fail_safe = fail_safe - 1
+            time.sleep(3)
+        except subprocess.CalledProcessError:
+            fail_safe = 0
+            output = ""
+    assert "msiSetACL" not in output
+
+
 def does_path_exist(absolute_path):
     run_ilocate = "ilocate {}".format(absolute_path)
     try:

@@ -8,7 +8,7 @@ from datahubirodsruleset.decorator import make, Output
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
 def get_project_collection_process_activity(ctx, project_collection_path):
     """
-    Query for any process activity linked to the input project.
+    Query for any process activity linked to the input project collection.
 
     Parameters
     ----------

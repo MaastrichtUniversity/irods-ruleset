@@ -33,7 +33,7 @@ def revoke_project_collection_user_access(ctx, user_project_collection, reason, 
     reason : str
         The reason of the deletion
     description : str
-        Optional, the description text for the deletion
+        An optional description providing additional details, empty string if not provided by the form/user
     """
     project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)

@@ -1,5 +1,7 @@
 import subprocess
 import pytest
+from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ProjectAVUs
 
 from test_cases.utils import (
     TMP_INSTANCE_PATH,
@@ -63,12 +65,32 @@ class TestPolicies:
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_post_proc_for_coll_create(self):
-        """This tests whether the 'latest_project_number' is properly incremented when creating a project"""
+        """
+        This tests whether the 'latest_project_number' and 'latestProjectCollectionNumber' are properly incremented
+        when creating a project and a project collection.
+        """
+        # Project
         run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
         current_value = subprocess.check_output(run_iquest, shell=True).strip()
         project = create_project(self)
         new_value = subprocess.check_output(run_iquest, shell=True).strip()
         assert int(current_value) + 1 == int(new_value)
+
+        # Project collection
+        run_iquest = (
+            'iquest "%s" "SELECT META_COLL_ATTR_VALUE '
+            "WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}' \"".format(
+                project["project_path"], ProjectAVUs.LATEST_PROJECT_COLLECTION_NUMBER.value
+            )
+        )
+        current_value = subprocess.check_output(run_iquest, shell=True).strip()
+        collection_path = formatters.format_project_collection_path(project["project_id"], "C000000001")
+        create_collection = "imkdir {}".format(collection_path)
+        subprocess.check_call(create_collection, shell=True)
+        new_value = subprocess.check_output(run_iquest, shell=True).strip()
+        assert int(current_value) + 1 == int(new_value)
+
+        # teardown
         remove_project(project["project_path"])
         revert_latest_project_number()
 

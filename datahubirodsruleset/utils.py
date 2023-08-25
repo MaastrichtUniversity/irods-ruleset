@@ -27,7 +27,7 @@ def test_rule_output(ctx, rule_name, args):
     # The rule expect some arguments, and test_rule_output expect them as a csv string
     else:
         args = args.split(",")
-        # we need to add a empty string as the last index for the output argument.
+        # we need to add an empty string as the last index for the output argument.
         args.append("")
         output = getattr(ctx.callback, rule_name)(*args)
         ctx.callback.writeLine("stdout", str(output["arguments"][len(args) - 1]))
@@ -296,7 +296,7 @@ def apply_batch_collection_avu_operation(ctx, collection_path, operation_type, m
     }
     str_json_input = json.dumps(json_input)
     ctx.msi_atomic_apply_metadata_operations(str_json_input, "")
-    message = "INFO: {} deletion metadata for {}".format(operation_type, collection_path)
+    message = "INFO: {} deletion metadata for {}".format(operation_type.capitalize(), collection_path)
     ctx.callback.msiWriteRodsLog(message, 0)
 
 

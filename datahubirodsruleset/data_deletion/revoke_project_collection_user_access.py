@@ -43,7 +43,7 @@ def revoke_project_collection_user_access(ctx, user_project_collection, reason, 
         return
 
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
-    set_collection_deletion_metadata(ctx, user_project_collection, reason, description)
+    apply_collection_deletion_metadata(ctx, user_project_collection, reason, description, "add")
     revoke_project_collection_user_acl(ctx, user_project_collection)
     delete_project_collection_metadata_from_index(ctx, project_id, collection_id)
     ctx.callback.msiSetACL("default", "admin:read", "rods", user_project_collection)
@@ -128,7 +128,7 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
     )
 
 
-def set_collection_deletion_metadata(ctx, collection_path, reason, description):
+def apply_collection_deletion_metadata(ctx, collection_path, reason, description, operation_type):
     """
     Set all DataDeletionAttributes with the user input values.
 
@@ -142,8 +142,9 @@ def set_collection_deletion_metadata(ctx, collection_path, reason, description):
         The reason of the deletion
     description : str
         Optional, the description text for the deletion
+    operation_type: str
+        expected values: "add" or "remove"
     """
-
     deletion_metadata = {
         DataDeletionAttribute.REASON.value: reason,
         DataDeletionAttribute.STATE.value: DataDeletionState.PENDING.value,
@@ -151,4 +152,4 @@ def set_collection_deletion_metadata(ctx, collection_path, reason, description):
     if description:
         deletion_metadata[DataDeletionAttribute.DESCRIPTION.value] = description
 
-    apply_batch_collection_avu_operation(ctx, collection_path, "add", deletion_metadata)
+    apply_batch_collection_avu_operation(ctx, collection_path, operation_type, deletion_metadata)

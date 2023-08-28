@@ -17,6 +17,9 @@ COLLECTION_METADATA_INDEX = "collection_metadata"
 FALSE_AS_STRING = "false"
 TRUE_AS_STRING = "true"
 
+IRODS_ZONE_BASE_PATH = "/nlmumc"
+IRODS_BACKUP_ACL_BASE_PATH = "/nlmumc/backupACL"
+
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STDOUT)
 def test_rule_output(ctx, rule_name, args):
@@ -326,3 +329,29 @@ def create_metadata_operations(operation_type, metadata):
         operations.append(operation)
 
     return operations
+
+
+def map_access_name_to_access_level(access_name):
+    """
+    The returns value from ACL queries (COLL_ACCESS_NAME) are access names.
+    But msiSetACL or ichmod expect access type as arguments.
+    This function converts "access name" to "access type"
+
+    Parameters
+    ----------
+    access_name: str
+        expected values: "own", "modify object" & "read object"
+
+    Returns
+    -------
+    str
+        The equivalent access type value: "own", "write" & "read"
+    """
+
+    user_access = access_name
+    if access_name == "modify object":
+        user_access = "write"
+    elif access_name == "read object":
+        user_access = "read"
+
+    return user_access

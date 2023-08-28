@@ -68,7 +68,7 @@ def check_project_collection_restoration_condition(ctx, user_project, user_proje
     )["arguments"][2]
 
     if collection_state != DataDeletionState.PENDING.value:
-        ctx.callback.msiExit("-1", "Project collection deletion state is not valid {}".format(project_state))
+        ctx.callback.msiExit("-1", "Project collection deletion state is not valid {}".format(user_project_collection))
         return
 
 

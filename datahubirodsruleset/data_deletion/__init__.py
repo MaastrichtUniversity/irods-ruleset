@@ -6,7 +6,8 @@ from datahubirodsruleset.data_deletion.restore_project_user_access import restor
 from datahubirodsruleset.data_deletion.restore_project_collection_user_access import (
     restore_project_collection_user_access,
 )
-from datahubirodsruleset.data_deletion.revoke_project_user_access import revoke_project_user_access
+from datahubirodsruleset.data_deletion.restore_project_user_access import restore_project_user_access
 from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import (
     revoke_project_collection_user_access,
 )
+from datahubirodsruleset.data_deletion.revoke_project_user_access import revoke_project_user_access

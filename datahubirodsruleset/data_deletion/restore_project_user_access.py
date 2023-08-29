@@ -1,4 +1,5 @@
 # /rules/tests/run_test.sh -r restore_project_user_access -a "/nlmumc/projects/P000000011"
+from dhpythonirodsutils.enums import DataDeletionState
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import (
@@ -7,7 +8,10 @@ from datahubirodsruleset import (
     IRODS_ZONE_BASE_PATH,
     apply_batch_acl_operation,
 )
-from datahubirodsruleset.data_deletion.restore_project_collection_user_access import remove_collection_deletion_metadata
+from datahubirodsruleset.data_deletion.restore_project_collection_user_access import (
+    remove_collection_deletion_metadata,
+    check_collection_delete_data_state,
+)
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -27,6 +31,8 @@ def restore_project_user_access(ctx, user_project_path):
         The absolute path of the project
     """
     backup_project_path = IRODS_BACKUP_ACL_BASE_PATH + user_project_path.replace(IRODS_ZONE_BASE_PATH, "")
+
+    check_collection_delete_data_state(ctx, user_project_path, DataDeletionState.PENDING.value)
 
     restore_project_user_acl(ctx, user_project_path, backup_project_path)
 

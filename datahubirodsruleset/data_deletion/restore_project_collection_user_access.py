@@ -1,4 +1,6 @@
 # /rules/tests/run_test.sh -r restore_project_collection_user_access -a "/nlmumc/projects/P000000002/C000000001"
+import json
+
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import DataDeletionAttribute, DataDeletionState
 from genquery import row_iterator, AS_LIST
@@ -37,7 +39,7 @@ def restore_project_collection_user_access(ctx, user_project_collection):
 
 def check_project_collection_restoration_condition(ctx, user_project, user_project_collection):
     """
-    Check if the AVUs states conditions are met. Otherwise, stop the rule execution and raise an exception.
+    Check if the project collection has the AVUs states are in the expected states.
 
     Parameters
     ----------
@@ -54,21 +56,42 @@ def check_project_collection_restoration_condition(ctx, user_project, user_proje
         Raise an exception if the conditions are not met. (exit status code "-1" == UnknowniRODSError)
     """
     # Check the parent project of the collection is still 'active'
-    project_state = ctx.callback.getCollectionAVU(
-        user_project, DataDeletionAttribute.STATE.value, "", "", FALSE_AS_STRING
-    )["arguments"][2]
-
-    if project_state != "":
-        ctx.callback.msiExit("-1", "Project deletion state is not valid {}".format(project_state))
-        return
+    check_collection_delete_data_state(ctx, user_project, "")
 
     # Check the project collection has the state (='pending-for-deletion')
-    collection_state = ctx.callback.getCollectionAVU(
-        user_project_collection, DataDeletionAttribute.STATE.value, "", "", FALSE_AS_STRING
-    )["arguments"][2]
+    check_collection_delete_data_state(ctx, user_project_collection, DataDeletionState.PENDING.value)
 
-    if collection_state != DataDeletionState.PENDING.value:
-        ctx.callback.msiExit("-1", "Project collection deletion state is not valid {}".format(user_project_collection))
+
+def check_collection_delete_data_state(ctx, collection_path, value_to_check):
+    """
+    Check if the AVU state conditions are met. Otherwise, stop the rule execution and raise an exception.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    collection_path: str
+        The absolute path of the iRODS collection
+    value_to_check : str
+        The value to compare against the attribute value
+
+    Raises
+    -------
+    irods.exception.UnknowniRODSError
+        Raise an exception if the conditions are not met. (exit status code "-1" == UnknowniRODSError)
+    """
+    output = ctx.callback.get_collection_attribute_value(collection_path, DataDeletionAttribute.STATE.value, "result")[
+        "arguments"
+    ][2]
+    value = json.loads(output)["value"]
+
+    if value != value_to_check:
+        ctx.callback.msiExit(
+            "-1",
+            "Deletion state is not valid for: {}; Got '{}', but expected '{}'".format(
+                collection_path, value, value_to_check
+            ),
+        )
         return
 
 

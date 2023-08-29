@@ -1,6 +1,4 @@
 # /rules/tests/run_test.sh -r delete_project_collection_data -a "/nlmumc/projects/P000000008/C000000001,false"
-import json
-
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute
 from dhpythonirodsutils.exceptions import ValidationError
@@ -9,6 +7,7 @@ from dhpythonirodsutils.validators import validate_project_collection_path
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import FALSE_AS_STRING
+from datahubirodsruleset.data_deletion.restore_project_collection_user_access import check_collection_delete_data_state
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -31,14 +30,7 @@ def delete_project_collection_data(ctx, user_project_collection, commit):
     ctx.callback.writeLine("stdout", "")
     ctx.callback.writeLine("stdout", "* Running delete_project_collection_data with commit mode as '{}'".format(commit))
 
-    output = ctx.callback.get_collection_attribute_value(user_project_collection, "deletionState", "result")[
-        "arguments"
-    ][2]
-    collection_state = json.loads(output)["value"]
-
-    if collection_state != DataDeletionState.PENDING.value:
-        ctx.callback.msiExit("-1", "Project collection deletion state is not valid {}".format(user_project_collection))
-        return
+    check_collection_delete_data_state(ctx, user_project_collection, DataDeletionState.PENDING.value)
 
     ctx.callback.writeLine("stdout", "* Update ACL of rods for {}".format(user_project_collection))
     if commit:
@@ -73,6 +65,7 @@ def delete_collection_data(ctx, project_collection_path, commit):
     check_number_of_files_left = total_number_of_files == metadata_files_count
     ctx.callback.writeLine("stdout", "\t\t> Check number of files left\t\t\t: {}".format(check_number_of_files_left))
 
+    # Cleanup
     if commit and check_number_of_files_left:
         ctx.callback.setCollectionAVU(
             project_collection_path, DataDeletionAttribute.STATE.value, DataDeletionState.DELETED.value

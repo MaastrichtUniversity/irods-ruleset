@@ -73,6 +73,11 @@ def delete_collection_data(ctx, project_collection_path, commit):
         project_id = formatters.get_project_id_from_project_collection_path(project_collection_path)
         collection_id = formatters.get_collection_id_from_project_collection_path(project_collection_path)
         ctx.callback.setCollectionSize(project_id, collection_id, FALSE_AS_STRING, FALSE_AS_STRING)
+    elif commit and not check_number_of_files_left:
+        ctx.callback.msiExit(
+            "-1",
+            "Check of the number of files left after deletion failed for: {}".format(project_collection_path),
+        )
 
     ctx.callback.msiSetACL("recursive", "admin:read", "rods", project_collection_path)
 

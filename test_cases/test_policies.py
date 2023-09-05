@@ -1,5 +1,7 @@
 import subprocess
 import pytest
+from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ProjectAVUs
 
 from test_cases.utils import (
     TMP_INSTANCE_PATH,
@@ -12,6 +14,7 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     create_user,
     remove_user,
+    revert_latest_project_collection_number,
 )
 
 
@@ -62,12 +65,32 @@ class TestPolicies:
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_post_proc_for_coll_create(self):
-        """This tests whether the 'latest_project_number' is properly incremented when creating a project"""
+        """
+        This tests whether the 'latest_project_number' and 'latestProjectCollectionNumber' are properly incremented
+        when creating a project and a project collection.
+        """
+        # Project
         run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
         current_value = subprocess.check_output(run_iquest, shell=True).strip()
         project = create_project(self)
         new_value = subprocess.check_output(run_iquest, shell=True).strip()
         assert int(current_value) + 1 == int(new_value)
+
+        # Project collection
+        run_iquest = (
+            'iquest "%s" "SELECT META_COLL_ATTR_VALUE '
+            "WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}' \"".format(
+                project["project_path"], ProjectAVUs.LATEST_PROJECT_COLLECTION_NUMBER.value
+            )
+        )
+        current_value = subprocess.check_output(run_iquest, shell=True).strip()
+        collection_path = formatters.format_project_collection_path(project["project_id"], "C000000001")
+        create_collection = "imkdir {}".format(collection_path)
+        subprocess.check_call(create_collection, shell=True)
+        new_value = subprocess.check_output(run_iquest, shell=True).strip()
+        assert int(current_value) + 1 == int(new_value)
+
+        # teardown
         remove_project(project["project_path"])
         revert_latest_project_number()
 
@@ -130,8 +153,9 @@ class TestPolicies:
         ils_output = subprocess.check_output(run_ils, shell=True)
         assert "{}#nlmumc:read".format(self.manager1) in ils_output
         assert "{}#nlmumc:own".format(self.manager1) not in ils_output
-        # Tear down
+        # teardown
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_path)
 
     def test_pre_proc_for_modify_avu_metadata(self):
         """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
@@ -169,7 +193,7 @@ class TestPolicies:
             subprocess.check_call(check.format(test_manager, self.project_id, avu), shell=True)
             subprocess.check_call(check.format(financial_manager, self.project_id, financial_avu_to_check), shell=True)
 
-        # Teardown
+        # teardown
         remove_user(test_manager)
 
     def test_pre_proc_for_coll_create_first(self):
@@ -231,7 +255,9 @@ class TestPolicies:
         check_resource = "ils -l {}/instance.json".format(collection_path)
         output = subprocess.check_output(check_resource, shell=True)
         assert self.destination_resource in output
+        # teardown
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_path)
 
     def test_set_resc_scheme_for_create_second(self):
         """Test if a file put directly in a project is properly blocked"""

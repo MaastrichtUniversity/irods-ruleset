@@ -16,17 +16,16 @@ from datahubirodsruleset.projects.get_project_process_activity import (
 )
 
 
-# TODO - POC rule
-#   Refactor this rule during DHS-3024
-
-
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def revoke_project_user_access(ctx, user_project, reason, description):
     """
      After a user request a project deletion, all users accesses need to be revoked immediately. Including all
      collections that have not yet been deleted.
      Additionally:
-      * Check if there are any ongoing process linked to the project. If true, stop the rule execution
+      * Check if there are any ongoing process linked to the project, this includes dropzones and pending deletions.
+       If true, stop the rule execution
+      * The 'deletion metadata' need to be set as AVUs on the project
+      * Backup of ACL is create
 
      Parameters
      ----------
@@ -43,7 +42,6 @@ def revoke_project_user_access(ctx, user_project, reason, description):
     has_active_drop_zones = check_active_dropzone_by_project_id(ctx, project_id)
     has_active_processes = check_project_process_activity(ctx, project_id)
     has_pending_deletions = check_pending_deletions_by_project_id(ctx, project_id)
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" + str(has_pending_deletions) + "XXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
     if has_active_drop_zones or has_active_processes or has_pending_deletions:
         ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for project {}".format(user_project))
@@ -80,12 +78,13 @@ def revoke_project_user_access(ctx, user_project, reason, description):
 
     ctx.callback.msiWriteRodsLog("INFO: Revoke users ACL for collections in project '{}'".format(user_project), 0)
     for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(user_project), AS_LIST, ctx.callback):
+        project_collection_path = proj_coll[0]
         # For already deleted collection we do not revoke anything, this is already done
-        output = ctx.callback.get_collection_attribute_value(user_project, DataDeletionAttribute.STATE.value, "result")[
-            "arguments"
-        ][2]
-        value = json.loads(output)["value"]
-        if value == DataDeletionState.DELETED.value:
+        output = ctx.callback.get_collection_attribute_value(
+            project_collection_path, DataDeletionAttribute.STATE.value, "result"
+        )["arguments"][2]
+        data_deletion_status = json.loads(output)["value"]
+        if data_deletion_status == DataDeletionState.DELETED.value:
             continue
 
-        ctx.revoke_project_collection_user_access(proj_coll[0], "deletionReason", "deletionReasonDescription")
+        ctx.revoke_project_collection_user_access(project_collection_path, reason, description)

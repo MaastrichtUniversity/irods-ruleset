@@ -1,4 +1,5 @@
 # /rules/tests/run_test.sh -r get_project_process_activity -a "P000000002,false"
+from dhpythonirodsutils.enums import DataDeletionAttribute, DataDeletionState
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import TRUE_AS_STRING
@@ -80,6 +81,23 @@ def check_active_dropzone_by_project_id(ctx, project_id):
         token = result[0]
         ctx.callback.msiWriteRodsLog("ERROR: Project '{}' has an active dropzone '{}'".format(project_id, token), 0)
 
+        return True
+
+    return False
+
+
+def check_pending_deletions_by_project_id(ctx, project_id):
+    parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
+    conditions = "META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
+        DataDeletionAttribute.STATE.value,
+        DataDeletionState.PENDING.value,
+        project_id,
+    )
+
+    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        name = result[0]
+        process = result[1]
+        print("{} -> {}".format(name, process))
         return True
 
     return False

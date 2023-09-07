@@ -7,7 +7,6 @@ from test_cases.utils import (
     TMP_INSTANCE_PATH,
     get_instance,
     remove_project,
-    revert_latest_project_number,
     remove_dropzone,
     create_project,
     create_dropzone,
@@ -61,7 +60,6 @@ class TestPolicies:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_post_proc_for_coll_create(self):
@@ -92,7 +90,6 @@ class TestPolicies:
 
         # teardown
         remove_project(project["project_path"])
-        revert_latest_project_number()
 
     def test_post_proc_for_modify_avu_metadata(self):
         """This tests whether toggling the 'enableDropzoneSharing' AVU sets properly the ACLs on the dropzones of the changed project"""

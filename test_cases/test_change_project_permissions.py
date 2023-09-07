@@ -6,7 +6,6 @@ from dhpythonirodsutils import formatters
 from test_cases.utils import (
     create_project,
     remove_project,
-    revert_latest_project_number,
     create_user,
     remove_user,
     create_dropzone,
@@ -83,7 +82,6 @@ class TestChangeProjectPermissions:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
 
         remove_user(cls.depositor)
         remove_user(cls.new_user)

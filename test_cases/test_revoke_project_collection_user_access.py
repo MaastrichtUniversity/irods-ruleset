@@ -12,7 +12,6 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
     remove_project,
-    revert_latest_project_number,
     run_index_all_project_collections_metadata,
     wait_for_revoke_project_collection_user_acl,
     get_project_collection_instance_in_elastic,
@@ -75,7 +74,6 @@ class BaseRevokeProjectCollectionUserAccess:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     @classmethod

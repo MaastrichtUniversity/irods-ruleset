@@ -11,7 +11,6 @@ from test_cases.utils import (
     create_project,
     start_and_wait_for_ingest,
     remove_project,
-    revert_latest_project_number,
     create_data_steward,
     create_user,
     remove_user,
@@ -93,7 +92,6 @@ class BaseTestTapeArchive:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         remove_user(cls.manager1)
         remove_user(cls.manager2)
         print("End {}.teardown_class".format(cls.__name__))

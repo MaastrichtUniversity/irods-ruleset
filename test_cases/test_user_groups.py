@@ -6,7 +6,6 @@ from dhpythonirodsutils.enums import ProcessState, ProcessType
 
 from test_cases.utils import (
     remove_project,
-    revert_latest_project_number,
     create_project,
     create_user,
     create_data_steward,
@@ -116,7 +115,6 @@ class TestUserGroups:
     def teardown_class(cls):
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         remove_user_from_group("DH-project-admins", cls.manager1)
         remove_user(cls.manager1)
         remove_user(cls.manager2)

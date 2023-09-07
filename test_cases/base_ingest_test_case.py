@@ -4,7 +4,6 @@ import subprocess
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
-    revert_latest_project_number,
     remove_project,
     create_dropzone,
     create_project,
@@ -105,7 +104,6 @@ class BaseTestCaseIngest:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_collection_avu(self):

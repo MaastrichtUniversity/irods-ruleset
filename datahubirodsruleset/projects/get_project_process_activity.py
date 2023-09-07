@@ -1,14 +1,13 @@
-# /rules/tests/run_test.sh -r get_project_process_activity -a "P000000002,false"
+# /rules/tests/run_test.sh -r get_project_process_activity -a "P000000002"
 from dhpythonirodsutils.enums import DataDeletionAttribute, DataDeletionState
 from genquery import row_iterator, AS_LIST
 
-from datahubirodsruleset import TRUE_AS_STRING
 from datahubirodsruleset.collections.get_project_collection_process_activity import check_collection_active_process
 from datahubirodsruleset.decorator import make, Output
 
 
-@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
-def get_project_process_activity(ctx, project_id, query_dropzone_activity):
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
+def get_project_process_activity(ctx, project_id):
     """
     Query for any process activity linked to the input project.
 
@@ -18,20 +17,19 @@ def get_project_process_activity(ctx, project_id, query_dropzone_activity):
         Combined type of callback and rei struct.
     project_id: str
         e.g: P000000001
-    query_dropzone_activity: str
-        If "true", check if any active dropzone is linked to the input project
 
     Returns
     -------
-    bool
-        True, if there is any active process linked to the project.
+    dict
+        Key: str, describe the activity. Value: bool, True means active.
     """
-    project_activity = check_project_process_activity(ctx, project_id)
-    dropzone_activity = False
-    if query_dropzone_activity == TRUE_AS_STRING:
-        dropzone_activity = check_active_dropzone_by_project_id(ctx, project_id)
+    project_activity = {
+        "has_active_drop_zones": check_active_dropzone_by_project_id(ctx, project_id),
+        "has_active_processes": check_project_process_activity(ctx, project_id),
+        "has_pending_deletions": check_pending_deletions_by_project_id(ctx, project_id),
+    }
 
-    return project_activity or dropzone_activity
+    return project_activity
 
 
 def check_project_process_activity(ctx, project_id):
@@ -95,9 +93,13 @@ def check_pending_deletions_by_project_id(ctx, project_id):
     )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        name = result[0]
-        process = result[1]
-        print("{} -> {}".format(name, process))
+        collection_path = result[0]
+        attribute = result[1]
+        value = result[1]
+        ctx.callback.msiWriteRodsLog(
+            "ERROR: Project '{}' has '{}' with state: {}:{}".format(project_id, collection_path, attribute, value), 0
+        )
+
         return True
 
     return False

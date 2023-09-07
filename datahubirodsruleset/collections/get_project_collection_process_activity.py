@@ -105,6 +105,11 @@ def check_active_dropzone_by_project_collection_path(ctx, project_collection_pat
 
     for drop_zone in drop_zones:
         if drop_zone["project"] == project_id and drop_zone["destination"] == collection_id:
+            message = "ERROR: '{}' has an active dropzone '{}' with state: '{}'".format(
+                project_collection_path, drop_zone["token"], drop_zone["state"]
+            )
+            ctx.callback.msiWriteRodsLog(message, 0)
+
             return True
 
     return False

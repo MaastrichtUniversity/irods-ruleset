@@ -23,10 +23,17 @@ def get_project_process_activity(ctx, project_id):
     dict
         Key: str, describe the activity. Value: bool, True means active.
     """
+    has_active_drop_zones = check_active_dropzone_by_project_id(ctx, project_id)
+    has_active_processes = check_project_process_activity(ctx, project_id)
+    has_pending_deletions = check_pending_deletions_by_project_id(ctx, project_id)
+
+    has_process_activity = False
+    if has_active_drop_zones or has_active_processes or has_pending_deletions:
+        has_process_activity = True
+
     project_activity = {
-        "has_active_drop_zones": check_active_dropzone_by_project_id(ctx, project_id),
-        "has_active_processes": check_project_process_activity(ctx, project_id),
-        "has_pending_deletions": check_pending_deletions_by_project_id(ctx, project_id),
+        "has_process_activity": has_process_activity,
+        "has_only_active_collection": check_project_has_active_collection(ctx, project_id),
     }
 
     return project_activity
@@ -103,3 +110,49 @@ def check_pending_deletions_by_project_id(ctx, project_id):
         return True
 
     return False
+
+
+def check_project_has_active_collection(ctx, project_id):
+    """
+    Query the collections inside the input project to know if it contains any project collections or all its project
+    collections have been deleted.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    project_id: str
+        e.g: P000000001
+
+    Returns
+    -------
+    bool
+        If false, the project doesn't contain any project collections or all its project collections have been deleted
+    """
+    number_collections = 0
+    number_deleted_collections = 0
+
+    # Query the total number of project collection
+    parameters = "count(COLL_NAME)"
+    conditions = "COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
+        project_id,
+    )
+    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        number_collections = result[0]
+
+    # Query the total number of deleted project collection
+    parameters = "count(COLL_NAME)"
+    conditions = "META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
+        DataDeletionAttribute.STATE.value,
+        DataDeletionState.DELETED.value,
+        project_id,
+    )
+    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        number_deleted_collections = result[0]
+
+    if number_collections == 0:
+        return False
+    elif number_deleted_collections == number_collections:
+        return False
+
+    return True

@@ -1,8 +1,8 @@
-# /rules/tests/run_test.sh -r revoke_project_user_access -a "/nlmumc/projects/P000000011,reason42,description24"
+# /rules/tests/run_test.sh -r revoke_project_user_access -a "/nlmumc/projects/P000000011,funding_expired,description24"
 import json
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProcessAttribute, DataDeletionAttribute, DataDeletionState
+from dhpythonirodsutils.enums import DataDeletionAttribute, DataDeletionState
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import IRODS_BACKUP_ACL_BASE_PATH, IRODS_ZONE_BASE_PATH
@@ -19,24 +19,24 @@ from datahubirodsruleset.projects.get_project_process_activity import (
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def revoke_project_user_access(ctx, user_project, reason, description):
     """
-     After a user request a project deletion, all users accesses need to be revoked immediately. Including all
-     collections that have not yet been deleted.
-     Additionally:
-      * Check if there are any ongoing process linked to the project, this includes dropzones and pending deletions.
-       If true, stop the rule execution
-      * The 'deletion metadata' need to be set as AVUs on the project
-      * Backup of ACL is create
+    After a user request a project deletion, all users accesses need to be revoked immediately. Including all
+    collections that have not yet been deleted.
+    Additionally:
+     * Check if there are any ongoing process linked to the project, this includes dropzones and pending deletions.
+      If true, stop the rule execution
+     * The 'deletion metadata' need to be set as AVUs on the project
+     * Backup of ACL is created
 
-     Parameters
-     ----------
-     ctx : Context
-         Combined type of callback and rei struct.
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
     user_project : str
-          The absolute path of the project
-     reason : str
-         The reason of the deletion
-     description : str
-         An optional description providing additional details, empty string if not provided by the form/user
+         The absolute path of the project
+    reason : str
+        The reason of the deletion
+    description : str
+        An optional description providing additional details, empty string if not provided by the form/user
     """
     project_id = formatters.get_project_id_from_project_path(user_project)
     has_active_drop_zones = check_active_dropzone_by_project_id(ctx, project_id)
@@ -51,10 +51,12 @@ def revoke_project_user_access(ctx, user_project, reason, description):
     try:
         ctx.callback.msiCollCreate(backup_project, 1, 0)
     except RuntimeError:
-        print("ERROR: msiCollCreate")
+        ctx.callback.msiWriteRodsLog("ERROR: Could not create backup project '{}'".format(backup_project), 0)
+        ctx.callback.msiExit("-1", "Stop execution, could not create backup project '{}'".format(backup_project))
+        return
 
-    ctx.callback.msiWriteRodsLog("INFO: Create ACL backup for project '{}'".format(backup_project), 0)
     apply_collection_deletion_metadata(ctx, user_project, reason, description, "add")
+    ctx.callback.msiWriteRodsLog("INFO: Create ACL backup for project '{}'".format(backup_project), 0)
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
@@ -79,7 +81,7 @@ def revoke_project_user_access(ctx, user_project, reason, description):
     ctx.callback.msiWriteRodsLog("INFO: Revoke users ACL for collections in project '{}'".format(user_project), 0)
     for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(user_project), AS_LIST, ctx.callback):
         project_collection_path = proj_coll[0]
-        # For already deleted collection we do not revoke anything, this is already done
+        # For already deleted collections we do not revoke anything, this is already done
         output = ctx.callback.get_collection_attribute_value(
             project_collection_path, DataDeletionAttribute.STATE.value, "result"
         )["arguments"][2]

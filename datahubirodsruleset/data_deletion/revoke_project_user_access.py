@@ -7,7 +7,6 @@ from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import IRODS_BACKUP_ACL_BASE_PATH, IRODS_ZONE_BASE_PATH
 from datahubirodsruleset.data_deletion.restore_project_user_access import map_access_name_to_access_level
-from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import apply_collection_deletion_metadata
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.projects.get_project_process_activity import (
     check_active_dropzone_by_project_id,
@@ -55,7 +54,7 @@ def revoke_project_user_access(ctx, user_project, reason, description):
         ctx.callback.msiExit("-1", "Stop execution, could not create backup project '{}'".format(backup_project))
         return
 
-    apply_collection_deletion_metadata(ctx, user_project, reason, description, "add")
+    ctx.callback.setCollectionAVU(user_project, DataDeletionAttribute.STATE.value, DataDeletionState.PENDING.value)
     ctx.callback.msiWriteRodsLog("INFO: Create ACL backup for project '{}'".format(backup_project), 0)
 
     for result in row_iterator(

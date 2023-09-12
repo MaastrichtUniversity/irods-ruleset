@@ -1,12 +1,12 @@
 # /rules/tests/run_test.sh -r delete_project_data -a "/nlmumc/projects/P000000002,false"
-from dhpythonirodsutils.enums import DataDeletionState
+
+from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute
 from dhpythonirodsutils.formatters import format_string_to_boolean
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import IRODS_BACKUP_ACL_BASE_PATH, IRODS_ZONE_BASE_PATH
 from datahubirodsruleset.data_deletion.delete_project_collection_data import delete_collection_data
 from datahubirodsruleset.data_deletion.restore_project_collection_user_access import (
-    remove_collection_deletion_metadata,
     check_collection_delete_data_state,
 )
 from datahubirodsruleset.decorator import make, Output
@@ -69,8 +69,9 @@ def cleanup_delete_project_data(ctx, user_project_path, commit):
     """
     After deleting the project data, some cleanups actions are required:
         * ACL changes
-        * AVUs metadata deletion
         * backup collection deletion
+        * remove the project DeletionState
+        * set the project DeletionState to deleted
 
     Parameters
     ----------
@@ -85,6 +86,8 @@ def cleanup_delete_project_data(ctx, user_project_path, commit):
         backup_project_path = IRODS_BACKUP_ACL_BASE_PATH + user_project_path.replace(IRODS_ZONE_BASE_PATH, "")
         ctx.callback.msiRmColl(backup_project_path, "forceFlag=", 0)
         ctx.callback.msiWriteRodsLog("INFO: Deleted backup project '{}'".format(backup_project_path), 0)
-
-        remove_collection_deletion_metadata(ctx, user_project_path)
+        ctx.callback.remove_collection_attribute_value(ctx, user_project_path, DataDeletionAttribute.STATE.value)
+        ctx.callback.setCollectionAVU(
+            user_project_path, DataDeletionAttribute.STATE.value, DataDeletionState.DELETED.value
+        )
         ctx.callback.msiSetACL("default", "admin:read", "rods", user_project_path)

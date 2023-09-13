@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r remove_project_collection_avu -a "/nlmumc/projects/P000000008,deletionState"
+# /rules/tests/run_test.sh -r remove_collection_attribute_value -a "/nlmumc/projects/P000000008,deletionState"
 
 import irods_types  # pylint: disable=import-error
 import json

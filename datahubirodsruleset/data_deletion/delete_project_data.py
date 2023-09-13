@@ -86,7 +86,7 @@ def cleanup_delete_project_data(ctx, user_project_path, commit):
         backup_project_path = IRODS_BACKUP_ACL_BASE_PATH + user_project_path.replace(IRODS_ZONE_BASE_PATH, "")
         ctx.callback.msiRmColl(backup_project_path, "forceFlag=", 0)
         ctx.callback.msiWriteRodsLog("INFO: Deleted backup project '{}'".format(backup_project_path), 0)
-        ctx.callback.remove_collection_attribute_value(ctx, user_project_path, DataDeletionAttribute.STATE.value)
+        ctx.callback.remove_collection_attribute_value(user_project_path, DataDeletionAttribute.STATE.value)
         ctx.callback.setCollectionAVU(
             user_project_path, DataDeletionAttribute.STATE.value, DataDeletionState.DELETED.value
         )

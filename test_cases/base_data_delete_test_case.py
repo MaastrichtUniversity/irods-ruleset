@@ -14,6 +14,7 @@ from test_cases.utils import (
     revert_latest_project_number,
     run_index_all_project_collections_metadata,
     add_data_to_direct_dropzone,
+    remove_dropzone,
 )
 
 
@@ -69,6 +70,12 @@ class BaseDataDelete:
 
         # Running the index all rule: delete the current elasticsearch index that could be in a bad state
         run_index_all_project_collections_metadata()
+
+        # The rule revoke_project_collection_user_access checks if a dropzone is linked to the input project collection,
+        # which is the case during the test case execution.
+        # To by-pass this check, the call for the dropzone deletion is done immediately, instead of waiting
+        # for *irodsIngestRemoveDelay* (5 minutes).
+        remove_dropzone(cls.token, cls.dropzone_type)
 
         cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_collection_user_access -a "{},{},{}" '.format(
             cls.project_collection_path, cls.deletion_reason, cls.deletion_description

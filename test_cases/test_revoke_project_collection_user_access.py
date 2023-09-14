@@ -9,7 +9,6 @@ from test_cases.utils import (
     wait_for_revoke_project_collection_user_acl,
     get_project_collection_instance_in_elastic,
     wait_for_change_project_permissions_to_finish,
-    remove_dropzone,
 )
 
 
@@ -20,12 +19,6 @@ class TestRevokeProjectCollectionUserAccess(BaseDataDeleteTestCase):
         assert instance["project_title"] == cls.project_title
         assert instance["project_id"] == cls.project_id
         assert instance["collection_id"] == cls.collection_id
-
-        # The rule revoke_project_collection_user_access checks if a dropzone is linked to the input project collection
-        # which is the case during the test case execution.
-        # To by-pass this check, the call for the dropzone deletion is done immediately, instead of waiting
-        # for *irodsIngestRemoveDelay* (5 minutes).
-        remove_dropzone(cls.token, cls.dropzone_type)
 
         subprocess.check_call(cls.revoke_rule, shell=True)
         wait_for_revoke_project_collection_user_acl()

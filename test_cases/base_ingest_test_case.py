@@ -166,6 +166,9 @@ class BaseTestCaseIngest:
         import requests
 
         # TODO How relevant is this test?
+        # Note: This test can start to fail when reaching high project_id number (e.g: P000000150).
+        # A potential first time PID registration can cause a synchronization timing issue between the EpicPID
+        # registration service and the global Handle URL resolving service.
         rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
             self.project_id, self.collection_id
         )

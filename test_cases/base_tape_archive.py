@@ -22,9 +22,9 @@ class BaseTestTapeArchive:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "test_manager"
+    depositor = "tape_test_manager"
     manager1 = depositor
-    manager2 = "test_data_steward"
+    manager2 = "tape_test_data_steward"
     data_steward = manager2
     service_account = "service-surfarchive"
 

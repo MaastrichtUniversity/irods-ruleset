@@ -157,7 +157,7 @@ class TestPolicies:
     def test_pre_proc_for_modify_avu_metadata(self):
         """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
         # Setup: Add a non-admin manager to the project
-        test_manager = "test_manager"
+        test_manager = "policy_test_manager"
         create_user(test_manager)
         mod_acl = "ichmod own {} /nlmumc/projects/{}".format(test_manager, self.project_id)
         subprocess.check_call(mod_acl, shell=True)

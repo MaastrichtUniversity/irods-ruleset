@@ -80,11 +80,11 @@ class TestUserGroups:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "test_manager"
+    depositor = "user_group_test_manager"
     manager1 = depositor
-    manager2 = "test_data_steward"
+    manager2 = "user_group_test_data_steward"
     data_steward = manager2
-    group = "test_group"
+    group = "user_group_test_group"
     service_account = "service-test"
 
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
@@ -199,7 +199,7 @@ class TestUserGroups:
         rule = "/rules/tests/run_test.sh -r get_user_metadata -a {}".format(self.manager2)
         ret = subprocess.check_output(rule.format(), shell=True)
         user = json.loads(ret)
-        assert user["givenName"] == "test_data_steward"
+        assert user["givenName"] == self.manager2
         assert user["familyName"] == "LastName"
 
     def test_get_user_active_processes(self):

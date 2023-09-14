@@ -57,3 +57,12 @@ su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v test_direct_ingest.py::TestDirectIngestUM::test_collection_avu
 ```
+
+# How to run all the test cases in parallel
+```
+./rit.sh exec icat
+su irods
+pip install pytest-xdist
+cd /rules/test_cases
+/var/lib/irods/.local/bin/pytest -p no:cacheprovider -n 3 --dist loadfile -v .
+```

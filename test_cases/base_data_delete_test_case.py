@@ -41,7 +41,7 @@ class BaseDataDelete:
     collection_id = "C000000001"
     project_collection_path = ""
 
-    deletion_reason = "reason42"
+    deletion_reason = "funding_expired"
     deletion_description = "description24"
     deletion_state = DataDeletionState.PENDING.value
 
@@ -77,8 +77,8 @@ class BaseDataDelete:
         # for *irodsIngestRemoveDelay* (5 minutes).
         remove_dropzone(cls.token, cls.dropzone_type)
 
-        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_collection_user_access -a "{},{},{}" '.format(
-            cls.project_collection_path, cls.deletion_reason, cls.deletion_description
+        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_user_access -a "{},{},{}" '.format(
+            cls.project_path, cls.deletion_reason, cls.deletion_description
         )
         cls.run_after_ingest()
         print("End {}.setup_class".format(cls.__name__))
@@ -131,7 +131,11 @@ class BaseDataDeleteTestCase(BaseDataDelete):
         ret_metadata = subprocess.check_output(metadata, shell=True)
         assert "value: {}".format(self.deletion_state) in ret_metadata
 
-    def test_index_all_project_collections_metadata(self):
+    def test_project_collection_metadata_removal_from_index(self):
+        result = self.get_metadata_in_elastic_search()
+        assert result["hits"]["total"]["value"] == 0
+
+    def test_re_index_all_project_collections_metadata(self):
         run_index_all_project_collections_metadata()
         result = self.get_metadata_in_elastic_search()
         # run_index_all_project_collections_metadata delete the existing index.

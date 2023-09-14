@@ -7,6 +7,7 @@ from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import IRODS_BACKUP_ACL_BASE_PATH, IRODS_ZONE_BASE_PATH
 from datahubirodsruleset.data_deletion.restore_project_user_access import map_access_name_to_access_level
+from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import SERVICE_ACCOUNT_ALLOW_LIST
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.projects.get_project_process_activity import (
     check_active_dropzone_by_project_id,
@@ -18,8 +19,8 @@ from datahubirodsruleset.projects.get_project_process_activity import (
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def revoke_project_user_access(ctx, user_project, reason, description):
     """
-    After a user request a project deletion, all users accesses need to be revoked immediately. Including all
-    collections that have not yet been deleted.
+    After a user request a project deletion, all users accesses need to be revoked immediately including
+    service accounts not on the allow list. Including all collections that have not yet been deleted.
     Additionally:
      * Check if there are any ongoing process linked to the project, this includes dropzones and pending deletions.
       If true, stop the rule execution
@@ -72,7 +73,7 @@ def revoke_project_user_access(ctx, user_project, reason, description):
             account_type = account[1]
             ctx.callback.msiSetACL("default", user_access, account_name, backup_project)
 
-            if account_type != "rodsadmin" and "service-" not in account_name:
+            if account_type != "rodsadmin" and account_name not in SERVICE_ACCOUNT_ALLOW_LIST:
                 ctx.callback.msiSetACL("default", "null", account_name, user_project)
 
     ctx.callback.msiWriteRodsLog("INFO: Users ACL revoked for project '{}'".format(user_project), 0)

@@ -11,7 +11,6 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
     remove_project,
-    revert_latest_project_number,
     run_index_all_project_collections_metadata,
     add_data_to_direct_dropzone,
     remove_dropzone,
@@ -88,7 +87,6 @@ class BaseDataDelete:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     @classmethod

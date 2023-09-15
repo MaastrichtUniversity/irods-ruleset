@@ -66,16 +66,6 @@ def add_data_to_direct_dropzone(dropzone_info):
         subprocess.check_call(iput, shell=True)
 
 
-def revert_latest_project_number():
-    run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
-    latest_project_number = subprocess.check_output(run_iquest, shell=True).strip()
-    assert latest_project_number.isdigit()
-    revert_value = int(latest_project_number) - 1
-
-    run_set_meta = "imeta set -C /nlmumc/projects latest_project_number {}".format(revert_value)
-    subprocess.check_call(run_set_meta, shell=True)
-
-
 def revert_latest_project_collection_number(project_path):
     run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'latestProjectCollectionNumber' \"".format(
         project_path

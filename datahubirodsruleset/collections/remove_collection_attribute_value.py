@@ -5,7 +5,7 @@ import json
 from datahubirodsruleset.decorator import make, Output
 
 
-# TODO crash on multiple attributes
+# TODO crash on multiple instances of the attribute
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
 def remove_collection_attribute_value(ctx, project_collection_path, attribute):
     """

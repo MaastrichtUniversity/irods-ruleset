@@ -20,9 +20,10 @@ def get_all_users_email(ctx):
         Key => project id; Value => Project size
     """
 
-    project = []
+    emails = []
 
-    for account in row_iterator("USER_NAME, META_USER_ATTR_VALUE", "META_USER_ATTR_NAME LIKE 'email'", AS_LIST, ctx.callback):
-        project.append(account[1])
+    for email in row_iterator("USER_NAME, META_USER_ATTR_VALUE", "META_USER_ATTR_NAME LIKE 'email'", AS_LIST, ctx.callback):
+        if '@' in email[1]:
+            emails.append(email[1])
 
-    return project
+    return emails

@@ -9,11 +9,6 @@ from datahubirodsruleset import IRODS_BACKUP_ACL_BASE_PATH, IRODS_ZONE_BASE_PATH
 from datahubirodsruleset.data_deletion.restore_project_user_access import map_access_name_to_access_level
 from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import SERVICE_ACCOUNT_ALLOW_LIST
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.projects.get_project_process_activity import (
-    check_active_dropzone_by_project_id,
-    check_pending_deletions_by_project_id,
-    check_project_process_activity,
-)
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -39,11 +34,11 @@ def revoke_project_user_access(ctx, user_project, reason, description):
         An optional description providing additional details, empty string if not provided by the form/user
     """
     project_id = formatters.get_project_id_from_project_path(user_project)
-    has_active_drop_zones = check_active_dropzone_by_project_id(ctx, project_id)
-    has_active_processes = check_project_process_activity(ctx, project_id)
-    has_pending_deletions = check_pending_deletions_by_project_id(ctx, project_id)
 
-    if has_active_drop_zones or has_active_processes or has_pending_deletions:
+    output = ctx.callback.get_project_process_activity(project_id, "result")["arguments"][1]
+    process_activity = json.loads(output)
+
+    if process_activity["has_process_activity"]:
         ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for project {}".format(user_project))
         return
 

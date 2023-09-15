@@ -33,7 +33,7 @@ def get_project_process_activity(ctx, project_id):
 
     project_activity = {
         "has_process_activity": has_process_activity,
-        "has_only_active_collection": check_project_has_active_collection(ctx, project_id),
+        "has_active_collection": check_project_has_active_collection(ctx, project_id),
     }
 
     return project_activity

@@ -54,14 +54,16 @@ def add_metadata_files_to_direct_dropzone(token):
     add_metadata_files_to_dropzone(token, "direct")
 
 
-def revert_latest_project_number():
-    run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
-    latest_project_number = subprocess.check_output(run_iquest, shell=True).strip()
-    assert latest_project_number.isdigit()
-    revert_value = int(latest_project_number) - 1
+def add_data_to_direct_dropzone(dropzone_info):
+    for filename, size in dropzone_info.files_per_protocol.items():
+        file_path = "/tmp/{}".format(filename)
+        dropzone_path = formatters.format_dropzone_path(dropzone_info.token, dropzone_info.dropzone_type)
+        logical_path = "{}/{}".format(dropzone_path, filename)
 
-    run_set_meta = "imeta set -C /nlmumc/projects latest_project_number {}".format(revert_value)
-    subprocess.check_call(run_set_meta, shell=True)
+        with open(file_path, "wb") as file_buffer:
+            file_buffer.write("0" * size)
+        iput = "iput -R stagingResc01 {} {}".format(file_path, logical_path)
+        subprocess.check_call(iput, shell=True)
 
 
 def revert_latest_project_collection_number(project_path):

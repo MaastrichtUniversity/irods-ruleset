@@ -4,6 +4,7 @@ from dhpythonirodsutils.enums import ProjectAVUs
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path, format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING
+import time
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -50,6 +51,7 @@ def create_project_collection(ctx, project_id, title):
             ctx.callback.msiCollCreate(new_project_collection_path, 0, 0)
         except RuntimeError:
             error = -1
+            time.sleep(0.1 * retry)
         else:
             error = 0
 

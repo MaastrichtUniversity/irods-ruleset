@@ -2,9 +2,8 @@ import json
 import os
 import subprocess
 
-import pytest
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute, ProcessAttribute
+from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute
 
 from test_cases.utils import (
     create_dropzone,
@@ -12,15 +11,13 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
     remove_project,
-    revert_latest_project_number,
     run_index_all_project_collections_metadata,
-    wait_for_revoke_project_collection_user_acl,
-    get_project_collection_instance_in_elastic,
-    wait_for_change_project_permissions_to_finish,
+    add_data_to_direct_dropzone,
+    remove_dropzone,
 )
 
 
-class BaseRevokeProjectCollectionUserAccess:
+class BaseDataDelete:
     project_path = ""
     project_id = ""
     project_title = "PROJECTNAME"
@@ -43,9 +40,17 @@ class BaseRevokeProjectCollectionUserAccess:
     collection_id = "C000000001"
     project_collection_path = ""
 
-    deletion_reason = "reason42"
+    deletion_reason = "funding_expired"
     deletion_description = "description24"
     deletion_state = DataDeletionState.PENDING.value
+
+    files_per_protocol = {
+        "0bytes.file": 0,
+        "50K.file": 51200,
+        "15M.file": 15728640,
+        "45M.file": 47185920,
+        "256M.file": 262144001,
+    }
 
     revoke_rule = ""
 
@@ -59,15 +64,22 @@ class BaseRevokeProjectCollectionUserAccess:
         cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
         cls.token = create_dropzone(cls)
         add_metadata_files_to_direct_dropzone(cls.token)
+        add_data_to_direct_dropzone(cls)
         start_and_wait_for_ingest(cls)
 
         # Running the index all rule: delete the current elasticsearch index that could be in a bad state
         run_index_all_project_collections_metadata()
 
-        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_collection_user_access -a "{},{},{}" '.format(
-            cls.project_collection_path, cls.deletion_reason, cls.deletion_description
+        # The rule revoke_project_collection_user_access checks if a dropzone is linked to the input project collection,
+        # which is the case during the test case execution.
+        # To by-pass this check, the call for the dropzone deletion is done immediately, instead of waiting
+        # for *irodsIngestRemoveDelay* (5 minutes).
+        remove_dropzone(cls.token, cls.dropzone_type)
+
+        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_user_access -a "{},{},{}" '.format(
+            cls.project_path, cls.deletion_reason, cls.deletion_description
         )
-        cls.revoke_project_collection_user_access()
+        cls.run_after_ingest()
         print("End {}.setup_class".format(cls.__name__))
 
     @classmethod
@@ -75,34 +87,23 @@ class BaseRevokeProjectCollectionUserAccess:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     @classmethod
-    def revoke_project_collection_user_access(cls):
+    def run_after_ingest(cls):
         pass
 
 
-class TestRevokeRevokeProjectUserAccess(BaseRevokeProjectCollectionUserAccess):
-    @classmethod
-    def revoke_project_collection_user_access(cls):
-        instance = get_project_collection_instance_in_elastic(cls.project_id)
-        assert instance["project_title"] == cls.project_title
-        assert instance["project_id"] == cls.project_id
-        assert instance["collection_id"] == cls.collection_id
-
-        subprocess.check_call(cls.revoke_rule, shell=True)
-        wait_for_revoke_project_collection_user_acl()
-
+class BaseDataDeleteTestCase(BaseDataDelete):
     def test_revoke_project_collection_user_acl(self):
         acl = "ils -A {}".format(self.project_collection_path)
         ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc".format(self.manager1) not in ret_acl
         assert "{}#nlmumc".format(self.manager2) not in ret_acl
 
-        assert "{}#nlmumc".format("rods") in ret_acl
-        assert "{}#nlmumc".format("service-disqover") in ret_acl
-        assert "{}#nlmumc".format("service-pid") in ret_acl
+        assert "{}#nlmumc:read object".format("rods") in ret_acl
+        assert "{}#nlmumc:read object".format("service-disqover") in ret_acl
+        assert "{}#nlmumc:read object".format("service-pid") in ret_acl
 
         # Check the ACL of a file in a sub-folder
         version_schema = formatters.format_schema_versioned_collection_path(self.project_id, self.collection_id, "1")
@@ -111,9 +112,9 @@ class TestRevokeRevokeProjectUserAccess(BaseRevokeProjectCollectionUserAccess):
         assert "{}#nlmumc".format(self.manager1) not in ret_acl_version_schema
         assert "{}#nlmumc".format(self.manager2) not in ret_acl_version_schema
 
-        assert "{}#nlmumc".format("rods") in ret_acl_version_schema
-        assert "{}#nlmumc".format("service-disqover") in ret_acl_version_schema
-        assert "{}#nlmumc".format("service-pid") in ret_acl_version_schema
+        assert "{}#nlmumc:read object".format("rods") in ret_acl_version_schema
+        assert "{}#nlmumc:read object".format("service-disqover") in ret_acl_version_schema
+        assert "{}#nlmumc:read object".format("service-pid") in ret_acl_version_schema
 
     def test_set_collection_deletion_metadata(self):
         metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.REASON.value)
@@ -128,42 +129,11 @@ class TestRevokeRevokeProjectUserAccess(BaseRevokeProjectCollectionUserAccess):
         ret_metadata = subprocess.check_output(metadata, shell=True)
         assert "value: {}".format(self.deletion_state) in ret_metadata
 
-    def test_delete_project_collection_metadata_from_index(self):
+    def test_project_collection_metadata_removal_from_index(self):
         result = self.get_metadata_in_elastic_search()
         assert result["hits"]["total"]["value"] == 0
 
-    def test_change_project_permissions(self):
-        user_to_check = "auser"
-        change_project_permissions_rule = (
-            "irule -r irods_rule_engine_plugin-irods_rule_language-instance"
-            " \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
-        )
-        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
-            self.project_path, self.depositor
-        )
-
-        # Add write rights for user_to_check to the project
-        subprocess.check_output(
-            change_project_permissions_rule.format(self.project_id, user_to_check, "write"), shell=True
-        )
-
-        # Check that user_to_check is in project contributors
-        ret = subprocess.check_output(rule_project_details, shell=True)
-        project = json.loads(ret)
-        assert user_to_check not in project["managers"]["users"]
-        assert user_to_check in project["contributors"]["users"]
-        assert user_to_check not in project["viewers"]["users"]
-
-        wait_for_change_project_permissions_to_finish()
-
-        # Check that user_to_check is still not part of the project collection ACL.
-        # changeProjectPermissions mustn't give access (back) to user to project collection that are deleted
-        # or pending-for-deletion.
-        acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
-        assert "{}#nlmumc:read".format(user_to_check) not in ret_acl
-
-    def test_index_all_project_collections_metadata(self):
+    def test_re_index_all_project_collections_metadata(self):
         run_index_all_project_collections_metadata()
         result = self.get_metadata_in_elastic_search()
         # run_index_all_project_collections_metadata delete the existing index.
@@ -184,36 +154,3 @@ class TestRevokeRevokeProjectUserAccess(BaseRevokeProjectCollectionUserAccess):
 
         ret = subprocess.check_output(query, shell=True)
         return json.loads(ret)
-
-
-class TestRevokeRevokeProjectUserAccessWithActiveProcess(BaseRevokeProjectCollectionUserAccess):
-    def test_revoke_project_collection_user_access(self):
-        mod_acl = "ichmod -M own rods {}".format(self.project_collection_path)
-        subprocess.check_call(mod_acl, shell=True)
-
-        # Archive
-        set_enable_archive = "imeta set -C {} {} stuff".format(
-            self.project_collection_path, ProcessAttribute.ARCHIVE.value
-        )
-        subprocess.check_call(set_enable_archive, shell=True)
-
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call(self.revoke_rule, shell=True)
-
-        # Un-Archive
-        set_enable_archive = "imeta set -C {} {} stuff".format(
-            self.project_collection_path, ProcessAttribute.UNARCHIVE.value
-        )
-        subprocess.check_call(set_enable_archive, shell=True)
-
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call(self.revoke_rule, shell=True)
-
-        # Export
-        set_enable_archive = "imeta set -C {} {} dataverse:stuff".format(
-            self.project_collection_path, ProcessAttribute.EXPORTER.value
-        )
-        subprocess.check_call(set_enable_archive, shell=True)
-
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call(self.revoke_rule, shell=True)

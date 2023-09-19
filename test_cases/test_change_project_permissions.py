@@ -6,7 +6,6 @@ from dhpythonirodsutils import formatters
 from test_cases.utils import (
     create_project,
     remove_project,
-    revert_latest_project_number,
     create_user,
     remove_user,
     create_dropzone,
@@ -30,9 +29,9 @@ class TestChangeProjectPermissions:
     project_title = "PROJECTNAME"
 
     # a user who doesn't have any project access after the iRODS bootstraps
-    depositor = "foobar"
+    depositor = "change_project_permissions_foobar"
     manager1 = depositor
-    manager2 = "test_datasteward"
+    manager2 = "change_project_permissions_test_datasteward"
     data_steward = manager2
 
     ingest_resource = "ires-hnas-umResource"
@@ -50,7 +49,7 @@ class TestChangeProjectPermissions:
     project_collection_path = ""
 
     archive_destination_resource = "arcRescSURF01"
-    new_user = "new_user"
+    new_user = "change_project_permissions_new_user"
 
     @classmethod
     def setup_class(cls):
@@ -83,7 +82,6 @@ class TestChangeProjectPermissions:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
 
         remove_user(cls.depositor)
         remove_user(cls.new_user)

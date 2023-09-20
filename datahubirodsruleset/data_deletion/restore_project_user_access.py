@@ -1,5 +1,5 @@
 # /rules/tests/run_test.sh -r restore_project_user_access -a "/nlmumc/projects/P000000011"
-from dhpythonirodsutils.enums import DataDeletionState
+from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute
 from genquery import row_iterator, AS_LIST
 
 from datahubirodsruleset import (
@@ -36,10 +36,10 @@ def restore_project_user_access(ctx, user_project_path):
 
     restore_project_user_acl(ctx, user_project_path, backup_project_path)
 
+    # Clean-up
     ctx.callback.msiRmColl(backup_project_path, "forceFlag=", 0)
     ctx.callback.msiWriteRodsLog("INFO: Deleted backup project '{}'".format(backup_project_path), 0)
-
-    remove_collection_deletion_metadata(ctx, user_project_path)
+    ctx.callback.remove_collection_attribute_value(user_project_path, DataDeletionAttribute.STATE.value)
 
 
 def restore_project_user_acl(ctx, user_project_path, backup_project_path):

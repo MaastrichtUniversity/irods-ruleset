@@ -1,5 +1,6 @@
 import json
 import subprocess
+import time
 
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
@@ -7,7 +8,6 @@ from dhpythonirodsutils.enums import ProjectAVUs
 from test_cases.utils import (
     create_project,
     remove_project,
-    revert_latest_project_number,
     create_user,
     remove_user,
     create_dropzone,
@@ -53,9 +53,9 @@ class TestProjects:
     project_title = ""
 
     # a user who doesn't have any project access after the iRODS bootstraps
-    depositor = "foobar"
+    depositor = "projects_foobar"
     manager1 = depositor
-    manager2 = "test_datasteward"
+    manager2 = "projects_test_datasteward"
     data_steward = manager2
 
     ingest_resource = "ires-hnas-umResource"
@@ -74,7 +74,7 @@ class TestProjects:
 
     number_of_projects = 3
     archive_destination_resource = "arcRescSURF01"
-    new_user = "new_user"
+    new_user = "projects_new_user"
 
     @classmethod
     def setup_class(cls):
@@ -91,6 +91,7 @@ class TestProjects:
             cls.project_paths.append(project["project_path"])
             cls.project_ids.append(project["project_id"])
             cls.project_titles.append(cls.project_title)
+            time.sleep(1)
         print("End {}.setup_class".format(cls.__name__))
 
     @classmethod
@@ -99,7 +100,6 @@ class TestProjects:
         print("Start {}.teardown_class".format(cls.__name__))
         for project_path in cls.project_paths:
             remove_project(project_path)
-            revert_latest_project_number()
 
         remove_user(cls.depositor)
         remove_user(cls.new_user)

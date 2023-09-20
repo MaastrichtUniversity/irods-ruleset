@@ -6,7 +6,6 @@ from dhpythonirodsutils.enums import ProcessState, ProcessType
 
 from test_cases.utils import (
     remove_project,
-    revert_latest_project_number,
     create_project,
     create_user,
     create_data_steward,
@@ -81,11 +80,11 @@ class TestUserGroups:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "test_manager"
+    depositor = "user_group_test_manager"
     manager1 = depositor
-    manager2 = "test_data_steward"
+    manager2 = "user_group_test_data_steward"
     data_steward = manager2
-    group = "test_group"
+    group = "user_group_test_group"
     service_account = "service-test"
 
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
@@ -116,7 +115,6 @@ class TestUserGroups:
     def teardown_class(cls):
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         remove_user_from_group("DH-project-admins", cls.manager1)
         remove_user(cls.manager1)
         remove_user(cls.manager2)
@@ -201,7 +199,7 @@ class TestUserGroups:
         rule = "/rules/tests/run_test.sh -r get_user_metadata -a {}".format(self.manager2)
         ret = subprocess.check_output(rule.format(), shell=True)
         user = json.loads(ret)
-        assert user["givenName"] == "test_data_steward"
+        assert user["givenName"] == self.manager2
         assert user["familyName"] == "LastName"
 
     def test_get_user_active_processes(self):

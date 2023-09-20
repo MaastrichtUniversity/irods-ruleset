@@ -6,7 +6,6 @@ from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
     remove_project,
-    revert_latest_project_number,
     remove_dropzone,
     create_project,
     create_dropzone,
@@ -54,7 +53,6 @@ class BaseTestCaseDropZones:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_dropzone_avu(self):

@@ -11,9 +11,9 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
     remove_project,
-    revert_latest_project_number,
     run_index_all_project_collections_metadata,
     add_data_to_direct_dropzone,
+    remove_dropzone,
 )
 
 
@@ -40,7 +40,7 @@ class BaseDataDelete:
     collection_id = "C000000001"
     project_collection_path = ""
 
-    deletion_reason = "reason42"
+    deletion_reason = "funding_expired"
     deletion_description = "description24"
     deletion_state = DataDeletionState.PENDING.value
 
@@ -70,8 +70,14 @@ class BaseDataDelete:
         # Running the index all rule: delete the current elasticsearch index that could be in a bad state
         run_index_all_project_collections_metadata()
 
-        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_collection_user_access -a "{},{},{}" '.format(
-            cls.project_collection_path, cls.deletion_reason, cls.deletion_description
+        # The rule revoke_project_collection_user_access checks if a dropzone is linked to the input project collection,
+        # which is the case during the test case execution.
+        # To by-pass this check, the call for the dropzone deletion is done immediately, instead of waiting
+        # for *irodsIngestRemoveDelay* (5 minutes).
+        remove_dropzone(cls.token, cls.dropzone_type)
+
+        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_user_access -a "{},{},{}" '.format(
+            cls.project_path, cls.deletion_reason, cls.deletion_description
         )
         cls.run_after_ingest()
         print("End {}.setup_class".format(cls.__name__))
@@ -81,7 +87,6 @@ class BaseDataDelete:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     @classmethod
@@ -124,7 +129,11 @@ class BaseDataDeleteTestCase(BaseDataDelete):
         ret_metadata = subprocess.check_output(metadata, shell=True)
         assert "value: {}".format(self.deletion_state) in ret_metadata
 
-    def test_index_all_project_collections_metadata(self):
+    def test_project_collection_metadata_removal_from_index(self):
+        result = self.get_metadata_in_elastic_search()
+        assert result["hits"]["total"]["value"] == 0
+
+    def test_re_index_all_project_collections_metadata(self):
         run_index_all_project_collections_metadata()
         result = self.get_metadata_in_elastic_search()
         # run_index_all_project_collections_metadata delete the existing index.

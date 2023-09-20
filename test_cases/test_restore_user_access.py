@@ -10,12 +10,16 @@ from test_cases.utils import (
 )
 
 
-class TestRestoreProjectCollectionUserAccess(BaseDataDelete):
+class TestRestoreProjectUserAccess(BaseDataDelete):
     @classmethod
     def run_after_ingest(cls):
         subprocess.check_call(cls.revoke_rule, shell=True)
         wait_for_revoke_project_collection_user_acl()
 
+        # First, restore the project
+        restore_rule = '/rules/tests/run_test.sh -r restore_project_user_access -a "{}" '.format(cls.project_path)
+        subprocess.check_call(restore_rule, shell=True)
+        # Then the project collection
         restore_rule = '/rules/tests/run_test.sh -r restore_project_collection_user_access -a "{}" '.format(
             cls.project_collection_path
         )

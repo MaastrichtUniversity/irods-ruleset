@@ -12,7 +12,7 @@ from test_cases.utils import (
 )
 
 
-class TestRevokeProjectCollectionUserAccess(BaseDataDeleteTestCase):
+class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
     @classmethod
     def run_after_ingest(cls):
         instance = get_project_collection_instance_in_elastic(cls.project_id)
@@ -23,19 +23,13 @@ class TestRevokeProjectCollectionUserAccess(BaseDataDeleteTestCase):
         subprocess.check_call(cls.revoke_rule, shell=True)
         wait_for_revoke_project_collection_user_acl()
 
-    def test_delete_project_collection_metadata_from_index(self):
-        result = self.get_metadata_in_elastic_search()
-        assert result["hits"]["total"]["value"] == 0
-
     def test_change_project_permissions(self):
         user_to_check = "auser"
         change_project_permissions_rule = (
             "irule -r irods_rule_engine_plugin-irods_rule_language-instance"
             " \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
         )
-        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
-            self.project_path, self.depositor
-        )
+        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false"'.format(self.project_path)
 
         # Add write rights for user_to_check to the project
         subprocess.check_output(
@@ -59,7 +53,7 @@ class TestRevokeProjectCollectionUserAccess(BaseDataDeleteTestCase):
         assert "{}#nlmumc:read".format(user_to_check) not in ret_acl
 
 
-class TestRevokeProjectCollectionUserAccessWithActiveProcess(BaseDataDelete):
+class TestRevokeProjectUserAccessWithActiveProcess(BaseDataDelete):
     def test_revoke_project_collection_user_access(self):
         mod_acl = "ichmod -M own rods {}".format(self.project_collection_path)
         subprocess.check_call(mod_acl, shell=True)

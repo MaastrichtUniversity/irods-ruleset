@@ -8,7 +8,7 @@ from test_cases.utils import (
 )
 
 
-class TestDeleteProjectCollectionData(BaseDataDeleteTestCase):
+class TestDeleteProjectData(BaseDataDeleteTestCase):
     deletion_state = DataDeletionState.DELETED.value
     number_metadata_files = 4
 
@@ -17,9 +17,7 @@ class TestDeleteProjectCollectionData(BaseDataDeleteTestCase):
         subprocess.check_call(cls.revoke_rule, shell=True)
         wait_for_revoke_project_collection_user_acl()
 
-        delete_rule = '/rules/tests/run_test.sh -r delete_project_collection_data -a "{},true" '.format(
-            cls.project_collection_path
-        )
+        delete_rule = '/rules/tests/run_test.sh -r delete_project_data -a "{},true" '.format(cls.project_path)
         subprocess.check_call(delete_rule, shell=True)
 
     def test_number_files_after_deletion(self):

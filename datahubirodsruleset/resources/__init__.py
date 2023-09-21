@@ -1,5 +1,6 @@
 """This sub-package contains the rules related to DataHub resources (ingest & destination)"""
 # Public rules
+from datahubirodsruleset.resources.get_resource_allocation_per_project import get_resource_allocation_per_project
 from datahubirodsruleset.resources.get_resource_size_for_all_collections import get_resource_size_for_all_collections
 
 # Private rules

@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     python_requires=">=2.7",
     install_requires=[
-        "dh-python-irods-utils @ git+https://github.com/MaastrichtUniversity/dh-python-irods-utils.git@v1.1.1#egg=dh-python-irods-utils",
+        "dh-python-irods-utils @ git+https://github.com/MaastrichtUniversity/dh-python-irods-utils.git@v1.1.4#egg=dh-python-irods-utils",
         "cryptography",
         "jsonschema==3.0.2",
         "pyrsistent==0.16.1",

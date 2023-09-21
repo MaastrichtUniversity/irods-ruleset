@@ -25,7 +25,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     token: str
         The token of the dropzone
     depositor: str
-        The person requesting the ingestion
+        The iRODS username of the user who started the ingestion
     dropzone_type: str
         The type of dropzone
 
@@ -38,12 +38,10 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
     try:
-        collection_id = ctx.callback.createProjectCollection(project_id, "", title)["arguments"][1]
+        collection_id = ctx.callback.create_project_collection(project_id, title, "")["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating projectCollection", 0)
-        ctx.callback.setErrorAVU(
-            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error creating projectCollection"
-        )
+        ctx.callback.set_ingestion_error_avu(dropzone_path, "Error creating projectCollection", project_id, depositor)
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
 
@@ -79,11 +77,8 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         )["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating dropzone pre-ingest information", 0)
-        ctx.callback.setErrorAVU(
-            dropzone_path,
-            "state",
-            DropzoneState.ERROR_INGESTION.value,
-            "Failed creating dropzone pre-ingest information",
+        ctx.callback.set_ingestion_error_avu(
+            dropzone_path, "Failed creating dropzone pre-ingest information", project_id, depositor
         )
 
     ctx.callback.msiWriteRodsLog(

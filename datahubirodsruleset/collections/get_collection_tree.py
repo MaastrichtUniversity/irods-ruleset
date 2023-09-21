@@ -23,7 +23,7 @@ def get_collection_tree(ctx, relative_path):
        The folders and files attributes at the requested path
     """
 
-    import time
+    from datetime import datetime
 
     output = []
 
@@ -48,8 +48,8 @@ def get_collection_tree(ctx, relative_path):
             "type": "folder",
             "size": "--",
             "rescname": "--",
-            "ctime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[1]))),
-            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[2]))),
+            "ctime": datetime.utcfromtimestamp(int(result[1])).strftime("%Y-%m-%d %H:%M:%S"),
+            "mtime": datetime.utcfromtimestamp(int(result[2])).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         output.append(folder_node)
@@ -62,7 +62,6 @@ def get_collection_tree(ctx, relative_path):
     ):
 
         relative_data_path = relative_path + "/" + result[0]
-
         data_node = {
             "name": result[0],
             "path": relative_data_path,
@@ -70,8 +69,8 @@ def get_collection_tree(ctx, relative_path):
             "size": result[1],
             "rescname": result[2],
             "offlineResource": result[2] == "arcRescSURF01",
-            "ctime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[3]))),
-            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(result[4]))),
+            "ctime": datetime.utcfromtimestamp(int(result[3])).strftime("%Y-%m-%d %H:%M:%S"),
+            "mtime": datetime.utcfromtimestamp(int(result[4])).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         output.append(data_node)

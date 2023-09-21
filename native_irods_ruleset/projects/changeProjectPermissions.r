@@ -38,12 +38,8 @@ IRULE_changeProjectPermissions(*project, *users){
         }
         # WORKAROUND:
         # Using the correct value "null" triggers some json parsing error during the rule execution in iRODS.
-        # This is only have been identify for rule with delay block.
-        if (*rights == "remove"){
-            *rights  = "null"
-        }
-
-        msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
+        # This is only have been identified for rule with delay block.
+        set_acl("default", "*rights", "*account", '/nlmumc/projects/*project');
 
         *count = *count-1;
 
@@ -53,12 +49,25 @@ IRULE_changeProjectPermissions(*project, *users){
     }
 
     delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
-        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
-            *projectCollection = *Row.COLL_NAME;
+        *activeProjectCollections = list();
+        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project') {
+            *activeProjectCollection = *Row.COLL_NAME;
 
+            *deletionState = "";
+            foreach ( *RowDeletion in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '*activeProjectCollection' AND META_COLL_ATTR_NAME == "deletionState") {
+                *deletionState = *RowDeletion.META_COLL_ATTR_VALUE;
+            }
+            if (*deletionState == "") {
+                # Add the value to the list object
+                *activeProjectCollections = cons(*activeProjectCollection, *activeProjectCollections);
+            }
+        }
+        msiWriteRodsLog("DEBUG: changeProjectPermissions activeProjectCollections - *activeProjectCollections", 0);
+
+        foreach ( *projectCollection in *activeProjectCollections ) {
             # Reset user list to original input value
             *delay_users = *input_users;
-            *count = 100;    
+            *count = 100;
 
             # Open the collection to be able to modify the collection ACL
             msiSetACL("recursive", "admin:own", "rods", "*projectCollection");
@@ -83,13 +92,14 @@ IRULE_changeProjectPermissions(*project, *users){
                 }
 
                 # Always set rights to read, unless they are removed
-                if (*rights == "remove"){
-                    *collection_rights = "null";
-                } else {
+                if (*rights != "remove"){
                     *collection_rights = "read";
                 }
+                else{
+                    *collection_rights = *rights
+                }
 
-                msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
+                set_acl("recursive", "*collection_rights", "*account", "*projectCollection");
 
                 *count = *count - 1;
 

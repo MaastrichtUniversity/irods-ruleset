@@ -1,6 +1,8 @@
 # /rules/tests/run_test.sh -r replace_metadata_placeholder_files -a "handsome-snake,P000000019,C000000001,dlinssen" -u "dlinssen"
+
 from dhpythonirodsutils import formatters
 
+from datahubirodsruleset import icp_wrapper
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
@@ -34,7 +36,7 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     collection_id: str
         The collection ID e.g: C000000001
     depositor: str
-        The user who started the ingestion
+        The iRODS username of the user who started the ingestion
     """
     # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
     # subprocess is only use for subprocess.check_call to execute ichmod.
@@ -58,6 +60,7 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
             "Abort replace_metadata_placeholder_files: Rule client user '{}' is not the depositor '{}'".format(
                 project_id, collection_id
             ),
+            depositor,
         )
 
     try:
@@ -71,6 +74,7 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
             collection_id,
             dropzone_path,
             "Update metadata files ACL failed for '{}/{}'".format(project_id, collection_id),
+            depositor,
         )
 
     dropzone_instance_path = formatters.format_instance_dropzone_path(token, dropzone_type)
@@ -79,5 +83,8 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     ctx.callback.msiDataObjUnlink("objPath=" + pc_instance_path + "++++forceFlag=", 0)
     ctx.callback.msiDataObjUnlink("objPath=" + pc_schema_path + "++++forceFlag=", 0)
 
-    ctx.callback.msiDataObjCopy(dropzone_instance_path, pc_instance_path, "forceFlag=", 0)
-    ctx.callback.msiDataObjCopy(dropzone_schema_path, pc_schema_path, "forceFlag=", 0)
+    try:
+        icp_wrapper(ctx, dropzone_instance_path, pc_instance_path, project_id, True)
+        icp_wrapper(ctx, dropzone_schema_path, pc_schema_path, project_id, True)
+    except RuntimeError:
+        ctx.callback.msiExit("-1", "ERROR: Couldn't replace the metadata placeholder files")

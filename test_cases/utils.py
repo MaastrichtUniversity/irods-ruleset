@@ -54,13 +54,27 @@ def add_metadata_files_to_direct_dropzone(token):
     add_metadata_files_to_dropzone(token, "direct")
 
 
-def revert_latest_project_number():
-    run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
+def add_data_to_direct_dropzone(dropzone_info):
+    for filename, size in dropzone_info.files_per_protocol.items():
+        file_path = "/tmp/{}".format(filename)
+        dropzone_path = formatters.format_dropzone_path(dropzone_info.token, dropzone_info.dropzone_type)
+        logical_path = "{}/{}".format(dropzone_path, filename)
+
+        with open(file_path, "wb") as file_buffer:
+            file_buffer.write("0" * size)
+        iput = "iput -R stagingResc01 {} {}".format(file_path, logical_path)
+        subprocess.check_call(iput, shell=True)
+
+
+def revert_latest_project_collection_number(project_path):
+    run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'latestProjectCollectionNumber' \"".format(
+        project_path
+    )
     latest_project_number = subprocess.check_output(run_iquest, shell=True).strip()
     assert latest_project_number.isdigit()
     revert_value = int(latest_project_number) - 1
 
-    run_set_meta = "imeta set -C /nlmumc/projects latest_project_number {}".format(revert_value)
+    run_set_meta = "imeta set -C {} latest_project_number {}".format(project_path, revert_value)
     subprocess.check_call(run_set_meta, shell=True)
 
 
@@ -189,6 +203,25 @@ def wait_for_change_project_permissions_to_finish():
             fail_safe = 0
             output = ""
     assert "changeProjectPermission" not in output
+
+
+def wait_for_revoke_project_collection_user_acl():
+    """
+    Wait for upto 90 seconds for the delay queue part of revoke_project_collection_user_acl to finish
+    Continue when completed in time
+    """
+    cmd = "iqstat -a | grep msiSetACL"
+    fail_safe = 30
+    output = ""
+    while fail_safe != 0:
+        try:
+            output = subprocess.check_output(cmd, shell=True)
+            fail_safe = fail_safe - 1
+            time.sleep(3)
+        except subprocess.CalledProcessError:
+            fail_safe = 0
+            output = ""
+    assert "msiSetACL" not in output
 
 
 def does_path_exist(absolute_path):

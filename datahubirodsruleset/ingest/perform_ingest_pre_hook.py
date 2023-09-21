@@ -38,7 +38,7 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
     try:
-        collection_id = ctx.callback.createProjectCollection(project_id, "", title)["arguments"][1]
+        collection_id = ctx.callback.create_project_collection(project_id, title, "")["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating projectCollection", 0)
         ctx.callback.set_ingestion_error_avu(dropzone_path, "Error creating projectCollection", project_id, depositor)

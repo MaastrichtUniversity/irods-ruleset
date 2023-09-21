@@ -4,7 +4,6 @@ import subprocess
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
-    revert_latest_project_number,
     remove_project,
     create_dropzone,
     create_project,
@@ -105,7 +104,6 @@ class BaseTestCaseIngest:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_collection_avu(self):
@@ -168,6 +166,9 @@ class BaseTestCaseIngest:
         import requests
 
         # TODO How relevant is this test?
+        # Note: This test can start to fail when reaching high project_id number (e.g: P000000150).
+        # A potential first time PID registration can cause a synchronization timing issue between the EpicPID
+        # registration service and the global Handle URL resolving service.
         rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
             self.project_id, self.collection_id
         )

@@ -83,7 +83,7 @@ if [ ! -z $rule  ] && [ ! -z $rule_arguments ] && [ -z $user_name ];
       else
        irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut  | python -m json.tool
    fi
-   exit 0
+   exit $?
 fi
 
 

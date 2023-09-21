@@ -37,7 +37,7 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
         )
 
         # Check that user_to_check is in project contributors
-        ret = subprocess.check_output(rule_project_details, shell=True)
+        ret = subprocess.check_output(rule_project_details, shell=True, encoding="UTF-8")
         project = json.loads(ret)
         assert user_to_check not in project["managers"]["users"]
         assert user_to_check in project["contributors"]["users"]
@@ -49,7 +49,7 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
         # changeProjectPermissions mustn't give access (back) to user to project collection that are deleted
         # or pending-for-deletion.
         acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(user_to_check) not in ret_acl
 
 

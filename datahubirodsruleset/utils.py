@@ -340,7 +340,7 @@ def map_access_name_to_access_level(access_name):
     Parameters
     ----------
     access_name: str
-        expected values: "own", "modify object" & "read object"
+        expected values: "own", "modify_object" & "read_object"
 
     Returns
     -------
@@ -349,9 +349,9 @@ def map_access_name_to_access_level(access_name):
     """
 
     user_access = access_name
-    if access_name == "modify object":
+    if access_name == "modify_object":
         user_access = "write"
-    elif access_name == "read object":
+    elif access_name == "read_object":
         user_access = "read"
 
     return user_access

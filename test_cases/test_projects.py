@@ -175,13 +175,13 @@ class TestProjects:
             # the project with an ingested collection
             if project["project_id"] == self.project_id:
                 assert project["collections"][0]["collection"] == project_collection_path
-                assert project["collections"][0]["data_size_gib"] == 0.0005127061158418655
+                assert project["collections"][0]["data_size_gib"] == 0.0005072075873613358
                 assert project["collections"][0]["details_per_resource"]
                 assert int(project["collections"][0]["collection_storage_cost"]) == 0
                 assert int(project["project_cost_monthly"]) == 0
                 assert int(project["project_cost_yearly"]) == 0
-                assert project["project_size_gb"] == 0.000550514
-                assert project["project_size_gib"] == 0.0005127061158418655
+                assert project["project_size_gb"] == 0.0005446100000000001
+                assert project["project_size_gib"] == 0.0005072075873613358
             else:
                 assert project["project_cost_monthly"] == 0
                 assert project["project_cost_yearly"] == 0

@@ -14,7 +14,7 @@ class BaseTestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
     new_schema_name = "New DataHub General Schema"
     new_collection_title = "collection_title"
     num_files = 6
-    byte_size = 825779
+    byte_size = 816923
 
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):

@@ -27,36 +27,36 @@ class TestRestoreProjectUserAccess(BaseDataDelete):
 
     def test_restore_project_collection_user_acl(self):
         acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
-        assert "{}#nlmumc:read object".format(self.manager1) in ret_acl
-        assert "{}#nlmumc:read object".format(self.manager2) in ret_acl
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        assert "{}#nlmumc:read_object".format(self.manager1) in ret_acl
+        assert "{}#nlmumc:read_object".format(self.manager2) in ret_acl
 
-        assert "{}#nlmumc:read object".format("rods") in ret_acl
-        assert "{}#nlmumc:read object".format("service-disqover") in ret_acl
-        assert "{}#nlmumc:read object".format("service-pid") in ret_acl
+        assert "{}#nlmumc:read_object".format("rods") in ret_acl
+        assert "{}#nlmumc:read_object".format("service-disqover") in ret_acl
+        assert "{}#nlmumc:read_object".format("service-pid") in ret_acl
 
         # Check the ACL of a file in a sub-folder
         version_schema = formatters.format_schema_versioned_collection_path(self.project_id, self.collection_id, "1")
         acl_version_schema = "ils -A {}".format(version_schema)
-        ret_acl_version_schema = subprocess.check_output(acl_version_schema, shell=True)
-        assert "{}#nlmumc:read object".format(self.manager1) in ret_acl_version_schema
-        assert "{}#nlmumc:read object".format(self.manager2) in ret_acl_version_schema
+        ret_acl_version_schema = subprocess.check_output(acl_version_schema, shell=True, encoding="UTF-8")
+        assert "{}#nlmumc:read_object".format(self.manager1) in ret_acl_version_schema
+        assert "{}#nlmumc:read_object".format(self.manager2) in ret_acl_version_schema
 
-        assert "{}#nlmumc:read object".format("rods") in ret_acl_version_schema
-        assert "{}#nlmumc:read object".format("service-disqover") in ret_acl_version_schema
-        assert "{}#nlmumc:read object".format("service-pid") in ret_acl_version_schema
+        assert "{}#nlmumc:read_object".format("rods") in ret_acl_version_schema
+        assert "{}#nlmumc:read_object".format("service-disqover") in ret_acl_version_schema
+        assert "{}#nlmumc:read_object".format("service-pid") in ret_acl_version_schema
 
     def test_delete_collection_deletion_metadata(self):
         metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.REASON.value)
-        ret_metadata = subprocess.check_output(metadata, shell=True)
+        ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
         assert "None" in ret_metadata
 
         metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.DESCRIPTION.value)
-        ret_metadata = subprocess.check_output(metadata, shell=True)
+        ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
         assert "None" in ret_metadata
 
         metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.STATE.value)
-        ret_metadata = subprocess.check_output(metadata, shell=True)
+        ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
         assert "None" in ret_metadata
 
     # test metadata are back in the index

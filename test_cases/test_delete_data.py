@@ -22,5 +22,5 @@ class TestDeleteProjectData(BaseDataDeleteTestCase):
 
     def test_number_files_after_deletion(self):
         metadata = "imeta ls -C {} {}".format(self.project_collection_path, "numFiles")
-        ret_metadata = subprocess.check_output(metadata, shell=True)
+        ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
         assert "value: {}".format(self.number_metadata_files) in ret_metadata

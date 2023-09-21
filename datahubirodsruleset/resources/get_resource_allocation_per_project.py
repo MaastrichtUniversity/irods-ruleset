@@ -38,9 +38,9 @@ def get_resource_allocation_per_project(ctx):
         project_dict = get_project_details(ctx, project_path)
 
         collection_size_per_resource = json.loads(
-            ctx.callback.get_collection_size_per_resource(project_dict["id"], "")["arguments"][
-                1
-            ]
+            ctx.callback.get_collection_size_per_resource(project_dict["id"], "")[
+                "arguments"
+            ][1]
         )
         collections = collection_size_per_resource.values()
         for collection in collections:
@@ -71,6 +71,7 @@ def get_prices_of_resources(ctx):
 
     return resource_prices
 
+
 def get_cost_of_project(project_dict, resource_prices):
     import copy
 
@@ -80,47 +81,49 @@ def get_cost_of_project(project_dict, resource_prices):
             float(value["size"]) / 1000 / 1000 / 1000 * float(resource_prices[key])
         )
         project_dict["storage"][key]["cost_per_year"] = round(cost_per_year, 2)
-        project_dict["storage"][key]["cost_per_month"] = round(
-            cost_per_year / 12, 2
-        )
+        project_dict["storage"][key]["cost_per_month"] = round(cost_per_year / 12, 2)
     return project_dict
 
-def get_project_details(ctx, project_path):
-        project_id = formatters.get_project_id_from_project_path(project_path)
-        
-        budget_number = ctx.callback.getCollectionAVU(
-            project_path, "responsibleCostCenter", "", "", TRUE_AS_STRING
-        )["arguments"][2]
-        data_steward = ctx.callback.getCollectionAVU(
-            project_path, "dataSteward", "", "", TRUE_AS_STRING
-        )["arguments"][2]
-        title = ctx.callback.getCollectionAVU(
-            project_path, "title", "", "", TRUE_AS_STRING
-        )["arguments"][2]
 
-        return {
-            "id": project_id,
-            "title": title,
-            "data_steward": data_steward,
-            "budget_number": budget_number,
-            "storage": {},
-        }
-    
+def get_project_details(ctx, project_path):
+    project_id = formatters.get_project_id_from_project_path(project_path)
+
+    budget_number = ctx.callback.getCollectionAVU(
+        project_path, "responsibleCostCenter", "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    data_steward = ctx.callback.getCollectionAVU(
+        project_path, "dataSteward", "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    title = ctx.callback.getCollectionAVU(
+        project_path, "title", "", "", TRUE_AS_STRING
+    )["arguments"][2]
+
+    return {
+        "id": project_id,
+        "title": title,
+        "data_steward": data_steward,
+        "budget_number": budget_number,
+        "storage": {},
+    }
+
+
 def format_output(output):
     result = []
     for project in output:
         for resource, value in project["storage"].items():
-            result.append({
-                "budget_number": project["budget_number"],
-                "data_steward": project["data_steward"],
-                "id": project["id"],
-                "title": project["title"],
-                "storage": {
-                    resource: {
-                        "cost_per_month": value["cost_per_month"],
-                        "cost_per_year": value["cost_per_year"],
-                        "size": value["size"]
-                    }
+            result.append(
+                {
+                    "budget_number": project["budget_number"],
+                    "data_steward": project["data_steward"],
+                    "id": project["id"],
+                    "title": project["title"],
+                    "storage": {
+                        resource: {
+                            "cost_per_month": value["cost_per_month"],
+                            "cost_per_year": value["cost_per_year"],
+                            "size": value["size"],
+                        }
+                    },
                 }
-            })
+            )
     return result

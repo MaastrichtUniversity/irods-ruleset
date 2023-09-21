@@ -50,7 +50,7 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
 
     # Add simple retry retrieving PID
     RETRY_MAX_NUMBER = 5
-    RETRY_SLEEP_NUMBER = 30
+    RETRY_SLEEP_NUMBER = 10
     retry_counter = RETRY_MAX_NUMBER
     return_code = 0
 
@@ -65,7 +65,9 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
                 handle = json.loads(response.text)
                 return_code = 0
             else:
-                ctx.callback.msiWriteRodsLog("ERROR: Response EpicPID not HTTP OK: '{}'".format(response.status_code), 0)
+                ctx.callback.msiWriteRodsLog(
+                    "ERROR: Response EpicPID not HTTP OK: '{}'".format(response.status_code), 0
+                )
                 return_code = 1
 
         except requests.exceptions.RequestException as e:

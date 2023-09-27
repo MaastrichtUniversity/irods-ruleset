@@ -6,8 +6,8 @@ from datahubirodsruleset.formatters import format_project_path, format_human_byt
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
-@make(inputs=[0, 1, 2, 3, 4, 5], outputs=[6], handler=Output.STORE)
-def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, depositor, dropzone_type):
+@make(inputs=[0, 1, 2, 3, 4], outputs=[5], handler=Output.STORE)
+def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dropzone_type):
     """
     This rule is part the ingestion workflow.
     Perform the preliminary common tasks for both 'mounted' and 'direct' ingest.
@@ -18,8 +18,6 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         Combined type of callback and rei struct.
     project_id: str
         The project id, e.g: P00000010
-    title: str
-        The title of the dropzone / new collection
     dropzone_path: str
         The dropzone absolute path
     token: str
@@ -36,6 +34,8 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     """
     ctx.callback.msiWriteRodsLog("Starting ingestion {}".format(dropzone_path), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
+
+    title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
 
     try:
         collection_id = ctx.callback.create_project_collection(project_id, title, "")["arguments"][2]

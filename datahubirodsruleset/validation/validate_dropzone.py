@@ -70,7 +70,6 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
                 "-818000", "User '{}' is not the creator of dropzone '{}'".format(username, dropzone_path)
             )
 
-    title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
 
     # Get resource availability -- check ingest & destination resource
@@ -95,4 +94,5 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.VALIDATING.value)
 
     validation_result = ctx.callback.validate_metadata(dropzone_path, "")["arguments"][1]
-    return {"project_id": project_id, "title": title, "validation_result": validation_result}
+
+    return {"project_id": project_id, "validation_result": validation_result}

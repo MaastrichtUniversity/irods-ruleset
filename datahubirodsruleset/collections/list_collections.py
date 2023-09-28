@@ -3,11 +3,10 @@ from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
-def optimized_list_collections(ctx, project_path):
+def list_collections(ctx, project_path):
     """
     Get a listing of all the project's collections
 

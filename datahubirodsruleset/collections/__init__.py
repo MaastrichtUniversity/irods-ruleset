@@ -7,7 +7,6 @@ from datahubirodsruleset.collections.get_project_collection_process_activity imp
     get_project_collection_process_activity,
 )
 from datahubirodsruleset.collections.list_collections import list_collections
-from datahubirodsruleset.collections.optimized_list_collection import optimized_list_collections
 from datahubirodsruleset.collections.set_acl import set_acl
 from datahubirodsruleset.collections.remove_collection_attribute_value import remove_collection_attribute_value
 

@@ -23,9 +23,6 @@ projectCollection:
         Used in RW and MDR
     openProjectCollection
         IN RW, not in MDR
-        Used in RS (prepareExportProjectCollection & tape)
-    prepareExportProjectCollection
-        Used in RW and MDR
 misc:
     calcCollectionFiles
         In RS (setCollectionSize)

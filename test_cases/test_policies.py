@@ -178,7 +178,6 @@ class TestPolicies:
         list_project_setting_avu_to_check = [
             "enableArchive",
             "enableUnarchive",
-            "enableOpenAccessExport",
             "collectionMetadataSchemas",
             "enableContributorEditMetadata",
             # "enableDropzoneSharing", triggers acPostProcForModifyAVUMetadata

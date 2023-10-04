@@ -24,8 +24,8 @@ acPreProcForModifyAVUMetadata(*Option,*SourceItemType,*TargetItemType,*SourceIte
 modifyProjectAVUMetadataPolicy(*ItemName,*AName,*AValue) {
     ### Policy to prevent setting specials Project AVU by unauthorized users
     if(*ItemName like regex "/nlmumc/projects/P[0-9]{9}") {
-        if(*AName == "description" || *AName == "enableArchive" || *AName == "enableUnarchive"
-        || *AName == "enableOpenAccessExport" || *AName == "collectionMetadataSchemas"
+        if(*AName == "description" || *AName == "collectionMetadataSchemas"
+        || *AName == "enableArchive" || *AName == "enableUnarchive"
         || *AName == "enableContributorEditMetadata" || *AName == "enableDropzoneSharing") {
             *hasAccess = 0;
             # msiCheckAccess will fail if the $userNameClient is not currently part the *ItemName ACL

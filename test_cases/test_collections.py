@@ -141,7 +141,6 @@ class TestCollections:
         assert collection_detail["title"] == self.collection_title_base + "0"
         assert collection_detail["enableArchive"] == "false"
         assert collection_detail["enableUnarchive"] == "false"
-        assert collection_detail["enableOpenAccessExport"] == "false"
         assert collection_detail["externals"] == "no-externalPID-set"
         assert collection_detail["exporterState"] == "no-state-set"
 

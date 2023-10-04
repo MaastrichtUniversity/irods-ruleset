@@ -82,7 +82,7 @@ class BaseTestTapeArchive:
         cls.large_file_logical_path = "{}/large_file".format(cls.project_collection_path)
 
         cls.run_ichmod = "ichmod -rM own {} {}".format(cls.service_account, cls.project_collection_path)
-        cls.rule_status = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,false"'
+        cls.rule_status = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true"'
         cls.check_small_file_resource = "ils -l {}/instance.json".format(cls.project_collection_path)
         cls.check_large_file_resource = "ils -l {}".format(cls.large_file_logical_path)
         print("End {}.setup_class".format(cls.__name__))

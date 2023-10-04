@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r get_resource_allocation_per_project
+# /rules/tests/run_test.sh -r get_project_usage_report
 import json
 
 from dhpythonirodsutils import formatters
@@ -10,7 +10,7 @@ from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)
-def get_resource_allocation_per_project(ctx):
+def get_project_usage_report(ctx):
     """
     OPS report rule.
     HAS TO BE CALLED AS RODSADMIN.
@@ -115,15 +115,15 @@ def format_output(output):
                 {
                     "budget_number": project["budget_number"],
                     "data_steward": project["data_steward"],
-                    "id": project["id"],
+                    "id": "{}_{}".format(project["id"], resource),
+                    "project_id": project["id"],
                     "title": project["title"],
-                    "storage": {
-                        resource: {
-                            "cost_per_month": value["cost_per_month"],
-                            "cost_per_year": value["cost_per_year"],
-                            "size": value["size"],
-                        }
-                    },
+                    "resource": {
+                        "cost_per_month": value["cost_per_month"],
+                        "cost_per_year": value["cost_per_year"],
+                        "size": value["size"],
+                        "resource": resource
+                    }
                 }
             )
     return result

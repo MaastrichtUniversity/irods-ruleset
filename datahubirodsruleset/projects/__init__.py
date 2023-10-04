@@ -13,6 +13,7 @@ from datahubirodsruleset.projects.list_contributing_projects_by_attribute import
 from datahubirodsruleset.projects.list_projects_finance import get_projects_finance
 from datahubirodsruleset.projects.list_projects_minimal import list_projects_minimal
 from datahubirodsruleset.projects.optimized_list_projects import optimized_list_projects
+from datahubirodsruleset.projects.get_project_usage_report import get_project_usage_report
 
 # Private rules
 from datahubirodsruleset.projects.get_project_finance import get_project_finance

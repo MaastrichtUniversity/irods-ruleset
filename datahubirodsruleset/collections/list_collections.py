@@ -3,7 +3,6 @@ from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -32,38 +31,38 @@ def list_collections(ctx, project_path):
     # Initialize the collections dictionary
     project_collections = []
 
-    proj_size = float(0)
     for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '" + project_path + "'", AS_LIST, ctx.callback):
-        # Calculate size for entire project
-        coll_size = float(ctx.callback.get_collection_size(proj_coll[0], "B", "none", "")["arguments"][3])
-        proj_size = proj_size + coll_size
-
         # Initialize the collections dictionary
         project_collection = {}
+        project_collection["size"] = 0
+        project_collection["title"] = ""
+        project_collection["creator"] = ""
+        project_collection["PID"] = ""
+        project_collection["numFiles"] = 0
+        project_collection["id"] = formatters.get_collection_id_from_project_collection_path(proj_coll[0])
 
-        project_collection["id"] = proj_coll[0].split("/")[4]
-
-        # Get AVUs
-        project_collection["size"] = coll_size
-        project_collection["title"] = ctx.callback.getCollectionAVU(proj_coll[0], "title", "", "", FALSE_AS_STRING)[
-            "arguments"
-        ][2]
-        project_collection["creator"] = ctx.callback.getCollectionAVU(proj_coll[0], "creator", "", "", FALSE_AS_STRING)[
-            "arguments"
-        ][2]
-        project_collection["PID"] = ctx.callback.getCollectionAVU(proj_coll[0], "PID", "", "", FALSE_AS_STRING)[
-            "arguments"
-        ][2]
-        project_collection["numFiles"] = int(
-            ctx.callback.getCollectionAVU(proj_coll[0], "numFiles", "", "0", FALSE_AS_STRING)["arguments"][2]
+        parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
+        conditions = "META_COLL_ATTR_NAME in ('dcat:byteSize', 'title', 'creator', 'PID', 'numFiles', 'latest_version_number') AND COLL_NAME = '{}' ".format(
+            proj_coll[0]
         )
+        latest_version_number = ""
+        for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+            # Loop over metadata
+            if result[1] == "dcat:byteSize":
+                project_collection["size"] = int(result[2])
+            if result[1] == "title":
+                project_collection["title"] = result[2]
+            if result[1] == "creator":
+                project_collection["creator"] = result[2]
+            if result[1] == "PID":
+                project_collection["PID"] = result[2]
+            if result[1] == "numFiles":
+                project_collection["numFiles"] = int(result[2])
+            if result[1] == "latest_version_number":
+                latest_version_number = result[2]
 
         # Calculate the number of user uploaded files
         metadata_files = 0
-
-        latest_version_number = ctx.callback.getCollectionAVU(
-            proj_coll[0], "latest_version_number", "", "", FALSE_AS_STRING
-        )["arguments"][2]
 
         if latest_version_number:
             metadata_files = (int(latest_version_number) * 2) + 2

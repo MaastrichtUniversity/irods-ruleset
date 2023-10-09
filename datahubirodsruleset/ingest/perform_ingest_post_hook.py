@@ -1,3 +1,5 @@
+# /rules/tests/run_test.sh -r perform_ingest_post_hook -a "P000000003,C000000001,/nlmumc/ingest/zones/ugly-sandpiper,mounted,100,jmelius"
+
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING

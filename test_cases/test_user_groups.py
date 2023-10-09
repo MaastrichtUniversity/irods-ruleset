@@ -2,9 +2,10 @@ import subprocess
 import json
 import os
 
+from dhpythonirodsutils.enums import ProcessState, ProcessType
+
 from test_cases.utils import (
     remove_project,
-    revert_latest_project_number,
     create_project,
     create_user,
     create_data_steward,
@@ -15,6 +16,7 @@ from test_cases.utils import (
     remove_user_from_group,
     set_user_avu,
     check_if_key_value_in_dict_list,
+    create_dropzone,
 )
 
 """
@@ -28,9 +30,6 @@ get_all_users_groups_memberships
 get_all_users_id
     Not used in MDR, RW
     Used in RS (optimized_list_projects)
-get_contributing_project
-    Not used in RS
-    Used in MDR, RW
 get_groups
     Not used in RS
     Used in MDR, RW
@@ -68,21 +67,11 @@ iRODS Rule language rules
 getDataStewards
     Not used in RS
     Used in MDR, RW
-getDisplayNameForAccount
-    Not used in MDR, RW
-    Used in RS(getProjectCollectionsArray)
-getEmailForAccount
-    Not used MDR, RW or RS. 
-getGroups
-    Not used MDR, RW or RS. 
 getUsers
     Used in MDR, RW and RS (get_all_users_groups_memberships)
 getUsersInGroup
     Not used in RS
     Used in MDR, RW
-listGroupsByUser
-    Used in RW
-    Not used in MDR and RS
 """
 
 
@@ -91,12 +80,15 @@ class TestUserGroups:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "test_manager"
+    depositor = "user_group_test_manager"
     manager1 = depositor
-    manager2 = "test_data_steward"
+    manager2 = "user_group_test_data_steward"
     data_steward = manager2
-    group = "test_group"
+    group = "user_group_test_group"
     service_account = "service-test"
+
+    collection_creator = "jonathan.melius@maastrichtuniversity.nl"
+    collection_title = "collection_title"
 
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
@@ -123,7 +115,6 @@ class TestUserGroups:
     def teardown_class(cls):
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         remove_user_from_group("DH-project-admins", cls.manager1)
         remove_user(cls.manager1)
         remove_user(cls.manager2)
@@ -139,15 +130,6 @@ class TestUserGroups:
         ret = subprocess.check_output(rule, shell=True)
         user_ids = json.loads(ret)
         assert user_ids[user_id] == user_id
-
-    def test_get_contributing_project(self):
-        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
-            self.project_id, self.manager1
-        )
-        ret = subprocess.check_output(rule, shell=True)
-        project = json.loads(ret)
-        assert project["id"] == self.project_id
-        assert project["title"] == self.project_title
 
     def test_get_groups(self):
         rule = '/rules/tests/run_test.sh -r get_groups -a "false"'
@@ -217,8 +199,104 @@ class TestUserGroups:
         rule = "/rules/tests/run_test.sh -r get_user_metadata -a {}".format(self.manager2)
         ret = subprocess.check_output(rule.format(), shell=True)
         user = json.loads(ret)
-        assert user["givenName"] == "test_data_steward"
+        assert user["givenName"] == self.manager2
         assert user["familyName"] == "LastName"
+
+    def test_get_user_active_processes(self):
+        self.dropzone_type = "direct"
+        token = create_dropzone(self)
+        collection_path = "/nlmumc/projects/{project_id}/C00000000{{collection_number}}".format(
+            project_id=self.project_id
+        )
+        for i in range(1, 4):
+            collection_path_formatted = collection_path.format(collection_number=i)
+            create_collection = "imkdir {}".format(collection_path_formatted)
+            set_collection_title = "imeta set -C {} title 'title number {}'".format(collection_path_formatted, i)
+            subprocess.check_call(create_collection, shell=True)
+            subprocess.check_call(set_collection_title, shell=True)
+
+        set_archive_state = "imeta set -C /nlmumc/projects/{}/C000000001 archiveState 'archiving 1/4'".format(
+            self.project_id
+        )
+        set_unarchive_state = "imeta set -C /nlmumc/projects/{}/C000000002 unArchiveState 'unarchiving 4/4'".format(
+            self.project_id
+        )
+        set_exporter_state = (
+            "imeta set -C /nlmumc/projects/{}/C000000003 exporterState 'dataverseNL: exporting 3/4'".format(
+                self.project_id
+            )
+        )
+        subprocess.check_call(set_archive_state, shell=True)
+        subprocess.check_call(set_unarchive_state, shell=True)
+        subprocess.check_call(set_exporter_state, shell=True)
+
+        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u {}'.format(
+            self.manager1
+        )
+        all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["repository"] == "SURFSara Tape"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["collection_title"] == "title number 1"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["collection_id"] == "C000000001"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["state"] == "archiving 1/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["repository"] == "SURFSara Tape"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["collection_title"] == "title number 2"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["collection_id"] == "C000000002"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["state"] == "unarchiving 4/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["repository"] == "dataverseNL"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_title"] == "title number 3"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_id"] == "C000000003"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["state"] == "exporting 3/4"
+        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
+
+        assert all_processes_output[ProcessState.OPEN.value][0]["validateState"] == "N/A"
+        assert all_processes_output[ProcessState.OPEN.value][0]["title"] == self.collection_title
+        assert all_processes_output[ProcessState.OPEN.value][0]["type"] == self.dropzone_type
+        assert all_processes_output[ProcessState.OPEN.value][0]["token"] == token
+        assert all_processes_output[ProcessState.OPEN.value][0]["state"] == "open"
+
+        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(
+            self.manager1
+        )
+        no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
+        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_archival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.UNARCHIVE.value
+        assert no_archival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_archival_output[ProcessState.OPEN.value]) == 1
+
+        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(
+            self.manager1
+        )
+        no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
+        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_unarchival_output[ProcessState.OPEN.value]) == 1
+
+        no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(
+            self.manager1
+        )
+        no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
+        assert len(no_export_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert no_export_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_export_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+        assert len(no_export_output[ProcessState.OPEN.value]) == 1
+
+        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(
+            self.manager1
+        )
+        no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
+        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 3
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
+        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
+        assert len(no_dropzones_output[ProcessState.OPEN.value]) == 0
+
+        remove_dropzone = "irm -rf /nlmumc/ingest/direct/{}".format(token)
+        subprocess.check_call(remove_dropzone, shell=True)
 
     def test_get_user_or_group_by_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
@@ -260,31 +338,22 @@ class TestUserGroups:
         imeta = "imeta rm -u {} {} {}".format(self.manager1, field_name, field_value)
         subprocess.check_output(imeta, shell=True)
 
+    def test_get_expanded_user_group_information(self):
+        rule = '/rules/tests/run_test.sh -r get_expanded_user_group_information -a "{};{}"'.format(
+            self.manager2, self.group
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        output = json.loads(ret)
+        assert self.manager1 in output
+        assert self.manager2 in output
+        assert self.group in output
+        assert output[self.manager1]["email"] == "{}@maastrichtuniversity.nl".format(self.manager1)
+
     def test_get_data_stewards(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDataStewards.r"
         ret = subprocess.check_output(rule, shell=True)
         data_stewards = json.loads(ret)
         assert check_if_key_value_in_dict_list(data_stewards, "userName", self.data_steward)
-
-    def test_get_display_name_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDisplayNameForAccount.r \"*account='{}'\"".format(
-            self.manager1
-        )
-        display_name = subprocess.check_output(rule, shell=True).rstrip("\n")
-        assert display_name == "{} LastName".format(self.manager1)
-
-    def test_get_email_for_account(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getEmailForAccount.r \"*account='{}'\"".format(
-            self.manager1
-        )
-        email = subprocess.check_output(rule, shell=True).rstrip("\n")
-        assert email == "{}@maastrichtuniversity.nl".format(self.manager1)
-
-    def test_get_groups_rule_language(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getGroups.r \"*showSpecialGroups='false'\""
-        ret = subprocess.check_output(rule, shell=True)
-        groups = json.loads(ret)
-        assert check_if_key_value_in_dict_list(groups, "userName", self.group)
 
     def test_get_users(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsers.r \"*showServiceAccounts='false'\""
@@ -304,12 +373,3 @@ class TestUserGroups:
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
         assert not check_if_key_value_in_dict_list(users, "userName", self.manager2)
-
-    def test_list_groups_by_user(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/listGroupsByUser.r"
-        ret = subprocess.check_output(rule, shell=True)
-        groups = json.loads(ret)
-        for group in groups:
-            if group["GroupName"] == self.group:
-                assert "{} LastName".format(self.manager1) in group["Users"]
-                assert not "{} LastName".format(self.manager2) in group["Users"]

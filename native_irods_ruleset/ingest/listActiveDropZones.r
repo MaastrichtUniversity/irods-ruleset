@@ -148,10 +148,15 @@ IRULE_listActiveDropZones(*report, *result) {
             msiAddKeyVal(*kvp, 'destination', *destination);
         }
 
-        if (*creator == "") {
-            msiAddKeyVal(*kvp, 'creator', "");
-        } else {
+        *creatorDisplayName = *creator;
+        foreach (*Row in SELECT META_USER_ATTR_VALUE WHERE USER_NAME == "*creator" AND META_USER_ATTR_NAME == "displayName") {
+            *creatorDisplayName = *Row.META_USER_ATTR_VALUE;
+        }
+
+        if (*creatorDisplayName == "") {
             msiAddKeyVal(*kvp, 'creator', *creator);
+        } else {
+            msiAddKeyVal(*kvp, 'creator', *creatorDisplayName);
         }
 
         if ( $userNameClient == *creator){

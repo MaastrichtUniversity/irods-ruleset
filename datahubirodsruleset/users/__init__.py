@@ -1,12 +1,13 @@
 """This sub-package contains the rules related to iRODS users & groups"""
 # Public rules
-from datahubirodsruleset.users.get_contributing_project import get_contributing_project
+from datahubirodsruleset.users.get_user_active_processes import get_user_active_processes
 from datahubirodsruleset.users.get_groups import get_groups
 from datahubirodsruleset.users.get_temporary_password_lifetime import get_temporary_password_lifetime
 from datahubirodsruleset.users.get_user_attribute_value import get_user_attribute_value
 from datahubirodsruleset.users.get_user_group_memberships import get_user_group_memberships
 from datahubirodsruleset.users.get_user_internal_affiliation_status import get_user_internal_affiliation_status
 from datahubirodsruleset.users.get_user_or_group_by_id import get_user_or_group_by_id
+from datahubirodsruleset.users.get_expanded_user_group_information import get_expanded_user_group_information
 from datahubirodsruleset.users.set_user_attribute_value import set_user_attribute_value
 
 # Private rules

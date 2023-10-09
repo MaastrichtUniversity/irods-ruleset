@@ -11,7 +11,6 @@ from datahubirodsruleset.customizable_metadata.set_acl_for_metadata_snapshot imp
 from datahubirodsruleset.customizable_metadata.close_project_collection_snapshot import (
     close_project_collection_snapshot,
 )
-from datahubirodsruleset.customizable_metadata.get_pid import get_pid
 from datahubirodsruleset.customizable_metadata.get_versioned_pids import get_versioned_pids
 from datahubirodsruleset.customizable_metadata.open_project_collection_snapshot import open_project_collection_snapshot
 from datahubirodsruleset.customizable_metadata.update_metadata_during_edit_collection import (

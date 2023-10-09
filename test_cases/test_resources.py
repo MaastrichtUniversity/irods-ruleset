@@ -6,7 +6,6 @@ from test_cases.utils import (
     TMP_INSTANCE_PATH,
     start_and_wait_for_ingest,
     remove_project,
-    revert_latest_project_number,
     remove_dropzone,
     create_project,
     create_dropzone,
@@ -15,7 +14,6 @@ from test_cases.utils import (
 
 """
 Python rules:
-- list_destination_resources_status: valid, used in irods-rule-wrapper, but not MDR
 - get_resource_size_for_all_collections: valid, used by DevOps to calculate how much data is in iRODS in total
 
 
@@ -26,7 +24,6 @@ Native rules:
 - getIngestResources: used in MDR/RW (createProject)
 - getResourceAVU: used in tapeUnarchive, prepareTapeUnarchive, prepareTapeArchive
 - getResourcesInCollection: used in calcCollectionSizeAcrossResc and thus in setCollectionSize
-- resourceExists: NOT USED
 """
 
 
@@ -75,25 +72,7 @@ class TestResources:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
-
-    def test_list_destination_resources_status(self):
-        rule = "/rules/tests/run_test.sh -r list_destination_resources_status"
-        rule_output = subprocess.check_output(rule, shell=True)
-        json.loads(rule_output)
-        assert "replRescAZM01" in rule_output
-        assert "replRescUM01" in rule_output
-        assert "replRescUMCeph01" in rule_output
-        change_status = "iadmin modresc replRescAZM01 status {}"
-        subprocess.check_call(change_status.format("down"), shell=True)
-        second_time_output = subprocess.check_output(rule, shell=True)
-        assert "replRescAZM01" in rule_output
-        rule_parsed = json.loads(second_time_output)
-        for item in rule_parsed:
-            if item["name"] == "replRescAZM01":
-                assert not item["available"]
-        subprocess.check_call(change_status.format("up"), shell=True)
 
     def test_calc_collection_files_across_resc(self):
         resc_found = False
@@ -114,6 +93,7 @@ class TestResources:
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for resc in rule_parsed["numFilesPerResc"]:
             if resc["resourceID"] == iquest_result:
                 assert resc["numFiles"] == "1"
@@ -142,6 +122,7 @@ class TestResources:
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for resc in rule_parsed["sizePerResc"]:
             if resc["resourceID"] == iquest_result:
                 assert resc["dataSize"] == "13"
@@ -155,6 +136,7 @@ class TestResources:
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDestinationResources.r"
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for item in rule_parsed:
             assert item["name"] in ["replRescAZM01", "replRescUM01", "replRescUMCeph01"]
 
@@ -162,6 +144,7 @@ class TestResources:
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getIngestResources.r"
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
+        assert len(rule_parsed) > 0
         for item in rule_parsed:
             assert item["name"] in [
                 "ires-hnas-azmResource",

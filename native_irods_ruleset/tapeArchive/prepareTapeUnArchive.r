@@ -1,24 +1,24 @@
 # This rule handles two input variables: a collection absolute path or data object absolute path
 # e.g Bring back an entire collection online
-# irule -F prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001'" "*initiator='jmelius'"
 #
 # e.g Bring back a single data object online
-# irule -F prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeUnArchive.r "*archColl='/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'" "*initiator='jmelius'"
 
 irule_dummy() {
-    IRULE_prepareTapeUnArchive(*archColl);
+    IRULE_prepareTapeUnArchive(*archColl, *initiator);
 }
 
-IRULE_prepareTapeUnArchive(*archColl) {
+IRULE_prepareTapeUnArchive(*archColl, *initiator) {
 
     # Check the input absolute path and initialize the required variables for this rule
     if (*archColl like regex "/nlmumc/projects/P[0-9]{9}/C[0-9]{9}.*"){
-        # split the *archColl into *project and *projectCollection
-        *splitPath =  split(*archColl, "/");
-        *project = elem(*splitPath,2);
-        *projectPath =  "/nlmumc/projects/*project";
-        *projectCollection = elem(*splitPath,3);
-        *projectCollectionPath = "/nlmumc/projects/*project/*projectCollection";
+        *project = "";
+        get_project_id_from_project_collection_path(*archColl,*project)
+        *projectCollection = "";
+        get_collection_id_from_project_collection_path(*archColl,*projectCollection)
+        *projectCollectionPath = "";
+        get_project_collection_path(*project, *projectCollection,*projectCollectionPath)
     }
     else{
          failmsg(-1, "Invalid input path: *archColl");
@@ -35,22 +35,22 @@ IRULE_prepareTapeUnArchive(*archColl) {
     # rodsadmin user running the rule
     # get this from avu set on archive
     getResourceAVU(*resc,"service-account",*aclChange,"N/A","true");
-    *stateAttrName = "archiveState";
+    *stateAttrName = "unArchiveState";
 
      # Log statements
-     msiWriteRodsLog("INFO: UnArchival worklow started for *archColl", 0);
+     msiWriteRodsLog("INFO: UnArchival workflow started for *archColl", 0);
      msiWriteRodsLog("DEBUG: Data will be moved from resource *resc", 0);
      msiWriteRodsLog("DEBUG: Service account used is *aclChange", 0);
+     msiWriteRodsLog("DEBUG: *initiator is the initiator", 0);
 
     # Retrieve archiveState
     *archiveState = "";
-    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*archColl" AND META_COLL_ATTR_NAME == "archiveState") {
+    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = "*archColl" AND META_COLL_ATTR_NAME in ("'archiveState', 'unArchiveState'")) {
         *archiveState = *av.META_COLL_ATTR_VALUE;
     }
 
     # Check for valid state to start archiving
-    if ( *archiveState != "no-state-set" && *archiveState != "archive-done"  && *archiveState != ""
-            && *archiveState not like  "Number of files offline:*"  && *archiveState not like  "Caching files countdown:*") {
+    if ( *archiveState != "") {
         failmsg(-1, "Invalid state(*archiveState) to start process.");
     }
 
@@ -123,7 +123,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
         msiWriteRodsLog("DEBUG: Stage back to cache: *offlineList", 0);
 
         # Recursive call to check un-migrating status
-        prepareTapeUnArchive(*archColl);
+        prepareTapeUnArchive(*archColl, *initiator);
     }
 
     # UnMigrating Check
@@ -135,7 +135,7 @@ IRULE_prepareTapeUnArchive(*archColl) {
         # Delay & recursive call
         delay("<PLUSET>30s</PLUSET>"){
             msiWriteRodsLog("DEBUG: SURFSara Archive - delay 30s, before retry", 0);
-            prepareTapeUnArchive(*archColl);
+            prepareTapeUnArchive(*archColl, *initiator);
         }
     }
     else{
@@ -144,8 +144,8 @@ IRULE_prepareTapeUnArchive(*archColl) {
             *value = "start-transfer";
             setCollectionAVU(*projectCollectionPath, *stateAttrName, *value)
             msiWriteRodsLog("DEBUG: Start replication back to UM for: *unArchivingList", 0);
-            delay("<PLUSET>1s</PLUSET>") {
-                tapeUnArchive(*count, *archColl);
+            delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
+                tapeUnArchive(*count, *archColl, *initiator);
             }
         }
         else{
@@ -154,5 +154,5 @@ IRULE_prepareTapeUnArchive(*archColl) {
     }
 }
 
-INPUT *archColl=""
+INPUT *archColl="", *initiator=""
 OUTPUT ruleExecOut

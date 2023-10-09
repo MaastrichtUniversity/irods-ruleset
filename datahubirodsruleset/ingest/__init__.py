@@ -1,6 +1,7 @@
 """This sub-package contains the rules related to DataHub ingestion workflow"""
 # Public rules
 from datahubirodsruleset.ingest.start_ingest import start_ingest
+from datahubirodsruleset.ingest.set_ingestion_error_avu import set_ingestion_error_avu
 
 # Private rules
 from datahubirodsruleset.ingest.finish_ingest import finish_ingest

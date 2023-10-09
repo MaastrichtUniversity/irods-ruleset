@@ -1,12 +1,12 @@
-# /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct"
-from dhpythonirodsutils.enums import DropzoneState
+# /rules/tests/run_test.sh -r validate_data_post_ingestion -a "/nlmumc/projects/P000000019/C000000001,/nlmumc/ingest/direct/angry-elephant,direct,jmelius"
 
+from datahubirodsruleset import formatters
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
-@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
-def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_type):
+@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
+def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_type, depositor):
     """
     This rule is part the ingestion workflow.
     It compares the size and number of files from the dropzone to the newly ingested project collection.
@@ -27,6 +27,8 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
         The collection id, e.g: /nlmumc/ingest/direct/angry-elephant
     dropzone_type: str
         The type of dropzone: direct or mounted.
+    depositor: str
+        The user who started the ingestion
     """
     collection_num_files = ctx.callback.getCollectionAVU(project_collection, "numFiles", "", "", TRUE_AS_STRING)[
         "arguments"
@@ -59,29 +61,41 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     ret = ctx.callback.get_data_object_size(project_collection, schema_file_name, "")["arguments"][2]
     collection_schema_size = int(ret)
 
-    ctx.callback.msiWriteRodsLog(
-        "DEBUG: '{}' collection_instance_size: {}".format(project_collection, str(collection_instance_size)), 0
-    )
-    ctx.callback.msiWriteRodsLog(
-        "DEBUG: '{}' collection_schema_size: {}".format(project_collection, str(collection_schema_size)), 0
-    )
-    ctx.callback.msiWriteRodsLog(
-        "DEBUG: '{}' collection_total_size: {}".format(project_collection, str(collection_size)), 0
-    )
-    ctx.callback.msiWriteRodsLog(
-        "DEBUG: '{}' collection_file_count: {}".format(project_collection, str(collection_num_files)), 0
-    )
-
     dropzone_num_files = ctx.callback.getCollectionAVU(dropzone, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
     dropzone_size = ctx.callback.getCollectionAVU(dropzone, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
 
     match_num_files = int(dropzone_num_files) == int(collection_num_files)
+    ctx.callback.msiWriteRodsLog(
+        "DEBUG: dropzone_num_files = {} ;; collection_num_files = {}".format(
+            str(dropzone_num_files), str(collection_num_files)
+        ),
+        0,
+    )
     match_size = False
     if dropzone_type == "mounted":
         collection_user_size = int(collection_size) - int(collection_instance_size) - int(collection_schema_size)
         match_size = int(dropzone_size) == collection_user_size
+
+        ctx.callback.msiWriteRodsLog(
+            "DEBUG: Calculation: {} (collection_size) - {} (collection_instance_size) - {} (collection_schema_size) = {}".format(
+                str(collection_size),
+                str(collection_instance_size),
+                str(collection_schema_size),
+                str(collection_user_size),
+            ),
+            0,
+        )
+        ctx.callback.msiWriteRodsLog(
+            "DEBUG: dropzone_size = {} ;; collection_user_size = {}".format(
+                str(dropzone_size), str(collection_user_size)
+            ),
+            0,
+        )
     elif dropzone_type == "direct":
         match_size = int(dropzone_size) == int(collection_size)
+        ctx.callback.msiWriteRodsLog(
+            "DEBUG: dropzone_size = {} ;; collection_size = {}".format(str(dropzone_size), str(collection_size)), 0
+        )
 
     ctx.callback.msiWriteRodsLog(
         "DEBUG: Match dropzone '{}' to '{}' size: {}".format(dropzone, project_collection, str(match_size)), 0
@@ -92,4 +106,5 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     )
 
     if match_size is False or match_num_files is False:
-        ctx.callback.setErrorAVU(dropzone, "state", DropzoneState.ERROR_INGESTION.value, "Error copying data")
+        project_id = formatters.get_project_id_from_project_collection_path(project_collection)
+        ctx.callback.set_ingestion_error_avu(dropzone, "Error copying data", project_id, depositor)

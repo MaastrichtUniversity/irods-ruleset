@@ -1,9 +1,10 @@
 # Call with
 #
-# irule -s -F changeProjectPermissions.r *project="P000000016" *users="p.vanschayck@maastrichtuniversity.nl:read m.coonen@maastrichtuniversity.nl:write"
-#
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance "changeProjectPermissions('P000000007','psuppers:remove')" null  ruleExecOut
+# Remove user rights by using the "remove" keyword
 # Change immediately the ACL on the project level.
 # Then in the delay queue, change recursively all the collections under the project.
+# DOES NOT WORK WITH irule -r irods_rule_engine_plugin-irods_rule_language-instance -s -F /rules/projects/changeProjectPermissions.r *project="P000000016" *users="pvanschay2:read mcoonen:write scannexus:read"
 
 irule_dummy() {
     IRULE_changeProjectPermissions(*project, *users);
@@ -35,8 +36,10 @@ IRULE_changeProjectPermissions(*project, *users){
             # Signal end of loop
             *users = ""
         }
-
-        msiSetACL("default", "*rights", "*account", '/nlmumc/projects/*project');
+        # WORKAROUND:
+        # Using the correct value "null" triggers some json parsing error during the rule execution in iRODS.
+        # This is only have been identified for rule with delay block.
+        set_acl("default", "*rights", "*account", '/nlmumc/projects/*project');
 
         *count = *count-1;
 
@@ -45,13 +48,26 @@ IRULE_changeProjectPermissions(*project, *users){
         }
     }
 
-    delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF>") {
-        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project' ) {
-            *projectCollection = *Row.COLL_NAME;
+    delay("<EF>1s REPEAT UNTIL SUCCESS OR 1 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
+        *activeProjectCollections = list();
+        foreach ( *Row in SELECT COLL_NAME WHERE COLL_PARENT_NAME = '/nlmumc/projects/*project') {
+            *activeProjectCollection = *Row.COLL_NAME;
 
+            *deletionState = "";
+            foreach ( *RowDeletion in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '*activeProjectCollection' AND META_COLL_ATTR_NAME == "deletionState") {
+                *deletionState = *RowDeletion.META_COLL_ATTR_VALUE;
+            }
+            if (*deletionState == "") {
+                # Add the value to the list object
+                *activeProjectCollections = cons(*activeProjectCollection, *activeProjectCollections);
+            }
+        }
+        msiWriteRodsLog("DEBUG: changeProjectPermissions activeProjectCollections - *activeProjectCollections", 0);
+
+        foreach ( *projectCollection in *activeProjectCollections ) {
             # Reset user list to original input value
             *delay_users = *input_users;
-            *count = 100;    
+            *count = 100;
 
             # Open the collection to be able to modify the collection ACL
             msiSetACL("recursive", "admin:own", "rods", "*projectCollection");
@@ -76,13 +92,14 @@ IRULE_changeProjectPermissions(*project, *users){
                 }
 
                 # Always set rights to read, unless they are removed
-                if (*rights == "null"){
-                    *collection_rights = "null";
-                } else {
+                if (*rights != "remove"){
                     *collection_rights = "read";
                 }
+                else{
+                    *collection_rights = *rights
+                }
 
-                msiSetACL("recursive", "*collection_rights", "*account", "*projectCollection");
+                set_acl("recursive", "*collection_rights", "*account", "*projectCollection");
 
                 *count = *count - 1;
 

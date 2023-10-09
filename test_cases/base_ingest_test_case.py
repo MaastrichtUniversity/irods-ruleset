@@ -4,7 +4,6 @@ import subprocess
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
-    revert_latest_project_number,
     remove_project,
     create_dropzone,
     create_project,
@@ -18,6 +17,26 @@ from test_cases.utils import (
 # TODO Test for item added to delayed queue (iqstat)
 # TODO Test for trigger pre ingest error validation with corrupt metadata
 # TODO Test for trigger post ingest with missing dropzone creator email
+
+"""
+iRODS Rule language rules
+
+checkDropZoneACL:
+    *   In RS (create_drop_zone, get_active_drop_zone, validate_dropzone & listActiveDropZones)
+
+createRemoteDirectory:
+    *   In RS (create_drop_zone)
+
+delayRemoveDropzone:
+    *   In RS (finish_ingest)
+
+editIngest:
+    *   In MDR, RW
+
+listActiveDropZones:
+    *   NOT in RW, MDR
+    *   In RS (get_user_active_processes)
+"""
 
 
 class BaseTestCaseIngest:
@@ -43,9 +62,26 @@ class BaseTestCaseIngest:
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
     collection_title = "collection_title"
     collection_id = "C000000001"
+    collection_number_files = 8
+    collection_total_size = 63516274
+
+    # iRODS seems to have 3 different ways/protocols to transfer data, depending on the file size:
+    # * 0     < X < 4  MB
+    # * 4 MB  < X < 32 MB
+    # * 32 MB < X
+    files_per_protocol = {
+        "0bytes.file": 0,
+        "50K.file": 51200,
+        "15M.file": 15728640,
+        "45M.file": 47185920,
+    }
 
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):
+        pass
+
+    @classmethod
+    def add_data_to_dropzone(cls):
         pass
 
     @classmethod
@@ -59,6 +95,7 @@ class BaseTestCaseIngest:
         cls.project_id = project["project_id"]
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
+        cls.add_data_to_dropzone()
         start_and_wait_for_ingest(cls)
         print("End {}.setup_class".format(cls.__name__))
 
@@ -67,7 +104,6 @@ class BaseTestCaseIngest:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_collection_avu(self):
@@ -84,8 +120,8 @@ class BaseTestCaseIngest:
         assert collection_detail["creator"] == self.collection_creator
         assert collection_detail["collection"] == self.collection_id
         assert collection_detail["title"] == self.collection_title
-        assert int(collection_detail["numFiles"]) == 4
-        assert int(collection_detail["byteSize"]) == 550514
+        assert int(collection_detail["numFiles"]) == self.collection_number_files
+        assert int(collection_detail["byteSize"]) == self.collection_total_size
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 
@@ -122,7 +158,7 @@ class BaseTestCaseIngest:
     def test_project_acl(self):
         acl = "ils -A {}".format(self.project_path)
         ret = subprocess.check_output(acl, shell=True)
-        assert "rods#nlmumc:own".format(self.manager1) in ret
+        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager2) in ret
 
@@ -130,6 +166,9 @@ class BaseTestCaseIngest:
         import requests
 
         # TODO How relevant is this test?
+        # Note: This test can start to fail when reaching high project_id number (e.g: P000000150).
+        # A potential first time PID registration can cause a synchronization timing issue between the EpicPID
+        # registration service and the global Handle URL resolving service.
         rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
             self.project_id, self.collection_id
         )

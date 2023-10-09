@@ -1,15 +1,19 @@
 import subprocess
 import pytest
+from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ProjectAVUs
 
 from test_cases.utils import (
     TMP_INSTANCE_PATH,
     get_instance,
     remove_project,
-    revert_latest_project_number,
     remove_dropzone,
     create_project,
     create_dropzone,
     add_metadata_files_to_direct_dropzone,
+    create_user,
+    remove_user,
+    revert_latest_project_collection_number,
 )
 
 
@@ -56,18 +60,36 @@ class TestPolicies:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_post_proc_for_coll_create(self):
-        """This tests whether the 'latest_project_number' is properly incremented when creating a project"""
+        """
+        This tests whether the 'latest_project_number' and 'latestProjectCollectionNumber' are properly incremented
+        when creating a project and a project collection.
+        """
+        # Project
         run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = 'latest_project_number' \""
         current_value = subprocess.check_output(run_iquest, shell=True).strip()
         project = create_project(self)
         new_value = subprocess.check_output(run_iquest, shell=True).strip()
         assert int(current_value) + 1 == int(new_value)
+
+        # Project collection
+        run_iquest = (
+            'iquest "%s" "SELECT META_COLL_ATTR_VALUE '
+            "WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}' \"".format(
+                project["project_path"], ProjectAVUs.LATEST_PROJECT_COLLECTION_NUMBER.value
+            )
+        )
+        current_value = subprocess.check_output(run_iquest, shell=True).strip()
+        collection_path = formatters.format_project_collection_path(project["project_id"], "C000000001")
+        create_collection = "imkdir {}".format(collection_path)
+        subprocess.check_call(create_collection, shell=True)
+        new_value = subprocess.check_output(run_iquest, shell=True).strip()
+        assert int(current_value) + 1 == int(new_value)
+
+        # teardown
         remove_project(project["project_path"])
-        revert_latest_project_number()
 
     def test_post_proc_for_modify_avu_metadata(self):
         """This tests whether toggling the 'enableDropzoneSharing' AVU sets properly the ACLs on the dropzones of the changed project"""
@@ -99,7 +121,7 @@ class TestPolicies:
         third_ils_output = subprocess.check_output(run_ils, shell=True)
         assert "dlinssen" not in third_ils_output
 
-    def test_post_proc_for_put(self):
+    def test_pep_api_data_obj_put_post(self):
         """
         This tests whether the sizeIngested AVU is properly incremented when a file in ingested.
         Also check the metadata files have the correct ACL for the dropzone creator
@@ -114,42 +136,62 @@ class TestPolicies:
         )
         subprocess.check_call(put_instance, shell=True)
         # The policy assumes 3 replicas for direct ingest sizeIngested to be triggered (0-stagingresc, 1 and 2).
-        # Therefor an extra replica on rootResc is created 
-        repl_instance = "irepl -R {} {}/instance.json".format(
-            "rootResc", collection_path
-        )
+        # Therefor an extra replica on rootResc is created
+        repl_instance = "irepl -R {} {}/instance.json".format("rootResc", collection_path)
         subprocess.check_call(repl_instance, shell=True)
         # Test sizeIngested AVU
         get_size_ingested = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'sizeIngested' \"".format(
             collection_path
         )
-        size_ingested = subprocess.check_output(get_size_ingested, shell=True)
+        size_ingested = subprocess.check_output(get_size_ingested, shell=True).rstrip("\n")
         assert int(size_ingested) == 12521
         # Test metadata file ACL
         run_ils = "ils -A /nlmumc/ingest/direct/{}/instance.json".format(self.token)
         ils_output = subprocess.check_output(run_ils, shell=True)
         assert "{}#nlmumc:read".format(self.manager1) in ils_output
         assert "{}#nlmumc:own".format(self.manager1) not in ils_output
-        # Tear down
+        # teardown
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_path)
 
     def test_pre_proc_for_modify_avu_metadata(self):
-        """ This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
-        list_avu_to_check = [
-            "responsibleCostCenter",
+        """This tests if a regular contributor is allowed to modify certain project AVUs (they should not be)"""
+        # Setup: Add a non-admin manager to the project
+        test_manager = "policy_test_manager"
+        create_user(test_manager)
+        mod_acl = "ichmod own {} /nlmumc/projects/{}".format(test_manager, self.project_id)
+        subprocess.check_call(mod_acl, shell=True)
+
+        financial_manager = self.manager1
+        contributor = "service-pid"
+        check = "export clientUserName={} && imeta set -C /nlmumc/projects/{} {} false"
+
+        # Financial => Only Principal Investigator or Data steward
+        financial_avu_to_check = "responsibleCostCenter"
+        with pytest.raises(subprocess.CalledProcessError) as e_info:
+            subprocess.check_call(check.format(contributor, self.project_id, financial_avu_to_check), shell=True)
+        with pytest.raises(subprocess.CalledProcessError) as e_info:
+            subprocess.check_call(check.format(test_manager, self.project_id, financial_avu_to_check), shell=True)
+        subprocess.check_call(check.format(financial_manager, self.project_id, financial_avu_to_check), shell=True)
+
+        # Project settings => only project managers, Principal Investigator or Data steward
+        list_project_setting_avu_to_check = [
             "enableArchive",
             "enableUnarchive",
             "enableOpenAccessExport",
             "collectionMetadataSchemas",
             "enableContributorEditMetadata",
             # "enableDropzoneSharing", triggers acPostProcForModifyAVUMetadata
-            "description"
+            "description",
         ]
-        for avu in list_avu_to_check:
-            check = "export clientUserName={} && imeta set -C /nlmumc/projects/{} {} false"
+        for avu in list_project_setting_avu_to_check:
             with pytest.raises(subprocess.CalledProcessError) as e_info:
-                subprocess.check_call(check.format("service-pid", self.project_id, avu), shell=True)
-            subprocess.check_call(check.format(self.manager1, self.project_id, avu), shell=True)
+                subprocess.check_call(check.format(contributor, self.project_id, avu), shell=True)
+            subprocess.check_call(check.format(test_manager, self.project_id, avu), shell=True)
+            subprocess.check_call(check.format(financial_manager, self.project_id, financial_avu_to_check), shell=True)
+
+        # teardown
+        remove_user(test_manager)
 
     def test_pre_proc_for_coll_create_first(self):
         """This tests if a user is allowed to make a dir in a direct dropzone that is already ingesting (they should not be)"""
@@ -210,7 +252,9 @@ class TestPolicies:
         check_resource = "ils -l {}/instance.json".format(collection_path)
         output = subprocess.check_output(check_resource, shell=True)
         assert self.destination_resource in output
+        # teardown
         subprocess.check_call("irm -rf {}".format(collection_path), shell=True)
+        revert_latest_project_collection_number(self.project_path)
 
     def test_set_resc_scheme_for_create_second(self):
         """Test if a file put directly in a project is properly blocked"""

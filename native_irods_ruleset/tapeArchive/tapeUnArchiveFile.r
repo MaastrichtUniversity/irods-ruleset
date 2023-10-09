@@ -2,11 +2,12 @@
 tapeUnArchiveFile(*ScanColl, *archiveResc, *projectResource, *resourceLocation, *isMoved, *count){
     # TODO After 4.2.6 update, check replication performance without remote call
     remote(*resourceLocation,""){
+        *stateAttrName = "unArchiveState";
 
         *ipath=*ScanColl.COLL_NAME++"/"++*ScanColl.DATA_NAME;
 
         *value = "unarchive-in-progress "++str(*isMoved+1)++"/"++str(*count);
-        setCollectionAVU(*archColl, "archiveState",*value);
+        setCollectionAVU(*archColl, *stateAttrName, *value);
 
         # We do not pass any options, this way we get the existing checksum, which should always exist for
         # archived files. If a failure occurs, the replication is stopped, no trimming happens

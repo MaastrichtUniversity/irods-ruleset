@@ -5,8 +5,8 @@ from datahubirodsruleset.drop_zones.create_drop_zone import create_drop_zone
 from datahubirodsruleset.drop_zones.get_active_drop_zone import get_active_drop_zone
 from datahubirodsruleset.drop_zones.get_dropzone_files import get_dropzone_files
 from datahubirodsruleset.drop_zones.get_dropzone_folders import get_dropzone_folders
-from datahubirodsruleset.drop_zones.set_dropzone_total_size_avu import set_dropzone_total_size_avu
 from datahubirodsruleset.drop_zones.set_project_acl_to_dropzone import set_project_acl_to_dropzone
+from datahubirodsruleset.drop_zones.remove_users_dropzone_acl import remove_users_dropzone_acl
 
 # Private rules
 from datahubirodsruleset.drop_zones.generate_token import generate_token

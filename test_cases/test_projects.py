@@ -1,5 +1,6 @@
 import json
 import subprocess
+import time
 
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
@@ -7,7 +8,6 @@ from dhpythonirodsutils.enums import ProjectAVUs
 from test_cases.utils import (
     create_project,
     remove_project,
-    revert_latest_project_number,
     create_user,
     remove_user,
     create_dropzone,
@@ -15,36 +15,33 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     set_irods_collection_avu,
     create_data_steward,
+    revert_latest_project_collection_number,
+    run_index_all_project_collections_metadata,
 )
 
 """
 iRODS native rules usage summary:
-- changeProjectPermissions: valid
-- detailsProject: IN RW, not in MDR
-- getProjectCost: IN detailsProject
-
-- listManagingProjects: not in RW, not in MDR
-- listContributingProjects: not in RW, not in MDR
-- listViewingProjects: not in RW, not in MDR
+- detailsProject: 
+    * IN RW, not in MDR
+    * IN RS (reportProjects)
+- getProjectCost: IN RS (detailsProject)
 
 
 - listProjectManagers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject 
 
 - listProjectContributors: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject
 
 - listProjectViewers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
-    * obsolete: IN getProjectCollectionsArray, detailsProject, listManagingProjects, listContributingProjects
+    * obsolete: IN detailsProject
 
-- listProjectsByUser: IN RW, not in MDR
-- reportProjects: not in RW, not in MDR
-
-iRODS python rules usage summary:
-- list_projects: IN RW, not in MDR
+- reportProjects:
+    * used in disk_use_email.py -> docker-reporting
+    * not in RW, not in MDR
 """
 
 
@@ -56,9 +53,9 @@ class TestProjects:
     project_title = ""
 
     # a user who doesn't have any project access after the iRODS bootstraps
-    depositor = "foobar"
+    depositor = "projects_foobar"
     manager1 = depositor
-    manager2 = "test_datasteward"
+    manager2 = "projects_test_datasteward"
     data_steward = manager2
 
     ingest_resource = "ires-hnas-umResource"
@@ -77,12 +74,14 @@ class TestProjects:
 
     number_of_projects = 3
     archive_destination_resource = "arcRescSURF01"
-    new_user = "new_user"
+    new_user = "projects_new_user"
 
     @classmethod
     def setup_class(cls):
         print()
         print("Start {}.setup_class".format(cls.__name__))
+        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
+        run_index_all_project_collections_metadata()
         create_user(cls.depositor)
         create_data_steward(cls.data_steward)
         create_user(cls.new_user)
@@ -92,6 +91,7 @@ class TestProjects:
             cls.project_paths.append(project["project_path"])
             cls.project_ids.append(project["project_id"])
             cls.project_titles.append(cls.project_title)
+            time.sleep(1)
         print("End {}.setup_class".format(cls.__name__))
 
     @classmethod
@@ -100,40 +100,11 @@ class TestProjects:
         print("Start {}.teardown_class".format(cls.__name__))
         for project_path in cls.project_paths:
             remove_project(project_path)
-            revert_latest_project_number()
 
         remove_user(cls.depositor)
         remove_user(cls.new_user)
         remove_user(cls.data_steward)
         print("End {}.teardown_class".format(cls.__name__))
-
-    def test_list_projects(self):
-        rule = "/rules/tests/run_test.sh -r optimized_list_projects -u {}".format(self.depositor)
-        ret = subprocess.check_output(rule, shell=True)
-        projects = json.loads(ret)
-
-        assert len(projects) == self.number_of_projects
-
-        for project_index in range(self.number_of_projects):
-            self.assert_project_avu(projects[project_index], project_index)
-            assert projects[project_index]["path"] == self.project_ids[project_index]
-            assert projects[project_index]["OBI:0000103"] == self.manager1
-            assert projects[project_index]["storageQuotaGb"] == "0"
-            assert projects[project_index]["responsibleCostCenter"] == self.budget_number
-            assert projects[project_index]["archiveDestinationResource"] == self.archive_destination_resource
-            assert projects[project_index]["authorizationPeriodEndDate"] == "01-01-9999"
-            assert projects[project_index]["dataRetentionPeriodEndDate"] == "01-01-9999"
-            assert projects[project_index]["dataSteward"] == self.manager2
-            assert projects[project_index]["ingestResource"] == self.ingest_resource
-            assert projects[project_index]["resource"] == self.destination_resource
-
-            assert len(projects[project_index]["managers"]) == 2
-            assert len(projects[project_index]["contributors"]) == 0
-            assert len(projects[project_index]["viewers"]) == 0
-
-            # check if the list members are user ids, not usernames
-            for manager in projects[project_index]["managers"]:
-                assert manager.isnumeric()
 
     def test_project_manager_access(self):
         cmd = '/rules/tests/run_test.sh -r get_project_acl_for_manager -a "{},false" -u {}'
@@ -221,46 +192,7 @@ class TestProjects:
         # teardown
         subprocess.check_call("ichmod -rM own rods {}".format(project_collection_path), shell=True)
         subprocess.check_call("irm -rf {}".format(project_collection_path), shell=True)
-
-    def test_project_migration_status(self):
-        # Setup
-        project_id = self.project_ids[0]
-        project_path = self.project_paths[0]
-        project_collection_path = formatters.format_project_collection_path(project_id, self.collection_id)
-
-        create_collection = "imkdir {}".format(project_collection_path)
-        subprocess.check_call(create_collection, shell=True)
-        set_irods_collection_avu(project_collection_path, "title", self.collection_title)
-
-        # Assert empty migration
-        rule = '/rules/tests/run_test.sh -r get_project_migration_status -a "{}"'.format(project_path)
-        ret = subprocess.check_output(rule, shell=True)
-        project_migration_status = json.loads(ret)
-
-        assert not project_migration_status
-
-        # Assert archive migration
-        status = "Repository:test_status"
-        set_irods_collection_avu(project_collection_path, "archiveState", status)
-        ret = subprocess.check_output(rule, shell=True)
-        project_migration_status = json.loads(ret)
-
-        assert len(project_migration_status) == 1
-        assert project_migration_status[0]["status"] == status
-        assert project_migration_status[0]["collection"] == self.collection_id
-        assert project_migration_status[0]["title"] == self.collection_title
-        assert project_migration_status[0]["repository"] == "SURFSara Tape"
-
-        # Assert 2 'ongoing' migrations
-        set_irods_collection_avu(project_collection_path, "exporterState", status)
-        ret = subprocess.check_output(rule, shell=True)
-        project_migration_status = json.loads(ret)
-
-        assert len(project_migration_status) == 2
-
-        # teardown
-        run_remove_folder = "irm -fr {}".format(project_collection_path)
-        subprocess.check_call(run_remove_folder, shell=True)
+        revert_latest_project_collection_number(self.project_paths[0])
 
     def test_project_resource_availability(self):
         project_id = self.project_ids[0]
@@ -449,6 +381,17 @@ class TestProjects:
         for project_index in range(self.number_of_projects):
             assert projects[project_index]["id"] == self.project_ids[project_index]
             assert projects[project_index]["title"] == self.project_titles[project_index]
+
+    def test_get_contributing_project(self, project_index=0):
+        project_id = self.project_ids[project_index]
+        project_title = self.project_titles[project_index]
+        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
+            project_id, self.manager1
+        )
+        ret = subprocess.check_output(rule, shell=True)
+        project = json.loads(ret)
+        assert project["id"] == project_id
+        assert project["title"] == project_title
 
     def assert_project_avu(self, project, project_index=0):
         assert project["collectionMetadataSchemas"] == self.schema_name

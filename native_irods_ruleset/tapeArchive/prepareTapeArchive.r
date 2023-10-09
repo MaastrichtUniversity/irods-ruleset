@@ -1,11 +1,11 @@
 # Call with
-# irule -F prepareTapeArchive.r "*archColl='/nlmumc/projects/P000000001/C000000097'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/tapeArchive/prepareTapeArchive.r "*archColl='/nlmumc/projects/P000000006/C000000001'" "*initiator='jmelius'"
 
 irule_dummy() {
-    IRULE_prepareTapeArchive(*archColl);
+    IRULE_prepareTapeArchive(*archColl, *initiator);
 }
 
-IRULE_prepareTapeArchive(*archColl) {
+IRULE_prepareTapeArchive(*archColl, *initiator) {
 
     # split the *archColl into *project and *projectCollection
     uuChopPath(*archColl, *dir, *projectCollection);
@@ -28,17 +28,18 @@ IRULE_prepareTapeArchive(*archColl) {
     *stateAttrName = "archiveState";
 
     # Log statements
-    msiWriteRodsLog("INFO: Archival worklow started for *archColl", 0);
+    msiWriteRodsLog("INFO: Archival workflow started for *archColl", 0);
     msiWriteRodsLog("DEBUG: Data will be moved to resource *archiveResc", 0);
     msiWriteRodsLog("DEBUG: Service account used is *aclChange", 0);
+    msiWriteRodsLog("DEBUG: *initiator is the initiator", 0);
 
     # Query *stateAttrName value
     *stateValue = "";
-    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*archColl" AND META_COLL_ATTR_NAME == *stateAttrName) {
+    foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = "*archColl" AND META_COLL_ATTR_NAME in ("'archiveState', 'unArchiveState'")) {
         *stateValue = *av.META_COLL_ATTR_VALUE;
     }
     # Check for valid state to start archiving
-    if ( *stateValue != "no-state-set" && *stateValue != "archive-done"  && *stateValue != "" ) {
+    if ( *stateValue != "" ) {
         failmsg(-1, "Invalid state to start archiving.");
     }
 
@@ -116,10 +117,10 @@ IRULE_prepareTapeArchive(*archColl) {
     setCollectionAVU(*archColl, "archiveState", *value)
 
     # Delay before replication
-    delay("<PLUSET>1s</PLUSET>") {
-        tapeArchive(*archColl, *counter, *rescParentsLocation, *dataPerResources, *rescParentsName);
+    delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
+        tapeArchive(*archColl, *initiator, *counter, *rescParentsLocation, *dataPerResources, *rescParentsName);
     }
 }
 
-INPUT *archColl=""
+INPUT *archColl="", *initiator=""
 OUTPUT ruleExecOut

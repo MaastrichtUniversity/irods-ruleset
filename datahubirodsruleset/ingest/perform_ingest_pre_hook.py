@@ -6,8 +6,8 @@ from datahubirodsruleset.formatters import format_project_path, format_human_byt
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
-@make(inputs=[0, 1, 2, 3, 4, 5], outputs=[6], handler=Output.STORE)
-def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, depositor, dropzone_type):
+@make(inputs=[0, 1, 2, 3, 4], outputs=[5], handler=Output.STORE)
+def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dropzone_type):
     """
     This rule is part the ingestion workflow.
     Perform the preliminary common tasks for both 'mounted' and 'direct' ingest.
@@ -18,14 +18,12 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         Combined type of callback and rei struct.
     project_id: str
         The project id, e.g: P00000010
-    title: str
-        The title of the dropzone / new collection
     dropzone_path: str
         The dropzone absolute path
     token: str
         The token of the dropzone
     depositor: str
-        The person requesting the ingestion
+        The iRODS username of the user who started the ingestion
     dropzone_type: str
         The type of dropzone
 
@@ -37,13 +35,13 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
     ctx.callback.msiWriteRodsLog("Starting ingestion {}".format(dropzone_path), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
+    title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
+
     try:
-        collection_id = ctx.callback.createProjectCollection(project_id, "", title)["arguments"][1]
+        collection_id = ctx.callback.create_project_collection(project_id, title, "")["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating projectCollection", 0)
-        ctx.callback.setErrorAVU(
-            dropzone_path, "state", DropzoneState.ERROR_INGESTION.value, "Error creating projectCollection"
-        )
+        ctx.callback.set_ingestion_error_avu(dropzone_path, "Error creating projectCollection", project_id, depositor)
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
 
@@ -79,11 +77,8 @@ def perform_ingest_pre_hook(ctx, project_id, title, dropzone_path, token, deposi
         )["arguments"][2]
     except RuntimeError:
         ctx.callback.msiWriteRodsLog("Failed creating dropzone pre-ingest information", 0)
-        ctx.callback.setErrorAVU(
-            dropzone_path,
-            "state",
-            DropzoneState.ERROR_INGESTION.value,
-            "Failed creating dropzone pre-ingest information",
+        ctx.callback.set_ingestion_error_avu(
+            dropzone_path, "Failed creating dropzone pre-ingest information", project_id, depositor
         )
 
     ctx.callback.msiWriteRodsLog(

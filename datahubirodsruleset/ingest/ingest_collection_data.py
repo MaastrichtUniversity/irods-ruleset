@@ -1,3 +1,5 @@
+from subprocess import check_call  # nosec
+
 import irods_types  # pylint: disable=import-error
 
 from dhpythonirodsutils.enums import ProjectAVUs
@@ -258,15 +260,22 @@ class CollectionIngestManager:
         int
             The replication status code. 0 is success.
         """
-        replication_status = 1
         try:
+            ret_stats = ctx.callback.msiObjStat(destination_file_full_path, irods_types.RodsObjStat())
+            stats = ret_stats["arguments"][1]
+            file_size = int(stats.objSize)
             ctx.callback.msiWriteRodsLog("DEBUG: \tStart replication for: {}".format(destination_file_full_path), 0)
-            ret_replication = ctx.callback.msiDataObjRepl(
-                destination_file_full_path,
-                "destRescName={}++++verifyChksum=".format(destination_resource),
-                0,
-            )
-            replication_status = int(ret_replication["arguments"][2])
+            if file_size == 0:
+                check_call(["ichmod", "-M", "own", "rods", destination_file_full_path], shell=False)
+                check_call(["irepl", "-R", destination_resource, destination_file_full_path], shell=False)
+                replication_status = 0
+            else:
+                ret_replication = ctx.callback.msiDataObjRepl(
+                    destination_file_full_path,
+                    "destRescName={}++++verifyChksum=".format(destination_resource),
+                    0,
+                )
+                replication_status = int(ret_replication["arguments"][2])
         except RuntimeError:
             ctx.callback.msiWriteRodsLog("ERROR: \tReplication failed for: {}".format(destination_file_full_path), 0)
             replication_status = 1
@@ -358,7 +367,7 @@ class CollectionIngestManager:
         checksum_status = 1
         try:
             ctx.callback.msiWriteRodsLog("DEBUG: \tStart checksum for: {}".format(destination_file_full_path), 0)
-            ret_checksum = ctx.callback.msiDataObjChksum(destination_file_full_path, "verifyChksum=", 0)
+            ret_checksum = ctx.callback.msiDataObjChksum(destination_file_full_path, "", 0)
             checksum_status = int(ret_checksum["arguments"][2])
         except RuntimeError:
             ctx.callback.msiWriteRodsLog("ERROR: \tChecksum failed for: {}".format(destination_file_full_path), 0)

@@ -67,18 +67,19 @@ IRULE_msi_json_arrayops_test {
 
    writeLine("stdout", "\n");
    writeLine("stdout", "\n");
+   writeLine("stdout", "Testing json_arrayops_add ...");
    writeLine("stdout", "\n");
    writeLine("stdout", "\n");
 
    *json_str = '[]';
    *output = "";
-   json_arrayops_add(*json_str, *item1 , *output );
-   json_arrayops_add(*json_str, *item2 , *output );
-   json_arrayops_add(*json_str, *item3 , *output );
-   json_arrayops_add(*json_str, *item4 , *output );
-   json_arrayops_add(*json_str, *item8 , *output );
+   json_arrayops_add(*json_str, *item1 );
+   json_arrayops_add(*json_str, *item2 );
+   json_arrayops_add(*json_str, *item3 );
+   json_arrayops_add(*json_str, *item4 );
+   json_arrayops_add(*json_str, *item8 );
    writeLine("stdout", "Check 1: adding new values to JSON array. Outcome:");
-   writeLine("stdout", "    *json_str size:  *output ");
+   writeLine("stdout", "    *json_str");
 
     *test = *output
 
@@ -86,30 +87,24 @@ IRULE_msi_json_arrayops_test {
         writeLine("stdout", "TEST SUCCESS FULL");
     }
 
-
    # adding 'null' is not supported and will not extend the JSON array
-   json_arrayops_add(*json_str, *item5 , *output );
+   json_arrayops_add(*json_str, *item5 );
    writeLine("stdout", "Check 2: adding 'null' value to JSON array. Outcome:");
-   writeLine("stdout", "    *json_str size: *output");
+   writeLine("stdout", "    *json_str");
 
    # adding those will append additional boolean values to array
-   json_arrayops_add(*json_str, *item6 , *output );
-   json_arrayops_add(*json_str, *item7 , *output );
+   json_arrayops_add(*json_str, *item6 );
+   json_arrayops_add(*json_str, *item7 );
    writeLine("stdout", "Check 3: adding boolean values to JSON array. Outcome:");
-   writeLine("stdout", "    *json_str size: *output");
+   writeLine("stdout", "    *json_str");
 
    # adding those will not change array because they are already present in it
-   json_arrayops_add(*json_str, *item1 , *output );
-   json_arrayops_add(*json_str, *item2 , *output );
-   json_arrayops_add(*json_str, *item3 , *output );
-   json_arrayops_add(*json_str, *item4 , *output );
+   json_arrayops_add(*json_str, *item1 );
+   json_arrayops_add(*json_str, *item2 );
+   json_arrayops_add(*json_str, *item3 );
+   json_arrayops_add(*json_str, *item4 );
    writeLine("stdout", "Check 4: adding pre-existing values to JSON array. Outcome:");
-   writeLine("stdout", "    *json_str size: *output");
-
-   # size operation
-   json_arrayops_size(*json_str, *output);
-   writeLine("stdout", "Check 9: Determine size of JSON array. Outcome:");
-   writeLine("stdout", "    *json_str max idx: *output");
+   writeLine("stdout", "    *json_str");
 
    # get operation
    *idx = "2";
@@ -117,7 +112,6 @@ IRULE_msi_json_arrayops_test {
    json_arrayops_get(*json_str, *idx , *item11 );
    writeLine("stdout", "Check 10: Get an object from the JSON array. Outcome:");
    writeLine("stdout", "    *json_str value '*item11' retrieved from idx: *idx");
-
 
 }
 

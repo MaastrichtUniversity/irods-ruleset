@@ -14,7 +14,7 @@ IRULE_getDestinationResources(*result) {
         *name = *Row.RESC_NAME
         *comment = *Row.RESC_COMMENT
         *r = ' { "name": "*name", "comment": "*comment" } '
-        json_arrayops_add(*resources, *r, "");
+        json_arrayops_add(*resources, *r);
     }
 
     *result = *resources;

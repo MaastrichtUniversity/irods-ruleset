@@ -357,10 +357,20 @@ def map_access_name_to_access_level(access_name):
     return user_access
 
 
-@make(inputs=[0, 1], outputs=[0, 2], handler=Output.STORE)
+@make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
 def json_arrayops_add(ctx, json_str, item):
     """
-    Add item to stringified json array
+    Python function to replace the functionality of msi_json_arrayops.add
+    ```
+    if ( strOps == "add" ) {
+        // append value only if it's a boolean, or it's not presented in the array
+        if ( json_is_boolean(jval) || i_match == outSizeOrIndex ) {
+            json_array_append_new(root, jval);
+            outSizeOrIndex = (int) json_array_size(root);
+        }
+    }
+    ```
+
     Parameters
     ----------
     ctx: Context
@@ -374,16 +384,16 @@ def json_arrayops_add(ctx, json_str, item):
     -------
     json_obj : str
         updated json array
-    size : str
-        size of the updated json array
     """
     if not json_str:
         json_str = "[]"
+
     json_obj = json.loads(json_str)
+
     if item == "null":
-        size = len(json_obj)
-        return json_obj, int(size)
-    elif item == "false":
+        return json_obj
+
+    if item == "false":
         item = False
     elif item == "true":
         item = True
@@ -392,62 +402,11 @@ def json_arrayops_add(ctx, json_str, item):
             item = json.loads(item)
         except ValueError:
             item = str(item)
+
     if not item in json_obj:
         json_obj.append(item)
-    size = len(json_obj)
-    return json_obj, size
 
-
-@make(inputs=[0, 1], outputs=[0, 2], handler=Output.STORE)
-def json_arrayops_get(ctx, json_str, index):
-    """
-    get item from stringified json array at the specified index
-    Parameters
-    ----------
-    ctx: Context
-        Combined type of callback and rei struct.
-    json_str : str
-        json array
-    index : str
-        index of the item to be returned
-
-    Returns
-    -------
-    json_obj : str
-        update json array
-    object : str
-        object in json_str at specified index
-    """
-    if not json_str:
-        json_str = "[]"
-    json_obj = json.loads(json_str)
-    index = int(index)
-    object = json_obj[index]
-    return json_obj, object
-
-
-@make(inputs=[0], outputs=[0, 1], handler=Output.STORE)
-def json_arrayops_size(ctx, json_str):
-    """
-    get size of stringified json array
-    Parameters
-    ----------
-    ctx: Context
-        Combined type of callback and rei struct.
-    json_str : str
-        json array
-    Returns
-    -------
-    json_obj : str
-        update json array
-    size : str
-        size of json array
-    """
-    if not json_str:
-        json_str = "[]"
-    json_obj = json.loads(json_str)
-    size = len(json_obj)
-    return json_obj, size
+    return json_obj
 
 
 @make(inputs=[0, 1], outputs=[0], handler=Output.STORE)

@@ -34,7 +34,7 @@ IRULE_reportProjects(*result) {
         detailsProject(*project, "false", *outcome)
 
         # And append it to the jsonStr
-        json_arrayops_add(*jsonStr, *outcome, "");
+        json_arrayops_add(*jsonStr, *outcome);
     }
 
     # jsonStr now contains information about all projects. Return this in the result variable

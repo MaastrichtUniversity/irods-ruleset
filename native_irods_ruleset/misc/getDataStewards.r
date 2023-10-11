@@ -33,7 +33,7 @@ IRULE_getDataStewards(*result) {
             *displayName = *Row.META_USER_ATTR_VALUE;
         }
         *userObject = '{ "userName" : "*userName", "userId" : "*userID", "displayName" : "*displayName" }';
-        json_arrayops_add( *userObjects, *userObject, "" );
+        json_arrayops_add( *userObjects, *userObject);
 	}
     *result = *userObjects;
 }

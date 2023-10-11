@@ -43,7 +43,7 @@ IRULE_calcCollectionFilesAcrossResc(*collection, *result, *resultIdList, *result
 
         # Collect the values for this iteration and add it to the json array
         *jsonArr = '{"resourceID": "*rescId", "numFiles": "*count"}';
-        json_arrayops_add(*rescNumFilesArray, *jsonArr, "");
+        json_arrayops_add(*rescNumFilesArray, *jsonArr);
 
         # Add the same values to the list object
         *rescIdList = cons(*rescId, *rescIdList);

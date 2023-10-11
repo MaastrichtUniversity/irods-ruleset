@@ -218,7 +218,7 @@ IRULE_listActiveDropZones(*report, *result) {
 
         msi_json_objops(*o, *kvp, "set");
 
-        json_arrayops_add(*json_str, *o, "")
+        json_arrayops_add(*json_str, *o)
     }
 
     *result = *json_str;

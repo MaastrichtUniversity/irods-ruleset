@@ -18,18 +18,19 @@ irule_dummy() {
 IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result) {
     *value = "";
     *arrayops = '[]';
-    *arraySize = "0";
+    *arraySize = 0;
     *result = '';
     foreach (*avu in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS WHERE COLL_NAME == "*path") {
         if ( *avu.META_COLL_ATTR_NAME == *attribute) {
             *value = *avu.META_COLL_ATTR_VALUE;
             *unit = *avu.META_COLL_ATTR_UNITS;
             *output = '{"attribute": "*attribute", "value": "*value", "unit": "*unit"}'
-			json_arrayops_add(*arrayops, *output, *arraySize);
+			json_arrayops_add(*arrayops, *output);
+            *arraySize = *arraySize+1;
         }
     }
     *result = *arrayops;
-    if (*arraySize == "0") {
+    if (*arraySize == 0) {
         if (*fatal == "true") {
             failmsg(-1, "ERROR: The attribute '*attribute' of collection '*path' has no value in iCAT");
         } else {

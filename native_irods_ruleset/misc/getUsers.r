@@ -27,13 +27,13 @@ IRULE_getUsers(*showServiceAccounts,*result) {
 
         if ( str(*showServiceAccounts) == "false" ) {
            if ( strlen(*Row.USER_NAME) < 8 ) {
-                json_arrayops_add(*users, *userObject, "");
+                json_arrayops_add(*users, *userObject);
            } else if ( substr(*Row.USER_NAME, 0, 8) != "service-" ) {
-                json_arrayops_add(*users, *userObject, "");
+                json_arrayops_add(*users, *userObject);
            }
         }
         else{
-            json_arrayops_add(*users, *userObject, "");
+            json_arrayops_add(*users, *userObject);
         }
     }
 

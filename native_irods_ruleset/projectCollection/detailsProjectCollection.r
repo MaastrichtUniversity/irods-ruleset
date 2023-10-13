@@ -21,7 +21,6 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project/*collection","numFiles",*numFiles,"N/A","false");
     getCollectionAVU("/nlmumc/projects/*project/*collection","PID",*PID,"no-PID-set","false");
     getCollectionSize("/nlmumc/projects/*project/*collection", "B", "none", *byteSize);
-    getCollectionAVU("/nlmumc/projects/*project/*collection","exporterState",*exporterState,"no-state-set","false");
 
     getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
     getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,*enableArchive,"false");
@@ -30,7 +29,7 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     listProjectContributors(*project, *inherited, *contributors);
     listProjectViewers(*project, *inherited, *viewers);
 
-    *details = '{"project": "*project", "collection": "*collection", "exporterState": "*exporterState", "enableArchive": "*enableArchive", "enableUnarchive": "*enableUnarchive", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
+    *details = '{"project": "*project", "collection": "*collection", "enableArchive": "*enableArchive", "enableUnarchive": "*enableUnarchive", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
     # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
     msiString2KeyValPair("", *titleKvp);

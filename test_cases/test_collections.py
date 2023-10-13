@@ -142,7 +142,6 @@ class TestCollections:
         assert collection_detail["enableArchive"] == "false"
         assert collection_detail["enableUnarchive"] == "false"
         assert collection_detail["externals"] == "no-externalPID-set"
-        assert collection_detail["exporterState"] == "no-state-set"
 
         assert int(collection_detail["numFiles"]) == 4
         assert int(collection_detail["byteSize"]) == 550514

@@ -66,12 +66,13 @@ IRULE_prepareTapeArchive(*archColl, *initiator) {
 
         *counter=*counter+1;
 	}
-	msiWriteRodsLog("INFO: surfArchiveScanner found *counter files", 0);
+
     *value = "Number of files found: *counter";
     setCollectionAVU(*archColl, "archiveState", *value)
 
     # Delay before replication
     delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
+	    msiWriteRodsLog("INFO: prepareTapeArchive found *counter files to archive", 0);
         tapeArchive(*archColl, *initiator, *counter);
     }
 }

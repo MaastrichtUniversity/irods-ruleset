@@ -15,7 +15,7 @@ tapeArchive(*archColl, *initiator, *counter){
     # Count how many file have been archived
     *isMoved=0;
 
-	msiWriteRodsLog("INFO: surfArchiveScanner found *counter files", 0);
+	msiWriteRodsLog("INFO: tapeArchive has *counter files to archive", 0);
 
     if (*counter > 0) {
         getResourcesNames(*rescParentsName);

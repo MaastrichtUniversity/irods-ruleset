@@ -54,7 +54,7 @@ IRULE_calcCollectionFilesAcrossResc(*collection, *result, *resultIdList, *result
     *jsonStr = '';
     msiString2KeyValPair("", *kvp);
     msiAddKeyVal(*kvp, 'numFilesPerResc', *rescNumFilesArray);
-    msi_json_objops(*jsonStr, *kvp, "set");
+    json_objops_set(*jsonStr, str(*kvp));
     *result = *jsonStr;
 
     # Also return as lists (for easy usage in other rules)

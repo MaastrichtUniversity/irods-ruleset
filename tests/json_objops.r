@@ -13,6 +13,8 @@ myTestRule {
    msiAddKeyVal(*kvp, 'type', 'DATA_SHARING');
    msiAddKeyVal(*kvp, 'collId', '12345');
    msiAddKeyVal(*kvp, 'title', 'DICOM 原生資料備份');
+   msiAddKeyVal(*kvp, 'title_sp', 'Mélius & Daniël double" single\'  ');
+   msiAddKeyVal(*kvp, 'test_dict', '{"type":"PMID"}');
    msiAddKeyVal(*kvp, 'creatorList', '["U505173-ru.nl","hurngchunlee-icloud.com"]');
    msiAddKeyVal(*kvp, 'associatedPublication', '[{"type":"PMID", "id":"654321"}]');
 
@@ -21,6 +23,7 @@ myTestRule {
 
    ## modify JSON object (add/set/get/rm)
    msiString2KeyValPair("", *kvp);
+   msiAddKeyVal(*kvp, 'test_dict', '{"id":"654321"}');
    msiAddKeyVal(*kvp, 'associatedPublication', '{"type":"arXiv", "id":"xyz/123"}');
    *ec = errorcode( msi_json_objops(*json_str, *kvp, "add") );
    writeLine("stdout", *json_str);
@@ -58,6 +61,7 @@ myTestRule {
    msiAddKeyVal(*kvp, 'type', 'DATA_SHARING');
    msiAddKeyVal(*kvp, 'collId', '12345');
    msiAddKeyVal(*kvp, 'title', 'DICOM 原生資料備份');
+   msiAddKeyVal(*kvp, 'title_sp', 'Mélius & Daniël double" single\'  ');
    msiAddKeyVal(*kvp, 'creatorList', '["U505173-ru.nl","hurngchunlee-icloud.com"]');
    msiAddKeyVal(*kvp, 'associatedPublication', '[{"type":"PMID", "id":"654321"}]');
 

@@ -411,31 +411,95 @@ def json_arrayops_add(ctx, json_str, item):
 
 @make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
 def json_objops_add(ctx, json_str, kvp):
+    """
+    Python function to replace the functionality of  msi_json_objops.add
+    ```
+    else if ( strOps == "add" ) {
+        if (json_is_array( data )) {
+            json_array_append_new(data, jval);
+        } else {
+            json_object_set_new(root, inKey, jval);
+        }
+    ```
+
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        initial json object
+    kvp : str
+        item to be added to the json array
+
+    Returns
+    -------
+    json_obj : str
+        updated json object
+    """
     if not json_str:
         json_str = "{}"
     json_obj = json.loads(json_str)
-    pairs = kvp.split("++++")
-    for key_value_pair in pairs:
-        print(key_value_pair)
-        pair = key_value_pair.split("=")
-        key = pair[0]
-        value = pair[1]
-        try:
-            value = json.loads(value)
-        except ValueError:
-            value = str(value)
-        json_obj[key] = value
+
+    for key, value in get_key_value_pair_iterator(kvp):
+        if key in json_obj and type(json_obj[key]) == list:
+            # json_is_array
+            json_obj[key].append(value)
+        else:
+            # json_object_set_new
+            json_obj[key] = value
+
     return json_obj
 
 
 @make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
 def json_objops_set(ctx, json_str, kvp):
+    """
+    Python function to replace the functionality of msi_json_objops.set
+    ```
+    else if ( strOps == "set" ) {
+        json_object_set_new(root, inKey, jval);
+    ```
+
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        initial json object
+    kvp : str
+        item to be added to the json array
+
+    Returns
+    -------
+    json_obj : str
+        updated json object
+    """
     if not json_str:
         json_str = "{}"
     json_obj = json.loads(json_str)
+
+    for key, value in get_key_value_pair_iterator(kvp):
+        json_obj[key] = value
+
+    return json_obj
+
+
+def get_key_value_pair_iterator(kvp):
+    """
+    Parse the key-value pair input object and create an iterator.
+
+    Parameters
+    ----------
+    kvp: str
+        key-value pair
+
+    Yields
+    -------
+    (str,str)
+    """
     pairs = kvp.split("++++")
+
     for key_value_pair in pairs:
-        print(key_value_pair)
         pair = key_value_pair.split("=")
         key = pair[0]
         value = pair[1]
@@ -443,5 +507,5 @@ def json_objops_set(ctx, json_str, kvp):
             value = json.loads(value)
         except ValueError:
             value = str(value)
-        json_obj[key] = value
-    return json_obj
+
+        yield key, value

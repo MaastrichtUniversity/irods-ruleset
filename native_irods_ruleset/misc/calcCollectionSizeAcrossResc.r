@@ -90,7 +90,7 @@ IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultI
     *jsonStr = '';
     msiString2KeyValPair("", *kvp);
     msiAddKeyVal(*kvp, 'sizePerResc', *rescSizeArray);
-    msi_json_objops(*jsonStr, *kvp, "set");
+    json_objops_set(*jsonStr, str(*kvp));
     *result = *jsonStr;
 
     # Also return as lists (for easy usage in other rules)

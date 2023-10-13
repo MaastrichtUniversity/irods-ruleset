@@ -207,16 +207,17 @@ IRULE_listActiveDropZones(*report, *result) {
                 msiAddKeyVal(*kvp, 'userName', *userName);
             }
 
+            # msi_time_ts2str is deprecated
             ### DROPZONE START & END DATE
-            *fmt = "%.4d-%.2d-%.2d";
-            msi_time_ts2str( int(*date), *fmt, *startDate );
-            msi_time_ts2str( (int(*date) + 7776000), *fmt, *endDate ); # increase with the amount of seconds in 90 days
-          
-            msiAddKeyVal(*kvp, 'startDate', *startDate);
-            msiAddKeyVal(*kvp, 'endDate', *endDate);
+#             *fmt = "%.4d-%.2d-%.2d";
+#             msi_time_ts2str( int(*date), *fmt, *startDate );
+#             msi_time_ts2str( (int(*date) + 7776000), *fmt, *endDate ); # increase with the amount of seconds in 90 days
+#
+#             msiAddKeyVal(*kvp, 'startDate', *startDate);
+#             msiAddKeyVal(*kvp, 'endDate', *endDate);
         }
 
-        msi_json_objops(*o, *kvp, "set");
+        json_objops_set(*o, str(*kvp));
 
         json_arrayops_add(*json_str, *o)
     }

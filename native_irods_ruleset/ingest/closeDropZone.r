@@ -68,12 +68,12 @@ IRULE_closeDropZone(*token) {
         # Disabling the network mounted ingest zone needs to be executed on remote ires server
         if ( *dropzoneType == "mounted" ){
             msiWriteRodsLog("INFO: Closing dropzone *token from project *project on ingest resource host *ingestResourceHost", 0);
-            remote(*ingestResourceHost,"") {
+            remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
               msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);
             }
         }
 
-        remote(*directIngestResourceHost,"") {
+        remote(*directIngestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
            # Only the metadata files exist on stagingResc01 and need to be deleted
            if ( *dropzoneType == "mounted" ){
               msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);

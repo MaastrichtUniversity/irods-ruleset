@@ -86,4 +86,3 @@ def revoke_project_user_access(ctx, user_project, reason, description):
         ctx.revoke_project_collection_user_access(project_collection_path, reason, description)
 
     ctx.callback.setCollectionAVU(user_project, DataDeletionAttribute.STATE.value, DataDeletionState.PENDING.value)
-

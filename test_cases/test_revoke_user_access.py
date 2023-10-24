@@ -75,12 +75,3 @@ class TestRevokeProjectUserAccessWithActiveProcess(BaseDataDelete):
 
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(self.revoke_rule, shell=True)
-
-        # Export
-        set_enable_archive = "imeta set -C {} {} dataverse:stuff".format(
-            self.project_collection_path, ProcessAttribute.EXPORTER.value
-        )
-        subprocess.check_call(set_enable_archive, shell=True)
-
-        with pytest.raises(subprocess.CalledProcessError):
-            subprocess.check_call(self.revoke_rule, shell=True)

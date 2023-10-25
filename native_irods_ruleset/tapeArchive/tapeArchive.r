@@ -29,9 +29,6 @@ tapeArchive(*archColl, *initiator, *counter, *rescParentsLocation, *dataPerResou
         *size = 0;
         msi_json_arrayops(*dataArray , "", "size", *size);
 
-        # Get the resource host location
-        *resourceHostLocation= *rescParentsLocation.*srcResourceId;
-
         if ( *size > 0 ){
             for (*index=0; *index < *size; *index = *index + 1) {
                 # Get the data's path by its index in *dataArray

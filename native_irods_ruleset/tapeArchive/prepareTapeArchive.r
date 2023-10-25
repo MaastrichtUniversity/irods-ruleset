@@ -6,7 +6,6 @@ irule_dummy() {
 }
 
 IRULE_prepareTapeArchive(*archColl, *initiator) {
-
     # split the *archColl into *project and *projectCollection
     uuChopPath(*archColl, *dir, *projectCollection);
     uuChopPath(*dir, *dir2, *project);

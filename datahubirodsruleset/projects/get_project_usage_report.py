@@ -97,12 +97,16 @@ def get_project_details(ctx, project_path):
     title = ctx.callback.getCollectionAVU(
         project_path, "title", "", "", TRUE_AS_STRING
     )["arguments"][2]
+    principal_investigator = ctx.callback.getCollectionAVU(
+        project_path, "OBI:0000103", "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
     return {
         "id": project_id,
         "title": title,
         "data_steward": data_steward,
         "budget_number": budget_number,
+        "principal_investigator": principal_investigator,
         "storage": {},
     }
 
@@ -115,6 +119,7 @@ def format_output(output):
                 {
                     "budget_number": project["budget_number"],
                     "data_steward": project["data_steward"],
+                    "principal_investigator": project["principal_investigator"],
                     "id": "{}_{}".format(project["id"], resource),
                     "project_id": project["id"],
                     "title": project["title"],

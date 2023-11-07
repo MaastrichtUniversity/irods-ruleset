@@ -50,7 +50,6 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
 
     if dropzone_type == "direct":
         ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
-        ingest_resource_host = json.loads(ingest_resource_host)["value"]
     else:
         ingest_resource = ctx.callback.getCollectionAVU(
             format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING

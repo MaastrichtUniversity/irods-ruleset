@@ -35,8 +35,6 @@ def delete_project_collection_data(ctx, user_project_collection, commit):
     deletion_state = check_collection_delete_data_state(ctx, user_project_collection, DataDeletionState.PENDING.value)
     output_dict["messages"].append("Deletion state for {}: {}".format(user_project_collection, deletion_state))
 
-
-
     output_dict["messages"].append("Update ACL of rods for {}".format(user_project_collection))
     if commit:
         ctx.callback.msiSetACL("recursive", "admin:own", "rods", user_project_collection)

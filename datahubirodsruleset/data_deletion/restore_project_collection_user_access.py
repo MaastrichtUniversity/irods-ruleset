@@ -9,8 +9,9 @@ from datahubirodsruleset import FALSE_AS_STRING
 from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import apply_collection_deletion_metadata
 from datahubirodsruleset.decorator import make, Output
 
+output_dict = {"messages": []}
 
-@make(inputs=[0], outputs=[], handler=Output.STORE)
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
 def restore_project_collection_user_access(ctx, user_project_collection):
     """
     Restore the current users access from the parent project ACL to the input project collection ACL
@@ -86,13 +87,13 @@ def check_collection_delete_data_state(ctx, collection_path, value_to_check):
     value = json.loads(output)["value"]
 
     if value != value_to_check:
-        ctx.callback.msiExit(
-            "-1",
+        output_dict["messages"].append(
             "Deletion state is not valid for: {}; Got '{}', but expected '{}'".format(
                 collection_path, value, value_to_check
-            ),
+            )
         )
-        return
+    
+    return output_dict
 
 
 def restore_project_collection_user_acl(ctx, user_project, user_project_collection):

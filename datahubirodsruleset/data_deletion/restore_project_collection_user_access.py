@@ -85,9 +85,7 @@ def check_collection_delete_data_state(ctx, collection_path, value_to_check):
 
     if value != value_to_check:
         message = "Deletion state is not valid for: {}; Got '{}', but expected '{}'".format(collection_path, value, value_to_check)
-        message_str = json.dumps(message)
-        ctx.callback.msiExit("-1", message_str)
-        return
+        ctx.callback.msiExit("-1", message)
 
 
 def restore_project_collection_user_acl(ctx, user_project, user_project_collection):

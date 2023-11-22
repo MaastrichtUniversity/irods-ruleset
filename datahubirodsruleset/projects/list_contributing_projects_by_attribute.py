@@ -18,8 +18,7 @@ def list_contributing_projects_by_attribute(ctx, attribute):
     ctx : Context
         Combined type of callback and rei struct.
     attribute: str
-        The attribute value of a project feature AVU. e.g: 'enableArchive', 'enableUnarchive', 'enableOpenAccessExport',
-        'enableContributorEditMetadata'
+        The attribute value of a project feature AVU. e.g: 'enableArchive', 'enableUnarchive', 'enableContributorEditMetadata'
 
     Returns
     -------

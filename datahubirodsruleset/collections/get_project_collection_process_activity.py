@@ -44,7 +44,7 @@ def check_project_collection_process_activity(ctx, project_collection_path):
 
 def check_collection_active_process(ctx, query_collection_condition):
     """
-    Query the input project for any active process (ARCHIVE, UNARCHIVE or EXPORTER). If one is found stop, the rule
+    Query the input project for any active process (ARCHIVE or UNARCHIVE). If one is found stop, the rule
     execution.
 
     Parameters
@@ -61,10 +61,9 @@ def check_collection_active_process(ctx, query_collection_condition):
         True, if there is any active process linked to the project.
     """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND {} ".format(
+    conditions = "META_COLL_ATTR_NAME in ('{}', '{}') AND {} ".format(
         ProcessAttribute.ARCHIVE.value,
         ProcessAttribute.UNARCHIVE.value,
-        ProcessAttribute.EXPORTER.value,
         query_collection_condition,
     )
 

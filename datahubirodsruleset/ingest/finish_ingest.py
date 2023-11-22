@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r finish_ingest -a "P000000014,dlinssen,handsome-snake,C000000001,ires-hnas-umResource,direct"
+# /rules/tests/run_test.sh -r finish_ingest -a "P000000014,dlinssen,handsome-snake,C000000001,ires-hnas-um.dh.local,direct"
 import json
 
 from dhpythonirodsutils.enums import DropzoneState

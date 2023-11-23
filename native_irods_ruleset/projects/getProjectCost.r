@@ -10,7 +10,7 @@
 # Please note the different usage of size units:
 # - bytes are used for the purpose of storing values in iCAT
 # - GB is used for the purpose of calculating and displaying costs
-# - GiB is used for the purpose of diplaying the size to end-user
+# - GiB is used for the purpose of displaying the size to end-user
 
 irule_dummy() {
     IRULE_getProjectCost(*project, *result, *collections, *projectSize);
@@ -21,7 +21,6 @@ irule_dummy() {
 IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
     *pricePerGBPerYearAttr = "NCIT:C88193";
     *collectionsArray = "[]";
-    *collectionsArraySize = 0;
     *projectCost = 0;
     *projectSize = 0;
     *result = 0;
@@ -37,7 +36,6 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
     # Warning: expected first default value. Need a more robust check
     *previousCollection = "/nlmumc/projects/*project/C000000001";
     *resourceDetails = '[]';
-    *detailsArraySize = 0;
     *collectionCost = 0;
 
     # Prepare and execute query
@@ -70,7 +68,7 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
                 *collection = '{"collection": "*collectionId", "dataSizeGiB": "*collSize", "detailsPerResource": *resourceDetails, "collectionStorageCost": "*collectionCost"}';
 
                 # Add the results of the previous collection to the Json
-                msi_json_arrayops(*collectionsArray, *collection, "add", *collectionsArraySize);
+                json_arrayops_add(*collectionsArray, *collection);
                 *projectCost = *projectCost + *collectionCost;
 
                 # Reset
@@ -116,7 +114,7 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
 
             # Add the results for this resource to the Json
             *details = '{"resource": "*resourceId", "dataSizeGBOnResource": "*sizeOnResource", "pricePerGBPerYear": "*pricePerGBPerYearStr", "storageCostOnResource": "*storageCostOnResc"}';
-            msi_json_arrayops(*resourceDetails, *details, "add", *detailsArraySize);
+            json_arrayops_add(*resourceDetails, *details);
 
             # Error out if no byteSize_resc attribute is present for this collection
             if ( *resourceId == "" ) {
@@ -139,7 +137,7 @@ IRULE_getProjectCost(*project, *result, *collections, *projectSize) {
         *collection = '{"collection": "*collectionId", "dataSizeGiB": "*collSize", "detailsPerResource": *resourceDetails, "collectionStorageCost": "*collectionCost"}';
 
         *projectCost = *projectCost + *collectionCost;
-        msi_json_arrayops(*collectionsArray, *collection, "add", *collectionsArraySize);
+        json_arrayops_add(*collectionsArray, *collection);
     }
     # Output the results for the entire project as Json
     *collections = *collectionsArray;

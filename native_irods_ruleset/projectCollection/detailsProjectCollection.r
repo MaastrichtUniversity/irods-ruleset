@@ -31,18 +31,18 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
 
     *details = '{"project": "*project", "collection": "*collection", "enableArchive": "*enableArchive", "enableUnarchive": "*enableUnarchive", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 
-    # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
+    # Title needs proper escaping before adding to JSON. That's why we pass it through json_objops_add
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);
-    msi_json_objops(*details, *titleKvp, "add");
+    json_objops_add(*details, str(*titleKvp));
 
     getCollectionAVUTriple("/nlmumc/projects/*project/*collection", 'externalPID', '', 'false', *externals);
     if ( *externals == "" ) {
         msiString2KeyValPair("externals=no-externalPID-set", *ext);
-        msi_json_objops(*details, *ext, "add");
+        json_objops_add(*details,  str(*ext));
     } else {
         msiString2KeyValPair("externals=*externals", *ext);
-        msi_json_objops(*details, *ext, "add");
+        json_objops_add(*details,  str(*ext));
     }
 
     *result = *details;

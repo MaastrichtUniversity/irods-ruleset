@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r delete_project_collection_data -a "/nlmumc/projects/P000000008/C000000001,false"\
+# /rules/tests/run_test.sh -r delete_project_collection_data -a "/nlmumc/projects/P000000008/C000000001,false"
 import json
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute

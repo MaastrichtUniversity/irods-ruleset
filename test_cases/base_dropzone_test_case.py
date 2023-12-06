@@ -2,6 +2,7 @@ import json
 import subprocess
 import time
 
+import pytest
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
@@ -112,13 +113,14 @@ class BaseTestCaseDropZones:
 
         fail_safe = 100
         while fail_safe != 0:
-            field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
-            if "CAT_NO_ROWS_FOUND" in field_value_return:
-                fail_safe = 0
-            else:
+            try:
+                subprocess.check_output(run_iquest, shell=True)
                 fail_safe = fail_safe - 1
                 time.sleep(3)
-
-        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
-        # TODO Update CAT_NO_ROWS_FOUND check after 4.2.12
-        assert "CAT_NO_ROWS_FOUND" in field_value_return
+            except subprocess.CalledProcessError:
+                fail_safe = 0
+        # Starting from 4.2.12:
+        # When iquest returns a "CAT_NO_ROWS_FOUND", the exit status code is 1 instead of 0.
+        # And therefore, a CalledProcessError is raised.
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_output(run_iquest, shell=True)

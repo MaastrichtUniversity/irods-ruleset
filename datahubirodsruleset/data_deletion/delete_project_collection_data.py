@@ -7,10 +7,9 @@ from dhpythonirodsutils.formatters import format_string_to_boolean
 from dhpythonirodsutils.validators import validate_project_collection_path
 from genquery import row_iterator, AS_LIST
 
-from datahubirodsruleset import FALSE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
 from datahubirodsruleset.data_deletion.restore_project_collection_user_access import check_collection_delete_data_state
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING
 
 output_dict = {"messages": []}
 
@@ -40,13 +39,14 @@ def delete_project_collection_data(ctx, user_project_collection, commit):
         ctx.callback.msiSetACL("recursive", "admin:own", "rods", user_project_collection)
 
     output_dict["messages"].append("Start deletion for {}".format(user_project_collection))
-    delete_collection_data(ctx, user_project_collection, commit, output_dict)
+    delete_collection_data(ctx, user_project_collection, commit)
 
     # Convert the dictionary to JSON
     json_output = json.dumps(output_dict, indent=2)
+    if commit: ctx.callback.msiWriteRodsLog(json_output, 0)
     return json_output
 
-def delete_collection_data(ctx, project_collection_path, commit, output_dict):
+def delete_collection_data(ctx, project_collection_path, commit):
     """
     Function to take care of the deletion of all the data files inside the input project collection.
     All AVUs and metadata files are preserved.
@@ -60,13 +60,13 @@ def delete_collection_data(ctx, project_collection_path, commit, output_dict):
     commit : bool
         If true, execute the data file deletion.
     """
-    metadata_files_count = set_metadata_files_acl_to_read(ctx, project_collection_path, commit, output_dict)
-    count_project_collection_number_of_files(ctx, project_collection_path, output_dict)
+    metadata_files_count = set_metadata_files_acl_to_read(ctx, project_collection_path, commit)
+    count_project_collection_number_of_files(ctx, project_collection_path)
 
-    delete_project_collection_sub_folder(ctx, project_collection_path, commit, output_dict)
-    delete_project_collection_root_files(ctx, project_collection_path, commit, output_dict)
+    delete_project_collection_sub_folder(ctx, project_collection_path, commit)
+    delete_project_collection_root_files(ctx, project_collection_path, commit)
 
-    total_number_of_files = count_project_collection_number_of_files(ctx, project_collection_path, output_dict)
+    total_number_of_files = count_project_collection_number_of_files(ctx, project_collection_path)
 
     check_number_of_files_left = total_number_of_files == metadata_files_count
     output_dict["messages"].append("Check number of files left: {}".format(check_number_of_files_left))
@@ -87,10 +87,8 @@ def delete_collection_data(ctx, project_collection_path, commit, output_dict):
 
     ctx.callback.msiSetACL("recursive", "admin:read", "rods", project_collection_path)
 
-    return output_dict
 
-
-def delete_project_collection_sub_folder(ctx, project_collection_path, commit, output_dict):
+def delete_project_collection_sub_folder(ctx, project_collection_path, commit):
     """
     Query for all sub-folders at the root of the project collection to delete them.
 
@@ -124,10 +122,8 @@ def delete_project_collection_sub_folder(ctx, project_collection_path, commit, o
         else:
             output_dict["messages"].append("Keep collection sub-folder: {}".format(sub_folder))
     
-    return output_dict
 
-
-def delete_project_collection_root_files(ctx, project_collection_path, commit, output_dict):
+def delete_project_collection_root_files(ctx, project_collection_path, commit):
     """
     Query for all data files at the root of the project collection to delete them.
 
@@ -159,11 +155,8 @@ def delete_project_collection_root_files(ctx, project_collection_path, commit, o
                 ctx.callback.msiDataObjUnlink("objPath={}++++forceFlag=".format(data_path), 0)
         else:
             output_dict["messages"].append("Keep data file: {}".format(data_path))
-    
-    return output_dict
 
-
-def set_metadata_files_acl_to_read(ctx, project_collection_path, commit, output_dict):
+def set_metadata_files_acl_to_read(ctx, project_collection_path, commit):
     """
     Set ACL to read for all metadata files: instance.json, schema.json, metadata.xml & .metadata_versions
 
@@ -222,10 +215,10 @@ def set_metadata_files_acl_to_read(ctx, project_collection_path, commit, output_
 
     output_dict["messages"].append("metadata_files_count: {}".format(metadata_files_count))
 
-    return metadata_files_count, output_dict
+    return metadata_files_count
 
 
-def count_project_collection_number_of_files(ctx, project_collection_path, output_dict):
+def count_project_collection_number_of_files(ctx, project_collection_path):
     """
     Execute a query to get the total number of files inside the project collection
 
@@ -252,4 +245,4 @@ def count_project_collection_number_of_files(ctx, project_collection_path, outpu
 
     output_dict["messages"].append("total_number_of_files: {}".format(total_number_of_files))
 
-    return total_number_of_files, output_dict
+    return total_number_of_files

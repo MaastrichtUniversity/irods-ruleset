@@ -2,6 +2,7 @@ import subprocess
 import json
 import os
 
+import pytest
 from dhpythonirodsutils.enums import ProcessState, ProcessType
 
 from test_cases.utils import (
@@ -298,8 +299,11 @@ class TestUserGroups:
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
             self.manager1, field_name
         )
-        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
-        assert "CAT_NO_ROWS_FOUND" in field_value_return
+        # Starting from 4.2.12:
+        # When iquest returns a "CAT_NO_ROWS_FOUND", the exit status code is 1 instead of 0.
+        # And therefore, a CalledProcessError is raised.
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = '/rules/tests/run_test.sh -r set_user_attribute_value -a "{},{},{}"'.format(
             self.manager1, field_name, field_value

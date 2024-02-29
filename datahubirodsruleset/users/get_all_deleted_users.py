@@ -6,23 +6,10 @@ from datahubirodsruleset.decorator import make, Output
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def get_all_deleted_users(ctx):
-    """
-    Query all the (authorized) projects sizes in one query.
 
-    Parameters
-    ----------
-    ctx : Context
-        Combined type of callback and rei struct.
+    output = []
 
-    Returns
-    -------
-    Dict
-        Key => project id; Value => Project size
-    """
+    for account in row_iterator("USER_NAME", "META_USER_ATTR_NAME = 'pendingDeletionProcedure'", AS_LIST, ctx.callback):
+        output.append(account[0])
 
-    users = []
-
-    for account in row_iterator("USER_NAME, META_USER_ATTR_VALUE", "META_USER_ATTR_NAME LIKE 'pendingDeletionProcedure'", AS_LIST, ctx.callback):
-        users[account[0]] = account[0]
-
-    return users
+    return output

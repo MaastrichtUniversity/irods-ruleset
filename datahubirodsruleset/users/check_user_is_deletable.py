@@ -1,7 +1,9 @@
-# /rules/tests/run_test.sh -r check_user_is_deletable -j
+# /rules/tests/run_test.sh -r check_user_is_deletable -a "dlinssen" -j
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
+import json
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -33,6 +35,12 @@ def check_user_is_deletable(ctx, username):
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
     if not user_id:
         ctx.callback.msiExit("-1", "Username {} does not exist".format(username))
+
+    # Check if user has the Pending Deletion AVU set (failsafe)
+    deletion_avu = json.loads(ctx.get_user_attribute_value(username, "pendingDeletionProcedure", FALSE_AS_STRING, "result")["arguments"][3])["value"]
+    ctx.callback.msiWriteRodsLog("deletion_avu = '{}'".format(deletion_avu),0)
+    if deletion_avu != TRUE_AS_STRING:
+        reasons.append("This user does not have a pending deletion procedure")
 
     # Check for projects that have this user as DS or PI
     for project in row_iterator(

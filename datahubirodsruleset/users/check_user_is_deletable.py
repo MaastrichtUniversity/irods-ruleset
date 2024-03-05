@@ -38,7 +38,6 @@ def check_user_is_deletable(ctx, username):
 
     # Check if user has the Pending Deletion AVU set (failsafe)
     deletion_avu = json.loads(ctx.get_user_attribute_value(username, "pendingDeletionProcedure", FALSE_AS_STRING, "result")["arguments"][3])["value"]
-    ctx.callback.msiWriteRodsLog("deletion_avu = '{}'".format(deletion_avu),0)
     if deletion_avu != TRUE_AS_STRING:
         reasons.append("This user does not have a pending deletion procedure")
 

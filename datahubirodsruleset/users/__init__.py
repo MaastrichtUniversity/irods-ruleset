@@ -12,6 +12,7 @@ from datahubirodsruleset.users.get_expanded_user_group_information import get_ex
 from datahubirodsruleset.users.set_user_attribute_value import set_user_attribute_value
 from datahubirodsruleset.users.check_user_is_deletable import check_user_is_deletable
 from datahubirodsruleset.users.get_users_active_permissions import get_users_active_permissions
+from datahubirodsruleset.users.delete_user import delete_user
 
 # Private rules
 from datahubirodsruleset.users.get_all_user_groups_membership import get_all_users_groups_memberships

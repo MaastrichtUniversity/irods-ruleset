@@ -6,7 +6,7 @@ from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING
 
 
-@make(inputs=[0], outputs=[], handler=Output.STORE)
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
 def delete_user(ctx, username):
     """
     ! Only callable by RODS !
@@ -44,4 +44,4 @@ def delete_user(ctx, username):
         except CalledProcessError as err:
             ctx.callback.msiExit("-1", "ERROR: iadmin rmuser: cmd '{}' retcode'{}'".format(err.cmd, err.returncode))
 
-    return ""
+    return json.dumps({"success": True, "deleted_user": username})

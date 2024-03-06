@@ -26,11 +26,11 @@ def delete_user(ctx, username):
     # If the user calling this function is someone other than 'rods' (so a project admin)
     # we need to crash, this is an admin only rule
     if current_user != "rods":
-        ctx.callback.msiExit("-1", json.dumps("This rule can only be called by RODS!"))
+        ctx.callback.msiExit("-1", "This rule can only be called by RODS!")
 
     is_deletable = json.loads(ctx.callback.check_user_is_deletable(username, "result")["arguments"][1])["is_deletable"]
     if not is_deletable:
-        ctx.callback.msiExit("-1", json.dumps("User '{}' is not valid for deletion!".format(username)))
+        ctx.callback.msiExit("-1", "User '{}' is not valid for deletion!".format(username))
     else:
         try:
             check_call(
@@ -42,4 +42,6 @@ def delete_user(ctx, username):
                 shell=False,
             )
         except CalledProcessError as err:
-            ctx.callback.msiExit("-1", json.dumps("ERROR: iadmin rmuser: cmd '{}' retcode'{}'".format(err.cmd, err.returncode)))
+            ctx.callback.msiExit("-1", "ERROR: iadmin rmuser: cmd '{}' retcode'{}'".format(err.cmd, err.returncode))
+
+    return ""

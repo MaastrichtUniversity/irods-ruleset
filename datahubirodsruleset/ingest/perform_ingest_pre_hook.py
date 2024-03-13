@@ -3,7 +3,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 import json
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path, format_human_bytes, format_project_collection_path
-from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
 @make(inputs=[0, 1, 2, 3, 4], outputs=[5], handler=Output.STORE)
@@ -80,7 +80,10 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
         ctx.callback.set_ingestion_error_avu(
             dropzone_path, "Failed creating dropzone pre-ingest information", project_id, depositor
         )
-
+        
+    # Check if the dropzone is valid for ingestion 
+    # see bug https://github.com/irods/irods/issues/7302
+    is_dropzone_ingestable(ctx, dropzone_path, project_id, depositor)
     ctx.callback.msiWriteRodsLog(
         "DEBUG: dropzone pre-ingest information created on {} for {}".format(ingest_resource_host, token), 0
     )
@@ -99,3 +102,10 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
         "destination_collection": destination_project_collection_path,
         "ingest_resource_host": ingest_resource_host,
     }
+
+
+def is_dropzone_ingestable(ctx, dropzone_path, project_id, depositor):
+        is_ingestable = ctx.callback.getCollectionAVU(dropzone_path, "isIngestable", "", "", TRUE_AS_STRING)["arguments"][2]
+        if is_ingestable == FALSE_AS_STRING:
+            message = "Dropzone contains directory with illegal character(s)"
+            ctx.callback.set_ingestion_error_avu(dropzone_path, message, project_id, depositor)

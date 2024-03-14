@@ -102,6 +102,8 @@ def path_to_dict(path):
         d["children"] = [path_to_dict(os.path.join(path, x)) for x in os.listdir(path)]
 
     else:
+        if "'" in d["name"]:
+            dropzone_is_ingestable["contains_single_quote"] = True
         if " and " in d["name"]:
             dropzone_is_ingestable["contains_and"] = True
         d["type"] = "file"

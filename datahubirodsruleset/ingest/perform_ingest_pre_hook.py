@@ -81,13 +81,13 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
             dropzone_path, "Failed creating dropzone pre-ingest information", project_id, depositor
         )
         
-    # Check if the dropzone is valid for ingestion 
-    # see bug https://github.com/irods/irods/issues/7302
-    is_dropzone_ingestable(ctx, dropzone_path, project_id, depositor)
     ctx.callback.msiWriteRodsLog(
         "DEBUG: dropzone pre-ingest information created on {} for {}".format(ingest_resource_host, token), 0
     )
-
+    # Check if the dropzone is valid for ingestion 
+    # see bug https://github.com/irods/irods/issues/7302
+    is_dropzone_ingestable(ctx, dropzone_path, project_id, depositor)
+    
     ctx.callback.msiWriteRodsLog(
         "Starting the ingestion of {} to {} ({})({})".format(
             dropzone_path,

@@ -6,7 +6,7 @@ from dhpythonirodsutils import formatters
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
-dropzone_is_ingestable = {"contains_single_quote": False, "contains_and": False}
+dropzone_is_ingestable = {"dropzone_is_ingestable": True}
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
 def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone_type):
@@ -68,7 +68,7 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
     ctx.callback.setCollectionAVU(dropzone_path, "totalSize", str(size))
     ctx.callback.setCollectionAVU(dropzone_path, "numFiles", str(file_count))
 
-    is_ingestable = not (dropzone_is_ingestable["contains_single_quote"] and dropzone_is_ingestable["contains_and"])
+    is_ingestable = dropzone_is_ingestable["dropzone_is_ingestable"]
     ctx.callback.setCollectionAVU(dropzone_path, "isIngestable", formatters.format_boolean_to_string(is_ingestable))
 
     save_pre_ingest_document(ctx, result, token)
@@ -91,21 +91,14 @@ def path_to_dict(path):
     import os
 
     d = {"name": os.path.basename(path)}
+    # Due to a bug in GenQuery https://github.com/irods/irods/issues/7302
+    if "'" in path and " and " in path:
+        dropzone_is_ingestable["dropzone_is_ingestable"] = False
     if os.path.isdir(path):
-        # Due to a bug in GenQuery https://github.com/irods/irods/issues/7302
-        if "'" in d["name"]:
-            dropzone_is_ingestable["contains_single_quote"] = True
-        if " and " in d["name"]:
-            dropzone_is_ingestable["contains_and"] = True
-            
         d["type"] = "directory"
         d["children"] = [path_to_dict(os.path.join(path, x)) for x in os.listdir(path)]
 
     else:
-        if "'" in d["name"]:
-            dropzone_is_ingestable["contains_single_quote"] = True
-        if " and " in d["name"]:
-            dropzone_is_ingestable["contains_and"] = True
         d["type"] = "file"
         d["size"] = os.path.getsize(path)
 

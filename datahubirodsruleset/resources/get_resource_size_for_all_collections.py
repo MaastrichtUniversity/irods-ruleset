@@ -36,7 +36,14 @@ def get_resource_size_for_all_collections(ctx):
         for collection_resources in collection:
             for collection_resource in collection_resources:
                 if collection_resource["resourceName"] not in resources:
-                    resources[collection_resource["resourceName"]] = int(collection_resource["size"])
+                    resources[collection_resource["resourceName"]] = {"size": int(collection_resource["size"])}
                 else:
-                    resources[collection_resource["resourceName"]] += int(collection_resource["size"])
+                    resources[collection_resource["resourceName"]]["size"] += int(collection_resource["size"])
+    for resource in resources.keys():
+        cost_of_resource = ctx.callback.getResourceAVU(resource,"NCIT:C88193","","0","false")["arguments"][2]
+        cost_per_year = (
+            float(resources[resource]["size"]) / 1000 / 1000 / 1000 * float(cost_of_resource)
+        )
+        resources[resource]["cost_per_year"] = round(cost_per_year, 2)
+        resources[resource]["cost_per_month"] = round(cost_per_year / 12, 2)
     return resources

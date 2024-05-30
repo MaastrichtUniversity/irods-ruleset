@@ -2,11 +2,11 @@ import subprocess
 import json
 import os
 
+import pytest
 from dhpythonirodsutils.enums import ProcessState, ProcessType
 
 from test_cases.utils import (
     remove_project,
-    revert_latest_project_number,
     create_project,
     create_user,
     create_data_steward,
@@ -81,11 +81,11 @@ class TestUserGroups:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "test_manager"
+    depositor = "user_group_test_manager"
     manager1 = depositor
-    manager2 = "test_data_steward"
+    manager2 = "user_group_test_data_steward"
     data_steward = manager2
-    group = "test_group"
+    group = "user_group_test_group"
     service_account = "service-test"
 
     collection_creator = "jonathan.melius@maastrichtuniversity.nl"
@@ -116,7 +116,6 @@ class TestUserGroups:
     def teardown_class(cls):
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         remove_user_from_group("DH-project-admins", cls.manager1)
         remove_user(cls.manager1)
         remove_user(cls.manager2)
@@ -126,10 +125,10 @@ class TestUserGroups:
 
     def test_get_all_users_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
-        user_id = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_all_users_id"
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         user_ids = json.loads(ret)
         assert user_ids[user_id] == user_id
 
@@ -141,10 +140,10 @@ class TestUserGroups:
 
     def test_get_service_accounts_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.service_account)
-        user_id = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_service_accounts_id"
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         service_accounts = json.loads(ret)
         assert user_id in service_accounts
 
@@ -180,28 +179,28 @@ class TestUserGroups:
 
     def test_get_user_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
-        user_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = '/rules/tests/run_test.sh -r get_user_id -a "{}"'.format(self.manager1)
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         user_id_irule = json.loads(ret)
         assert int(user_id_iquest) == user_id_irule
 
     def test_get_user_internal_affiliation_status(self):
         rule = "/rules/tests/run_test.sh -r get_user_internal_affiliation_status -a {user}"
-        ret = subprocess.check_output(rule.format(user=self.manager1), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(user=self.manager1), shell=True)
         affiliation_status = json.loads(ret)
         assert affiliation_status
 
-        ret = subprocess.check_output(rule.format(user=self.manager2), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(user=self.manager2), shell=True)
         affiliation_status = json.loads(ret)
         assert not affiliation_status
 
     def test_get_user_metadata(self):
         rule = "/rules/tests/run_test.sh -r get_user_metadata -a {}".format(self.manager2)
-        ret = subprocess.check_output(rule.format(), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(), shell=True)
         user = json.loads(ret)
-        assert user["givenName"] == "test_data_steward"
+        assert user["givenName"] == self.manager2
         assert user["familyName"] == "LastName"
 
     def test_get_user_active_processes(self):
@@ -223,16 +222,11 @@ class TestUserGroups:
         set_unarchive_state = "imeta set -C /nlmumc/projects/{}/C000000002 unArchiveState 'unarchiving 4/4'".format(
             self.project_id
         )
-        set_exporter_state = (
-            "imeta set -C /nlmumc/projects/{}/C000000003 exporterState 'dataverseNL: exporting 3/4'".format(
-                self.project_id
-            )
-        )
+
         subprocess.check_call(set_archive_state, shell=True)
         subprocess.check_call(set_unarchive_state, shell=True)
-        subprocess.check_call(set_exporter_state, shell=True)
 
-        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u {}'.format(
+        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true" -u {}'.format(
             self.manager1
         )
         all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
@@ -248,53 +242,35 @@ class TestUserGroups:
         assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["state"] == "unarchiving 4/4"
         assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
 
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["repository"] == "dataverseNL"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_title"] == "title number 3"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_id"] == "C000000003"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["state"] == "exporting 3/4"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
-
         assert all_processes_output[ProcessState.OPEN.value][0]["validateState"] == "N/A"
         assert all_processes_output[ProcessState.OPEN.value][0]["title"] == self.collection_title
         assert all_processes_output[ProcessState.OPEN.value][0]["type"] == self.dropzone_type
         assert all_processes_output[ProcessState.OPEN.value][0]["token"] == token
         assert all_processes_output[ProcessState.OPEN.value][0]["state"] == "open"
 
-        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(
+        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true" -u {}'.format(
             self.manager1
         )
         no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
-        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 1
         assert no_archival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.UNARCHIVE.value
-        assert no_archival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
         assert len(no_archival_output[ProcessState.OPEN.value]) == 1
 
-        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(
+        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false" -u {}'.format(
             self.manager1
         )
         no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
-        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 1
         assert no_unarchival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
-        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
         assert len(no_unarchival_output[ProcessState.OPEN.value]) == 1
 
-        no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(
-            self.manager1
-        )
-        no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
-        assert len(no_export_output[ProcessState.IN_PROGRESS.value]) == 2
-        assert no_export_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
-        assert no_export_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
-        assert len(no_export_output[ProcessState.OPEN.value]) == 1
-
-        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(
+        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true" -u {}'.format(
             self.manager1
         )
         no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
-        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 3
+        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 2
         assert no_dropzones_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
         assert no_dropzones_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
-        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
         assert len(no_dropzones_output[ProcessState.OPEN.value]) == 0
 
         remove_dropzone = "irm -rf /nlmumc/ingest/direct/{}".format(token)
@@ -302,17 +278,17 @@ class TestUserGroups:
 
     def test_get_user_or_group_by_id(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.manager1)
-        user_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        user_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.group)
-        group_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "/rules/tests/run_test.sh -r get_user_or_group_by_id -a {id}"
-        ret = subprocess.check_output(rule.format(id=user_id_iquest), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(id=user_id_iquest), shell=True)
         user = json.loads(ret)
         assert user["userName"] == self.manager1
 
-        ret = subprocess.check_output(rule.format(id=group_id_iquest), shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule.format(id=group_id_iquest), shell=True)
         group = json.loads(ret)
         assert group["groupName"] == self.group
 
@@ -323,8 +299,11 @@ class TestUserGroups:
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
             self.manager1, field_name
         )
-        field_value_return = subprocess.getoutput(run_iquest).strip()
-        assert "CAT_NO_ROWS_FOUND" in field_value_return
+        # Starting from 4.2.12:
+        # When iquest returns a "CAT_NO_ROWS_FOUND", the exit status code is 1 instead of 0.
+        # And therefore, a CalledProcessError is raised.
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = '/rules/tests/run_test.sh -r set_user_attribute_value -a "{},{},{}"'.format(
             self.manager1, field_name, field_value
@@ -334,7 +313,7 @@ class TestUserGroups:
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
             self.manager1, field_name
         )
-        field_value_return = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        field_value_return = subprocess.check_output(run_iquest, shell=True).strip()
         assert field_value_return == field_value
 
         imeta = "imeta rm -u {} {} {}".format(self.manager1, field_name, field_value)
@@ -366,12 +345,12 @@ class TestUserGroups:
 
     def test_get_users_in_group(self):
         run_iquest = 'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{}\'"'.format(self.group)
-        group_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        group_id_iquest = subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsersInGroup.r \"*groupId='{}'\"".format(
             group_id_iquest
         )
-        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(rule, shell=True)
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
         assert not check_if_key_value_in_dict_list(users, "userName", self.manager2)

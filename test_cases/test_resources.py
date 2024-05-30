@@ -6,7 +6,6 @@ from test_cases.utils import (
     TMP_INSTANCE_PATH,
     start_and_wait_for_ingest,
     remove_project,
-    revert_latest_project_number,
     remove_dropzone,
     create_project,
     create_dropzone,
@@ -73,7 +72,6 @@ class TestResources:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_calc_collection_files_across_resc(self):
@@ -93,7 +91,7 @@ class TestResources:
         )
         rule_output = subprocess.check_output(rule, shell=True)
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
-        iquest_result = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
         for resc in rule_parsed["numFilesPerResc"]:
@@ -110,9 +108,9 @@ class TestResources:
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
             self.project_id, self.collection_id
         )
-        rule_output = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
-        assert rule_parsed["sizePerResc"][0]["dataSize"] == "532"
+        assert rule_parsed["sizePerResc"][0]["dataSize"] == "538"
         assert rule_parsed["sizePerResc"][0]["resourceID"].isnumeric()
         subprocess.check_call(
             "iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(
@@ -122,7 +120,7 @@ class TestResources:
         )
         rule_output = subprocess.check_output(rule, shell=True)
         run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
-        iquest_result = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        iquest_result = subprocess.check_output(run_iquest, shell=True).strip()
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
         for resc in rule_parsed["sizePerResc"]:
@@ -157,17 +155,11 @@ class TestResources:
 
     def test_get_resource_avu(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""
-        rule_output = subprocess.check_output(
-            rule.format("archiveDestResc", "", "true"), shell=True, encoding="UTF-8"
-        ).strip()
+        rule_output = subprocess.check_output(rule.format("archiveDestResc", "", "true"), shell=True).strip()
         assert rule_output == "true"
-        rule_output = subprocess.check_output(
-            rule.format("non_existing", "", "false"), shell=True, encoding="UTF-8"
-        ).strip()
+        rule_output = subprocess.check_output(rule.format("non_existing", "", "false"), shell=True).strip()
         assert rule_output != "override"
-        rule_output = subprocess.check_output(
-            rule.format("non_existing", "override", "false"), shell=True, encoding="UTF-8"
-        ).strip()
+        rule_output = subprocess.check_output(rule.format("non_existing", "override", "false"), shell=True).strip()
         assert rule_output == "override"
         with pytest.raises(subprocess.CalledProcessError) as e_info:
             subprocess.check_call(rule.format("non_existing", "", "true"), shell=True)

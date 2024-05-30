@@ -5,6 +5,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
+import time
 
 
 @make(inputs=range(7), outputs=[7], handler=Output.STORE)
@@ -46,8 +47,6 @@ def create_new_project(
                 Date
             storageQuotaGb  : str
                 The storage quota in Gb
-            enableOpenAccessExport : str
-                'true'/'false' expected values
             enableArchive : str
                 'true'/'false' expected values
             enableUnarchive : str
@@ -67,7 +66,6 @@ def create_new_project(
         ProjectAVUs.AUTHORIZATION_PERIOD_END_DATE.value: "01-01-9999",
         ProjectAVUs.DATA_RETENTION_PERIOD_END_DATE.value: "01-01-9999",
         ProjectAVUs.STORAGE_QUOTA_GB.value: "0",
-        ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value: "false",
         ProjectAVUs.ENABLE_ARCHIVE.value: "false",
         ProjectAVUs.ENABLE_UNARCHIVE.value: "false",
         ProjectAVUs.ENABLE_DROPZONE_SHARING.value: "false",
@@ -97,6 +95,7 @@ def create_new_project(
             ctx.callback.msiCollCreate(new_project_path, 0, 0)
         except RuntimeError:
             error = -1
+            time.sleep(0.1 * retry)
         else:
             error = 0
 
@@ -111,6 +110,7 @@ def create_new_project(
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, principal_investigator)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.DATA_STEWARD.value, data_steward)
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, responsible_cost_center)
+    ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.LATEST_PROJECT_COLLECTION_NUMBER.value, "0")
 
     for extra_parameter_name in extra_parameter_default_values:
         if extra_parameter_name in extra_parameters:

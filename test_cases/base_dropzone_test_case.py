@@ -2,11 +2,11 @@ import json
 import subprocess
 import time
 
+import pytest
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
     remove_project,
-    revert_latest_project_number,
     remove_dropzone,
     create_project,
     create_dropzone,
@@ -54,7 +54,6 @@ class BaseTestCaseDropZones:
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_dropzone_avu(self):
@@ -91,14 +90,14 @@ class BaseTestCaseDropZones:
 
         # Check that the depositor lost access on the dropzone collection (not all files)
         acl = "ils -A {}".format(dropzone_path)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         # 3 => dropzone collection, instance.json & schema.json
         assert ret_acl.count(self.depositor) == 3
 
         rule_remove_acl = '/rules/tests/run_test.sh -r remove_users_dropzone_acl -a "{}"'.format(dropzone_path)
         subprocess.check_call(rule_remove_acl, shell=True)
 
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         # 2 => instance.json & schema.json
         assert ret_acl.count(self.depositor) == 2
 
@@ -114,15 +113,14 @@ class BaseTestCaseDropZones:
 
         fail_safe = 100
         while fail_safe != 0:
-            field_value_return = subprocess.getoutput(run_iquest).strip()
-            if "CAT_NO_ROWS_FOUND" in field_value_return:
-                fail_safe = 0
-            else:
+            try:
+                subprocess.check_output(run_iquest, shell=True)
                 fail_safe = fail_safe - 1
                 time.sleep(3)
-
-        # check_output -> If the exit code was non-zero it raises a CalledProcessError.
-        # So we use getoutput instead because CAT_NO_ROWS_FOUND exit with an exit-code 1
-        field_value_return = subprocess.getoutput(run_iquest).strip()
-        # TODO Update CAT_NO_ROWS_FOUND check after 4.2.12
-        assert "CAT_NO_ROWS_FOUND" in field_value_return
+            except subprocess.CalledProcessError:
+                fail_safe = 0
+        # Starting from 4.2.12:
+        # When iquest returns a "CAT_NO_ROWS_FOUND", the exit status code is 1 instead of 0.
+        # And therefore, a CalledProcessError is raised.
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_output(run_iquest, shell=True)

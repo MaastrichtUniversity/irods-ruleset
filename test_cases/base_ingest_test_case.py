@@ -4,7 +4,6 @@ import subprocess
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
-    revert_latest_project_number,
     remove_project,
     create_dropzone,
     create_project,
@@ -64,7 +63,7 @@ class BaseTestCaseIngest:
     collection_title = "collection_title"
     collection_id = "C000000001"
     collection_number_files = 8
-    collection_total_size = 63510370
+    collection_total_size = 63516274
 
     # iRODS seems to have 3 different ways/protocols to transfer data, depending on the file size:
     # * 0     < X < 4  MB
@@ -105,7 +104,6 @@ class BaseTestCaseIngest:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_collection_avu(self):
@@ -152,14 +150,14 @@ class BaseTestCaseIngest:
         Check the project collection acl; assume that all members only have read access.
         """
         acl = "ils -A {}/{}".format(self.project_path, self.collection_id)
-        ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(acl, shell=True)
         assert "own" not in ret
-        assert "{}#nlmumc:read_object".format(self.manager1) in ret
-        assert "{}#nlmumc:read_object".format(self.manager2) in ret
+        assert "{}#nlmumc:read object".format(self.manager1) in ret
+        assert "{}#nlmumc:read object".format(self.manager2) in ret
 
     def test_project_acl(self):
         acl = "ils -A {}".format(self.project_path)
-        ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(acl, shell=True)
         assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager2) in ret
@@ -168,6 +166,9 @@ class BaseTestCaseIngest:
         import requests
 
         # TODO How relevant is this test?
+        # Note: This test can start to fail when reaching high project_id number (e.g: P000000150).
+        # A potential first time PID registration can cause a synchronization timing issue between the EpicPID
+        # registration service and the global Handle URL resolving service.
         rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
             self.project_id, self.collection_id
         )
@@ -185,7 +186,7 @@ class BaseTestCaseIngest:
         query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
             self.project_path, self.collection_id
         )
-        ret = subprocess.check_output(query, shell=True, encoding="UTF-8")
+        ret = subprocess.check_output(query, shell=True)
         resources = ret.splitlines()
         assert len(resources) == 2
         assert self.destination_resource in resources[0]
@@ -225,10 +226,10 @@ class BaseTestCaseIngest:
         dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
 
         run_iquest = query.format(dropzone_path, "totalSize")
-        total_size = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        total_size = subprocess.check_output(run_iquest, shell=True).strip()
 
         run_iquest = query.format(dropzone_path, "numFiles")
-        num_files = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        num_files = subprocess.check_output(run_iquest, shell=True).strip()
 
         assert total_size == self.dropzone_total_size
         assert num_files == self.dropzone_num_files

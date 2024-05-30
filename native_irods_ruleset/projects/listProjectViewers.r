@@ -15,21 +15,14 @@ irule_dummy() {
 
 IRULE_listProjectViewers(*project, *inherited, *result) {
     *groups = '[]';
-    *groupSize = 0;
-
     *users = '[]';
-    *userSize = 0;
-
     *groupObjects = '[]';
-    *groupObjectsSize = 0;
-
     *userObjects = '[]';
-    *userObjectsSize = 0;
 
     if ( *inherited == "true" ) {
-        *criteria = "'own', 'modify_object', 'read_object'"
+        *criteria = "'own', 'modify object', 'read object'"
     } else {
-        *criteria = "'read_object'"
+        *criteria = "'read object'"
     }
 
     msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in (*criteria)  and COLL_NAME = '/nlmumc/projects/*project'", *Query);
@@ -57,19 +50,18 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
                      *description = *av.META_USER_ATTR_VALUE;
                   } 
                 }
-                msi_json_arrayops( *groups, *objectName, "add", *groupSize);
+                json_arrayops_add(*groups, *objectName);
                 *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID", "displayName" : "*displayName", "description" : "*description" }';
-                msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
+                json_arrayops_add(*groupObjects, *groupObject);
             }
 
             if ( *objectType == "rodsuser" ) {
                 foreach( *U in select META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser" and META_USER_ATTR_NAME == "displayName" ) {
                    *displayName = *U.META_USER_ATTR_VALUE;
                 }
-
-                msi_json_arrayops(*users, *objectName, "add", *userSize);
+                json_arrayops_add(*users, *objectName);
                 *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
-                msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
+                json_arrayops_add(*userObjects, *userObject);
             }
             # All other cases of objectType, such as "" or "rodsadmin", are skipped
        }

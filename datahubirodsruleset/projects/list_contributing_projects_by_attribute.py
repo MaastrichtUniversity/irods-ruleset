@@ -18,8 +18,7 @@ def list_contributing_projects_by_attribute(ctx, attribute):
     ctx : Context
         Combined type of callback and rei struct.
     attribute: str
-        The attribute value of a project feature AVU. e.g: 'enableArchive', 'enableUnarchive', 'enableOpenAccessExport',
-        'enableContributorEditMetadata'
+        The attribute value of a project feature AVU. e.g: 'enableArchive', 'enableUnarchive', 'enableContributorEditMetadata'
 
     Returns
     -------
@@ -44,7 +43,7 @@ def list_contributing_projects_by_attribute(ctx, attribute):
 
     parameters = "COLL_NAME"
     conditions = (
-        "COLL_ACCESS_NAME in ('own', 'modify_object') "
+        "COLL_ACCESS_NAME in ('own', 'modify object') "
         "and COLL_ACCESS_USER_ID in ({}) "
         "and COLL_PARENT_NAME = '/nlmumc/projects' "
         "and META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = 'true'".format(access_user_id, attribute)

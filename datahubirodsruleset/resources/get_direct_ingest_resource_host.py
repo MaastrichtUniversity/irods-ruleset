@@ -22,5 +22,5 @@ def get_direct_ingest_resource_host(ctx):
         ctx.callback,
     ):
         direct_ingest_resource_host = row[0]
-
     return direct_ingest_resource_host
+ 

@@ -11,7 +11,6 @@ from test_cases.utils import (
     create_project,
     start_and_wait_for_ingest,
     remove_project,
-    revert_latest_project_number,
     create_data_steward,
     create_user,
     remove_user,
@@ -23,9 +22,9 @@ class BaseTestTapeArchive:
     project_id = ""
     project_title = "PROJECTNAME"
 
-    depositor = "test_manager"
+    depositor = "tape_test_manager"
     manager1 = depositor
-    manager2 = "test_data_steward"
+    manager2 = "tape_test_data_steward"
     data_steward = manager2
     service_account = "service-surfarchive"
 
@@ -83,7 +82,7 @@ class BaseTestTapeArchive:
         cls.large_file_logical_path = "{}/large_file".format(cls.project_collection_path)
 
         cls.run_ichmod = "ichmod -rM own {} {}".format(cls.service_account, cls.project_collection_path)
-        cls.rule_status = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,false"'
+        cls.rule_status = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true"'
         cls.check_small_file_resource = "ils -l {}/instance.json".format(cls.project_collection_path)
         cls.check_large_file_resource = "ils -l {}".format(cls.large_file_logical_path)
         print("End {}.setup_class".format(cls.__name__))
@@ -93,7 +92,6 @@ class BaseTestTapeArchive:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         remove_user(cls.manager1)
         remove_user(cls.manager2)
         print("End {}.teardown_class".format(cls.__name__))
@@ -149,10 +147,10 @@ class BaseTestTapeArchive:
         self.wait_for_active_processes(self.rule_status, active_processes)
 
         # Assert archive
-        output = subprocess.check_output(self.check_small_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_small_file_resource, shell=True)
         assert self.destination_resource in output
 
-        output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_large_file_resource, shell=True)
         assert "arcRescSURF01" in output
 
     def run_un_archive(self, un_archive_path):
@@ -170,10 +168,10 @@ class BaseTestTapeArchive:
         self.wait_for_active_processes(self.rule_status, active_processes)
 
         # Assert un-archive
-        output = subprocess.check_output(self.check_small_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_small_file_resource, shell=True)
         assert self.destination_resource in output
 
-        output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
+        output = subprocess.check_output(self.check_large_file_resource, shell=True)
         assert self.destination_resource in output
 
     # endregion

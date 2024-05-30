@@ -44,7 +44,7 @@ def list_contributing_projects(ctx, show_service_accounts):
     # Get the collection size on each resources
     parameters = "COLL_NAME"
     conditions = (
-        "COLL_ACCESS_NAME in ('own', 'modify_object') "
+        "COLL_ACCESS_NAME in ('own', 'modify object') "
         "and COLL_ACCESS_USER_ID in ({}) "
         "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
     )

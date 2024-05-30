@@ -1,4 +1,5 @@
 # TODO explain the nosec
+import json
 from subprocess import check_call, CalledProcessError  # nosec
 
 import irods_types  # pylint: disable=import-error
@@ -16,6 +17,9 @@ COLLECTION_METADATA_INDEX = "collection_metadata"
 FALSE_AS_STRING = "false"
 TRUE_AS_STRING = "true"
 
+IRODS_ZONE_BASE_PATH = "/nlmumc"
+IRODS_BACKUP_ACL_BASE_PATH = "/nlmumc/backupACL"
+
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STDOUT)
 def test_rule_output(ctx, rule_name, args):
@@ -26,7 +30,7 @@ def test_rule_output(ctx, rule_name, args):
     # The rule expect some arguments, and test_rule_output expect them as a csv string
     else:
         args = args.split(",")
-        # we need to add a empty string as the last index for the output argument.
+        # we need to add an empty string as the last index for the output argument.
         args.append("")
         output = getattr(ctx.callback, rule_name)(*args)
         ctx.callback.writeLine("stdout", str(output["arguments"][len(args) - 1]))
@@ -248,3 +252,260 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
     except CalledProcessError as err:
         ctx.callback.msiWriteRodsLog("ERROR: icp: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
         ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))
+
+
+def apply_batch_acl_operation(ctx, collection_path, acl_operations):
+    """
+    Apply the ACL operations in a single execution
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    collection_path : str
+        The absolute path of iRODS collection
+    acl_operations :  list[dict]
+        The list of ACL operations in the expected format
+    """
+    json_input = {
+        "logical_path": collection_path,
+        "operations": acl_operations,
+    }
+    str_json_input = json.dumps(json_input)
+    ctx.msi_atomic_apply_acl_operations(str_json_input, "")
+    message = "INFO: Apply batch ACL operations for {}".format(collection_path)
+    ctx.callback.msiWriteRodsLog(message, 0)
+
+
+def apply_batch_collection_avu_operation(ctx, collection_path, operation_type, metadata):
+    """
+    Apply the AVU operations in a single execution
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    collection_path : str
+        The absolute path of iRODS collection
+    operation_type : str
+        'add' or 'remove'
+    metadata : dict
+        Contains the AVUs to apply. key: attribute; value: value
+    """
+    json_input = {
+        "entity_name": collection_path,
+        "entity_type": "collection",
+        "operations": create_metadata_operations(operation_type, metadata),
+    }
+    str_json_input = json.dumps(json_input)
+    ctx.msi_atomic_apply_metadata_operations(str_json_input, "")
+    message = "INFO: {} deletion metadata for {}".format(operation_type.capitalize(), collection_path)
+    ctx.callback.msiWriteRodsLog(message, 0)
+
+
+def create_metadata_operations(operation_type, metadata):
+    """
+    Format the metadata operations in the expected format of msi_atomic_apply_metadata_operations
+
+    Parameters
+    ----------
+    operation_type : str
+        'add' or 'remove'
+    metadata : dict
+        Contains the AVUs to apply. key: attribute; value: value
+
+    Returns
+    -------
+    list[dict]
+        The list of AVU operations in the expected format
+    """
+    operations = []
+    for attribute, value in metadata.items():
+        operation = {
+            "operation": operation_type,
+            "attribute": attribute,
+            "value": value,
+        }
+        operations.append(operation)
+
+    return operations
+
+
+def map_access_name_to_access_level(access_name):
+    """
+    The returns value from ACL queries (COLL_ACCESS_NAME) are access names.
+    But msiSetACL or ichmod expect access type as arguments.
+    This function converts "access name" to "access type"
+
+    Parameters
+    ----------
+    access_name: str
+        expected values: "own", "modify object" & "read object"
+
+    Returns
+    -------
+    str
+        The equivalent access type value: "own", "write" & "read"
+    """
+
+    user_access = access_name
+    if access_name == "modify object":
+        user_access = "write"
+    elif access_name == "read object":
+        user_access = "read"
+
+    return user_access
+
+
+@make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
+def json_arrayops_add(ctx, json_str, item):
+    """
+    Python function to replace the functionality of msi_json_arrayops.add
+    ```
+    if ( strOps == "add" ) {
+        // append value only if it's a boolean, or it's not presented in the array
+        if ( json_is_boolean(jval) || i_match == outSizeOrIndex ) {
+            json_array_append_new(root, jval);
+            outSizeOrIndex = (int) json_array_size(root);
+        }
+    }
+    ```
+
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        initial json array
+    item : str
+        item to be added to the json array
+
+    Returns
+    -------
+    json_obj : str
+        updated json array
+    """
+    if not json_str:
+        json_str = "[]"
+
+    json_obj = json.loads(json_str)
+
+    if item == "null":
+        return json_obj
+
+    if item == "false":
+        item = False
+    elif item == "true":
+        item = True
+    else:
+        try:
+            item = json.loads(item)
+        except ValueError:
+            item = str(item)
+
+    if not item in json_obj:
+        json_obj.append(item)
+
+    return json_obj
+
+
+@make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
+def json_objops_add(ctx, json_str, kvp):
+    """
+    Python function to replace the functionality of  msi_json_objops.add
+    ```
+    else if ( strOps == "add" ) {
+        if (json_is_array( data )) {
+            json_array_append_new(data, jval);
+        } else {
+            json_object_set_new(root, inKey, jval);
+        }
+    ```
+
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        initial json object
+    kvp : str
+        item to be added to the json array
+
+    Returns
+    -------
+    json_obj : str
+        updated json object
+    """
+    if not json_str:
+        json_str = "{}"
+    json_obj = json.loads(json_str)
+
+    for key, value in get_key_value_pair_iterator(kvp):
+        if key in json_obj and type(json_obj[key]) == list:
+            # json_is_array
+            json_obj[key].append(value)
+        else:
+            # json_object_set_new
+            json_obj[key] = value
+
+    return json_obj
+
+
+@make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
+def json_objops_set(ctx, json_str, kvp):
+    """
+    Python function to replace the functionality of msi_json_objops.set
+    ```
+    else if ( strOps == "set" ) {
+        json_object_set_new(root, inKey, jval);
+    ```
+
+    Parameters
+    ----------
+    ctx: Context
+        Combined type of callback and rei struct.
+    json_str : str
+        initial json object
+    kvp : str
+        item to be added to the json array
+
+    Returns
+    -------
+    json_obj : str
+        updated json object
+    """
+    if not json_str:
+        json_str = "{}"
+    json_obj = json.loads(json_str)
+
+    for key, value in get_key_value_pair_iterator(kvp):
+        json_obj[key] = value
+
+    return json_obj
+
+
+def get_key_value_pair_iterator(kvp):
+    """
+    Parse the key-value pair input object and create an iterator.
+
+    Parameters
+    ----------
+    kvp: str
+        key-value pair
+
+    Yields
+    -------
+    (str,str)
+    """
+    pairs = kvp.split("++++")
+
+    for key_value_pair in pairs:
+        pair = key_value_pair.split("=")
+        key = pair[0]
+        value = pair[1]
+        try:
+            value = json.loads(value)
+        except ValueError:
+            value = str(value)
+
+        yield key, value

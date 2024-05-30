@@ -10,7 +10,6 @@ from test_cases.utils import (
     set_collection_avu,
     does_path_exist,
     remove_project,
-    revert_latest_project_number,
     wait_for_set_acl_for_metadata_snapshot_to_finish,
     run_index_all_project_collections_metadata,
 )
@@ -71,7 +70,6 @@ class BaseTestCaseCustomizableMetadata:
         print("Start {}.teardown_class".format(cls.__name__))
         wait_for_set_acl_for_metadata_snapshot_to_finish(cls.project_id)
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     # region extended setup
@@ -107,7 +105,7 @@ class BaseTestCaseCustomizableMetadata:
         metadata_snapshot = '/rules/tests/run_test.sh -r create_collection_metadata_snapshot -a "{},{}" -u {}'.format(
             cls.project_id, cls.collection_id, cls.depositor
         )
-        pid_request_status = subprocess.check_output(metadata_snapshot, shell=True, encoding="UTF-8").strip()
+        pid_request_status = subprocess.check_output(metadata_snapshot, shell=True).strip()
         assert pid_request_status == "true"
 
         # setCollectionSize is also called in set_acl_for_metadata_snapshot but in a delay queue
@@ -155,7 +153,7 @@ class BaseTestCaseCustomizableMetadata:
         run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'latest_version_number' \"".format(
             self.project_collection_path
         )
-        latest_version_number = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
+        latest_version_number = subprocess.check_output(run_iquest, shell=True).strip()
         assert latest_version_number.isdigit()
         assert int(latest_version_number) == 2
 

@@ -33,8 +33,11 @@ def start_ingest(ctx, depositor, token, dropzone_type):
         ctx.callback.validate_dropzone(dropzone_path, depositor, dropzone_type, "")["arguments"][3]
     )
     project_id = pre_ingest_tasks["project_id"]
-    title = pre_ingest_tasks["title"]
     validation_result = pre_ingest_tasks["validation_result"]
+
+    # Python2.7 default encoding is ASCII, so we need to enforce UFT-8 encoding
+    depositor = depositor.encode("utf-8")
+    token = token.encode("utf-8")
 
     if formatters.format_string_to_boolean(validation_result):
         ctx.callback.msiWriteRodsLog(
@@ -47,7 +50,7 @@ def start_ingest(ctx, depositor, token, dropzone_type):
 
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "perform_{}_ingest('{}', '{}', '{}', '{}')".format(dropzone_type, project_id, title, depositor, token),
+            "perform_{}_ingest('{}', '{}', '{}')".format(dropzone_type, project_id, depositor, token),
             "",
         )
     else:

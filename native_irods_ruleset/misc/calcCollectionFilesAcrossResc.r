@@ -43,7 +43,7 @@ IRULE_calcCollectionFilesAcrossResc(*collection, *result, *resultIdList, *result
 
         # Collect the values for this iteration and add it to the json array
         *jsonArr = '{"resourceID": "*rescId", "numFiles": "*count"}';
-        msi_json_arrayops(*rescNumFilesArray, *jsonArr, "add", 0);
+        json_arrayops_add(*rescNumFilesArray, *jsonArr);
 
         # Add the same values to the list object
         *rescIdList = cons(*rescId, *rescIdList);
@@ -54,7 +54,7 @@ IRULE_calcCollectionFilesAcrossResc(*collection, *result, *resultIdList, *result
     *jsonStr = '';
     msiString2KeyValPair("", *kvp);
     msiAddKeyVal(*kvp, 'numFilesPerResc', *rescNumFilesArray);
-    msi_json_objops(*jsonStr, *kvp, "set");
+    json_objops_set(*jsonStr, str(*kvp));
     *result = *jsonStr;
 
     # Also return as lists (for easy usage in other rules)

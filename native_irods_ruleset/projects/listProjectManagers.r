@@ -10,16 +10,9 @@ irule_dummy() {
 
 IRULE_listProjectManagers(*project, *result) {
     *groups = '[]';
-    *groupSize = 0;
-
     *users = '[]';
-    *userSize = 0;
-
     *groupObjects = '[]';
-    *groupObjectsSize = 0;
-
     *userObjects = '[]';
-    *userObjectsSize = 0;
 
     foreach ( *Row in select COLL_ACCESS_USER_ID where COLL_ACCESS_NAME = 'own' and COLL_NAME = '/nlmumc/projects/*project' ) {
         *objectID = *Row.COLL_ACCESS_USER_ID;
@@ -42,18 +35,18 @@ IRULE_listProjectManagers(*project, *result) {
                      *description = *av.META_USER_ATTR_VALUE
                   } 
                 }
-                msi_json_arrayops( *groups, *objectName, "add", *groupSize);
+                json_arrayops_add(*groups, *objectName);
                 *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID", "displayName" : "*displayName", "description" : "*description" }';
-                msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
+                json_arrayops_add(*groupObjects, *groupObject);
             }
 
             if ( *objectType == "rodsuser" ) {
                 foreach( *U in select META_USER_ATTR_VALUE where USER_ID = '*objectID' AND USER_TYPE = "rodsuser" and META_USER_ATTR_NAME == "displayName" ) {
                    *displayName = *U.META_USER_ATTR_VALUE;
                 }
-                msi_json_arrayops(*users, *objectName, "add", *userSize);
+                json_arrayops_add(*users, *objectName);
                 *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
-                msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
+                json_arrayops_add(*userObjects, *userObject);
             }
             # All other cases of objectType, such as "" or "rodsadmin", are skipped
         }

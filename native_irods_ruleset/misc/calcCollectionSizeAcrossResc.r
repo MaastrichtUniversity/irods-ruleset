@@ -79,7 +79,7 @@ IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultI
 
         # Collect the values for this iteration and add it to the json array
         *jsonArr = '{"resourceID": "*rescId", "dataSize": "*roundedSize"}';
-        msi_json_arrayops(*rescSizeArray, *jsonArr, "add", 0);
+        json_arrayops_add(*rescSizeArray, *jsonArr);
 
         # Add the same values to the list object
         *rescIdList = cons(*rescId, *rescIdList);
@@ -90,7 +90,7 @@ IRULE_calcCollectionSizeAcrossResc(*collection, *unit, *round, *result, *resultI
     *jsonStr = '';
     msiString2KeyValPair("", *kvp);
     msiAddKeyVal(*kvp, 'sizePerResc', *rescSizeArray);
-    msi_json_objops(*jsonStr, *kvp, "set");
+    json_objops_set(*jsonStr, str(*kvp));
     *result = *jsonStr;
 
     # Also return as lists (for easy usage in other rules)

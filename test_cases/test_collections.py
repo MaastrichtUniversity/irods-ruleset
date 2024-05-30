@@ -9,7 +9,6 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     add_metadata_files_to_direct_dropzone,
     remove_project,
-    revert_latest_project_number,
 )
 
 """
@@ -24,9 +23,6 @@ projectCollection:
         Used in RW and MDR
     openProjectCollection
         IN RW, not in MDR
-        Used in RS (prepareExportProjectCollection & tape)
-    prepareExportProjectCollection
-        Used in RW and MDR
 misc:
     calcCollectionFiles
         In RS (setCollectionSize)
@@ -112,7 +108,6 @@ class TestCollections:
         print()
         print("Start {}.teardown_class".format(cls.__name__))
         remove_project(cls.project_path)
-        revert_latest_project_number()
         print("End {}.teardown_class".format(cls.__name__))
 
     def test_list_collections(self):
@@ -127,7 +122,7 @@ class TestCollections:
             assert list_collections[collection_index]["creator"] == "jonathan.melius@maastrichtuniversity.nl"
             assert list_collections[collection_index]["numUserFiles"] == 0
             assert list_collections[collection_index]["numFiles"] == 4
-            assert list_collections[collection_index]["size"] == 544610.0
+            assert list_collections[collection_index]["size"] == 550514.0
             collection_id = self.collection_id[:-1] + str(collection_index + 1)
             assert list_collections[collection_index]["id"] == collection_id
             pid_suffix = "{}{}".format(self.project_id, collection_id)
@@ -146,12 +141,10 @@ class TestCollections:
         assert collection_detail["title"] == self.collection_title_base + "0"
         assert collection_detail["enableArchive"] == "false"
         assert collection_detail["enableUnarchive"] == "false"
-        assert collection_detail["enableOpenAccessExport"] == "false"
         assert collection_detail["externals"] == "no-externalPID-set"
-        assert collection_detail["exporterState"] == "no-state-set"
 
         assert int(collection_detail["numFiles"]) == 4
-        assert int(collection_detail["byteSize"]) == 544610
+        assert int(collection_detail["byteSize"]) == 550514
 
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
@@ -178,19 +171,19 @@ class TestCollections:
         collection_path = "/nlmumc/home/jmelius"
         user_to_check = "auser"
         acl = "ils -A {}".format(collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
         rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{},{}"'.format(user_to_check, collection_path)
         subprocess.check_call(rule, shell=True)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
 
         rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:null,{},{}"'.format(
             user_to_check, collection_path
         )
         subprocess.check_call(rule, shell=True)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
     def test_collection_size_per_resource(self):
@@ -205,25 +198,25 @@ class TestCollections:
             assert list_collections[collection_id][0]["relativeSize"] == 100.0
             assert list_collections[collection_id][0]["resourceId"].isnumeric()
             assert list_collections[collection_id][0]["resourceName"] == self.destination_resource
-            assert list_collections[collection_id][0]["size"] == "544610"
+            assert list_collections[collection_id][0]["size"] == "550514"
 
     def test_project_collection_acl_open_close_state(self):
         project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
         user_to_check = "rods"
         acl = "ils -A {}".format(project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
 
         rule_open = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" \"*user='{}'\" \"*rights='own'\"".format(
             self.project_id, self.collection_id, user_to_check
         )
         subprocess.check_call(rule_open, shell=True)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
 
         rule_close = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" ".format(
             self.project_id, self.collection_id
         )
         subprocess.check_call(rule_close, shell=True)
-        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
+        ret_acl = subprocess.check_output(acl, shell=True)
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl

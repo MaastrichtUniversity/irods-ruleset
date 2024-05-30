@@ -1,3 +1,6 @@
+# Call with
+#
+# NOT RECOMMENDED to be called with irule, since it is part of a greater workflow and has to be called from within prepareTapeUnArchive.r rule
 
 tapeUnArchive(*count, *archColl, *initiator){
     #Matthew Saum
@@ -22,13 +25,10 @@ tapeUnArchive(*count, *archColl, *initiator){
      getCollectionAVU(*projectPath,"archiveDestinationResource",*archiveResc,"N/A","true");
 
     *minimumSize=262144000;        #The minimum file size (in bytes)
-
-    # rodsadmin user running the rule
-    # get this from avu set on archive
-    getResourceAVU(*archiveResc,"service-account",*aclChange,"N/A","true");
-
     *isMoved=0;                 #Number of files moved counter
     *stateAttrName = "unArchiveState";
+
+    msiWriteRodsLog("DEBUG: surfArchiveScanner found *count files", 0);
 
     msiGetObjType(*archColl, *inputType);
     if (*inputType like '-d'){
@@ -40,15 +40,6 @@ tapeUnArchive(*count, *archColl, *initiator){
     *projectResource = "";
     foreach (*av in SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME == "*projectPath" AND META_COLL_ATTR_NAME == "resource") {
         *projectResource = *av.META_COLL_ATTR_VALUE;
-    }
-
-    #Find our resource location
-    *resourceLocation = ""
-    foreach(*parent in SELECT RESC_ID WHERE RESC_NAME = *projectResource){
-        *parentID = *parent.RESC_ID;
-        foreach(*r in SELECT RESC_LOC WHERE RESC_PARENT = *parentID){
-            *resourceLocation = *r.RESC_LOC;
-        }
     }
 
     if (*inputType like '-d'){
@@ -76,14 +67,14 @@ tapeUnArchive(*count, *archColl, *initiator){
             # will automatically also include a checksum check on the destination
             # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
             *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
-            msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+            msiWriteRodsLog("DEBUG: \t\t*ipath -> moveError: *moveError", 0);
             if ( *moveError != 0 ) {
                    setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
             }
 
             # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
             *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
-            msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+            msiWriteRodsLog("DEBUG: \t\t*ipath -> trimError: *trimError", 0);
             if ( *trimError != 0 ) {
                    setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
             }
@@ -122,14 +113,14 @@ tapeUnArchive(*count, *archColl, *initiator){
             # will automatically also include a checksum check on the destination
             # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
             *moveError = errorcode(msiDataObjRepl(*ipath, "destRescName=*projectResource", *moveStatus));
-            msiWriteRodsLog("DEBUG: moveError *moveError", 0);
+            msiWriteRodsLog("DEBUG: \t\t*ipath -> moveError: *moveError", 0);
             if ( *moveError != 0 ) {
                    setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Replication of *ipath from *projectResource to *archiveResc FAILED.")
             }
 
             # 'errorcode()' catches the microservice's error, making it non-fatal, so that the rule continues processing and is able to 'setTapeErrorAVU()'
             *trimError = errorcode(msiDataObjTrim(*ipath, *archiveResc, "null", "1", "null", *trimStatus));
-            msiWriteRodsLog("DEBUG: trimError *trimError", 0);
+            msiWriteRodsLog("DEBUG: \t\t*ipath -> trimError: *trimError", 0);
             if ( *trimError != 0 ) {
                    setTapeErrorAVU(*projectCollectionPath, *initiator, *stateAttrName, "error-unarchive-failed", "Trim *ipath from *projectResource FAILED.")
             }

@@ -90,14 +90,14 @@ class BaseTestCaseDropZones:
 
         # Check that the depositor lost access on the dropzone collection (not all files)
         acl = "ils -A {}".format(dropzone_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         # 3 => dropzone collection, instance.json & schema.json
         assert ret_acl.count(self.depositor) == 3
 
         rule_remove_acl = '/rules/tests/run_test.sh -r remove_users_dropzone_acl -a "{}"'.format(dropzone_path)
         subprocess.check_call(rule_remove_acl, shell=True)
 
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         # 2 => instance.json & schema.json
         assert ret_acl.count(self.depositor) == 2
 

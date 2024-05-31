@@ -113,7 +113,7 @@ class TestChangeProjectPermissions:
 
         # Check that new user has been added to the collection ACL with read rights
         acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
         # Check that the elastic search document also includes new user
@@ -137,7 +137,7 @@ class TestChangeProjectPermissions:
 
         # Check that new user has been added to the collection ACL with read rights
         acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
     def test_new_user_has_read_access(self):
@@ -157,7 +157,7 @@ class TestChangeProjectPermissions:
 
         # Check that new user has been added to the collection ACL with read rights
         acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:read".format(self.new_user) in ret_acl
 
     def test_new_user_has_access_removed(self):
@@ -177,7 +177,7 @@ class TestChangeProjectPermissions:
 
         # Check that new user has no rights anymore on the collection
         acl = "ils -A {}".format(self.project_collection_path)
-        ret_acl = subprocess.check_output(acl, shell=True)
+        ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert self.new_user not in ret_acl
 
         # Check that new user has been removed from the elastic search document

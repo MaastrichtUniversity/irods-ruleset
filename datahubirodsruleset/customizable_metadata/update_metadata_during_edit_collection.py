@@ -55,7 +55,7 @@ def update_metadata_during_edit_collection(ctx, project_id, collection_id, versi
     instance_object["@id"] = instance_handle
 
     # Opening the instance file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)
+    ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_WRONLYO_TRUNC", 0)
     opened_file = ret_val["arguments"][1]
     ctx.callback.msiDataObjWrite(opened_file, json.dumps(instance_object, indent=4), 0)
     ctx.callback.msiDataObjClose(opened_file, 0)

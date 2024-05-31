@@ -64,7 +64,7 @@ def main(rule_args, callback, rei):
 
             groups = groups[1:]
             parameters = "COLL_NAME"
-            conditions = "COLL_ACCESS_NAME in ('own', 'modify object', 'read object') " \
+            conditions = "COLL_ACCESS_NAME in ('own', 'modify_object', 'read_object') " \
                          "and COLL_ACCESS_USER_ID in ({}) " \
                          "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
 

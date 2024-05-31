@@ -20,7 +20,7 @@ def get_instance():
     response = requests.get(url)
 
     with open(TMP_INSTANCE_PATH, "w") as json_file:
-        json_file.write(response.content)
+        json_file.write(response.text)
 
 
 def get_schema():
@@ -31,7 +31,7 @@ def get_schema():
     response = requests.get(url)
 
     with open(TMP_SCHEMA_PATH, "w") as json_file:
-        json_file.write(response.content)
+        json_file.write(response.text)
 
 
 def add_metadata_files_to_dropzone(token, dropzone_type):
@@ -61,7 +61,7 @@ def add_data_to_direct_dropzone(dropzone_info):
         logical_path = "{}/{}".format(dropzone_path, filename)
 
         with open(file_path, "wb") as file_buffer:
-            file_buffer.write("0" * size)
+            file_buffer.write(b"0" * size)
         iput = "iput -R stagingResc01 {} {}".format(file_path, logical_path)
         subprocess.check_call(iput, shell=True)
 

@@ -35,16 +35,16 @@ class BaseTestTapeArchiveMounted(BaseTestTapeArchive):
         subprocess.check_call(rule, shell=True)
 
 
-class TestTapeArchiveS3Mounted(BaseTestTapeArchiveMounted):
+class TestTapeArchiveMountedS3(BaseTestTapeArchiveMounted):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUMCeph01"
 
 
-class TestTapeArchiveUMMounted(BaseTestTapeArchiveMounted):
+class TestTapeArchiveMountedUM(BaseTestTapeArchiveMounted):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
 
 
-class TestTapeArchiveAZMMounted(BaseTestTapeArchiveMounted):
+class TestTapeArchiveMountedAZM(BaseTestTapeArchiveMounted):
     ingest_resource = "ires-hnas-azmResource"
     destination_resource = "replRescAZM01"

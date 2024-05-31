@@ -35,9 +35,9 @@ def list_project_viewers(ctx, project_id, inherited, show_service_accounts):
     user_objects = []
 
     if formatters.format_string_to_boolean(inherited):
-        criteria = "'own', 'modify object', 'read object'"
+        criteria = "'own', 'modify_object', 'read_object'"
     else:
-        criteria = "'read object'"
+        criteria = "'read_object'"
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",

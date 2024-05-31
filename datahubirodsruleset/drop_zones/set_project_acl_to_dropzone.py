@@ -54,13 +54,13 @@ def set_project_acl_to_dropzone(ctx, project_id, dropzone_token, new_dropzone):
 
     if sharing_enabled:
         contributors = get_contributors_for_project_or_dropzone(ctx, project_path)
-        set_own_permissions_dropzone(ctx, dropzone_path, contributors, prefix)
+        set_own_permissions_dropzone(ctx, dropzone_path, contributors, prefix, caller)
     elif not sharing_enabled and not new_dropzone:
         contributors = get_contributors_for_project_or_dropzone(ctx, dropzone_path)
-        revoke_permissions_dropzone(ctx, dropzone_path, contributors, prefix)
+        revoke_permissions_dropzone(ctx, dropzone_path, contributors, prefix, caller)
 
 
-def set_own_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix):
+def set_own_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix, caller):
     """
     Set recursively all project contributors and managers to the input dropzone with 'own' rights.
 
@@ -74,14 +74,19 @@ def set_own_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix)
         List of the project's contributors usernames.
     admin_prefix: str
         If the client user is an admin, set the ACL with admin mode
+    caller: str
+        The caller of this rule
     """
     for contributor in contributors:
         ctx.callback.msiSetACL("recursive", admin_prefix + "own", contributor, dropzone_path)
-        ctx.callback.msiSetACL("default", admin_prefix + "read", contributor, dropzone_path + "/instance.json")
-        ctx.callback.msiSetACL("default", admin_prefix + "read", contributor, dropzone_path + "/schema.json")
+        if contributor != caller:
+            ctx.callback.msiSetACL("default", admin_prefix + "read", contributor, dropzone_path + "/instance.json")
+            ctx.callback.msiSetACL("default", admin_prefix + "read", contributor, dropzone_path + "/schema.json")
 
+    ctx.callback.msiSetACL("default", admin_prefix + "read", caller, dropzone_path + "/instance.json")
+    ctx.callback.msiSetACL("default", admin_prefix + "read", caller, dropzone_path + "/schema.json")
 
-def revoke_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix):
+def revoke_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix, caller):
     """
     Revoke recursively all the user permissions on the dropzone. And then re-set the creator permissions.
 
@@ -95,17 +100,21 @@ def revoke_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix):
         List of the project's contributors usernames.
     admin_prefix: str
         If the client user is an admin, set the ACL with admin mode
+    caller: str
+        The caller of this rule
     """
     # Remove permissions of all contributors
     for contributor in contributors:
-        ctx.callback.msiSetACL("recursive", admin_prefix + "null", contributor, dropzone_path)
+        if contributor != caller:
+            ctx.callback.msiSetACL("recursive", admin_prefix + "null", contributor, dropzone_path)
 
     creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
     # Give creator back permissions
     ctx.callback.msiSetACL("recursive", admin_prefix + "own", creator, dropzone_path)
     ctx.callback.msiSetACL("default", admin_prefix + "read", creator, dropzone_path + "/instance.json")
     ctx.callback.msiSetACL("default", admin_prefix + "read", creator, dropzone_path + "/schema.json")
-
+    # Remove caller's permissions in the end
+    ctx.callback.msiSetACL("recursive", admin_prefix + "null", caller, dropzone_path)
 
 def get_contributors_for_project_or_dropzone(ctx, path):
     """

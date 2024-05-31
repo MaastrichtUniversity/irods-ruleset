@@ -50,7 +50,6 @@ def revoke_project_user_access(ctx, user_project, reason, description):
         ctx.callback.msiExit("-1", "Stop execution, could not create backup project '{}'".format(backup_project))
         return
 
-    ctx.callback.setCollectionAVU(user_project, DataDeletionAttribute.STATE.value, DataDeletionState.PENDING.value)
     ctx.callback.msiWriteRodsLog("INFO: Create ACL backup for project '{}'".format(backup_project), 0)
 
     for result in row_iterator(
@@ -85,3 +84,5 @@ def revoke_project_user_access(ctx, user_project, reason, description):
             continue
 
         ctx.revoke_project_collection_user_access(project_collection_path, reason, description)
+
+    ctx.callback.setCollectionAVU(user_project, DataDeletionAttribute.STATE.value, DataDeletionState.PENDING.value)

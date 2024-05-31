@@ -55,7 +55,14 @@ def run_delete_project_data(ctx, user_project_path, commit):
         ctx.callback.msiSetACL("recursive", "admin:own", "rods", user_project_path)
 
     project_collections = []
-    for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(user_project_path), AS_LIST, ctx.callback):
+    for result in row_iterator(
+        "COLL_NAME",
+        "META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}' AND COLL_PARENT_NAME = '{}'".format(
+            DataDeletionAttribute.STATE.value, DataDeletionState.PENDING.value, user_project_path
+        ),
+        AS_LIST,
+        ctx.callback,
+    ):
         project_collections.append(result[0])
 
     ctx.callback.writeLine("stdout", "* Start deletion for {}".format(user_project_path))

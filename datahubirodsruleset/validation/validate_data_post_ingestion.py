@@ -73,8 +73,20 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     )
     match_size = False
     if dropzone_type == "mounted":
-        collection_user_size = int(collection_size) - int(collection_instance_size) - int(collection_schema_size)
-        match_size = int(dropzone_size) == collection_user_size
+        collection_user_size = int(collection_size) - collection_instance_size - collection_schema_size
+        if not (collection_instance_size > 0 and collection_schema_size > 0):
+            ctx.callback.msiWriteRodsLog(
+                "DEBUG: collection_instance_size = {} ;; collection_schema_size = {}".format(
+                    str(collection_instance_size), str(collection_schema_size)
+                ),
+                0,
+            )
+            ctx.callback.msiWriteRodsLog(
+                "DEBUG: Incorrect metadata file sizes. Maybe 'replace_metadata_placeholder_files' was not executed.",
+                0,
+            )
+        elif int(dropzone_size) == collection_user_size:
+            match_size = True
 
         ctx.callback.msiWriteRodsLog(
             "DEBUG: Calculation: {} (collection_size) - {} (collection_instance_size) - {} (collection_schema_size) = {}".format(

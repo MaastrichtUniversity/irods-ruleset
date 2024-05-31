@@ -399,7 +399,6 @@ class TestProjects:
         assert project["enableArchive"] == "false"
         assert project["enableContributorEditMetadata"] == "false"
         assert project["enableDropzoneSharing"] == "true"
-        assert project["enableOpenAccessExport"] == "false"
         assert project["enableUnarchive"] == "false"
         assert project["title"] == self.project_titles[project_index]
 

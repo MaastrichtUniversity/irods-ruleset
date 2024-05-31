@@ -9,7 +9,6 @@ irule_dummy() {
 
 IRULE_getDataStewards(*result) {
     *userObjects = '[]';
-    *userObjectsSize = 0;
 
     *users = ""
     foreach (*Row in SELECT USER_ID WHERE META_USER_ATTR_VALUE == "data-steward" AND META_USER_ATTR_NAME == "specialty") {
@@ -34,7 +33,7 @@ IRULE_getDataStewards(*result) {
             *displayName = *Row.META_USER_ATTR_VALUE;
         }
         *userObject = '{ "userName" : "*userName", "userId" : "*userID", "displayName" : "*displayName" }';
-        msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
+        json_arrayops_add( *userObjects, *userObject);
 	}
     *result = *userObjects;
 }

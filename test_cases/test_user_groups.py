@@ -2,6 +2,7 @@ import subprocess
 import json
 import os
 
+import pytest
 from dhpythonirodsutils.enums import ProcessState, ProcessType
 
 from test_cases.utils import (
@@ -221,16 +222,11 @@ class TestUserGroups:
         set_unarchive_state = "imeta set -C /nlmumc/projects/{}/C000000002 unArchiveState 'unarchiving 4/4'".format(
             self.project_id
         )
-        set_exporter_state = (
-            "imeta set -C /nlmumc/projects/{}/C000000003 exporterState 'dataverseNL: exporting 3/4'".format(
-                self.project_id
-            )
-        )
+
         subprocess.check_call(set_archive_state, shell=True)
         subprocess.check_call(set_unarchive_state, shell=True)
-        subprocess.check_call(set_exporter_state, shell=True)
 
-        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,true" -u {}'.format(
+        all_processes = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true" -u {}'.format(
             self.manager1
         )
         all_processes_output = json.loads(subprocess.check_output(all_processes, shell=True))
@@ -246,53 +242,35 @@ class TestUserGroups:
         assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["state"] == "unarchiving 4/4"
         assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
 
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["repository"] == "dataverseNL"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_title"] == "title number 3"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["collection_id"] == "C000000003"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["state"] == "exporting 3/4"
-        assert all_processes_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
-
         assert all_processes_output[ProcessState.OPEN.value][0]["validateState"] == "N/A"
         assert all_processes_output[ProcessState.OPEN.value][0]["title"] == self.collection_title
         assert all_processes_output[ProcessState.OPEN.value][0]["type"] == self.dropzone_type
         assert all_processes_output[ProcessState.OPEN.value][0]["token"] == token
         assert all_processes_output[ProcessState.OPEN.value][0]["state"] == "open"
 
-        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true,true" -u {}'.format(
+        no_archival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,false,true" -u {}'.format(
             self.manager1
         )
         no_archival_output = json.loads(subprocess.check_output(no_archival, shell=True))
-        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert len(no_archival_output[ProcessState.IN_PROGRESS.value]) == 1
         assert no_archival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.UNARCHIVE.value
-        assert no_archival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
         assert len(no_archival_output[ProcessState.OPEN.value]) == 1
 
-        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false,true" -u {}'.format(
+        no_unarchival = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,false" -u {}'.format(
             self.manager1
         )
         no_unarchival_output = json.loads(subprocess.check_output(no_unarchival, shell=True))
-        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 2
+        assert len(no_unarchival_output[ProcessState.IN_PROGRESS.value]) == 1
         assert no_unarchival_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
-        assert no_unarchival_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.EXPORT.value
         assert len(no_unarchival_output[ProcessState.OPEN.value]) == 1
 
-        no_export = '/rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true,false" -u {}'.format(
-            self.manager1
-        )
-        no_export_output = json.loads(subprocess.check_output(no_export, shell=True))
-        assert len(no_export_output[ProcessState.IN_PROGRESS.value]) == 2
-        assert no_export_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
-        assert no_export_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
-        assert len(no_export_output[ProcessState.OPEN.value]) == 1
-
-        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true,true" -u {}'.format(
+        no_dropzones = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true" -u {}'.format(
             self.manager1
         )
         no_dropzones_output = json.loads(subprocess.check_output(no_dropzones, shell=True))
-        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 3
+        assert len(no_dropzones_output[ProcessState.IN_PROGRESS.value]) == 2
         assert no_dropzones_output[ProcessState.IN_PROGRESS.value][0]["process_type"] == ProcessType.ARCHIVE.value
         assert no_dropzones_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
-        assert no_dropzones_output[ProcessState.IN_PROGRESS.value][2]["process_type"] == ProcessType.EXPORT.value
         assert len(no_dropzones_output[ProcessState.OPEN.value]) == 0
 
         remove_dropzone = "irm -rf /nlmumc/ingest/direct/{}".format(token)
@@ -321,8 +299,11 @@ class TestUserGroups:
         run_iquest = "iquest \"%s\" \"SELECT META_USER_ATTR_VALUE WHERE USER_NAME = '{}' and META_USER_ATTR_NAME = '{}' \"".format(
             self.manager1, field_name
         )
-        field_value_return = subprocess.getoutput(run_iquest).strip()
-        assert "CAT_NO_ROWS_FOUND" in field_value_return
+        # Starting from 4.2.12:
+        # When iquest returns a "CAT_NO_ROWS_FOUND", the exit status code is 1 instead of 0.
+        # And therefore, a CalledProcessError is raised.
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_output(run_iquest, shell=True).strip()
 
         rule = '/rules/tests/run_test.sh -r set_user_attribute_value -a "{},{},{}"'.format(
             self.manager1, field_name, field_value

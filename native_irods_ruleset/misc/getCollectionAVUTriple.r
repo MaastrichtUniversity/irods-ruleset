@@ -1,5 +1,5 @@
 # Call with
-# irule -F getCollectionAVUTriple.r "*path='/nlmumc/ingest/zones/grieving-giant'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getCollectionAVUTriple.r "*path='/nlmumc/ingest/direct/enchanting-ibis'" "*attribute='title'" "*overrideValue=''" "*fatal='true'"
 #
 # Return a JSON array with a triplet Attribute Value Unit for each matching input attribute to the collection
 #
@@ -25,7 +25,8 @@ IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result)
             *value = *avu.META_COLL_ATTR_VALUE;
             *unit = *avu.META_COLL_ATTR_UNITS;
             *output = '{"attribute": "*attribute", "value": "*value", "unit": "*unit"}'
-			msi_json_arrayops(*arrayops, *output, "add", *arraySize);
+			json_arrayops_add(*arrayops, *output);
+            *arraySize = *arraySize+1;
         }
     }
     *result = *arrayops;

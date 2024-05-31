@@ -10,7 +10,7 @@ from datahubirodsruleset.data_deletion.revoke_project_collection_user_access imp
 from datahubirodsruleset.decorator import make, Output
 
 
-@make(inputs=[0], outputs=[], handler=Output.STORE)
+@make(inputs=[0], outputs=[1], handler=Output.STORE)
 def restore_project_collection_user_access(ctx, user_project_collection):
     """
     Restore the current users access from the parent project ACL to the input project collection ACL
@@ -80,19 +80,12 @@ def check_collection_delete_data_state(ctx, collection_path, value_to_check):
     irods.exception.UnknowniRODSError
         Raise an exception if the conditions are not met. (exit status code "-1" == UnknowniRODSError)
     """
-    output = ctx.callback.get_collection_attribute_value(collection_path, DataDeletionAttribute.STATE.value, "result")[
-        "arguments"
-    ][2]
+    output = ctx.callback.get_collection_attribute_value(collection_path, DataDeletionAttribute.STATE.value, "result")["arguments"][2]
     value = json.loads(output)["value"]
 
     if value != value_to_check:
-        ctx.callback.msiExit(
-            "-1",
-            "Deletion state is not valid for: {}; Got '{}', but expected '{}'".format(
-                collection_path, value, value_to_check
-            ),
-        )
-        return
+        message = "Deletion state is not valid for: {}; Got '{}', but expected '{}'".format(collection_path, value, value_to_check)
+        ctx.callback.msiExit("-1", message)
 
 
 def restore_project_collection_user_acl(ctx, user_project, user_project_collection):

@@ -43,9 +43,9 @@ def revoke_project_collection_user_access(ctx, user_project_collection, reason, 
         return
 
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
-    apply_collection_deletion_metadata(ctx, user_project_collection, reason, description, "add")
     revoke_project_collection_user_acl(ctx, user_project_collection)
     delete_project_collection_metadata_from_index(ctx, project_id, collection_id)
+    apply_collection_deletion_metadata(ctx, user_project_collection, reason, description, "add")
     ctx.callback.msiSetACL("default", "admin:read", "rods", user_project_collection)
 
 

@@ -66,7 +66,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor):
     # Remotely execute the actual irsync
     ctx.remoteExec(
         ingest_resource_host,
-        "",
+        "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
         "perform_irsync('{}', '{}', '{}', '{}')".format(destination_resource, token, destination_collection, depositor),
         "",
     )

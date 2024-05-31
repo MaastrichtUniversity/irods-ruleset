@@ -4,7 +4,7 @@
 # When called as user with less privileges, only authorized projects will be returned.
 #
 # Call with:
-# irule -F reportProjects.r
+# irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projects/reportProjects.r
 #
 # Please note the different usage of size units:
 # - bytes are used for the purpose of storing values in iCAT
@@ -26,7 +26,6 @@ IRULE_reportProjects(*result) {
         # Declare variables
         *project = "";
         *outcome = "";
-        *size = 0;
 
         # Retrieve the project from the directory name
         uuChopPath(*Row.COLL_NAME, *dir, *project);
@@ -35,7 +34,7 @@ IRULE_reportProjects(*result) {
         detailsProject(*project, "false", *outcome)
 
         # And append it to the jsonStr
-        msi_json_arrayops(*jsonStr, *outcome, "add", *size);
+        json_arrayops_add(*jsonStr, *outcome);
     }
 
     # jsonStr now contains information about all projects. Return this in the result variable

@@ -15,16 +15,9 @@ irule_dummy() {
 
 IRULE_listProjectContributors(*project, *inherited, *result) {
     *groups = '[]';
-    *groupSize = 0;
-
     *users = '[]';
-    *userSize = 0;
-
     *groupObjects = '[]';
-    *groupObjectsSize = 0;
-
     *userObjects = '[]';
-    *userObjectsSize = 0;
 
     if ( *inherited == "true" ) {
         *criteria = "'own', 'modify_object'"
@@ -56,9 +49,9 @@ IRULE_listProjectContributors(*project, *inherited, *result) {
                      *description = *av.META_USER_ATTR_VALUE
                   } 
                 }
-                msi_json_arrayops( *groups, *objectName, "add", *groupSize);
+                json_arrayops_add(*groups, *objectName);
                 *groupObject = '{ "groupName" : "*objectName", "groupId" : "*objectID", "displayName" : "*displayName", "description" : "*description" }';
-                msi_json_arrayops( *groupObjects, *groupObject, "add", *groupObjectsSize );
+                json_arrayops_add(*groupObjects, *groupObject);
             }
 
             if ( *objectType == "rodsuser" ) {
@@ -66,9 +59,9 @@ IRULE_listProjectContributors(*project, *inherited, *result) {
                    *displayName = *U.META_USER_ATTR_VALUE;
                 }
 
-                msi_json_arrayops(*users, *objectName, "add", *userSize);
+                json_arrayops_add(*users, *objectName);
                 *userObject = '{ "userName" : "*objectName", "userId" : "*objectID", "displayName" : "*displayName" }';
-                msi_json_arrayops( *userObjects, *userObject, "add", *userObjectsSize );
+                json_arrayops_add(*userObjects, *userObject);
             }
             # All other cases of objectType, such as "" or "rodsadmin", are skipped
         }

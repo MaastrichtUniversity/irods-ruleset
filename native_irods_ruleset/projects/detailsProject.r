@@ -90,10 +90,10 @@ IRULE_detailsProject(*project, *inherited, *result) {
     }
 
     *details = '{"project":"*project", "projectStorageCost": "*projectCost", "collections": *collections, "resource": "*resourceStr", "dataSizeGiB": "*projSize", "storageQuotaGiB": "*storageQuotaGiBStr", "respCostCenter": "*respCostCenterStr", "dataSteward": "*dataStewardStr", "principalInvestigator": "*principalInvestigatorStr", "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
-    # Title needs proper escaping before adding to JSON. That's why we pass it through msi_json_objops
+    # Title needs proper escaping before adding to JSON. That's why we pass it through json_objops_add
     msiString2KeyValPair("", *titleKvp);
     msiAddKeyVal(*titleKvp, "title", *title);
-    msi_json_objops(*details, *titleKvp, "add");
+    json_objops_add(*details,  str(*titleKvp));
 
     *result = *details;
 }

@@ -47,8 +47,6 @@ def create_new_project(
                 Date
             storageQuotaGb  : str
                 The storage quota in Gb
-            enableOpenAccessExport : str
-                'true'/'false' expected values
             enableArchive : str
                 'true'/'false' expected values
             enableUnarchive : str
@@ -68,7 +66,6 @@ def create_new_project(
         ProjectAVUs.AUTHORIZATION_PERIOD_END_DATE.value: "01-01-9999",
         ProjectAVUs.DATA_RETENTION_PERIOD_END_DATE.value: "01-01-9999",
         ProjectAVUs.STORAGE_QUOTA_GB.value: "0",
-        ProjectAVUs.ENABLE_OPEN_ACCESS_EXPORT.value: "false",
         ProjectAVUs.ENABLE_ARCHIVE.value: "false",
         ProjectAVUs.ENABLE_UNARCHIVE.value: "false",
         ProjectAVUs.ENABLE_DROPZONE_SHARING.value: "false",

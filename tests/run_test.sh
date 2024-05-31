@@ -3,7 +3,7 @@
 # -r rulename
 # -a arguments (CSV)
 # -u username
-# -j if provided run output trough python -m json.tool
+# -j if provided run output trough python3 -m json.tool
 # -d Show debug statements
 
 
@@ -64,7 +64,7 @@ if [ ! -z $rule  ] && [ -z $rule_arguments ] && [ -z $user_name ];
       then
         irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut
       else
-       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut  | python -m json.tool
+       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut  | python3 -m json.tool
    fi
    exit 0
 fi
@@ -81,7 +81,7 @@ if [ ! -z $rule  ] && [ ! -z $rule_arguments ] && [ -z $user_name ];
       then
         irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut
       else
-       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut  | python -m json.tool
+       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut  | python3 -m json.tool
    fi
    exit $?
 fi
@@ -100,7 +100,7 @@ if [ ! -z $rule  ] && [ -z $rule_arguments ] && [ ! -z $user_name ];
      then
         irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut
       else
-       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut  | python -m json.tool
+       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut  | python3 -m json.tool
    fi
    unset clientUserName
    exit 0
@@ -120,7 +120,7 @@ if [ ! -z $rule  ] && [ ! -z $rule_arguments ] && [ ! -z $user_name ];
       then
         irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut
       else
-       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut  | python -m json.tool
+       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut  | python3 -m json.tool
    fi
    unset clientUserName
    exit 0

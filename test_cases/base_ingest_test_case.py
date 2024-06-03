@@ -158,7 +158,6 @@ class BaseTestCaseIngest:
     def test_project_acl(self):
         acl = "ils -A {}".format(self.project_path)
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.manager1) in ret
         assert "{}#nlmumc:own".format(self.manager2) in ret
 

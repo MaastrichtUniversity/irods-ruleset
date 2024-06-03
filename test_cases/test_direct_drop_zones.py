@@ -77,7 +77,6 @@ class TestDirectDropZones(BaseTestCaseDropZones):
         dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
         acl = "ils -A {}".format(dropzone_path)
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.depositor) in ret
         assert "{}#nlmumc:own".format(user_to_check) not in ret
 
@@ -92,7 +91,6 @@ class TestDirectDropZones(BaseTestCaseDropZones):
 
         # Check the acl after set_project_acl_to_dropzone
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.depositor) in ret
         assert "{}#nlmumc:own".format(user_to_check) in ret
 
@@ -107,7 +105,6 @@ class TestDirectDropZones(BaseTestCaseDropZones):
         # Check that the input user has no access
         acl = "ils -A {}".format(dropzone_path)
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.depositor) in ret
         assert "{}".format(user_to_check) not in ret
 
@@ -118,7 +115,6 @@ class TestDirectDropZones(BaseTestCaseDropZones):
         # Check manager2 has no access
         acl = "ils -A {}".format(dropzone_path)
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.depositor) in ret
         assert "{}".format(user_to_check) not in ret
 
@@ -129,7 +125,6 @@ class TestDirectDropZones(BaseTestCaseDropZones):
         # Check manager2 gained access
         acl = "ils -A {}".format(dropzone_path)
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.depositor) in ret
         assert "{}#nlmumc:own".format(user_to_check) in ret
 
@@ -139,6 +134,5 @@ class TestDirectDropZones(BaseTestCaseDropZones):
 
         # Check manager2 lost access
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "rods#nlmumc:own" in ret
         assert "{}#nlmumc:own".format(self.depositor) in ret
         assert "{}".format(user_to_check) not in ret

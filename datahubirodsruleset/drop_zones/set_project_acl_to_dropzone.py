@@ -77,6 +77,9 @@ def set_own_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix,
     caller: str
         The caller of this rule
     """
+    # First give the caller own permissions on the contents of the dropzone
+    ctx.callback.msiSetACL("recursive", admin_prefix + "own", caller, dropzone_path)
+
     for contributor in contributors:
         ctx.callback.msiSetACL("recursive", admin_prefix + "own", contributor, dropzone_path)
         if contributor != caller:

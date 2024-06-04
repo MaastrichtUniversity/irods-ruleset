@@ -25,11 +25,11 @@ IRULE_closeProjectCollection(*project, *projectCollection) {
         # Skip cases where *objectName could not be resolved (happens with deleted users)
         # && save yourself (= the current user) for last, otherwise you can't close anymore
         if ( *objectName != "" && *objectName != $userNameClient ) {
-            msiSetACL("recursive", "read", *objectName, "/nlmumc/projects/*project/*projectCollection");
+            msiSetACL("recursive", "admin:read", *objectName, "/nlmumc/projects/*project/*projectCollection");
         }
     }
 
-    msiSetACL("recursive", "read", $userNameClient, "/nlmumc/projects/*project/*projectCollection");
+    msiSetACL("recursive", "admin:read", $userNameClient, "/nlmumc/projects/*project/*projectCollection");
 }
 
 INPUT *project=$"P000000001", *projectCollection='C000000001'

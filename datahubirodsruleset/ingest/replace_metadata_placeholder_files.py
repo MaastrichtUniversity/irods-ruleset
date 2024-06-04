@@ -51,14 +51,14 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
 
     pc_instance_path = formatters.format_instance_collection_path(project_id, collection_id)
     pc_schema_path = formatters.format_schema_collection_path(project_id, collection_id)
-
-    if depositor != ctx.callback.get_client_username("")["arguments"][0]:
+    current_user = ctx.callback.get_client_username("")["arguments"][0]
+    if current_user != "rods" and current_user != depositor:
         ctx.callback.set_post_ingestion_error_avu(
             project_id,
             collection_id,
             dropzone_path,
             "Abort replace_metadata_placeholder_files: Rule client user '{}' is not the depositor '{}'".format(
-                project_id, collection_id
+                depositor, current_user
             ),
             depositor,
         )

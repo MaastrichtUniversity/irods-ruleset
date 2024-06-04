@@ -3,7 +3,7 @@ import json
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_instance_collection_path, format_schema_collection_path
-from datahubirodsruleset.utils import read_data_object_from_irods
+from datahubirodsruleset.utils import read_data_object_from_irods, iput_wrapper
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
@@ -29,6 +29,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
         The version of the identifiers to use in instance.json and schema.json
     """
     import datetime
+    import os
 
     # Setting the PID in the instance.json file
     instance_location = format_instance_collection_path(ctx, project_id, collection_id)
@@ -55,11 +56,12 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", version)
     instance_object["schema:isBasedOn"] = schema_url
 
-    # Opening the instance file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)
-    opened_file = ret_val["arguments"][1]
-    ctx.callback.msiDataObjWrite(opened_file, json.dumps(instance_object, indent=4), 0)
-    ctx.callback.msiDataObjClose(opened_file, 0)
+    local_instance_path = f"/tmp/instance_{project_id}_{collection_id}"
+    with open(local_instance_path, "w") as outfile:
+        outfile.write(json.dumps(instance_object, indent=4))
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified instance to local file '{local_instance_path}'", 0)
+        iput_wrapper(ctx, local_instance_path, instance_location, project_id, True)
+    os.remove(local_instance_path)
 
     # Setting the PID in the schema.json file
     schema_location = format_schema_collection_path(ctx, project_id, collection_id)
@@ -68,8 +70,9 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_object = json.loads(schema)
     schema_object["@id"] = schema_url
 
-    # Opening the schema file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + schema_location + "++++openFlags=O_RDWR", 0)
-    opened_schema_file = ret_val["arguments"][1]
-    ctx.callback.msiDataObjWrite(opened_schema_file, json.dumps(schema_object, indent=4), 0)
-    ctx.callback.msiDataObjClose(opened_schema_file, 0)
+    local_schema_path = f"/tmp/schema_{project_id}_{collection_id}"
+    with open(local_schema_path, "w") as outfile:
+        outfile.write(json.dumps(schema_object, indent=4))
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified schema to local file '{local_schema_path}'", 0)
+        iput_wrapper(ctx, local_schema_path, schema_location, project_id, True)
+    os.remove(local_schema_path)

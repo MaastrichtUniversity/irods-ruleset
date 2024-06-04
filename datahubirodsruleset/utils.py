@@ -254,6 +254,39 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
         ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))
 
 
+def iput_wrapper(ctx, source, destination, project_id, overwrite):
+    """
+    Workaround wrapper function to execute iRODS data object put.
+    Execute an 'iput' with a sub-process instead of msiDataObjPut.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    source: str
+        Full absolute local logical source path
+    destination: str
+        Full absolute iRODS logical destination path
+    project_id: str
+        e.g: P000000010
+    overwrite: bool
+        write data-object even it exists already; overwrite it
+    """
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    iput_cmd = ["iput", "-R", destination_resource, source, destination]
+    
+    if overwrite:
+        iput_cmd = ["iput", "-f", "-R", destination_resource, source, destination]
+
+    try:
+        check_call(["ichmod", "-M", "own", "rods", destination], shell=False)
+        check_call(iput_cmd, shell=False)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: iput: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        ctx.callback.msiExit("-1", "ERROR: iput failed for '{}'->'{}'".format(source, destination))
+
 def apply_batch_acl_operation(ctx, collection_path, acl_operations):
     """
     Apply the ACL operations in a single execution

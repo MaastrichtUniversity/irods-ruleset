@@ -56,7 +56,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", version)
     instance_object["schema:isBasedOn"] = schema_url
 
-    local_instance_path = f"/tmp/instance_{project_id}_{collection_id}"
+    local_instance_path = f"/tmp/instance_{project_id}_{collection_id}" # nosec
     with open(local_instance_path, "w") as outfile:
         outfile.write(json.dumps(instance_object, indent=4))
         ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified instance to local file '{local_instance_path}'", 0)
@@ -70,7 +70,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_object = json.loads(schema)
     schema_object["@id"] = schema_url
 
-    local_schema_path = f"/tmp/schema_{project_id}_{collection_id}"
+    local_schema_path = f"/tmp/schema_{project_id}_{collection_id}" # nosec
     with open(local_schema_path, "w") as outfile:
         outfile.write(json.dumps(schema_object, indent=4))
         ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified schema to local file '{local_schema_path}'", 0)

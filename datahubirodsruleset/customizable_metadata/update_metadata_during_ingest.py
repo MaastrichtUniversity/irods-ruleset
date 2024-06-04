@@ -29,7 +29,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
         The version of the identifiers to use in instance.json and schema.json
     """
     import datetime
-    import os
+    import tempfile
 
     # Setting the PID in the instance.json file
     instance_location = format_instance_collection_path(ctx, project_id, collection_id)
@@ -56,12 +56,14 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", version)
     instance_object["schema:isBasedOn"] = schema_url
 
-    local_instance_path = f"/tmp/instance_{project_id}_{collection_id}" # nosec
-    with open(local_instance_path, "w") as outfile:
-        outfile.write(json.dumps(instance_object, indent=4))
-        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified instance to local file '{local_instance_path}'", 0)
-        iput_wrapper(ctx, local_instance_path, instance_location, project_id, True)
-    os.remove(local_instance_path)
+    tmp_instance = tempfile.NamedTemporaryFile(delete=True, mode = "w")
+    try:
+        tmp_instance.write(json.dumps(instance_object, indent=4))
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified instance to local file '{tmp_instance.name}'", 0)
+        iput_wrapper(ctx, tmp_instance.name, instance_location, project_id, True)
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Successfully overwrote {instance_location}'", 0)
+    finally:
+        tmp_instance.close()
 
     # Setting the PID in the schema.json file
     schema_location = format_schema_collection_path(ctx, project_id, collection_id)
@@ -70,9 +72,11 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_object = json.loads(schema)
     schema_object["@id"] = schema_url
 
-    local_schema_path = f"/tmp/schema_{project_id}_{collection_id}" # nosec
-    with open(local_schema_path, "w") as outfile:
-        outfile.write(json.dumps(schema_object, indent=4))
-        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified schema to local file '{local_schema_path}'", 0)
-        iput_wrapper(ctx, local_schema_path, schema_location, project_id, True)
-    os.remove(local_schema_path)
+    tmp_schema = tempfile.NamedTemporaryFile(delete=True, mode = "w")
+    try:
+        tmp_schema.write(json.dumps(schema_object, indent=4))
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified schema to local file '{tmp_schema.name}'", 0)
+        iput_wrapper(ctx, tmp_schema.name, schema_location, project_id, True)
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Successfully overwrote {schema_location}'", 0)
+    finally:
+        tmp_instance.close()

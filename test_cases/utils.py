@@ -37,7 +37,9 @@ def get_schema():
 def add_metadata_files_to_dropzone(token, dropzone_type):
     get_instance()
     instance_path = formatters.format_instance_dropzone_path(token, dropzone_type)
-    iput_instance = "iput -R stagingResc01 {} {}".format(TMP_INSTANCE_PATH, instance_path)
+    iput_instance = "iput -R stagingResc01 {} {}".format(
+        TMP_INSTANCE_PATH, instance_path
+    )
     subprocess.check_call(iput_instance, shell=True)
 
     get_schema()
@@ -57,7 +59,9 @@ def add_metadata_files_to_direct_dropzone(token):
 def add_data_to_direct_dropzone(dropzone_info):
     for filename, size in dropzone_info.files_per_protocol.items():
         file_path = "/tmp/{}".format(filename)
-        dropzone_path = formatters.format_dropzone_path(dropzone_info.token, dropzone_info.dropzone_type)
+        dropzone_path = formatters.format_dropzone_path(
+            dropzone_info.token, dropzone_info.dropzone_type
+        )
         logical_path = "{}/{}".format(dropzone_path, filename)
 
         with open(file_path, "wb") as file_buffer:
@@ -74,7 +78,9 @@ def revert_latest_project_collection_number(project_path):
     assert latest_project_number.isdigit()
     revert_value = int(latest_project_number) - 1
 
-    run_set_meta = "imeta set -C {} latest_project_number {}".format(project_path, revert_value)
+    run_set_meta = "imeta set -C {} latest_project_number {}".format(
+        project_path, revert_value
+    )
     subprocess.check_call(run_set_meta, shell=True)
 
 
@@ -102,7 +108,9 @@ def create_project(test_case):
         test_case.manager2,
         test_case.budget_number,
     )
-    ret_create_new_project = subprocess.check_output(rule_create_new_project, shell=True)
+    ret_create_new_project = subprocess.check_output(
+        rule_create_new_project, shell=True
+    )
 
     project = json.loads(ret_create_new_project)
     assert validators.validate_project_id(str(project["project_id"]))
@@ -121,13 +129,15 @@ def create_project(test_case):
 
 
 def create_dropzone(test_case):
-    rule_create_drop_zone = '/rules/tests/run_test.sh -r create_drop_zone -a "{},{},{},{},{},{}"'.format(
-        test_case.dropzone_type,
-        test_case.depositor,
-        test_case.project_id,
-        test_case.collection_title,
-        test_case.schema_name,
-        test_case.schema_version,
+    rule_create_drop_zone = (
+        '/rules/tests/run_test.sh -r create_drop_zone -a "{},{},{},{},{},{}"'.format(
+            test_case.dropzone_type,
+            test_case.depositor,
+            test_case.project_id,
+            test_case.collection_title,
+            test_case.schema_name,
+            test_case.schema_version,
+        )
     )
     ret_create_drop_zone = subprocess.check_output(rule_create_drop_zone, shell=True)
     token = json.loads(ret_create_drop_zone)
@@ -136,22 +146,36 @@ def create_dropzone(test_case):
 
 
 def start_and_wait_for_ingest(test_case):
-    rule_start_ingest = '/rules/tests/run_test.sh -r start_ingest -a "{},{},{}" -u "{}"'.format(
-        test_case.depositor, test_case.token, test_case.dropzone_type, test_case.depositor
-    )
+    if test_case.dropzone_type == "direct":
+        rule_set_acl_instance = f'/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{test_case.depositor},{formatters.format_instance_dropzone_path(test_case.token, test_case.dropzone_type)}"'
+        rule_set_acl_schema = f'/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{test_case.depositor},{formatters.format_schema_dropzone_path(test_case.token, test_case.dropzone_type)}"'
+        rule_set_acl_rods = f'/rules/tests/run_test.sh -r set_acl -a "recursive,admin:own,rods,{formatters.format_dropzone_path(test_case.token, test_case.dropzone_type)}"'
+        subprocess.check_call(rule_set_acl_instance, shell=True)
+        subprocess.check_call(rule_set_acl_schema, shell=True)
+        subprocess.check_call(rule_set_acl_rods, shell=True)
+
+    rule_start_ingest = (f'/rules/tests/run_test.sh -r start_ingest -a "{test_case.depositor},{test_case.token},{test_case.dropzone_type}"')
     subprocess.check_call(rule_start_ingest, shell=True)
-    print("Starting {} ingestion of '{}'".format(test_case.dropzone_type, test_case.token))
-    rule_get_active_drop_zone = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
-        test_case.token, test_case.dropzone_type
+    print(
+        "Starting {} ingestion of '{}'".format(test_case.dropzone_type, test_case.token)
     )
-    ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
+    rule_get_active_drop_zone = (
+        '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
+            test_case.token, test_case.dropzone_type
+        )
+    )
+    ret_get_active_drop_zone = subprocess.check_output(
+        rule_get_active_drop_zone, shell=True
+    )
 
     drop_zone = json.loads(ret_get_active_drop_zone)
     assert drop_zone["token"] == test_case.token
 
     fail_safe = 100
     while fail_safe != 0:
-        ret_get_active_drop_zone = subprocess.check_output(rule_get_active_drop_zone, shell=True)
+        ret_get_active_drop_zone = subprocess.check_output(
+            rule_get_active_drop_zone, shell=True
+        )
 
         drop_zone = json.loads(ret_get_active_drop_zone)
         if drop_zone["state"] == "ingested":
@@ -246,7 +270,11 @@ def create_user(username):
     set_user_avu(username, "displayName", "{} LastName".format(username))
     set_user_avu(username, "eduPersonUniqueID", "{}@sram.surf.nl".format(username))
     set_user_avu(username, "email", "{}@maastrichtuniversity.nl".format(username))
-    set_user_avu(username, "voPersonExternalAffiliation", "{}@maastrichtuniversity.nl".format(username))
+    set_user_avu(
+        username,
+        "voPersonExternalAffiliation",
+        "{}@maastrichtuniversity.nl".format(username),
+    )
     set_user_avu(username, "voPersonExternalID", "{}@unimaas.nl".format(username))
 
     run_ichmod = "ichmod -M write {} /nlmumc/ingest/direct".format(username)
@@ -313,8 +341,12 @@ def get_project_collection_instance_in_elastic(project_id):
     elastic_host = os.environ.get("ENV_ELASTIC_HOST")
     elastic_port = os.environ.get("ENV_ELASTIC_PORT")
     elastic_password = os.environ.get("ENV_ELASTIC_PASSWORD")
-    search_url = "{}:{}/collection_metadata/_doc/_search".format(elastic_host, elastic_port)
-    query = "curl -u elastic:{} {}?q={}".format(elastic_password, search_url, project_id)
+    search_url = "{}:{}/collection_metadata/_doc/_search".format(
+        elastic_host, elastic_port
+    )
+    query = "curl -u elastic:{} {}?q={}".format(
+        elastic_password, search_url, project_id
+    )
 
     instance = ""
     # The AVU 'ingested' is set before calling index_add_single_project_collection_metadata in finish_ingest.py

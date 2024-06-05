@@ -22,3 +22,4 @@ from datahubirodsruleset.projects.get_project_user_members import get_project_us
 from datahubirodsruleset.projects.list_project_contributors import list_project_contributors
 from datahubirodsruleset.projects.list_project_managers import list_project_managers
 from datahubirodsruleset.projects.list_project_viewers import list_project_viewers
+from datahubirodsruleset.projects.close_project_collection import close_project_collection

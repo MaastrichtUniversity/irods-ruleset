@@ -14,7 +14,7 @@ from test_cases.utils import (
 """
 iRODS native rules usage summary:
 projectCollection:
-    closeProjectCollection:
+    close_project_collection:
         IN RW, not in MDR
         Used in RS (ingest & tape)
     createProjectCollection
@@ -214,9 +214,7 @@ class TestCollections:
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:own".format(user_to_check) in ret_acl
 
-        rule_close = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/closeProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" ".format(
-            self.project_id, self.collection_id
-        )
+        rule_close = f'/rules/tests/run_test.sh -r close_project_collection -a "{self.project_id},{self.collection_id}"'
         subprocess.check_call(rule_close, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "{}#nlmumc:own".format(user_to_check) not in ret_acl

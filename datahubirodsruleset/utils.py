@@ -256,6 +256,9 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
 
 def iput_wrapper(ctx, source, destination, project_id, overwrite):
     """
+    Added in 4.3.2 development, review if still necessary on next version upgrade!
+    This is because the microserice msiDataObjPut is only usable when called by a client with 'irule'
+    https://docs.irods.org/4.3.2/doxygen/reDataObjOpr_8cpp.html#a8076987f48ddb90fdfc0a7f5c5dcf13b
     Workaround wrapper function to execute iRODS data object put.
     Execute an 'iput' with a sub-process instead of msiDataObjPut.
 

@@ -3,7 +3,7 @@ import json
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_instance_collection_path, format_schema_collection_path
-from datahubirodsruleset.utils import read_data_object_from_irods
+from datahubirodsruleset.utils import read_data_object_from_irods, iput_wrapper
 
 
 @make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
@@ -29,6 +29,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
         The version of the identifiers to use in instance.json and schema.json
     """
     import datetime
+    import tempfile
 
     # Setting the PID in the instance.json file
     instance_location = format_instance_collection_path(ctx, project_id, collection_id)
@@ -55,11 +56,14 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", version)
     instance_object["schema:isBasedOn"] = schema_url
 
-    # Opening the instance file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_RDWR", 0)
-    opened_file = ret_val["arguments"][1]
-    ctx.callback.msiDataObjWrite(opened_file, json.dumps(instance_object, indent=4), 0)
-    ctx.callback.msiDataObjClose(opened_file, 0)
+    tmp_instance = tempfile.NamedTemporaryFile(delete=True, mode = "w")
+    try:
+        tmp_instance.write(json.dumps(instance_object, indent=4))
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified instance to local file '{tmp_instance.name}'", 0)
+        iput_wrapper(ctx, tmp_instance.name, instance_location, project_id, True)
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Successfully overwrote {instance_location}'", 0)
+    finally:
+        tmp_instance.close()
 
     # Setting the PID in the schema.json file
     schema_location = format_schema_collection_path(ctx, project_id, collection_id)
@@ -68,8 +72,11 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     schema_object = json.loads(schema)
     schema_object["@id"] = schema_url
 
-    # Opening the schema file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + schema_location + "++++openFlags=O_RDWR", 0)
-    opened_schema_file = ret_val["arguments"][1]
-    ctx.callback.msiDataObjWrite(opened_schema_file, json.dumps(schema_object, indent=4), 0)
-    ctx.callback.msiDataObjClose(opened_schema_file, 0)
+    tmp_schema = tempfile.NamedTemporaryFile(delete=True, mode = "w")
+    try:
+        tmp_schema.write(json.dumps(schema_object, indent=4))
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified schema to local file '{tmp_schema.name}'", 0)
+        iput_wrapper(ctx, tmp_schema.name, schema_location, project_id, True)
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Successfully overwrote {schema_location}'", 0)
+    finally:
+        tmp_instance.close()

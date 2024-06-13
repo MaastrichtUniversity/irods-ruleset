@@ -26,7 +26,7 @@ def set_post_ingestion_error_avu(ctx, project_id, collection_id, dropzone_path, 
     ctx.callback.setCollectionAVU(dropzone_path, "state", value)
     ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
     ctx.callback.msiWriteRodsLog(message, 0)
-    ctx.callback.closeProjectCollection(project_id, collection_id)
+    ctx.callback.close_project_collection(project_id, collection_id)
     # if this go wrong always continue
     try:
         dropzone_token = dropzone_path.split("/")[-1]

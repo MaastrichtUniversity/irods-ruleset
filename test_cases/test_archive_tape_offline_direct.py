@@ -29,21 +29,21 @@ class BaseTestTapeArchiveDirect(BaseTestTapeArchive):
 
         with open(large_file_path, "wb") as large_file:
             num_chars = 262144001
-            large_file.write("0" * num_chars)
+            large_file.write(b"0" * num_chars)
         iput = "iput -R stagingResc01 {} {}".format(large_file_path, logical_path)
         subprocess.check_call(iput, shell=True)
 
 
-class TestTapeArchiveS3Direct(BaseTestTapeArchiveDirect):
+class TestTapeArchiveDirectS3(BaseTestTapeArchiveDirect):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUMCeph01"
 
 
-class TestTapeArchiveUMDirect(BaseTestTapeArchiveDirect):
+class TestTapeArchiveDirectUM(BaseTestTapeArchiveDirect):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUM01"
 
 
-class TestTapeArchiveAZMDirect(BaseTestTapeArchiveDirect):
+class TestTapeArchiveDirectAZM(BaseTestTapeArchiveDirect):
     ingest_resource = "ires-hnas-azmResource"
     destination_resource = "replRescAZM01"

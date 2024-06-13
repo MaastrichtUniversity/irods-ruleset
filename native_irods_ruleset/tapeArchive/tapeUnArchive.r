@@ -148,5 +148,5 @@ tapeUnArchive(*count, *archColl, *initiator){
 
 
     # Close collection by making all access read only
-    closeProjectCollection(*project, *projectCollection);
+    close_project_collection(*project, *projectCollection);
 }

@@ -20,9 +20,9 @@ IRULE_listProjectViewers(*project, *inherited, *result) {
     *userObjects = '[]';
 
     if ( *inherited == "true" ) {
-        *criteria = "'own', 'modify object', 'read object'"
+        *criteria = "'own', 'modify_object', 'read_object'"
     } else {
-        *criteria = "'read object'"
+        *criteria = "'read_object'"
     }
 
     msiMakeGenQuery("COLL_ACCESS_USER_ID", "COLL_ACCESS_NAME in (*criteria)  and COLL_NAME = '/nlmumc/projects/*project'", *Query);

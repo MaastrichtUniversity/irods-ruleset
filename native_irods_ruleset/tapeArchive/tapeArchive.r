@@ -80,7 +80,7 @@ tapeArchive(*archColl, *initiator, *counter){
     msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0);
 
     # Close collection by making all access read only
-    closeProjectCollection(*project, *projectCollection);
+    close_project_collection(*project, *projectCollection);
 }
 
 getResourcesNames(*rescParentsName){

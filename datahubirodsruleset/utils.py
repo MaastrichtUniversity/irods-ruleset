@@ -254,6 +254,42 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
         ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))
 
 
+def iput_wrapper(ctx, source, destination, project_id, overwrite):
+    """
+    Added in 4.3.2 development, review if still necessary on next version upgrade!
+    This is because the microserice msiDataObjPut is only usable when called by a client with 'irule'
+    https://docs.irods.org/4.3.2/doxygen/reDataObjOpr_8cpp.html#a8076987f48ddb90fdfc0a7f5c5dcf13b
+    Workaround wrapper function to execute iRODS data object put.
+    Execute an 'iput' with a sub-process instead of msiDataObjPut.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    source: str
+        Full absolute local logical source path
+    destination: str
+        Full absolute iRODS logical destination path
+    project_id: str
+        e.g: P000000010
+    overwrite: bool
+        write data-object even it exists already; overwrite it
+    """
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    iput_cmd = ["iput", "-R", destination_resource, source, destination]
+    
+    if overwrite:
+        iput_cmd = ["iput", "-f", "-R", destination_resource, source, destination]
+
+    try:
+        check_call(["ichmod", "-M", "own", "rods", destination], shell=False)
+        check_call(iput_cmd, shell=False)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: iput: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        ctx.callback.msiExit("-1", "ERROR: iput failed for '{}'->'{}'".format(source, destination))
+
 def apply_batch_acl_operation(ctx, collection_path, acl_operations):
     """
     Apply the ACL operations in a single execution
@@ -340,7 +376,7 @@ def map_access_name_to_access_level(access_name):
     Parameters
     ----------
     access_name: str
-        expected values: "own", "modify object" & "read object"
+        expected values: "own", "modify_object" & "read_object"
 
     Returns
     -------
@@ -349,9 +385,9 @@ def map_access_name_to_access_level(access_name):
     """
 
     user_access = access_name
-    if access_name == "modify object":
+    if access_name == "modify_object":
         user_access = "write"
-    elif access_name == "read object":
+    elif access_name == "read_object":
         user_access = "read"
 
     return user_access

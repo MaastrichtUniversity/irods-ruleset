@@ -65,7 +65,7 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
         # Do not revoke / add permissions if the creator's permissions were changed on the project
         if sharing_enabled and username != creator:
             privilege = get_username_permission(ctx, project_path, username)
-            if privilege == "own" or privilege == "modify object":
+            if privilege == "own" or privilege == "modify_object":
                 set_single_own_permissions_dropzone(ctx, dropzone_path, username, prefix)
             else:
                 revoke_single_permissions_dropzone(ctx, dropzone_path, username, prefix)

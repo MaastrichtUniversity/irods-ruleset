@@ -126,7 +126,7 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, ingest_resou
     ctx.callback.remove_size_ingested_avu(destination_project_collection_path)
 
     # Close collection by making all access read only
-    ctx.callback.closeProjectCollection(project_id, collection_id)
+    ctx.callback.close_project_collection(project_id, collection_id)
 
     # Add metadata to elastic index
     ctx.callback.index_add_single_project_collection_metadata(project_id, collection_id, "")

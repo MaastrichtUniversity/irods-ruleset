@@ -321,7 +321,8 @@ def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', chec
         
     irepl_cmd = "export clientUserName={} && irepl {} {}".format(executing_user, options, path)
     try:
-        check_call(irepl_cmd, shell=True)
+        # Need to run nosec here. We need the shell=true because we run 'export clientUserName'
+        check_call(irepl_cmd, shell=True) # nosec
     except CalledProcessError as err:
         ctx.callback.msiWriteRodsLog("ERROR: irepl: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
         ctx.callback.msiExit("-1", "ERROR: irepl failed for '{}'->'{}'".format(path, destination_resource))

@@ -10,5 +10,6 @@ from datahubirodsruleset.index_metadata import *
 from datahubirodsruleset.ingest import *
 from datahubirodsruleset.projects import *
 from datahubirodsruleset.resources import *
+from datahubirodsruleset.tape_archival import *
 from datahubirodsruleset.users import *
 from datahubirodsruleset.validation import *

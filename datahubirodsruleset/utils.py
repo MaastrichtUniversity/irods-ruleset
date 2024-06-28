@@ -290,6 +290,43 @@ def iput_wrapper(ctx, source, destination, project_id, overwrite):
         ctx.callback.msiWriteRodsLog("ERROR: iput: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
         ctx.callback.msiExit("-1", "ERROR: iput failed for '{}'->'{}'".format(source, destination))
 
+def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', checksum = False, recursive = False):
+    """
+    Added in 4.3.2 development, review if still necessary on next version upgrade!
+    This is because the microserice msiDataObjRepl has a deadlock when called from the python rule engine
+    https://github.com/irods/irods_rule_engine_plugin_python/issues/54
+    Workaround wrapper function to execute iRODS data object repl.
+    Execute an 'irepl' with a sub-process instead of msiDataObjRepl.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    path: str
+        Full absolute local logical source path
+    destination_resource: str
+        The resource to replicate to
+    executing_user: str
+        The user that should execute this call (default Rods)
+    checksum: bool
+        If the checksum needs to be calculated/verified
+    recursive: bool
+        If the replication call should be recursive or not
+    """
+    options = "-R {}".format(destination_resource)
+    if checksum:
+        options += " -K"
+    if recursive:
+        options += " -r"
+        
+    irepl_cmd = "export clientUserName={} && irepl {} {}".format(executing_user, options, path)
+    try:
+        check_call(irepl_cmd, shell=True)
+    except CalledProcessError as err:
+        ctx.callback.msiWriteRodsLog("ERROR: irepl: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+        ctx.callback.msiExit("-1", "ERROR: irepl failed for '{}'->'{}'".format(path, destination_resource))
+
+
 def apply_batch_acl_operation(ctx, collection_path, acl_operations):
     """
     Apply the ACL operations in a single execution

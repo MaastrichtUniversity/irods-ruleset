@@ -36,6 +36,7 @@ def perform_archive(ctx, archival_path, check_results, username_initiator):
         clean_up_and_inform(ctx, check_results, files_archived)
     else:
         ctx.callback.msiWriteRodsLog("INFO: Nothing to archive, no files match criteria", 0)
+        clean_up_and_inform(ctx, check_results, 0)
 
 
 def archive_files(ctx, files_to_archive, check_results, username_initiator):
@@ -145,10 +146,11 @@ def clean_up_and_inform(ctx, check_results, files_archived):
     )["arguments"][1]
     ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
 
-    ctx.callback.setCollectionSize(
-        check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
-    )
-    ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
+    if files_archived:
+        ctx.callback.setCollectionSize(
+            check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
+        )
+        ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
     ctx.callback.close_project_collection(check_results["project_id"], check_results["project_collection_id"])
 
 

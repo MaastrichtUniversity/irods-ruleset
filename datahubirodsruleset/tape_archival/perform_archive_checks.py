@@ -72,7 +72,7 @@ def perform_archive_checks(ctx, archival_path):
         project_collection_path, ProcessAttribute.UNARCHIVE.value, "", "", FALSE_AS_STRING
     )["arguments"][2]
 
-    if archive_state not in ("in-queue-for-archival", "") or unarchive_state not in ("in-queue-for-unarchival", ""):
+    if archive_state != "" or unarchive_state != "":
         error_message = "Not permitted to start archival in state 'archive_state:{}' 'unarchive_state:{}".format(
             archive_state, unarchive_state
         )

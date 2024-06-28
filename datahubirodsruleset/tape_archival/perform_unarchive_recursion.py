@@ -73,10 +73,7 @@ def perform_unarchive_recursion(ctx, unarchival_path, check_results, username_in
         return
 
     else:
-        if dm_attr_output["files_online"]:
-            ctx.callback.setCollectionAVU(
-                check_results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, "start-transfer"
-            )
-            ctx.callback.perform_unarchive(json.dumps(return_value), username_initiator)
-        else:
-            ctx.callback.msiWriteRodsLog("DEBUG: Nothing to un-archive", 0)
+        ctx.callback.setCollectionAVU(
+            check_results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, "start-transfer"
+        )
+        ctx.callback.perform_unarchive(json.dumps(return_value), username_initiator)

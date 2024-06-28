@@ -27,12 +27,14 @@ def perform_unarchive(ctx, check_results, username_initiator):
     """
     check_results = json.loads(check_results)
     files_to_unarchive = get_files_to_unarchive(ctx, check_results)
-    project_resource = ctx.callback.getCollectionAVU(
-        format_project_path(ctx, check_results["project_id"]), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    files_unarchived = 0
     if files_to_unarchive:
+        project_resource = ctx.callback.getCollectionAVU(
+            format_project_path(ctx, check_results["project_id"]), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+        )["arguments"][2]
         files_unarchived = unarchive_files(ctx, files_to_unarchive, check_results, project_resource, username_initiator)
-        clean_up_and_inform(ctx, check_results, files_unarchived)
+    
+    clean_up_and_inform(ctx, check_results, files_unarchived)
 
 
 def unarchive_files(ctx, files_to_unarchive, check_results, project_resource, username_initiator):
@@ -125,10 +127,11 @@ def clean_up_and_inform(ctx, check_results, files_unarchived):
     )["arguments"][1]
     ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
 
-    ctx.callback.setCollectionSize(
-        check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
-    )
-    ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
+    if files_unarchived:
+        ctx.callback.setCollectionSize(
+            check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
+        )
+        ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
     ctx.callback.close_project_collection(check_results["project_id"], check_results["project_collection_id"])
 
 

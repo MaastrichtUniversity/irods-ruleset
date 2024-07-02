@@ -47,35 +47,24 @@ def get_project_resource_availability(
         ingest_resource = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        ingest_status = get_resource_status(ctx, ingest_resource)
+        ingest_status = ctx.callback.get_resource_status(ingest_resource, "")["arguments"][1] != "down"
 
     destination_status = False
     if check_destination_resource:
         destination_resource = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        destination_status = get_resource_status(ctx, destination_resource)
+        destination_status = ctx.callback.get_resource_status(destination_resource, "")["arguments"][1] != "down"
 
     archive_status = False
     if check_archive_resource:
         archive_resource = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        archive_status = get_resource_status(ctx, archive_resource)
+        archive_status = ctx.callback.get_resource_status(archive_resource, "")["arguments"][1] != "down"
 
     return (
         check_ingest_resource is ingest_status
         and check_destination_resource is destination_status
         and check_archive_resource is archive_status
     )
-
-
-# TODO move to its own file
-def get_resource_status(ctx, resource_name):
-    for result in row_iterator(
-        "RESC_STATUS",
-        "RESC_NAME = '{}'".format(resource_name),
-        AS_LIST,
-        ctx.callback,
-    ):
-        return result[0] != "down"

@@ -9,7 +9,7 @@ from dhpythonirodsutils import formatters, exceptions
 from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -19,6 +19,7 @@ def perform_unarchive_checks(ctx, unarchival_path):
 
         - Check if the path provided is valid (is a project_collection path or file in a project_collection path)
         - Check if the project and collection exist
+        - Check if the tape and destination resource are available
         - Check if unarchiving is enabled for this project
         - Check if the caller of the rule is 'service-surfarchive' (the SURF service account)
         - Check if the (un)archive states are valid (ie, no other archival related processes are running)
@@ -62,6 +63,17 @@ def perform_unarchive_checks(ctx, unarchival_path):
         project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
 
+    project_resource = ctx.callback.getCollectionAVU(
+        project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+
+    archive_destination_resource_status = ctx.callback.get_resource_status(archive_destination_resource, "")["arguments"][1]
+    project_resource_status = ctx.callback.get_resource_status(project_resource, "")["arguments"][1]
+    if archive_destination_resource_status == "down" or project_resource_status == "down":
+        error_message = "The project or tape resource is currently unavailable: unarchiving is not possible"
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+        ctx.callback.msiExit("-1", error_message)
+    
     service_account = ctx.callback.getResourceAVU(archive_destination_resource, "service-account", "", "0", "false")[
         "arguments"
     ][2]
@@ -96,4 +108,5 @@ def perform_unarchive_checks(ctx, unarchival_path):
         "project_collection_id": project_collection_id,
         "resource_location": resource_location,
         "archive_destination_resource": archive_destination_resource,
+        "project_resource": project_resource,
     }

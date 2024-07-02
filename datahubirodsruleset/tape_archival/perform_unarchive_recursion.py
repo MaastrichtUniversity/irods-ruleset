@@ -34,6 +34,7 @@ def perform_unarchive_recursion(ctx, unarchival_path, check_results, username_in
         "project_id": check_results["project_id"],
         "project_collection_id": check_results["project_collection_id"],
         "project_collection_path": check_results["project_collection_path"],
+        "project_resource": check_results["project_resource"],
         "resource_location": check_results["resource_location"],
         "service_account": check_results["service_account"],
         "archive_destination_resource": check_results["archive_destination_resource"],

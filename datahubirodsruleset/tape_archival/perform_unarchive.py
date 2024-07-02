@@ -29,15 +29,12 @@ def perform_unarchive(ctx, check_results, username_initiator):
     files_to_unarchive = get_files_to_unarchive(ctx, check_results)
     files_unarchived = 0
     if files_to_unarchive:
-        project_resource = ctx.callback.getCollectionAVU(
-            format_project_path(ctx, check_results["project_id"]), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
-        files_unarchived = unarchive_files(ctx, files_to_unarchive, check_results, project_resource, username_initiator)
+        files_unarchived = unarchive_files(ctx, files_to_unarchive, check_results, username_initiator)
     
     clean_up_and_inform(ctx, check_results, files_unarchived)
 
 
-def unarchive_files(ctx, files_to_unarchive, check_results, project_resource, username_initiator):
+def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
     """
     Actually archive the files.
     For all files passed, this does the following:
@@ -67,10 +64,12 @@ def unarchive_files(ctx, files_to_unarchive, check_results, project_resource, us
         # Checksum
         checksum = ctx.callback.msiDataObjChksum(file["virtual_path"], "", "")["arguments"][2]
         ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+        ctx.callback.msiWriteRodsLog("DEBUG: check_results {}".format(json.dumps(check_results)), 0)
+        ctx.callback.msiWriteRodsLog("DEBUG: projectresc {}".format(check_results["project_resource"]), 0)
 
         # Replicate
         try:
-            irepl_wrapper(ctx, file["virtual_path"], project_resource, check_results["service_account"], False, False)
+            irepl_wrapper(ctx, file["virtual_path"], check_results["project_resource"], check_results["service_account"], False, False)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(
@@ -79,7 +78,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, project_resource, us
                 ProcessAttribute.UNARCHIVE.value,
                 "error-unarchive-failed",
                 "Replication of {} from {} to {} FAILED.".format(
-                    file["virtual_path"], check_results["archive_destination_resource"], project_resource
+                    file["virtual_path"], check_results["archive_destination_resource"], check_results["project_resource"]
                 ),
             )
 

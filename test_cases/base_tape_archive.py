@@ -161,6 +161,71 @@ class BaseTestTapeArchive:
         # teardown
         subprocess.check_call(modify_unarchive_state.format(action="rm"), shell=True)
 
+    def test_tape_when_tape_resc_is_down(self):
+        # setup
+        modify_resc_availability = "iadmin modresc arcRescSURF01 status {}"
+        subprocess.check_call(modify_resc_availability.format("down"), shell=True)
+
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_archive()
+
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_un_archive(self.project_collection_path)
+
+        # teardown
+        subprocess.check_call(modify_resc_availability.format("up"), shell=True)
+
+    def test_tape_when_destination_resc_is_down(self):
+        # setup
+        modify_resc_availability = "iadmin modresc {} status {{status}}".format(self.destination_resource)
+        subprocess.check_call(modify_resc_availability.format(status="down"), shell=True)
+
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_archive()
+
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_un_archive(self.project_collection_path)
+
+        # teardown
+        subprocess.check_call(modify_resc_availability.format(status="up"), shell=True)
+
+    def test_unarchive_invalid_path(self):
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_un_archive("/nlmumc/home/rods")
+
+    def test_run_archive_without_service_account(self):
+        rule_archive = '/rules/tests/run_test.sh -r start_archive -a "{},{}" -u {}'.format(
+            self.project_collection_path, self.manager1, "rods"
+        )
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call(rule_archive, shell=True)
+
+    def test_run_unarchive_without_service_account(self):
+        rule_un_archive = '/rules/tests/run_test.sh -r start_unarchive -a "{},{}" -u {}'.format(
+            self.project_collection_path, self.manager1, "rods"
+        )
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call(rule_un_archive, shell=True)
+
+    def test_tape_with_non_existent_pc(self):
+        rule_un_archive = '/rules/tests/run_test.sh -r start_unarchive -a "{},{}" -u {}'.format(
+            "/nlmumc/projects/P100000000/C000000001", self.manager1, self.service_account
+        )
+        rule_archive = '/rules/tests/run_test.sh -r start_archive -a "{},{}" -u {}'.format(
+            "/nlmumc/projects/P100000000/C000000001", self.manager1, self.service_account
+        )
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call(rule_un_archive, shell=True)
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call(rule_archive, shell=True)
+
     def run_archive(self):
         # Setup Archive
         subprocess.check_call(self.run_ichmod, shell=True)

@@ -226,6 +226,9 @@ class BaseTestTapeArchive:
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(rule_archive, shell=True)
 
+    # endregion
+
+    # region helper functions
     def run_archive(self):
         # Setup Archive
         subprocess.check_call(self.run_ichmod, shell=True)
@@ -268,9 +271,6 @@ class BaseTestTapeArchive:
         output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
         assert self.destination_resource in output
 
-    # endregion
-
-    # region helper functions
     def assert_active_processes_output(self, active_processes):
         assert active_processes[ProcessState.IN_PROGRESS.value][0]["repository"] == "SURFSara Tape"
         assert active_processes[ProcessState.IN_PROGRESS.value][0]["collection_title"] == self.collection_title

@@ -64,8 +64,6 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         # Checksum
         checksum = ctx.callback.msiDataObjChksum(file["virtual_path"], "", "")["arguments"][2]
         ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
-        ctx.callback.msiWriteRodsLog("DEBUG: check_results {}".format(json.dumps(check_results)), 0)
-        ctx.callback.msiWriteRodsLog("DEBUG: projectresc {}".format(check_results["project_resource"]), 0)
 
         # Replicate
         try:

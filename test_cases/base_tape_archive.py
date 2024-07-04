@@ -131,6 +131,36 @@ class BaseTestTapeArchive:
         subprocess.check_call(set_enable_archive.format(value="true"), shell=True)
         subprocess.check_call(set_enable_un_archive.format(value="true"), shell=True)
 
+    def test_tape_running_archive_process(self):
+        # setup
+        modify_archive_state = "imeta -M {{action}} -C {} archiveState in-queue-for-archival".format(self.project_collection_path)
+        subprocess.check_call(modify_archive_state.format(action="set"), shell=True)
+
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_archive()
+
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_un_archive(self.project_collection_path)
+
+        # teardown
+        subprocess.check_call(modify_archive_state.format(action="rm"), shell=True)
+
+    def test_tape_running_unarchive_process(self):
+        # setup
+        modify_unarchive_state = "imeta -M {{action}} -C {} unArchiveState in-queue-for-unarchival".format(self.project_collection_path)
+        subprocess.check_call(modify_unarchive_state.format(action="set"), shell=True)
+
+        # assert
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_archive()
+
+        with pytest.raises(subprocess.CalledProcessError):
+            self.run_un_archive(self.project_collection_path)
+
+        # teardown
+        subprocess.check_call(modify_unarchive_state.format(action="rm"), shell=True)
+
     def run_archive(self):
         # Setup Archive
         subprocess.check_call(self.run_ichmod, shell=True)

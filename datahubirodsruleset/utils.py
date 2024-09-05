@@ -319,7 +319,7 @@ def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', chec
     if recursive:
         options += " -r"
         
-    irepl_cmd = "export clientUserName={} && irepl {} {}".format(executing_user, options, path)
+    irepl_cmd = "export clientUserName={} && irepl {} \"{}\"".format(executing_user, options, path)
     try:
         # Need to run nosec here. We need the shell=true because we run 'export clientUserName'
         check_call(irepl_cmd, shell=True) # nosec

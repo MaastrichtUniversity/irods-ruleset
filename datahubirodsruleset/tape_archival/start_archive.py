@@ -14,7 +14,7 @@ def start_archive(ctx, archival_path, username_initiator):
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    unarchival_path: str
+    archival_path: str
         The full path of the collection to be archived, e.g. '/nlmumc/projects/P000000017/C000000001'
     username_initiator: str
         The username of the initiator, e.g. dlinssen

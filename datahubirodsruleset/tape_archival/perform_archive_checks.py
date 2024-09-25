@@ -34,7 +34,7 @@ def perform_archive_checks(ctx, archival_path):
         project_collection_path = formatters.format_project_collection_path(project_id, project_collection_id)
         project_path = formatters.format_project_path(project_id)
     except exceptions.ValidationError:
-        error_message = "Invalid path to unarchive: '{}'".format(archival_path)
+        error_message = "Invalid path to archive: '{}'".format(archival_path)
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 

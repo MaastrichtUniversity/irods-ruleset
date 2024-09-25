@@ -151,7 +151,7 @@ def clean_up_and_inform(ctx, check_results, files_archived):
         Combined type of callback and rei struct.
     check_results: dict
         The dict containing all the information gained by the 'perform_archive_checks' rule.
-    files_unarchived: int
+    files_archived: int
         The amount of files archived by this rule
     """
     set_tape_avu(ctx, check_results["project_collection_path"], ArchiveState.ARCHIVE_DONE.value)

@@ -1,4 +1,4 @@
-# Part of the archival flow. Not to be called by user
+# Part of the unarchival flow. Not to be called by user
 import json
 
 from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState

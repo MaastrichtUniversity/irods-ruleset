@@ -1,4 +1,4 @@
-# Part of the archival flow. Not to be called by user
+# Part of the unarchival flow. Not to be called by user
 import irods_types  # pylint: disable=import-error
 import json
 
@@ -17,8 +17,6 @@ def perform_unarchive(ctx, check_results, username_initiator):
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    archival_path: str
-        The full path of the collection OR file to be unarchived, e.g. '/nlmumc/projects/P000000017/C000000001'  '/nlmumc/projects/P000000017/C000000001/300M.bin'
     check_results: dict
         The dict containing all the information gained by the 'perform_unarchive_checks' rule.
     username_initiator: str
@@ -46,7 +44,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
     ctx : Context
         Combined type of callback and rei struct.
     files_to_unarchive: dict
-        The files to archive
+        The files to unarchive
     check_results: dict
         The dict containing all the information gained by the 'perform_unarchive_checks' rule.
     username_initiator: str

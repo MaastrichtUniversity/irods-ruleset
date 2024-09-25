@@ -1,5 +1,7 @@
 # Entire collection:
 # /rules/tests/run_test.sh -r perform_archive_checks -a "/nlmumc/projects/P000000017/C000000001,dlinssen" -j -u service-surfarchive
+import irods_types  # pylint: disable=import-error
+
 from dhpythonirodsutils import formatters, exceptions
 from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
 
@@ -33,6 +35,14 @@ def perform_archive_checks(ctx, archival_path):
         project_path = formatters.format_project_path(project_id)
     except exceptions.ValidationError:
         error_message = "Invalid path to unarchive: '{}'".format(archival_path)
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+        ctx.callback.msiExit("-1", error_message)
+
+    try:
+        ctx.callback.msiObjStat(project_path, irods_types.RodsObjStat())
+        ctx.callback.msiObjStat(project_collection_path, irods_types.RodsObjStat())
+    except RuntimeError:
+        error_message = "Project or project_collection does not exist".format(project_path)
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 

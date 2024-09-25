@@ -30,16 +30,7 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
         )["arguments"][3]
     )
 
-    return_value = {
-        "project_id": check_results["project_id"],
-        "project_collection_id": check_results["project_collection_id"],
-        "project_collection_path": check_results["project_collection_path"],
-        "project_resource": check_results["project_resource"],
-        "tape_resource": check_results["tape_resource"],
-        "tape_resource_location": check_results["tape_resource_location"],
-        "service_account": check_results["service_account"],
-        "unarchival_path": unarchival_path,
-    }
+    check_results["unarchival_path"] = unarchival_path
 
     log_message = "msiWriteRodsLog('DEBUG: SURFSara Archive - delay 30s, before retry', 0)"
     rule_call = "move_offline_files_to_cache('{}', '{}', '')".format(unarchival_path, json.dumps(check_results))
@@ -77,4 +68,4 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
         ctx.callback.setCollectionAVU(
             check_results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, UnarchiveState.START_TRANSFER.value
         )
-        ctx.callback.perform_unarchive(json.dumps(return_value), username_initiator)
+        ctx.callback.perform_unarchive(json.dumps(check_results), username_initiator)

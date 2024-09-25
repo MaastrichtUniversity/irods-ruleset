@@ -9,7 +9,7 @@ from datahubirodsruleset.decorator import make, Output
 
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
-def dm_attr(ctx, unarchival_path, destination_resource, resource_location):
+def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
     """
     Get the status of a file or collection on tape.
 
@@ -25,12 +25,12 @@ def dm_attr(ctx, unarchival_path, destination_resource, resource_location):
     input_type = ctx.callback.msiGetObjType(unarchival_path, "")["arguments"][1]
     query = ""
     if input_type == "-c":
-        query = "DATA_RESC_NAME = '{}' AND COLL_NAME LIKE '%{}%'".format(destination_resource, unarchival_path)
+        query = "DATA_RESC_NAME = '{}' AND COLL_NAME LIKE '%{}%'".format(tape_resource, unarchival_path)
     elif input_type == "-d":
         file_name = Path(unarchival_path).name
         folder_name = unarchival_path.replace("/{}".format(file_name), "")
         query = "DATA_RESC_NAME = '{}' AND COLL_NAME = '{}' AND DATA_NAME = '{}'".format(
-            destination_resource, folder_name, file_name
+            tape_resource, folder_name, file_name
         )
 
     count = 0
@@ -41,7 +41,7 @@ def dm_attr(ctx, unarchival_path, destination_resource, resource_location):
         # The 'dmattr' call can also be called collection wide, but am choosing not to do so
         # because in the case of large amounts of files, the 'file_path' variable will be too
         # large for the iRODS server to handle, and will empty the variable and cause issues
-        output = ctx.callback.dmattr(file_path, resource_location, count, "")["arguments"][3].rstrip()
+        output = ctx.callback.dmattr(file_path, tape_resource_location, count, "")["arguments"][3].rstrip()
         file_status = output.split("+")[1]
         files.append(
             {"physical_path": file_path, "virtual_path": "{}/{}".format(row[1], row[2]), "status": file_status}

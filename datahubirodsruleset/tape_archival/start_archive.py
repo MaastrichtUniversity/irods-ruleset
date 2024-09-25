@@ -24,7 +24,7 @@ def start_archive(ctx, archival_path, username_initiator):
     # Log statements
     ctx.callback.msiWriteRodsLog("INFO: Archival workflow started for {}".format(archival_path), 0)
     ctx.callback.msiWriteRodsLog(
-        "DEBUG: Data will be moved onto resource {}".format(results["destination_resource"]), 0
+        "DEBUG: Data will be moved onto resource {}".format(results["tape_resource"]), 0
     )
     ctx.callback.msiWriteRodsLog("DEBUG: Service account used is {}".format(results["service_account"]), 0)
     ctx.callback.msiWriteRodsLog("DEBUG: {} is the initiator".format(username_initiator), 0)

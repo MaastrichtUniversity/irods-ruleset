@@ -26,7 +26,7 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
     check_results = json.loads(check_results)
     dm_attr_output = json.loads(
         ctx.callback.dm_attr(
-            unarchival_path, check_results["archive_destination_resource"], check_results["resource_location"], ""
+            unarchival_path, check_results["tape_resource"], check_results["tape_resource_location"], ""
         )["arguments"][3]
     )
 
@@ -35,9 +35,9 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
         "project_collection_id": check_results["project_collection_id"],
         "project_collection_path": check_results["project_collection_path"],
         "project_resource": check_results["project_resource"],
-        "resource_location": check_results["resource_location"],
+        "tape_resource": check_results["tape_resource"],
+        "tape_resource_location": check_results["tape_resource_location"],
         "service_account": check_results["service_account"],
-        "archive_destination_resource": check_results["archive_destination_resource"],
         "unarchival_path": unarchival_path,
     }
 
@@ -52,7 +52,7 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
             UnarchiveState.NUMBER_OF_FILES_OFFLINE.value.format(str(dm_attr_output["count"])),
         )
         for file_offline in dm_attr_output["files_offline"]:
-            ctx.callback.dmget(file_offline["physical_path"], check_results["resource_location"])
+            ctx.callback.dmget(file_offline["physical_path"], check_results["tape_resource_location"])
         ctx.delayExec(
             "<PLUSET>30s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
             recurse,

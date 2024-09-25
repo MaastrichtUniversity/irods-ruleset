@@ -35,11 +35,11 @@ def perform_unarchive(ctx, check_results, username_initiator):
 
 def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
     """
-    Actually archive the files.
+    Actually unarchive the files.
     For all files passed, this does the following:
     - Checksum
-    - Replicate to tape
-    - Trim the coordinating resource off
+    - Replicate to project resource
+    - Trim the project resource off
 
     Parameters
     ----------
@@ -75,14 +75,14 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 ProcessAttribute.UNARCHIVE.value,
                 UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
                 "Replication of {} from {} to {} FAILED.".format(
-                    file["virtual_path"], check_results["archive_destination_resource"], check_results["project_resource"]
+                    file["virtual_path"], check_results["tape_resource"], check_results["project_resource"]
                 ),
             )
 
         # Trim
         try:
             ctx.callback.msiDataObjTrim(
-                file["virtual_path"], check_results["archive_destination_resource"], "null", "2", "null", 0
+                file["virtual_path"], check_results["tape_resource"], "null", "2", "null", 0
             )
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
@@ -92,7 +92,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 ProcessAttribute.UNARCHIVE.value,
                 UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
                 "Trim of {} from {} FAILED.".format(
-                    file["virtual_path"], check_results["archive_destination_resource"]
+                    file["virtual_path"], check_results["tape_resource"]
                 ),
             )
 
@@ -163,8 +163,8 @@ def get_files_to_unarchive(ctx, check_results):
     dm_attr_output = json.loads(
         ctx.callback.dm_attr(
             check_results["unarchival_path"],
-            check_results["archive_destination_resource"],
-            check_results["resource_location"],
+            check_results["tape_resource"],
+            check_results["tape_resource_location"],
             "",
         )["arguments"][3]
     )

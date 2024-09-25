@@ -27,7 +27,7 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
     # Log statements
     ctx.callback.msiWriteRodsLog("INFO: UnArchival workflow started for {}".format(unarchival_path), 0)
     ctx.callback.msiWriteRodsLog(
-        "DEBUG: Data will be moved from resource {}".format(results["archive_destination_resource"]), 0
+        "DEBUG: Data will be moved from resource {}".format(results["tape_resource"]), 0
     )
     ctx.callback.msiWriteRodsLog("DEBUG: Service account used is {}".format(results["service_account"]), 0)
     ctx.callback.msiWriteRodsLog("DEBUG: {} is the initiator".format(username_initiator), 0)

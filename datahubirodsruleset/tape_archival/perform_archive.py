@@ -73,7 +73,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
         # Replicate
         try:
             irepl_wrapper(
-                ctx, file["path"], check_results["destination_resource"], check_results["service_account"], False, False
+                ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False, False
             )
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
@@ -83,7 +83,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
                 ProcessAttribute.ARCHIVE.value,
                 ArchiveState.ERROR_ARCHIVE_FAILED.value,
                 "Replication of {} from {} to {} FAILED.".format(
-                    file["path"], file["coordinating_resource"], check_results["destination_resource"]
+                    file["path"], file["coordinating_resource"], check_results["tape_resource"]
                 ),
             )
 
@@ -107,6 +107,12 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
 def get_coordinating_resources(ctx):
     """
     Query all coordinating resources. This is to avoid just assuming a file is on the resource that it SHOULD be on.
+    So we can trim the file after moving to tape, even if the file is not on the resource that is should be on.
+
+    Example: 
+    Project resource = replRescUMCeph01
+    Single file in project collection is on stagingResc01 due to some quirk during ingest
+    When moving project collection to tape, this file is still trimmed off (due to the trim knowing to trim stagingResc01)
 
     Parameters
     ----------
@@ -190,7 +196,7 @@ def get_files_to_archive(ctx, archival_path, check_results, coordinating_resourc
     for row in row_iterator(
         "RESC_PARENT,COLL_NAME,DATA_NAME",
         "COLL_NAME LIKE '{}%' AND DATA_RESC_NAME != '{}' AND DATA_SIZE >= '{}'".format(
-            archival_path, check_results["destination_resource"], check_results["minimum_file_size"]
+            archival_path, check_results["tape_resource"], check_results["minimum_file_size"]
         ),
         AS_LIST,
         ctx.callback,

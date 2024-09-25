@@ -57,6 +57,11 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
         The dict containing all the information gained by the 'perform_archive_checks' rule.
     username_initiator: str
         The user that initiated this entire flow. Used when creating a JIRA ticket on error.
+
+    Returns
+    ----------
+    str
+        The count of total files archived by this process
     """
     files_archived = 0
     for file in files_to_archive:
@@ -118,6 +123,11 @@ def get_coordinating_resources(ctx):
     ----------
     ctx : Context
         Combined type of callback and rei struct.
+    
+    Returns
+    ----------
+    dict
+        A dictionary containing coordinating resources and their iRODS IDs
     """
     resources = {}
     for resc in row_iterator(
@@ -190,6 +200,11 @@ def get_files_to_archive(ctx, archival_path, check_results, coordinating_resourc
         The dict containing all the information gained by the 'perform_archive_checks' rule.
     coordinating_resources: dict
         A dictionary of coordinating resources with their ID and name
+    
+    Returns
+    ----------
+    dict
+        A dictionary containing the path, resource ID and current coordinating resource of the data object to be archived
     """
     files_to_archive = []
 

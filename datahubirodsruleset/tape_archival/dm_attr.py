@@ -21,6 +21,11 @@ def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
         The full path of the collection OR file to be unarchived, e.g. '/nlmumc/projects/P000000017/C000000001' or '/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'
     username_initiator: str
         The username of the initiator, e.g. dlinssen
+
+    Returns
+    ----------
+    dict
+        A dictionary containing the files currently offline, unmigrating, online, and the total count
     """
     input_type = ctx.callback.msiGetObjType(unarchival_path, "")["arguments"][1]
     query = ""

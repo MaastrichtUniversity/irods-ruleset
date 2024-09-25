@@ -51,6 +51,11 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         The dict containing all the information gained by the 'perform_unarchive_checks' rule.
     username_initiator: str
         The user that initiated this entire flow. Used when creating a JIRA ticket on error.
+    
+    Returns
+    ----------
+    str
+        A count of the files unarchived by this process
     """
     files_unarchived = 0
     for file in files_to_unarchive:
@@ -159,6 +164,11 @@ def get_files_to_unarchive(ctx, check_results):
         Combined type of callback and rei struct.
     check_results: dict
         The dict containing all the information gained by the 'perform_unarchive_checks' rule.
+    
+    Returns
+    ----------
+    dict
+        A dictionary containing the files on tape but online (so ready to unarchive without needing caching)
     """
     dm_attr_output = json.loads(
         ctx.callback.dm_attr(

@@ -6,6 +6,8 @@ from dhpythonirodsutils.enums import (
     ProcessType,
     ProcessState,
     DropzoneState,
+    ArchiveState,
+    UnarchiveState,
 )
 
 from dhpythonirodsutils.formatters import (
@@ -197,7 +199,7 @@ def add_process_to_output(process, output):
     output: dict
         The rule output to extend
     """
-    completed_state = [DropzoneState.INGESTED.value, "unarchive-done", "archive-done", "exported"]
+    completed_state = [DropzoneState.INGESTED.value, UnarchiveState.UNARCHIVE_DONE.value, ArchiveState.ARCHIVE_DONE.value, "exported"]
     if process["state"] in [DropzoneState.OPEN.value, DropzoneState.WARNING_VALIDATION_INCORRECT.value]:
         output[ProcessState.OPEN.value].append(process)
     elif process["state"] in completed_state:

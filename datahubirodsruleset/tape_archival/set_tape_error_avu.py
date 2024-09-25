@@ -1,4 +1,5 @@
 from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ArchiveState, UnarchiveState
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -31,9 +32,9 @@ def set_tape_error_avu(ctx, project_collection_path, username_initiator, attribu
     project_collection_id = formatters.get_collection_id_from_project_collection_path(project_collection_path)
     description = ""
 
-    if "value" == "error-archive-failed":
+    if "value" == ArchiveState.ERROR_ARCHIVE_FAILED.value:
         description = "Archival failed for collection {} in project {}".format(project_collection_id, project_id)
-    elif "value" == "error-unarchive-failed":
+    elif "value" == UnarchiveState.ERROR_UNARCHIVE_FAILED.value:
         description = "Un-archival failed for collection {} in project {}".format(project_collection_id, project_id)
 
     # if this go wrong always continue

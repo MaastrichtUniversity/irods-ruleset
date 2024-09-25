@@ -5,7 +5,7 @@
 import json
 
 from datahubirodsruleset.decorator import make, Output
-from dhpythonirodsutils.enums import ProcessAttribute
+from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
@@ -35,9 +35,9 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
     # Open the PC up for the service account (which should be an admin)
     ctx.callback.msiSetACL("recursive", "admin:own", results["service_account"], results["project_collection_path"])
 
-    # Set the tape AVU so the user sees the active process even if the
+    # Set the tape AVU so the user sees the active process even if it has not started yet
     ctx.callback.setCollectionAVU(
-        results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, "in-queue-for-unarchival"
+        results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, UnarchiveState.IN_QUEUE_FOR_UNARCHIVAL.value
     )
 
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished

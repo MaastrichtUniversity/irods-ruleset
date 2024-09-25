@@ -2,11 +2,10 @@
 import irods_types  # pylint: disable=import-error
 import json
 
-from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
+from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
-from datahubirodsruleset.formatters import format_project_path
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING, irepl_wrapper
+from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
 
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
@@ -58,7 +57,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         set_tape_avu(
             ctx,
             check_results["project_collection_path"],
-            "unarchive-in-progress {}/{}".format(files_unarchived + 1, len(files_to_unarchive)),
+            UnarchiveState.UNARCHIVE_IN_PROGESS.value.format(files_unarchived + 1, len(files_to_unarchive)),
         )
 
         # Checksum
@@ -74,7 +73,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 check_results["project_collection_path"],
                 username_initiator,
                 ProcessAttribute.UNARCHIVE.value,
-                "error-unarchive-failed",
+                UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
                 "Replication of {} from {} to {} FAILED.".format(
                     file["virtual_path"], check_results["archive_destination_resource"], check_results["project_resource"]
                 ),
@@ -91,7 +90,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 check_results["project_collection_path"],
                 username_initiator,
                 ProcessAttribute.UNARCHIVE.value,
-                "error-unarchive-failed",
+                UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
                 "Trim of {} from {} FAILED.".format(
                     file["virtual_path"], check_results["archive_destination_resource"]
                 ),
@@ -116,11 +115,11 @@ def clean_up_and_inform(ctx, check_results, files_unarchived):
     files_unarchived: int
         The amount of files unarchived by this rule
     """
-    set_tape_avu(ctx, check_results["project_collection_path"], "unarchive-done")
+    set_tape_avu(ctx, check_results["project_collection_path"], UnarchiveState.UNARCHIVE_DONE.value)
     ctx.callback.msiWriteRodsLog("DEBUG: surfArchiveScanner unarchived {} files".format(files_unarchived), 0)
 
     kvp = ctx.callback.msiString2KeyValPair(
-        "{}={}".format(ProcessAttribute.UNARCHIVE.value, "unarchive-done"), irods_types.BytesBuf()
+        "{}={}".format(ProcessAttribute.UNARCHIVE.value, UnarchiveState.UNARCHIVE_DONE.value), irods_types.BytesBuf()
     )["arguments"][1]
     ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
 

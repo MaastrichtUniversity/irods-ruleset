@@ -3,7 +3,7 @@ import irods_types  # pylint: disable=import-error
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 import json
 
-from dhpythonirodsutils.enums import ProcessAttribute
+from dhpythonirodsutils.enums import ProcessAttribute, ArchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
@@ -30,7 +30,7 @@ def perform_archive(ctx, archival_path, check_results, username_initiator):
     files_to_archive = get_files_to_archive(ctx, archival_path, check_results, coordinating_resources)
 
     if files_to_archive:
-        value = "Number of files found: {}".format(len(files_to_archive))
+        value = ArchiveState.NUMBER_OF_FILES_FOUND.value.format(len(files_to_archive))
         set_tape_avu(ctx, check_results["project_collection_path"], value)
         files_archived = archive_files(ctx, files_to_archive, check_results, username_initiator)
         clean_up_and_inform(ctx, check_results, files_archived)
@@ -63,7 +63,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
         set_tape_avu(
             ctx,
             check_results["project_collection_path"],
-            "archive-in-progress {}/{}".format(files_archived + 1, len(files_to_archive)),
+            ArchiveState.ARCHIVE_IN_PROGESS.value.format(files_archived + 1, len(files_to_archive)),
         )
 
         # Checksum
@@ -81,7 +81,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
                 check_results["project_collection_path"],
                 username_initiator,
                 ProcessAttribute.ARCHIVE.value,
-                "error-archive-failed",
+                ArchiveState.ERROR_ARCHIVE_FAILED.value,
                 "Replication of {} from {} to {} FAILED.".format(
                     file["path"], file["coordinating_resource"], check_results["destination_resource"]
                 ),
@@ -96,7 +96,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
                 check_results["project_collection_path"],
                 username_initiator,
                 ProcessAttribute.ARCHIVE.value,
-                "error-archive-failed",
+                ArchiveState.ERROR_ARCHIVE_FAILED.value,
                 "Trim of {} from {} FAILED.".format(file["path"], file["coordinating_resource"]),
             )
 
@@ -138,11 +138,11 @@ def clean_up_and_inform(ctx, check_results, files_archived):
     files_unarchived: int
         The amount of files archived by this rule
     """
-    set_tape_avu(ctx, check_results["project_collection_path"], "archive-done")
+    set_tape_avu(ctx, check_results["project_collection_path"], ArchiveState.ARCHIVE_DONE.value)
     ctx.callback.msiWriteRodsLog("DEBUG: surfArchiveScanner archived {} files".format(files_archived), 0)
 
     kvp = ctx.callback.msiString2KeyValPair(
-        "{}={}".format(ProcessAttribute.ARCHIVE.value, "archive-done"), irods_types.BytesBuf()
+        "{}={}".format(ProcessAttribute.ARCHIVE.value, ArchiveState.ARCHIVE_DONE.value), irods_types.BytesBuf()
     )["arguments"][1]
     ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
 

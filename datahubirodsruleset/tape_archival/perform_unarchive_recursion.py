@@ -1,7 +1,7 @@
 # Part of the archival flow. Not to be called by user
 import json
 
-from dhpythonirodsutils.enums import ProcessAttribute
+from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
 
@@ -49,7 +49,7 @@ def perform_unarchive_recursion(ctx, unarchival_path, check_results, username_in
         ctx.callback.setCollectionAVU(
             check_results["project_collection_path"],
             ProcessAttribute.UNARCHIVE.value,
-            "Number of files offline: {}".format(str(dm_attr_output["count"])),
+            UnarchiveState.NUMBER_OF_FILES_OFFLINE.value.format(str(dm_attr_output["count"])),
         )
         for file_offline in dm_attr_output["files_offline"]:
             ctx.callback.dmget(file_offline["physical_path"], check_results["resource_location"])
@@ -64,7 +64,7 @@ def perform_unarchive_recursion(ctx, unarchival_path, check_results, username_in
         ctx.callback.setCollectionAVU(
             check_results["project_collection_path"],
             ProcessAttribute.UNARCHIVE.value,
-            "Caching files countdown: {}".format(len(dm_attr_output["files_unmigrating"])),
+            UnarchiveState.CACHING_FILES_COUNTDOWN.value.format(len(dm_attr_output["files_unmigrating"])),
         )
         ctx.delayExec(
             "<PLUSET>30s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
@@ -75,6 +75,6 @@ def perform_unarchive_recursion(ctx, unarchival_path, check_results, username_in
 
     else:
         ctx.callback.setCollectionAVU(
-            check_results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, "start-transfer"
+            check_results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, UnarchiveState.START_TRANSFER.value
         )
         ctx.callback.perform_unarchive(json.dumps(return_value), username_initiator)

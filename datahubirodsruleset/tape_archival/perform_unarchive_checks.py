@@ -30,8 +30,6 @@ def perform_unarchive_checks(ctx, unarchival_path):
         Combined type of callback and rei struct.
     unarchival_path: str
         The full path of the collection OR file to be unarchived, e.g. '/nlmumc/projects/P000000017/C000000001' or '/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'
-    username_initiator: str
-        The username of the initiator, e.g. dlinssen
     """
     try:
         project_id = formatters.get_project_id_from_project_collection_path(unarchival_path)

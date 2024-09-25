@@ -141,10 +141,8 @@ def create_new_project(
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     # If the user calling this function is someone other than 'rods' (so a project admin)
-    # we need to add rods as an owner on this project and remove the person calling this method
-    # from the ACLs
+    # we need to add rods as an owner on this project
     if current_user != "rods":
         ctx.callback.msiSetACL("default", "own", "rods", new_project_path)
-        ctx.callback.msiSetACL("default", "null", current_user, new_project_path)
 
     return {"project_path": new_project_path, "project_id": project_id}

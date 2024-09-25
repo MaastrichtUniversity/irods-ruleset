@@ -43,7 +43,7 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        "perform_unarchive_recursion('{}', '{}', '{}')".format(
+        "move_offline_files_to_cache('{}', '{}', '{}')".format(
             unarchival_path, json.dumps(results), username_initiator
         ),
         "",

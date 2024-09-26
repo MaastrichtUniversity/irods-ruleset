@@ -58,9 +58,9 @@ def perform_archive_checks(ctx, archival_path):
         project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
 
-    project_resource = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    project_resource = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
 
     tape_resource_status = ctx.callback.get_resource_status(tape_resource, "")["arguments"][1]
     project_resource_status = ctx.callback.get_resource_status(project_resource, "")["arguments"][1]
@@ -69,14 +69,10 @@ def perform_archive_checks(ctx, archival_path):
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
-    service_account = ctx.callback.getResourceAVU(tape_resource, "service-account", "", "0", "false")[
-        "arguments"
-    ][2]
+    service_account = ctx.callback.getResourceAVU(tape_resource, "service-account", "", "0", "false")["arguments"][2]
 
     # The minimum file size criteria (in bytes)
-    minimum_file_size = ctx.callback.getResourceAVU(tape_resource, "minimumFileSize", "", "0", "false")[
-        "arguments"
-    ][2]
+    minimum_file_size = ctx.callback.getResourceAVU(tape_resource, "minimumFileSize", "", "0", "false")["arguments"][2]
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     if current_user != service_account:

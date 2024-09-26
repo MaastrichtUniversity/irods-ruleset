@@ -30,7 +30,7 @@ def perform_unarchive_checks(ctx, unarchival_path):
         Combined type of callback and rei struct.
     unarchival_path: str
         The full path of the collection OR file to be unarchived, e.g. '/nlmumc/projects/P000000017/C000000001' or '/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'
-    
+
     Returns
     ----------
     dict
@@ -66,9 +66,9 @@ def perform_unarchive_checks(ctx, unarchival_path):
         project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
 
-    project_resource = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    project_resource = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)[
+        "arguments"
+    ][2]
 
     tape_resource_status = ctx.callback.get_resource_status(tape_resource, "")["arguments"][1]
     project_resource_status = ctx.callback.get_resource_status(project_resource, "")["arguments"][1]
@@ -76,10 +76,8 @@ def perform_unarchive_checks(ctx, unarchival_path):
         error_message = "The project or tape resource is currently unavailable: unarchiving is not possible"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
-    
-    service_account = ctx.callback.getResourceAVU(tape_resource, "service-account", "", "0", "false")[
-        "arguments"
-    ][2]
+
+    service_account = ctx.callback.getResourceAVU(tape_resource, "service-account", "", "0", "false")["arguments"][2]
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     if current_user != service_account:

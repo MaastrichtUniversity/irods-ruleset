@@ -66,6 +66,8 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
 
     else:
         ctx.callback.setCollectionAVU(
-            check_results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, UnarchiveState.START_TRANSFER.value
+            check_results["project_collection_path"],
+            ProcessAttribute.UNARCHIVE.value,
+            UnarchiveState.START_TRANSFER.value,
         )
         ctx.callback.perform_unarchive(json.dumps(check_results), username_initiator)

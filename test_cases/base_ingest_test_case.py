@@ -85,6 +85,10 @@ class BaseTestCaseIngest:
         pass
 
     @classmethod
+    def perform_tasks_after_project_creation(cls):
+        pass
+
+    @classmethod
     def setup_class(cls):
         print()
         print("Start {}.setup_class".format(cls.__name__))
@@ -93,6 +97,7 @@ class BaseTestCaseIngest:
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
+        cls.perform_tasks_after_project_creation()
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
         cls.add_data_to_dropzone()

@@ -25,10 +25,7 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
     results = json.loads(ctx.callback.perform_unarchive_checks(unarchival_path, "")["arguments"][1])
 
     # Log statements
-    ctx.callback.msiWriteRodsLog("INFO: UnArchival workflow started for {}".format(unarchival_path), 0)
-    ctx.callback.msiWriteRodsLog(
-        "DEBUG: Data will be moved from resource {}".format(results["tape_resource"]), 0
-    )
+    ctx.callback.msiWriteRodsLog("DEBUG: Data will be moved from resource {}".format(results["tape_resource"]), 0)
     ctx.callback.msiWriteRodsLog("DEBUG: Service account used is {}".format(results["service_account"]), 0)
     ctx.callback.msiWriteRodsLog("DEBUG: {} is the initiator".format(username_initiator), 0)
 
@@ -37,7 +34,9 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
 
     # Set the tape AVU so the user sees the active process even if it has not started yet
     ctx.callback.setCollectionAVU(
-        results["project_collection_path"], ProcessAttribute.UNARCHIVE.value, UnarchiveState.IN_QUEUE_FOR_UNARCHIVAL.value
+        results["project_collection_path"],
+        ProcessAttribute.UNARCHIVE.value,
+        UnarchiveState.IN_QUEUE_FOR_UNARCHIVAL.value,
     )
 
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished

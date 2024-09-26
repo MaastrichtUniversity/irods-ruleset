@@ -31,6 +31,10 @@ def perform_archive(ctx, archival_path, check_results, username_initiator):
 
     if files_to_archive:
         value = ArchiveState.NUMBER_OF_FILES_FOUND.value.format(len(files_to_archive))
+        ctx.callback.msiWriteRodsLog(
+            "INFO: Archival workflow started for {} ({} file(s))".format(archival_path, str(len(files_to_archive))),
+            0,
+        )
         set_tape_avu(ctx, check_results["project_collection_path"], value)
         files_archived = archive_files(ctx, files_to_archive, check_results, username_initiator)
         clean_up_and_inform(ctx, check_results, files_archived)
@@ -114,7 +118,7 @@ def get_coordinating_resources(ctx):
     Query all coordinating resources. This is to avoid just assuming a file is on the resource that it SHOULD be on.
     So we can trim the file after moving to tape, even if the file is not on the resource that is should be on.
 
-    Example: 
+    Example:
     Project resource = replRescUMCeph01
     Single file in project collection is on stagingResc01 due to some quirk during ingest
     When moving project collection to tape, this file is still trimmed off (due to the trim knowing to trim stagingResc01)
@@ -123,7 +127,7 @@ def get_coordinating_resources(ctx):
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    
+
     Returns
     ----------
     dict
@@ -200,7 +204,7 @@ def get_files_to_archive(ctx, archival_path, check_results, coordinating_resourc
         The dict containing all the information gained by the 'perform_archive_checks' rule.
     coordinating_resources: dict
         A dictionary of coordinating resources with their ID and name
-    
+
     Returns
     ----------
     dict

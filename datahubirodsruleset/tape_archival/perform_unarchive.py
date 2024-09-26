@@ -26,8 +26,14 @@ def perform_unarchive(ctx, check_results, username_initiator):
     files_to_unarchive = get_files_to_unarchive(ctx, check_results)
     files_unarchived = 0
     if files_to_unarchive:
+        ctx.callback.msiWriteRodsLog(
+            "INFO: UnArchival workflow started for {} ({} file(s))".format(
+                check_results["unarchival_path"], str(len(files_to_unarchive))
+            ),
+            0,
+        )
         files_unarchived = unarchive_files(ctx, files_to_unarchive, check_results, username_initiator)
-    
+
     clean_up_and_inform(ctx, check_results, files_unarchived)
 
 
@@ -49,7 +55,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         The dict containing all the information gained by the 'perform_unarchive_checks' rule.
     username_initiator: str
         The user that initiated this entire flow. Used when creating a JIRA ticket on error.
-    
+
     Returns
     ----------
     str
@@ -69,7 +75,14 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Replicate
         try:
-            irepl_wrapper(ctx, file["virtual_path"], check_results["project_resource"], check_results["service_account"], False, False)
+            irepl_wrapper(
+                ctx,
+                file["virtual_path"],
+                check_results["project_resource"],
+                check_results["service_account"],
+                False,
+                False,
+            )
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(
@@ -84,9 +97,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Trim
         try:
-            ctx.callback.msiDataObjTrim(
-                file["virtual_path"], check_results["tape_resource"], "null", "2", "null", 0
-            )
+            ctx.callback.msiDataObjTrim(file["virtual_path"], check_results["tape_resource"], "null", "2", "null", 0)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(
@@ -94,9 +105,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.UNARCHIVE.value,
                 UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Trim of {} from {} FAILED.".format(
-                    file["virtual_path"], check_results["tape_resource"]
-                ),
+                "Trim of {} from {} FAILED.".format(file["virtual_path"], check_results["tape_resource"]),
             )
 
         files_unarchived += 1
@@ -162,7 +171,7 @@ def get_files_to_unarchive(ctx, check_results):
         Combined type of callback and rei struct.
     check_results: dict
         The dict containing all the information gained by the 'perform_unarchive_checks' rule.
-    
+
     Returns
     ----------
     dict

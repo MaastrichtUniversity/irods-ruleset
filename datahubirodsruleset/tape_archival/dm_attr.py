@@ -1,14 +1,7 @@
-# Entire collection:
-# /rules/tests/run_test.sh -r dm_attr -a "/nlmumc/projects/P000000017/C000000001,arcRescSURF01,icat.dh.local" -j -u service-surfarchive
-# Single file:
-# /rules/tests/run_test.sh -r dm_attr -a "/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log,arcRescSURF01,icat.dh.local" -j -u service-surfarchive
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 from pathlib import Path
 
-from datahubirodsruleset.decorator import make, Output
 
-
-@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
 def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
     """
     Get the status of a file or collection on tape.
@@ -19,8 +12,10 @@ def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
         Combined type of callback and rei struct.
     unarchival_path: str
         The full path of the collection OR file to be unarchived, e.g. '/nlmumc/projects/P000000017/C000000001' or '/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log'
-    username_initiator: str
-        The username of the initiator, e.g. dlinssen
+    tape_resource: str
+        The name of the tape resource
+    tape_resource_location: str
+        The resource location listed for the tape resource (can be found with 'iadmin lr {}')
 
     Returns
     ----------
@@ -46,7 +41,7 @@ def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
         # The 'dmattr' call can also be called collection wide, but am choosing not to do so
         # because in the case of large amounts of files, the 'file_path' variable will be too
         # large for the iRODS server to handle, and will empty the variable and cause issues
-        output = ctx.callback.dmattr(file_path, tape_resource_location, count, "")["arguments"][3].rstrip()
+        output = ctx.callback.dmattr(file_path, tape_resource_location, "")["arguments"][2].rstrip()
         file_status = output.split("+")[1]
         files.append(
             {"physical_path": file_path, "virtual_path": "{}/{}".format(row[1], row[2]), "status": file_status}

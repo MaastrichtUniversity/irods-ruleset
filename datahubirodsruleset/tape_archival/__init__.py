@@ -10,4 +10,3 @@ from datahubirodsruleset.tape_archival.set_tape_error_avu import set_tape_error_
 from datahubirodsruleset.tape_archival.move_offline_files_to_cache import move_offline_files_to_cache
 from datahubirodsruleset.tape_archival.perform_unarchive_checks import perform_unarchive_checks
 from datahubirodsruleset.tape_archival.perform_unarchive import perform_unarchive
-from datahubirodsruleset.tape_archival.dm_attr import dm_attr

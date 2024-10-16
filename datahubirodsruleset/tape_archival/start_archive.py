@@ -27,16 +27,24 @@ def start_archive(ctx, archival_path, username_initiator):
     ctx.callback.msiWriteRodsLog("DEBUG: {} is the initiator".format(username_initiator), 0)
 
     # Open the PC up for the service account (which should be an admin)
-    ctx.callback.msiSetACL("recursive", "admin:own", results["service_account"], results["project_collection_path"])
+    ctx.callback.msiSetACL("default", "admin:own", results["service_account"], results["project_collection_path"])
 
     # Set the tape AVU so the user sees the active process even if it has not started yet
     ctx.callback.setCollectionAVU(
         results["project_collection_path"], ProcessAttribute.ARCHIVE.value, ArchiveState.IN_QUEUE_FOR_ARCHIVAL.value
     )
 
+    # Perform the recursive SetACL call in the delay queue to not lock up on very large collections
+    set_acl_call = "msiSetACL('recursive', 'admin:own', '{}', '{}')".format(
+        results["service_account"], results["project_collection_path"]
+    )
+    perform_archive_call = "perform_archive('{}', '{}', '{}')".format(
+        archival_path, json.dumps(results), username_initiator
+    )
+
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        "perform_archive('{}', '{}', '{}')".format(archival_path, json.dumps(results), username_initiator),
+        "{};{}".format(set_acl_call, perform_archive_call),
         "",
     )

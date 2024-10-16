@@ -76,14 +76,23 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
         )
 
         # Checksum
-        checksum = ctx.callback.msiDataObjChksum(file["path"], "", "")["arguments"][2]
-        ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+        # We perform checksums beforehand because the 'irepl' command does not include checksumming
+        try:
+            checksum = ctx.callback.msiDataObjChksum(file["path"], "", "")["arguments"][2]
+            ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+        except RuntimeError as err:
+            ctx.callback.msiWriteRodsLog(err, 0)
+            ctx.callback.set_tape_error_avu(
+                check_results["project_collection_path"],
+                username_initiator,
+                ProcessAttribute.ARCHIVE.value,
+                ArchiveState.ERROR_ARCHIVE_FAILED.value,
+                "Checksum of {} from {} FAILED.".format(file["path"], file["coordinating_resource"]),
+            )
 
         # Replicate
         try:
-            irepl_wrapper(
-                ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False, False
-            )
+            irepl_wrapper(ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(

@@ -4,6 +4,7 @@ import json
 from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.tape_archival.dm_attr import dm_attr
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -24,11 +25,7 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
         The username of the initiator, e.g. dlinssen
     """
     check_results = json.loads(check_results)
-    dm_attr_output = json.loads(
-        ctx.callback.dm_attr(
-            unarchival_path, check_results["tape_resource"], check_results["tape_resource_location"], ""
-        )["arguments"][3]
-    )
+    dm_attr_output = dm_attr(ctx, unarchival_path, check_results["tape_resource"], check_results["tape_resource_location"])
 
     check_results["unarchival_path"] = unarchival_path
 

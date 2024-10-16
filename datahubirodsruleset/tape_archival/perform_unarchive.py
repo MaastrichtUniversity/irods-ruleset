@@ -6,6 +6,7 @@ from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
+from datahubirodsruleset.tape_archival.dm_attr import dm_attr
 
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
@@ -70,8 +71,19 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         )
 
         # Checksum
-        checksum = ctx.callback.msiDataObjChksum(file["virtual_path"], "", "")["arguments"][2]
-        ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+        # We perform checksums beforehand because the 'irepl' command does not include checksumming
+        try:
+            checksum = ctx.callback.msiDataObjChksum(file["virtual_path"], "", "")["arguments"][2]
+            ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+        except RuntimeError as err:
+            ctx.callback.msiWriteRodsLog(err, 0)
+            ctx.callback.set_tape_error_avu(
+                check_results["project_collection_path"],
+                username_initiator,
+                ProcessAttribute.UNARCHIVE.value,
+                UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
+                "Checksum of {} from {} FAILED.".format(file["virtual_path"], check_results["tape_resource"]),
+            )
 
         # Replicate
         try:
@@ -80,7 +92,6 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 file["virtual_path"],
                 check_results["project_resource"],
                 check_results["service_account"],
-                False,
                 False,
             )
         except RuntimeError as err:
@@ -177,12 +188,11 @@ def get_files_to_unarchive(ctx, check_results):
     dict
         A dictionary containing the files on tape but online (so ready to unarchive without needing caching)
     """
-    dm_attr_output = json.loads(
-        ctx.callback.dm_attr(
-            check_results["unarchival_path"],
-            check_results["tape_resource"],
-            check_results["tape_resource_location"],
-            "",
-        )["arguments"][3]
+    dm_attr_output = dm_attr(
+        ctx,
+        check_results["unarchival_path"],
+        check_results["tape_resource"],
+        check_results["tape_resource_location"],
     )
+
     return dm_attr_output["files_online"]

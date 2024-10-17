@@ -25,6 +25,15 @@ class BaseTestCaseMountedIngest(BaseTestCaseIngest):
         )
         subprocess.check_call(rule, shell=True)
 
+class BaseTestCaseMountedIngestAsContributor(BaseTestCaseMountedIngest):
+    @classmethod
+    def perform_tasks_after_project_creation(cls):
+        cls.depositor = "dlinssen"
+        cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
+        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,write,{},{}"'.format(
+            cls.depositor, cls.project_path
+        )
+        subprocess.check_call(rule_set_acl, shell=True)
 
 class TestMountedIngestUM(BaseTestCaseMountedIngest):
     ingest_resource = "ires-hnas-umResource"
@@ -37,5 +46,20 @@ class TestMountedIngestAZM(BaseTestCaseMountedIngest):
 
 
 class TestMountedIngestS3(BaseTestCaseMountedIngest):
+    ingest_resource = "ires-hnas-umResource"
+    destination_resource = "replRescUMCeph01"
+
+
+class TestMountedIngestUMAsContributor(BaseTestCaseMountedIngestAsContributor):
+    ingest_resource = "ires-hnas-umResource"
+    destination_resource = "replRescUM01"
+
+
+class TestMountedIngestAZMAsContributor(BaseTestCaseMountedIngestAsContributor):
+    ingest_resource = "ires-hnas-azmResource"
+    destination_resource = "replRescAZM01"
+
+
+class TestMountedIngestS3AsContributor(BaseTestCaseMountedIngestAsContributor):
     ingest_resource = "ires-hnas-umResource"
     destination_resource = "replRescUMCeph01"

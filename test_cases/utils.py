@@ -265,7 +265,10 @@ def set_collection_avu(collection_path, attribute, value):
 
 def create_user(username):
     run_imeta = "iadmin mkuser {} rodsuser".format(username)
-    subprocess.check_call(run_imeta, shell=True)
+    try:
+        subprocess.check_call(run_imeta, shell=True)
+    except subprocess.CalledProcessError:
+        print("User {} already exists, continuing code execution".format(username))
 
     set_user_avu(username, "displayName", "{} LastName".format(username))
     set_user_avu(username, "eduPersonUniqueID", "{}@sram.surf.nl".format(username))

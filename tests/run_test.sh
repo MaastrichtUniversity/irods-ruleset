@@ -66,7 +66,7 @@ if [ ! -z $rule  ] && [ -z $rule_arguments ] && [ -z $user_name ];
       else
        irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut  | python3 -m json.tool
    fi
-   exit 0
+   exit $?
 fi
 
 # Rule and arguments defined  no username
@@ -99,11 +99,13 @@ if [ ! -z $rule  ] && [ -z $rule_arguments ] && [ ! -z $user_name ];
    if [[ -z $json ]]
      then
         irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut
+        EXITCODE=$?
       else
        irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"\")" null ruleExecOut  | python3 -m json.tool
+       EXITCODE=$?
    fi
    unset clientUserName
-   exit 0
+   exit $EXITCODE
 fi
 
 
@@ -118,13 +120,13 @@ if [ ! -z $rule  ] && [ ! -z $rule_arguments ] && [ ! -z $user_name ];
    export clientUserName=$user_name
    if [[ -z $json ]]
       then
-        irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut
+       irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut
+       EXITCODE=$?
       else
        irule -r irods_rule_engine_plugin-irods_rule_language-instance "test_rule_output(\"$rule\", \"$rule_arguments\")" null ruleExecOut  | python3 -m json.tool
+       EXITCODE=$?
    fi
    unset clientUserName
-   exit 0
+   exit $EXITCODE
 fi
-
-
 

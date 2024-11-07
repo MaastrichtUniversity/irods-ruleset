@@ -27,10 +27,10 @@ from datahubirodsruleset.utils import TRUE_AS_STRING
 ARCHIVAL_REPOSITORY_NAME = "SURFSara Tape"
 
 
-@make(inputs=[0, 1, 2, 3], outputs=[4], handler=Output.STORE)
-def admin_get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarchive, query_export):
+@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
+def admin_get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarchive):
     """
-    Query all the active process status (ingest, tape archive & DataverseNL export) of the user.
+    Query all the active process status (ingest, tape archive) of the user.
 
     Parameters
     ----------
@@ -42,8 +42,6 @@ def admin_get_user_active_processes(ctx, query_drop_zones, query_archive, query_
         'true'/'false' expected; If true, query the list of active archive processes
     query_unarchive: str
         'true'/'false' expected; If true, query the list of active un-archive processes
-    query_export: str
-        'true'/'false' expected; If true, query the list of active export (to DataverseNl) processes
 
     Returns
     -------
@@ -53,7 +51,6 @@ def admin_get_user_active_processes(ctx, query_drop_zones, query_archive, query_
     query_drop_zones = format_string_to_boolean(query_drop_zones)
     query_archive = format_string_to_boolean(query_archive)
     query_unarchive = format_string_to_boolean(query_unarchive)
-    query_export = format_string_to_boolean(query_export)
 
     output = {
         ProcessState.COMPLETED.value: [],
@@ -64,16 +61,13 @@ def admin_get_user_active_processes(ctx, query_drop_zones, query_archive, query_
 
     if query_drop_zones:
         get_list_active_drop_zones(ctx, output)
-
-    if query_archive and query_unarchive and query_export:
+    if query_archive and query_unarchive:
         get_list_active_project_processes(ctx, output)
     else:
         if query_archive:
             get_list_active_project_process(ctx, ProcessAttribute.ARCHIVE, ProcessType.ARCHIVE, output)
         if query_unarchive:
             get_list_active_project_process(ctx, ProcessAttribute.UNARCHIVE, ProcessType.UNARCHIVE, output)
-        if query_export:
-            get_list_active_project_process(ctx, ProcessAttribute.EXPORTER, ProcessType.EXPORT, output)
 
     return output
 
@@ -148,10 +142,9 @@ def get_list_active_project_processes(ctx, output):
         The rule output to extend
     """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
+    conditions = "META_COLL_ATTR_NAME in ('{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
         ProcessAttribute.ARCHIVE.value,
         ProcessAttribute.UNARCHIVE.value,
-        ProcessAttribute.EXPORTER.value,
     )
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
@@ -161,8 +154,6 @@ def get_list_active_project_processes(ctx, output):
             process = get_project_process_information(ctx, result, ProcessType.ARCHIVE)
         if attribute == ProcessAttribute.UNARCHIVE.value:
             process = get_project_process_information(ctx, result, ProcessType.UNARCHIVE)
-        elif attribute == ProcessAttribute.EXPORTER.value:
-            process = get_project_process_information(ctx, result, ProcessType.EXPORT)
         add_process_to_output(process, output)
 
 
@@ -227,10 +218,6 @@ def get_process_repository_and_state(query_result, process_type):
 
     if process_type in [ProcessType.ARCHIVE, ProcessType.UNARCHIVE]:
         repository = ARCHIVAL_REPOSITORY_NAME
-    elif process_type is ProcessType.EXPORT:
-        state_split = query_result[2].split(":")
-        repository = state_split[0]
-        state = state_split[1]
 
     return repository, state
 

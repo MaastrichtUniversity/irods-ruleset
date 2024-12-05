@@ -92,7 +92,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
 
         # Replicate
         try:
-            irepl_wrapper(ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False)
+            irepl_wrapper(ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False, True)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(

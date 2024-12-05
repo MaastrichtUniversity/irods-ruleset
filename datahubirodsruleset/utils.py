@@ -290,7 +290,7 @@ def iput_wrapper(ctx, source, destination, project_id, overwrite):
         ctx.callback.msiWriteRodsLog("ERROR: iput: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
         ctx.callback.msiExit("-1", "ERROR: iput failed for '{}'->'{}'".format(source, destination))
 
-def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', recursive = False):
+def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', recursive = False, single_threaded = False):
     """
     Added in 4.3.2 development, review if still necessary on next version upgrade!
     This is because the microserice msiDataObjRepl has a deadlock when called from the python rule engine
@@ -310,10 +310,14 @@ def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', recu
         The user that should execute this call (default Rods)
     recursive: bool
         If the replication call should be recursive or not
+    single_threaded: bool
+        To run the replication with only 1 thread (not utilising the 'high' ports)
     """
     options = "-R {}".format(destination_resource)
     if recursive:
         options += " -r"
+    if single_threaded:
+        options += " -N1"
         
     irepl_cmd = "export clientUserName={} && irepl {} \"{}\"".format(executing_user, options, path)
     try:

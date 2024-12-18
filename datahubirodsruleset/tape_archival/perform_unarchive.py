@@ -87,6 +87,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Replicate
         try:
+            # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
             irepl_wrapper(
                 ctx,
                 file["virtual_path"],

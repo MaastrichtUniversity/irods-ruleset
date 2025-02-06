@@ -13,7 +13,7 @@ from datahubirodsruleset.utils import TRUE_AS_STRING
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
 def sync_collection_data(ctx, token, destination_collection, depositor, dropzone_type):
     """
-    This rule is part the ingest workflow.
+    This rule is part the ingest workflow. It is a wrapper around perform_irsync with some additional error handling and restart capabilities.
     It takes care of coping (syncing) the content of the physical (mounted) or virtual (direct) drop-zone path into the destination collection.
     MOUNTED: When the coping is done, it also calls replace_metadata_placeholder_files to update the project collection
     with the correct metadata files. (not necessary for direct)

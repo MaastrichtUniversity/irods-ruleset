@@ -38,7 +38,7 @@ def perform_ingest(ctx, project_id, depositor, token, dropzone_type):
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
 
-    # Ingest the files from local directory on resource server to iRODS collection
+    # Ingest the files from local directory on resource server (mounted) or a iRODS virtual collection to iRODS destination collection
     try:
         ctx.callback.sync_collection_data(token, destination_collection, depositor, dropzone_type)
     except RuntimeError:

@@ -11,6 +11,8 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
     This rule is part the ingest workflow.
     It takes care of actually copying (syncing) the content of the drop-zone into the destination collection.
 
+    Should not be called directly, instead call the wrapper function sync_collection_data.
+
     Parameters
     ----------
     ctx : Context

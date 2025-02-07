@@ -1,4 +1,5 @@
-# /rules/tests/run_test.sh -r start_ingest -a "dlinssen,handsome-snake,direct" -u "dlinssen"
+# To be called as an admin at all times
+# /rules/tests/run_test.sh -r start_ingest -a "dlinssen,handsome-snake,direct"
 import json
 
 from dhpythonirodsutils import formatters
@@ -46,7 +47,7 @@ def start_ingest(ctx, depositor, token, dropzone_type):
 
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "perform_{}_ingest('{}', '{}', '{}')".format(dropzone_type, project_id, depositor, token),
+            "perform_ingest('{}', '{}', '{}', '{}')".format(project_id, depositor, token, dropzone_type),
             "",
         )
     else:

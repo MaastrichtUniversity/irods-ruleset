@@ -92,6 +92,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
 
         # Replicate
         try:
+            # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
             irepl_wrapper(ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False, True)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)

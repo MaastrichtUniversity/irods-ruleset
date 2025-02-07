@@ -4,10 +4,10 @@ from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
 
-@make(inputs=range(3), outputs=[], handler=Output.STORE)
-def perform_direct_ingest(ctx, project_id, depositor, token):
+@make(inputs=range(4), outputs=[], handler=Output.STORE)
+def perform_ingest(ctx, project_id, depositor, token, dropzone_type):
     """
-    Perform a direct (collection to collection) ingest operation.
+    Perform an ingest operation.
 
     Parameters
     ----------
@@ -19,13 +19,11 @@ def perform_direct_ingest(ctx, project_id, depositor, token):
         The iRODS username of the user who started the ingestion
     token: str
         The token of the dropzone to be ingested
+    dropzone_type: str
+        The type of dropzone to be ingested (mounted or direct)
     """
     import time
 
-    RETRY_MAX_NUMBER = 5
-    RETRY_SLEEP_NUMBER = 60
-
-    dropzone_type = "direct"
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
     pre_ingest_results = json.loads(
@@ -40,20 +38,10 @@ def perform_direct_ingest(ctx, project_id, depositor, token):
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
 
-    retry_counter = RETRY_MAX_NUMBER
-    status = 0
-    while retry_counter > 0:
-        ret = ctx.callback.ingest_collection_data(dropzone_path, destination_collection, project_id, "")
-        status = int(ret["arguments"][3])
-        if status != 0:
-            retry_counter -= 1
-            ctx.callback.msiWriteRodsLog("DEBUG: Decrement retry_counter: {}".format(str(retry_counter)), 0)
-            time.sleep(RETRY_SLEEP_NUMBER)
-        else:
-            retry_counter = 0
-            ctx.callback.msiWriteRodsLog("INFO: Ingest collection data '{}' was successful".format(dropzone_path), 0)
-
-    if status != 0:
+    # Ingest the files from local directory on resource server (mounted) or a iRODS virtual collection to iRODS destination collection
+    try:
+        ctx.callback.sync_collection_data(token, destination_collection, depositor, dropzone_type)
+    except RuntimeError:
         ctx.callback.set_ingestion_error_avu(dropzone_path, "Error copying ingest zone", project_id, depositor)
 
     after = time.time()

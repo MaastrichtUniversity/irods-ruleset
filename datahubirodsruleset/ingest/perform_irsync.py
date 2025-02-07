@@ -1,14 +1,17 @@
+# Part of the ingest workflow. To use, call the rule sync_collection_data
 from dhpythonirodsutils import formatters
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 
 
-@make(inputs=range(4), outputs=[], handler=Output.STORE)
-def perform_irsync(ctx, destination_resource, token, destination_collection, depositor):
+@make(inputs=range(5), outputs=[], handler=Output.STORE)
+def perform_irsync(ctx, destination_resource, token, destination_collection, depositor, dropzone_type):
     """
-    This rule is part the mounted ingest workflow.
-    It takes care of actually copying (syncing) the content of the physical drop-zone into the destination collection.
+    This rule is part the ingest workflow.
+    It takes care of actually copying (syncing) the content of the drop-zone into the destination collection.
+
+    Should not be called directly, instead call the wrapper function sync_collection_data.
 
     Parameters
     ----------
@@ -22,6 +25,8 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
     depositor: str
         The iRODS username of the user who started the ingestion
+    dropzone_type: str
+        The type of dropzone to be ingested (mounted or direct)
     """
 
     # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
@@ -33,11 +38,14 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
     from subprocess import CalledProcessError, check_call  # nosec
     import time
 
-    source_collection = "/mnt/ingest/zones/{}".format(token)
-    dropzone_path = format_dropzone_path(ctx, token, "mounted")
-
-    # Revoke the user CIFS ACL on the mounted network dropzone folder
-    ctx.callback.set_dropzone_cifs_acl(token, "null")
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
+    if dropzone_type == "mounted":
+        source_collection = "/mnt/ingest/zones/{}".format(token)
+        # Revoke the user CIFS ACL on the mounted network dropzone folder
+        ctx.callback.set_dropzone_cifs_acl(token, "null")
+    elif dropzone_type == "direct":
+        # We need to prefix the dropzone path with 'i:' to indicate to iRODS that it is an iRODS - iRODS sync
+        source_collection = "i:{}".format(dropzone_path)
 
     RETRY_MAX_NUMBER = 5
     RETRY_SLEEP_NUMBER = 20
@@ -74,8 +82,9 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
             )
 
     if return_code != 0:
-        # Re-set the user CIFS ACL on the mounted network dropzone folder
-        ctx.callback.set_dropzone_cifs_acl(token, "write")
+        if dropzone_type == "mounted":
+            # Re-set the user CIFS ACL on the mounted network dropzone folder
+            ctx.callback.set_dropzone_cifs_acl(token, "write")
         project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
         ctx.callback.set_ingestion_error_avu(
             dropzone_path,

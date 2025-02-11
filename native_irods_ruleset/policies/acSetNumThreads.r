@@ -12,7 +12,7 @@ acSetNumThreads {
     *error = errorcode(msiGetValByKey($KVPairs,"rescName",*out));
 
     if ( *error == 0 ) {
-        if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL" || $KVPairs.rescName == "AZM-storage" || $KVPairs.rescName == "AZM-storage-repl") {
+        if ($KVPairs.rescName == "UM-Ceph-S3-AC" || $KVPairs.rescName == "UM-Ceph-S3-GL" || $KVPairs.rescName == "AZM-storage" || $KVPairs.rescName == "AZM-storage-repl" || $KVPairs.rescName == "AZM-storage2" || $KVPairs.rescName == "AZM-storage2-repl") {
             msiSetNumThreads("default","0","default");
         } else {
             msiSetNumThreads("default","4","default");

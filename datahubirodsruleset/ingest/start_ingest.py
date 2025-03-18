@@ -1,12 +1,6 @@
 # To be called as an admin at all times
 # /rules/tests/run_test.sh -r start_ingest -a "dlinssen,handsome-snake,direct"
-import json
-
-from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import DropzoneState
-
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.formatters import format_dropzone_path
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -28,32 +22,9 @@ def start_ingest(ctx, depositor, token, dropzone_type):
     dropzone_type: str
         The type of dropzone, 'mounted' or 'direct'
     """
-    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
 
-    pre_ingest_tasks = json.loads(
-        ctx.callback.validate_dropzone(dropzone_path, depositor, dropzone_type, "")["arguments"][3]
+    ctx.delayExec(
+        "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
+        "validate_and_ingest_dropzone('{}', '{}', '{}')".format(token, depositor, dropzone_type),
+        "",
     )
-    project_id = pre_ingest_tasks["project_id"]
-    validation_result = pre_ingest_tasks["validation_result"]
-
-    if formatters.format_string_to_boolean(validation_result):
-        ctx.callback.msiWriteRodsLog(
-            "Validation result OK {}. Setting status to '{}'".format(
-                dropzone_path, DropzoneState.IN_QUEUE_FOR_INGESTION.value
-            ),
-            0,
-        )
-        ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_INGESTION.value)
-
-        ctx.delayExec(
-            "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "perform_ingest('{}', '{}', '{}', '{}')".format(project_id, depositor, token, dropzone_type),
-            "",
-        )
-    else:
-        message = "Metadata is incorrect"
-        value = DropzoneState.WARNING_VALIDATION_INCORRECT.value
-        ctx.callback.setCollectionAVU(dropzone_path, "state", value)
-        ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
-        ctx.callback.msiWriteRodsLog(message, 0)
-        ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))

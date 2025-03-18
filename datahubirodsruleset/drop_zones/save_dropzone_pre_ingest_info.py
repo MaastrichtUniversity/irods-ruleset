@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token,C000000001,jmelius,mounted" -j
+# /rules/tests/run_test.sh -r save_dropzone_pre_ingest_info -a "bla-token,jmelius,mounted" -j
 import json
 
 from dhpythonirodsutils import formatters
@@ -8,8 +8,8 @@ from datahubirodsruleset.utils import TRUE_AS_STRING
 
 dropzone_is_ingestable = {"dropzone_is_ingestable": True}
 
-@make(inputs=[0, 1, 2, 3], outputs=[], handler=Output.STORE)
-def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone_type):
+@make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
+def save_dropzone_pre_ingest_info(ctx, dropzone_path, depositor, dropzone_type):
     """
     This rule generates a json formatted string with information about the provided dropzone
     Included are:
@@ -27,10 +27,8 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    token: str
-        The dropzone token, to locate the source collection; e.g: 'handsome-snake'
-    collection_id: str
-        The collection id, e.g: C00000004
+    dropzone_path: str
+        path to the dropzone (e.g: /nlmumc/ingest/zones/crazy-frog
     depositor: str
         The username of the person requesting to ingest
     dropzone_type: str
@@ -38,7 +36,7 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
     """
     import os
 
-    dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
+    token = dropzone_path.split("/")[-1]
     physical_path = ""
     if dropzone_type == "mounted":
         physical_path = os.path.join("/mnt/ingest/zones", token)
@@ -59,7 +57,6 @@ def save_dropzone_pre_ingest_info(ctx, token, collection_id, depositor, dropzone
     result["total_file_size"] = size
     result["file_count"] = file_count
     result["depositor"] = depositor
-    result["collection"] = collection_id
     result["type"] = dropzone_type
     result["token"] = token
     result["creator"] = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
@@ -166,3 +163,4 @@ def save_pre_ingest_document(ctx, document, token):
     with open(document_path, "w") as outfile:
         outfile.write(json.dumps(document, indent=4))
         ctx.callback.msiWriteRodsLog("DEBUG: Writing pre-ingest document {}".format(document_path), 0)
+    return document_path

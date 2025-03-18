@@ -36,7 +36,6 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
     title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
-
     try:
         collection_id = ctx.callback.create_project_collection(project_id, title, "")["arguments"][2]
     except RuntimeError:
@@ -44,50 +43,26 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
         ctx.callback.set_ingestion_error_avu(dropzone_path, "Error creating projectCollection", project_id, depositor)
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
+    
+    #TODO: Call this remotely?
+    # document_path = ctx.callback.getCollectionAVU(dropzone_path, "documentPath", "", "", TRUE_AS_STRING)["arguments"][2]
+    # ctx.callback.msiWriteRodsLog(f"collection_id = {collection_id}", 0)
+    # ctx.callback.msiWriteRodsLog(f"document_path = {document_path}", 0)
+    # with open(document_path, "w") as outfile:
+    #     document = json.load(outfile)
+    #     document["collection"] = collection_id
+    #     ctx.msiWriteRodsLog("hello world!!", 0)
+    #     outfile.write(json.dumps(document, indent=4))
+    #     ctx.callback.msiWriteRodsLog("DEBUG: Modifying pre-ingest document {} - Adding collection ID {}".format(document_path, collection_id), 0)
 
     ctx.callback.msiWriteRodsLog("Ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
-    if dropzone_type == "direct":
-        ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
-    else:
-        ingest_resource = ctx.callback.getCollectionAVU(
-            format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
-        # Obtain the resource host from the specified ingest resource
-        for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(ingest_resource), AS_LIST, ctx.callback):
-            ingest_resource_host = row[0]
+    total_size = ctx.callback.getCollectionAVU(dropzone_path, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
+    destination_resource = ctx.callback.getCollectionAVU(
+        format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
-    ctx.callback.msiWriteRodsLog("DEBUG: Resource remote host {}".format(ingest_resource_host), 0)
-
-    total_size = ""
-    destination_resource = ""
-    try:
-        ctx.remoteExec(
-            ingest_resource_host,
-            "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "save_dropzone_pre_ingest_info('{}', '{}', '{}', '{}')".format(
-                token, collection_id, depositor, dropzone_type
-            ),
-            "",
-        )
-        total_size = ctx.callback.getCollectionAVU(dropzone_path, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
-        destination_resource = ctx.callback.getCollectionAVU(
-            format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
-    except RuntimeError:
-        ctx.callback.msiWriteRodsLog("Failed creating dropzone pre-ingest information", 0)
-        ctx.callback.set_ingestion_error_avu(
-            dropzone_path, "Failed creating dropzone pre-ingest information", project_id, depositor
-        )
-        
-    ctx.callback.msiWriteRodsLog(
-        "DEBUG: dropzone pre-ingest information created on {} for {}".format(ingest_resource_host, token), 0
-    )
-    # Check if the dropzone is valid for ingestion 
-    # see bug https://github.com/irods/irods/issues/7302
-    is_dropzone_ingestable(ctx, dropzone_path, project_id, depositor)
-    
     ctx.callback.msiWriteRodsLog(
         "Starting the ingestion of {} to {} ({})({})".format(
             dropzone_path,
@@ -100,12 +75,4 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
     return {
         "collection_id": collection_id,
         "destination_collection": destination_project_collection_path,
-        "ingest_resource_host": ingest_resource_host,
     }
-
-
-def is_dropzone_ingestable(ctx, dropzone_path, project_id, depositor):
-        is_ingestable = ctx.callback.getCollectionAVU(dropzone_path, "isIngestable", "", "", TRUE_AS_STRING)["arguments"][2]
-        if is_ingestable == FALSE_AS_STRING:
-            message = "Dropzone contains directory with illegal character(s)"
-            ctx.callback.set_ingestion_error_avu(dropzone_path, message, project_id, depositor)

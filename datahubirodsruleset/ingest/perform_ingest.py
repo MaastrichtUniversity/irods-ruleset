@@ -33,7 +33,6 @@ def perform_ingest(ctx, project_id, depositor, token, dropzone_type):
     )
     collection_id = pre_ingest_results["collection_id"]
     destination_collection = pre_ingest_results["destination_collection"]
-    ingest_resource_host = pre_ingest_results["ingest_resource_host"]
 
     # Determine pre-ingest time to calculate average ingest speed
     before = time.time()
@@ -52,4 +51,4 @@ def perform_ingest(ctx, project_id, depositor, token, dropzone_type):
     )
 
     # Handle post ingestion operations
-    ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type)
+    ctx.callback.finish_ingest(project_id, depositor, token, collection_id, dropzone_type)

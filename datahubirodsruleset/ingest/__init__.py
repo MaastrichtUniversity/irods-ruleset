@@ -1,4 +1,5 @@
 """This sub-package contains the rules related to DataHub ingestion workflow"""
+
 # Public rules
 from datahubirodsruleset.ingest.start_ingest import start_ingest
 from datahubirodsruleset.ingest.set_ingestion_error_avu import set_ingestion_error_avu
@@ -13,3 +14,4 @@ from datahubirodsruleset.ingest.remove_size_ingested_avu import remove_size_inge
 from datahubirodsruleset.ingest.replace_metadata_placeholder_files import replace_metadata_placeholder_files
 from datahubirodsruleset.ingest.set_post_ingestion_error_avu import set_post_ingestion_error_avu
 from datahubirodsruleset.ingest.sync_collection_data import sync_collection_data
+from datahubirodsruleset.ingest.validate_and_ingest_dropzone import validate_and_ingest_dropzone

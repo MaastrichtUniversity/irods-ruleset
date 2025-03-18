@@ -62,13 +62,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
     # Get the ingest resource host
-    ingest_resource = ctx.callback.getCollectionAVU(
-        format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
-    ingest_resource_host = ""
-    # Obtain the resource host from the specified ingest resource
-    for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(ingest_resource), AS_LIST, ctx.callback):
-        ingest_resource_host = row[0]
+    ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
 
     # Execute the irsync call remotely for mounted ingests, as it needs access to the physical path
     if dropzone_type == "mounted":
@@ -76,7 +70,9 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
         ctx.remoteExec(
             ingest_resource_host,
             "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "perform_irsync('{}', '{}', '{}', '{}', '{}')".format(destination_resource, token, destination_collection, depositor, dropzone_type),
+            "perform_irsync('{}', '{}', '{}', '{}', '{}')".format(
+                destination_resource, token, destination_collection, depositor, dropzone_type
+            ),
             "",
         )
     # Execute the irsync on iCAT locally if its a direct ingest, since it's all virtual
@@ -96,4 +92,4 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
         ctx.callback.perform_ingest_post_hook(
             project_id, collection_id, dropzone_path, dropzone_type, str(difference), depositor
         )
-        ctx.callback.finish_ingest(project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type)
+        ctx.callback.finish_ingest(project_id, depositor, token, collection_id, dropzone_type)

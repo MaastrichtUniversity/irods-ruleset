@@ -8,8 +8,8 @@ from datahubirodsruleset.formatters import format_dropzone_path, format_project_
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
-@make(inputs=[0, 1, 2, 3, 4, 5], outputs=[], handler=Output.STORE)
-def finish_ingest(ctx, project_id, depositor, token, collection_id, ingest_resource_host, dropzone_type):
+@make(inputs=[0, 1, 2, 3, 4], outputs=[], handler=Output.STORE)
+def finish_ingest(ctx, project_id, depositor, token, collection_id, dropzone_type):
     """
     Actions to be performed after an ingestion is completed
         Setting AVUs
@@ -149,8 +149,7 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, ingest_resou
             except RuntimeError:
                 ctx.callback.set_ingestion_error_avu(dropzone_path, "Error unmounting", project_id, depositor)
 
-    if dropzone_type == "direct":
-        ingest_resource_host = ctx.callback.get_direct_ingest_resource_host("")["arguments"][0]
+    ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog(
         "Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0

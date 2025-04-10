@@ -43,18 +43,6 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
         ctx.callback.set_ingestion_error_avu(dropzone_path, "Error creating projectCollection", project_id, depositor)
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
-    
-    #TODO: Call this remotely?
-    # document_path = ctx.callback.getCollectionAVU(dropzone_path, "documentPath", "", "", TRUE_AS_STRING)["arguments"][2]
-    # ctx.callback.msiWriteRodsLog(f"collection_id = {collection_id}", 0)
-    # ctx.callback.msiWriteRodsLog(f"document_path = {document_path}", 0)
-    # with open(document_path, "w") as outfile:
-    #     document = json.load(outfile)
-    #     document["collection"] = collection_id
-    #     ctx.msiWriteRodsLog("hello world!!", 0)
-    #     outfile.write(json.dumps(document, indent=4))
-    #     ctx.callback.msiWriteRodsLog("DEBUG: Modifying pre-ingest document {} - Adding collection ID {}".format(document_path, collection_id), 0)
-
     ctx.callback.msiWriteRodsLog("Ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 

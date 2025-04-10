@@ -183,7 +183,7 @@ def add_process_to_output(process, output):
         The rule output to extend
     """
     completed_state = [DropzoneState.INGESTED.value, UnarchiveState.UNARCHIVE_DONE.value, ArchiveState.ARCHIVE_DONE.value]
-    if process["state"] in [DropzoneState.OPEN.value, DropzoneState.WARNING_VALIDATION_INCORRECT.value]:
+    if process["state"] in [DropzoneState.OPEN.value, DropzoneState.WARNING_VALIDATION_INCORRECT.value, DropzoneState.WARNING_UNSUPPORTED_CHARACTER.value]:
         output[ProcessState.OPEN.value].append(process)
     elif process["state"] in completed_state:
         output[ProcessState.COMPLETED.value].append(process)

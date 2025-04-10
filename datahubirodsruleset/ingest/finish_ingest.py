@@ -131,24 +131,6 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, dropzone_typ
     # Add metadata to elastic index
     ctx.callback.index_add_single_project_collection_metadata(project_id, collection_id, "")
 
-    if dropzone_type == "mounted":
-        # Check if mounted dropzone is a legacy mounted dropzone
-        legacy_dropzone = ctx.callback.getCollectionAVU(dropzone_path, "legacy", "", FALSE_AS_STRING, FALSE_AS_STRING)[
-            "arguments"
-        ][2]
-        ctx.callback.msiWriteRodsLog("{} is a legacy dropzone: {}".format(dropzone_path, legacy_dropzone), 0)
-
-        if legacy_dropzone == TRUE_AS_STRING:
-            # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token
-            # is done.
-            # This is because of a bug in the unmount. This is kept in memory for
-            # the remaining of the irodsagent session.
-            # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
-            try:
-                ctx.callback.msiPhyPathReg(dropzone_path, "", "", "unmount", 0)
-            except RuntimeError:
-                ctx.callback.set_ingestion_error_avu(dropzone_path, "Error unmounting", project_id, depositor)
-
     ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog(

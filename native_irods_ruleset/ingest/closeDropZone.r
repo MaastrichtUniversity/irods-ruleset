@@ -42,23 +42,6 @@ IRULE_closeDropZone(*token) {
     get_direct_ingest_resource_host(*directIngestResourceHost);
     msiWriteRodsLog("INFO: Closing dropzone *token from project *project on direct resource host *directIngestResourceHost", 0);
 
-    if (*dropzoneType == "mounted") {
-        getCollectionAVU(*srcColl, "legacy", *legacyDropzone, "false", "false")
-        msiWriteRodsLog("DEBUG: *srcColl is a legacy dropzone: *legacyDropzone", 0)
-
-        if (*legacyDropzone == "true") {
-            # The unmounting of the physical mount point is not done in the delay() where msiRmColl on the token
-            # is done.
-            # This is because of a bug in the unmount. This is kept in memory for
-            # the remaining of the irodsagent session.
-            # See also: https://groups.google.com/d/msg/irod-chat/rasDT-AGAVQ/Bb31VJ9SAgAJ
-            *codeUnmount = errorcode(msiPhyPathReg(*srcColl, "", "", "unmount", *status));
-            if ( *codeUnmount < 0 ) {
-                msiWriteRodsLog("ERROR: msiPhyPathReg failed for *srcColl", 0);
-            }
-        }
-    }
-
     delay("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
         *error = errorcode(msiRmColl(*srcColl, "forceFlag=", *OUT));
         if ( *error < 0 ) {

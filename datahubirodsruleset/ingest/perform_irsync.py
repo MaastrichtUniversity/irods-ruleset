@@ -85,12 +85,14 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
         if dropzone_type == "mounted":
             # Re-set the user CIFS ACL on the mounted network dropzone folder
             ctx.callback.set_dropzone_cifs_acl(token, "write")
-        project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
-        ctx.callback.set_ingestion_error_avu(
-            dropzone_path,
+        # Perform an MSIEXIT here. If this rule is called from the 'perform_ingest' part of the ingest flow,
+        # then this error should be caught as a "RuntimeError" and should translate into the creation of a Jira ticket
+        # and setting the error-ingestion AVU.
+        # If the rule is called by directly calling 'sync_collection_data', then this will just stop execution and *not*
+        # create a Jira ticket and *not* set the error-ingestion AVU.
+        ctx.callback.msiExit(
+            "-1",
             "Error while performing perform_irsync towards '{}:{}'".format(
                 destination_collection, destination_resource
             ),
-            project_id,
-            depositor,
         )

@@ -5,3 +5,4 @@ from datahubirodsruleset.resources.get_resource_status import get_resource_statu
 
 # Private rules
 from datahubirodsruleset.resources.get_direct_ingest_resource_host import get_direct_ingest_resource_host
+from datahubirodsruleset.resources.get_dropzone_resource_host import get_dropzone_resource_host

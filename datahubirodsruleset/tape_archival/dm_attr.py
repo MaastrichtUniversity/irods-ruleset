@@ -42,14 +42,14 @@ def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
         # because in the case of large amounts of files, the 'file_path' variable will be too
         # large for the iRODS server to handle, and will empty the variable and cause issues
         output = ctx.callback.dmattr(file_path, tape_resource_location, "")["arguments"][2].rstrip()
-        file_status = output.split("+")[1]
+        file_status = output.split("+")[0]
         files.append(
             {"physical_path": file_path, "virtual_path": "{}/{}".format(row[1], row[2]), "status": file_status}
         )
 
     files_offline = [file for file in files if file["status"] == "OFL"]
-    files_unmigrating = [file for file in files if file["status"] == "UNM"]
-    files_online = [file for file in files if file["status"] in ("DUL", "REG", "MIG")]
+    files_unmigrating = [file for file in files if file["status"] in ("QUE", "STG")]
+    files_online = [file for file in files if file["status"] in ("DUL", "REG")]
 
     return {
         "files_offline": files_offline,

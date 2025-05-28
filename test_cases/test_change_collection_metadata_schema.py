@@ -61,7 +61,7 @@ class BaseTestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
 
 class TestChangeCollectionMetadataSchemaUM(BaseTestChangeCollectionMetadataSchema):
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
 
 
 class TestChangeCollectionMetadataSchemaS3(BaseTestChangeCollectionMetadataSchema):

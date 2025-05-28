@@ -102,6 +102,12 @@ def perform_unarchive_checks(ctx, unarchival_path):
     for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(tape_resource), AS_LIST, ctx.callback):
         tape_resource_location = row[0]
 
+    # Get the amount of children the project resource has, so we know how many files we should have left after trimming
+    for result in row_iterator("RESC_ID", "RESC_NAME = '{}'".format(project_resource), AS_LIST, ctx.callback):
+        resc_id = result[0]
+    for result in row_iterator("COUNT(RESC_ID)", "RESC_PARENT = '{}'".format(resc_id), AS_LIST, ctx.callback):
+        total_project_resource_children = result[0]
+
     return {
         "service_account": service_account,
         "project_collection_path": project_collection_path,
@@ -110,4 +116,5 @@ def perform_unarchive_checks(ctx, unarchival_path):
         "tape_resource_location": tape_resource_location,
         "tape_resource": tape_resource,
         "project_resource": project_resource,
+        "project_resource_children": total_project_resource_children,
     }

@@ -42,7 +42,7 @@ class TestTapeArchiveMountedS3(BaseTestTapeArchiveMounted):
 
 class TestTapeArchiveMountedUM(BaseTestTapeArchiveMounted):
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
 
 
 class TestTapeArchiveMountedAZM(BaseTestTapeArchiveMounted):

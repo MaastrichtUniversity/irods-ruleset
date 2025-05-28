@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r create_new_project -a "ires-hnas-umResource,replRescUM01,PROJECTNAME,jmelius,opalmen,UM-30001234X,{'enableDropzoneSharing':'true'}"
+# /rules/tests/run_test.sh -r create_new_project -a "ires-hnas-umResource,passRescUM01,PROJECTNAME,jmelius,opalmen,UM-30001234X,{'enableDropzoneSharing':'true'}"
 from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 

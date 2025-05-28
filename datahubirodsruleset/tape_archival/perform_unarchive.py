@@ -94,7 +94,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 check_results["project_resource"],
                 check_results["service_account"],
                 False,
-                True
+                True,
             )
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
@@ -110,7 +110,14 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Trim
         try:
-            ctx.callback.msiDataObjTrim(file["virtual_path"], check_results["tape_resource"], "null", "2", "null", 0)
+            ctx.callback.msiDataObjTrim(
+                file["virtual_path"],
+                check_results["tape_resource"],
+                "null",
+                check_results["project_resource_children"],
+                "null",
+                0,
+            )
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(

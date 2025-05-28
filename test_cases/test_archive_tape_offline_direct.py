@@ -41,7 +41,7 @@ class TestTapeArchiveDirectS3(BaseTestTapeArchiveDirect):
 
 class TestTapeArchiveDirectUM(BaseTestTapeArchiveDirect):
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
 
 
 class TestTapeArchiveDirectAZM(BaseTestTapeArchiveDirect):

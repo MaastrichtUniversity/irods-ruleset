@@ -1,5 +1,5 @@
 # This rule will calculate the size of a collection distributed over (multiple) resources
-# E.g. 100 GiB on replRescUM01, 50 GiB on replRescUMCeph01
+# E.g. 100 GiB on passRescUM01, 50 GiB on replRescUMCeph01
 # WARNING: This can become very compute expensive!
 #
 # Call with

@@ -59,7 +59,7 @@ class TestProjects:
     data_steward = manager2
 
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"
     schema_version = "1.0.0"

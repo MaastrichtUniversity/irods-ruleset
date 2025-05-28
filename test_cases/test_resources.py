@@ -37,7 +37,7 @@ class TestResources:
     manager2 = "opalmen"
 
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"
     schema_version = "1.0.0"
@@ -138,7 +138,7 @@ class TestResources:
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
         for item in rule_parsed:
-            assert item["name"] in ["replRescAZM01", "replRescUM01", "replRescUMCeph01"]
+            assert item["name"] in ["replRescAZM01", "passRescUM01", "replRescUMCeph01"]
 
     def test_get_ingest_resources(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getIngestResources.r"

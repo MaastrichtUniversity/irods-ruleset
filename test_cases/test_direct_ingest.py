@@ -29,7 +29,7 @@ class BaseTestCaseMountedIngestAsContributor(BaseTestCaseDirectIngest):
 
 class TestDirectIngestUM(BaseTestCaseDirectIngest):
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
 
 
 class TestDirectIngestAZM(BaseTestCaseDirectIngest):
@@ -44,7 +44,7 @@ class TestDirectIngestS3(BaseTestCaseDirectIngest):
 
 class TestDirectIngestUMAsContributor(BaseTestCaseMountedIngestAsContributor):
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
 
 
 class TestDirectIngestAZMAsContributor(BaseTestCaseMountedIngestAsContributor):

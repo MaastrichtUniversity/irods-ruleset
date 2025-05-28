@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r get_resource_status -a "replRescUM01"
+# /rules/tests/run_test.sh -r get_resource_status -a "passRescUM01"
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output

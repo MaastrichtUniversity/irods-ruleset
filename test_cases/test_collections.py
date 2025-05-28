@@ -165,7 +165,10 @@ class TestCollections:
         rule = '/rules/tests/run_test.sh -r get_collection_tree -a "{}"'.format(project_collection_path)
         ret = subprocess.check_output(rule, shell=True)
         collection_tree = json.loads(ret)
-        assert len(collection_tree) == 5
+        if "pass" in self.destination_resource:
+            assert len(collection_tree) == 3
+        elif "repl" in self.destination_resource:
+            assert len(collection_tree) == 5
 
     def test_set_acl(self):
         collection_path = "/nlmumc/home/jmelius"

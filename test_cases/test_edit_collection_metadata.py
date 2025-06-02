@@ -70,7 +70,7 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
 
 class TestEditCollectionMetadataUM(BaseEditCollectionMetadata):
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
 
 
 class TestEditCollectionMetadataS3(BaseEditCollectionMetadata):

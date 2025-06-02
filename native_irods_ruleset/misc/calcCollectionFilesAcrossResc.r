@@ -1,5 +1,5 @@
 # This rule will calculate the number of files distributed over (multiple) coordinating resources
-# E.g. 100 files on replRescUM01, 50 files on replRescUMCeph01
+# E.g. 100 files on passRescUM01, 50 files on replRescUMCeph01
 # Call with
 #
 # irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionFilesAcrossResc.r "*collection='/nlmumc/projects/P000000001/C000000001'"

@@ -74,7 +74,7 @@ class TestCollections:
     manager2 = "opalmen"
 
     ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUM01"
+    destination_resource = "passRescUM01"
     budget_number = "UM-30001234X"
     schema_name = "DataHub_general_schema"
     schema_version = "1.0.0"
@@ -165,7 +165,10 @@ class TestCollections:
         rule = '/rules/tests/run_test.sh -r get_collection_tree -a "{}"'.format(project_collection_path)
         ret = subprocess.check_output(rule, shell=True)
         collection_tree = json.loads(ret)
-        assert len(collection_tree) == 5
+        if "pass" in self.destination_resource:
+            assert len(collection_tree) == 3
+        elif "repl" in self.destination_resource:
+            assert len(collection_tree) == 5
 
     def test_set_acl(self):
         collection_path = "/nlmumc/home/jmelius"

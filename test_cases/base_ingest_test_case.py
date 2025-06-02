@@ -192,9 +192,13 @@ class BaseTestCaseIngest:
         )
         ret = subprocess.check_output(query, shell=True, encoding="UTF-8")
         resources = ret.splitlines()
-        assert len(resources) == 2
-        assert self.destination_resource in resources[0]
-        assert self.destination_resource in resources[1]
+        if "repl" in self.destination_resource:
+            assert len(resources) == 2
+            assert self.destination_resource in resources[0]
+            assert self.destination_resource in resources[1]
+        elif "pass" in self.destination_resource:
+            assert len(resources) == 1
+            assert self.destination_resource in resources[0]           
 
     def test_collection_data_replicas(self):
         """
@@ -204,7 +208,10 @@ class BaseTestCaseIngest:
             self.project_path, self.collection_id
         )
         ret = subprocess.check_output(query, shell=True)
-        assert int(ret) == 4
+        if "repl" in self.destination_resource:
+            assert int(ret) == 4
+        elif "pass" in self.destination_resource:
+            assert int(ret) == 2
 
     def test_elastic_index_update(self):
         instance = get_project_collection_instance_in_elastic(self.project_id)

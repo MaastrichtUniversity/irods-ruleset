@@ -18,7 +18,7 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
     ctx : Context
         Combined type of callback and rei struct.
     destination_resource: str
-        The resource that the ingestion should end up in; e.g. 'replRescUM01'
+        The resource that the ingestion should end up in; e.g. 'passRescUM01'
     token: str
         The dropzone token, to locate the source collection; e.g: 'handsome-snake'
     destination_collection: str

@@ -84,13 +84,13 @@ class TestResources:
         assert rule_parsed["numFilesPerResc"][0]["numFiles"] == "4"
         assert rule_parsed["numFilesPerResc"][0]["resourceID"].isnumeric()
         subprocess.check_call(
-            "iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(
+            "iput -R replRescAZM02 {} /nlmumc/projects/{}/{}/temp_file".format(
                 TMP_INSTANCE_PATH, self.project_id, self.collection_id
             ),
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
-        run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
+        run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM02\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
@@ -113,13 +113,13 @@ class TestResources:
         assert rule_parsed["sizePerResc"][0]["dataSize"] == "532"
         assert rule_parsed["sizePerResc"][0]["resourceID"].isnumeric()
         subprocess.check_call(
-            "iput -R replRescAZM01 {} /nlmumc/projects/{}/{}/temp_file".format(
+            "iput -R replRescAZM02 {} /nlmumc/projects/{}/{}/temp_file".format(
                 TMP_INSTANCE_PATH, self.project_id, self.collection_id
             ),
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
-        run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM01\' "'
+        run_iquest = 'iquest "%s" "SELECT RESC_ID WHERE RESC_NAME = \'replRescAZM02\' "'
         iquest_result = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
@@ -138,7 +138,7 @@ class TestResources:
         rule_parsed = json.loads(rule_output)
         assert len(rule_parsed) > 0
         for item in rule_parsed:
-            assert item["name"] in ["replRescAZM01", "passRescUM01", "replRescUMCeph01"]
+            assert item["name"] in ["replRescAZM02", "passRescUM01", "replRescUMCeph01"]
 
     def test_get_ingest_resources(self):
         rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getIngestResources.r"

@@ -42,7 +42,7 @@ class TestMountedIngestUM(BaseTestCaseMountedIngest):
 
 class TestMountedIngestAZM(BaseTestCaseMountedIngest):
     ingest_resource = "ires-hnas-azmResource"
-    destination_resource = "replRescAZM01"
+    destination_resource = "replRescAZM02"
 
 
 class TestMountedIngestS3(BaseTestCaseMountedIngest):
@@ -57,7 +57,7 @@ class TestMountedIngestUMAsContributor(BaseTestCaseMountedIngestAsContributor):
 
 class TestMountedIngestAZMAsContributor(BaseTestCaseMountedIngestAsContributor):
     ingest_resource = "ires-hnas-azmResource"
-    destination_resource = "replRescAZM01"
+    destination_resource = "replRescAZM02"
 
 
 class TestMountedIngestS3AsContributor(BaseTestCaseMountedIngestAsContributor):

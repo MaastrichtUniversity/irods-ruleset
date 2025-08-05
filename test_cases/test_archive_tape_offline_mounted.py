@@ -47,4 +47,4 @@ class TestTapeArchiveMountedUM(BaseTestTapeArchiveMounted):
 
 class TestTapeArchiveMountedAZM(BaseTestTapeArchiveMounted):
     ingest_resource = "ires-hnas-azmResource"
-    destination_resource = "replRescAZM01"
+    destination_resource = "replRescAZM02"

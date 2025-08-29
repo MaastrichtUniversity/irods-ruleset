@@ -46,4 +46,4 @@ class TestTapeArchiveDirectUM(BaseTestTapeArchiveDirect):
 
 class TestTapeArchiveDirectAZM(BaseTestTapeArchiveDirect):
     ingest_resource = "ires-hnas-azmResource"
-    destination_resource = "replRescAZM01"
+    destination_resource = "replRescAZM02"

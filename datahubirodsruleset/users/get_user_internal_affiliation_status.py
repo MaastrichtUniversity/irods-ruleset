@@ -2,7 +2,7 @@
 import json
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -21,12 +21,19 @@ def get_user_internal_affiliation_status(ctx, username):
     bool
         True, if the user is from the UM or MUMC organization. Otherwise, False.
     """
-    ret = ctx.get_user_attribute_value(username, "voPersonExternalID", TRUE_AS_STRING, "result")["arguments"][3]
-    external_id = json.loads(ret)["value"]
-    try:
-        affiliation = external_id.split("@")[1]
-    except ValueError:
-        affiliation = ""
-    if affiliation in ["unimaas.nl", "mumc.nl"]:
-        return True
-    return False
+    ret = ctx.get_user_attribute_value(
+        username, "voPersonExternalID", FALSE_AS_STRING, "result"
+    )["arguments"][3]
+
+    external_id = json.loads(ret).get("value")
+
+    # Early return if empty / None
+    if not external_id:
+        return False
+
+    # Safely extract affiliation
+    parts = external_id.split("@")
+    if len(parts) != 2:
+        return False
+
+    return parts[1] in {"unimaas.nl", "mumc.nl"}

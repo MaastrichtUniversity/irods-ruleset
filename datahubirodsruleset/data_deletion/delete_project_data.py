@@ -1,5 +1,7 @@
 # /rules/tests/run_test.sh -r delete_project_data -a "/nlmumc/projects/P000000002,false"
 
+import json
+
 from dhpythonirodsutils.enums import DataDeletionState, DataDeletionAttribute
 from dhpythonirodsutils.formatters import format_string_to_boolean
 from genquery import row_iterator, AS_LIST
@@ -12,7 +14,7 @@ from datahubirodsruleset.data_deletion.restore_project_collection_user_access im
 from datahubirodsruleset.decorator import make, Output
 
 
-@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
+@make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
 def delete_project_data(ctx, user_project_path, commit):
     """
     Rule to trigger the deletion of all the data files inside the input project.
@@ -28,13 +30,20 @@ def delete_project_data(ctx, user_project_path, commit):
         expected values: "true" or "false". If true, execute the data files deletion.
     """
     commit = format_string_to_boolean(commit)
+    output_dict = {"messages": [], "collections": []}
 
     ctx.callback.writeLine("stdout", "")
     ctx.callback.writeLine("stdout", "* Running delete_project_data with commit mode as '{}'".format(commit))
+    output_dict["messages"].append("Running delete_project_data with commit mode as '{}'".format(commit))
 
     check_collection_delete_data_state(ctx, user_project_path, DataDeletionState.PENDING.value)
-    run_delete_project_data(ctx, user_project_path, commit)
+    output_dict["collections"] = run_delete_project_data(ctx, user_project_path, commit)
     cleanup_delete_project_data(ctx, user_project_path, commit)
+
+    json_output = json.dumps(output_dict, indent=2)
+    if commit:
+        ctx.callback.msiWriteRodsLog(json_output, 0)
+    return json_output
 
 
 def run_delete_project_data(ctx, user_project_path, commit):
@@ -66,10 +75,16 @@ def run_delete_project_data(ctx, user_project_path, commit):
         project_collections.append(result[0])
 
     ctx.callback.writeLine("stdout", "* Start deletion for {}".format(user_project_path))
+    collection_outputs = []
     for collection_path in project_collections:
         ctx.callback.writeLine("stdout", "\t* Loop collection {}".format(collection_path))
 
-        delete_collection_data(ctx, collection_path, commit)
+        output = json.loads(
+            ctx.callback.delete_project_collection_data(collection_path, str(commit).lower(), "")["arguments"][2]
+        )
+        collection_outputs.append({"collection_path": collection_path, "output": output})
+
+    return collection_outputs
 
 
 def cleanup_delete_project_data(ctx, user_project_path, commit):

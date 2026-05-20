@@ -2,6 +2,8 @@
 # Build rulesets
 *.re
 test.r
+build/
+*.egg-info/
 venv/
 .venv/
 __pycache__/

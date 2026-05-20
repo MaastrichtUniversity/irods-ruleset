@@ -3,6 +3,10 @@
 *.re
 test.r
 venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
 test_cases/.pytest_cache
 test_cases/*.pyc
 test_cases/__pycache__

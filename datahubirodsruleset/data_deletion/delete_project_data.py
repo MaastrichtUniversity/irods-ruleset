@@ -30,7 +30,7 @@ def delete_project_data(ctx, user_project_path, commit):
     commit = format_string_to_boolean(commit)
 
     ctx.callback.writeLine("stdout", "")
-    ctx.callback.writeLine("stdout", "* Running delete_project_data with commit mode as '{}'".format(commit))
+    ctx.callback.writeLine("stdout", f"* Running delete_project_data with commit mode as '{commit}'")
 
     check_collection_delete_data_state(ctx, user_project_path, DataDeletionState.PENDING.value)
     run_delete_project_data(ctx, user_project_path, commit)
@@ -50,24 +50,22 @@ def run_delete_project_data(ctx, user_project_path, commit):
     commit : bool
         If true, execute the data file deletion.
     """
-    ctx.callback.writeLine("stdout", "* Update ACL of rods for {}".format(user_project_path))
+    ctx.callback.writeLine("stdout", f"* Update ACL of rods for {user_project_path}")
     if commit:
         ctx.callback.msiSetACL("recursive", "admin:own", "rods", user_project_path)
 
     project_collections = []
     for result in row_iterator(
         "COLL_NAME",
-        "META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}' AND COLL_PARENT_NAME = '{}'".format(
-            DataDeletionAttribute.STATE.value, DataDeletionState.PENDING.value, user_project_path
-        ),
+        f"META_COLL_ATTR_NAME = '{DataDeletionAttribute.STATE.value}' AND META_COLL_ATTR_VALUE = '{DataDeletionState.PENDING.value}' AND COLL_PARENT_NAME = '{user_project_path}'",
         AS_LIST,
         ctx.callback,
     ):
         project_collections.append(result[0])
 
-    ctx.callback.writeLine("stdout", "* Start deletion for {}".format(user_project_path))
+    ctx.callback.writeLine("stdout", f"* Start deletion for {user_project_path}")
     for collection_path in project_collections:
-        ctx.callback.writeLine("stdout", "\t* Loop collection {}".format(collection_path))
+        ctx.callback.writeLine("stdout", f"\t* Loop collection {collection_path}")
 
         delete_collection_data(ctx, collection_path, commit)
 
@@ -92,7 +90,7 @@ def cleanup_delete_project_data(ctx, user_project_path, commit):
     if commit:
         backup_project_path = IRODS_BACKUP_ACL_BASE_PATH + user_project_path.replace(IRODS_ZONE_BASE_PATH, "")
         ctx.callback.msiRmColl(backup_project_path, "forceFlag=", 0)
-        ctx.callback.msiWriteRodsLog("INFO: Deleted backup project '{}'".format(backup_project_path), 0)
+        ctx.callback.msiWriteRodsLog(f"INFO: Deleted backup project '{backup_project_path}'", 0)
         ctx.callback.remove_collection_attribute_value(user_project_path, DataDeletionAttribute.STATE.value)
         ctx.callback.setCollectionAVU(
             user_project_path, DataDeletionAttribute.STATE.value, DataDeletionState.DELETED.value

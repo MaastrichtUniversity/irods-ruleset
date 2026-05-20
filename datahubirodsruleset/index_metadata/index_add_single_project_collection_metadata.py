@@ -33,7 +33,7 @@ def index_add_single_project_collection_metadata(ctx, project_id, collection_id)
 
     index_success = index_project_collection(ctx, es, project_collection_path)
     if not index_success:
-        error_message = "ERROR: Elasticsearch update index failed for {}".format(project_collection_path)
+        error_message = f"ERROR: Elasticsearch update index failed for {project_collection_path}"
         ctx.callback.msiWriteRodsLog(error_message, 0)
 
     return index_success

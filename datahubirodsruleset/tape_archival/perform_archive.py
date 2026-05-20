@@ -32,7 +32,7 @@ def perform_archive(ctx, archival_path, check_results, username_initiator):
     if files_to_archive:
         value = ArchiveState.NUMBER_OF_FILES_FOUND.value.format(len(files_to_archive))
         ctx.callback.msiWriteRodsLog(
-            "INFO: Archival workflow started for {} ({} file(s))".format(archival_path, str(len(files_to_archive))),
+            f"INFO: Archival workflow started for {archival_path} ({len(files_to_archive)!s} file(s))",
             0,
         )
         set_tape_avu(ctx, check_results["project_collection_path"], value)
@@ -79,7 +79,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
         # We perform checksums beforehand because the 'irepl' command does not include checksumming
         try:
             checksum = ctx.callback.msiDataObjChksum(file["path"], "", "")["arguments"][2]
-            ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+            ctx.callback.msiWriteRodsLog(f"DEBUG: chksum done {checksum}", 0)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(
@@ -87,7 +87,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.ARCHIVE.value,
                 ArchiveState.ERROR_ARCHIVE_FAILED.value,
-                "Checksum of {} from {} FAILED.".format(file["path"], file["coordinating_resource"]),
+                f"Checksum of {file['path']} from {file['coordinating_resource']} FAILED.",
             )
 
         # Replicate
@@ -101,9 +101,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.ARCHIVE.value,
                 ArchiveState.ERROR_ARCHIVE_FAILED.value,
-                "Replication of {} from {} to {} FAILED.".format(
-                    file["path"], file["coordinating_resource"], check_results["tape_resource"]
-                ),
+                f"Replication of {file['path']} from {file['coordinating_resource']} to {check_results['tape_resource']} FAILED.",
             )
 
         # Trim
@@ -116,7 +114,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.ARCHIVE.value,
                 ArchiveState.ERROR_ARCHIVE_FAILED.value,
-                "Trim of {} from {} FAILED.".format(file["path"], file["coordinating_resource"]),
+                f"Trim of {file['path']} from {file['coordinating_resource']} FAILED.",
             )
 
         files_archived += 1
@@ -148,7 +146,7 @@ def get_coordinating_resources(ctx):
         "RESC_PARENT,RESC_LOC", "RESC_LOC != 'EMPTY_RESC_HOST' AND RESC_PARENT != ''", AS_LIST, ctx.callback
     ):
         for resource_information in row_iterator(
-            "RESC_NAME, RESC_ID", "RESC_ID = '{}'".format(resc[0]), AS_LIST, ctx.callback
+            "RESC_NAME, RESC_ID", f"RESC_ID = '{resc[0]}'", AS_LIST, ctx.callback
         ):
             resources[resource_information[1]] = resource_information[0]
     return resources
@@ -169,10 +167,10 @@ def clean_up_and_inform(ctx, check_results, files_archived):
         The amount of files archived by this rule
     """
     set_tape_avu(ctx, check_results["project_collection_path"], ArchiveState.ARCHIVE_DONE.value)
-    ctx.callback.msiWriteRodsLog("DEBUG: surfArchiveScanner archived {} files".format(files_archived), 0)
+    ctx.callback.msiWriteRodsLog(f"DEBUG: surfArchiveScanner archived {files_archived} files", 0)
 
     kvp = ctx.callback.msiString2KeyValPair(
-        "{}={}".format(ProcessAttribute.ARCHIVE.value, ArchiveState.ARCHIVE_DONE.value), irods_types.BytesBuf()
+        f"{ProcessAttribute.ARCHIVE.value}={ArchiveState.ARCHIVE_DONE.value}", irods_types.BytesBuf()
     )["arguments"][1]
     ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
 
@@ -224,15 +222,13 @@ def get_files_to_archive(ctx, archival_path, check_results, coordinating_resourc
 
     for row in row_iterator(
         "RESC_PARENT,COLL_NAME,DATA_NAME",
-        "COLL_NAME LIKE '{}%' AND DATA_RESC_NAME != '{}' AND DATA_SIZE >= '{}'".format(
-            archival_path, check_results["tape_resource"], check_results["minimum_file_size"]
-        ),
+        f"COLL_NAME LIKE '{archival_path}%' AND DATA_RESC_NAME != '{check_results['tape_resource']}' AND DATA_SIZE >= '{check_results['minimum_file_size']}'",
         AS_LIST,
         ctx.callback,
     ):
         files_to_archive.append(
             {
-                "path": "{}/{}".format(row[1], row[2]),
+                "path": f"{row[1]}/{row[2]}",
                 "parent_resource_id": row[0],
                 "coordinating_resource": coordinating_resources[row[0]],
             }

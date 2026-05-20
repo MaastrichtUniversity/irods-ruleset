@@ -59,7 +59,7 @@ class BaseTestTapeArchive:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         create_user(cls.manager1)
         create_data_steward(cls.manager2)
         cls.give_user_ingest_access(cls.manager1)
@@ -72,29 +72,29 @@ class BaseTestTapeArchive:
         cls.add_archive_data_to_dropzone()
         start_and_wait_for_ingest(cls)
 
-        set_enable_archive = "imeta set -C {} enableArchive true".format(cls.project_path)
+        set_enable_archive = f"imeta set -C {cls.project_path} enableArchive true"
         subprocess.check_call(set_enable_archive, shell=True)
 
-        set_enable_unarchive = "imeta set -C {} enableUnarchive true".format(cls.project_path)
+        set_enable_unarchive = f"imeta set -C {cls.project_path} enableUnarchive true"
         subprocess.check_call(set_enable_unarchive, shell=True)
 
         cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
-        cls.large_file_logical_path = "{}/large_file".format(cls.project_collection_path)
+        cls.large_file_logical_path = f"{cls.project_collection_path}/large_file"
 
-        cls.run_ichmod = "ichmod -rM own {} {}".format(cls.service_account, cls.project_collection_path)
+        cls.run_ichmod = f"ichmod -rM own {cls.service_account} {cls.project_collection_path}"
         cls.rule_status = '/rules/tests/run_test.sh -r get_user_active_processes -a "false,true,true"'
-        cls.check_small_file_resource = "ils -l {}/instance.json".format(cls.project_collection_path)
-        cls.check_large_file_resource = "ils -l {}".format(cls.large_file_logical_path)
-        print("End {}.setup_class".format(cls.__name__))
+        cls.check_small_file_resource = f"ils -l {cls.project_collection_path}/instance.json"
+        cls.check_large_file_resource = f"ils -l {cls.large_file_logical_path}"
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
         remove_user(cls.manager1)
         remove_user(cls.manager2)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     # region extended setup
     @classmethod
@@ -114,11 +114,8 @@ class BaseTestTapeArchive:
 
     def test_tape_avu_permissions(self):
         # setup
-        set_enable_archive = "imeta set -C {} enableArchive {{value}}".format(self.project_path)
-        subprocess.check_call(set_enable_archive.format(value="false"), shell=True)
-
-        set_enable_unarchive = "imeta set -C {} enableUnarchive {{value}}".format(self.project_path)
-        subprocess.check_call(set_enable_unarchive.format(value="false"), shell=True)
+        subprocess.check_call(f"imeta set -C {self.project_path} enableArchive false", shell=True)
+        subprocess.check_call(f"imeta set -C {self.project_path} enableUnarchive false", shell=True)
 
         # assert
         with pytest.raises(subprocess.CalledProcessError):
@@ -128,13 +125,14 @@ class BaseTestTapeArchive:
             self.run_unarchive(self.project_collection_path)
 
         # teardown
-        subprocess.check_call(set_enable_archive.format(value="true"), shell=True)
-        subprocess.check_call(set_enable_unarchive.format(value="true"), shell=True)
+        subprocess.check_call(f"imeta set -C {self.project_path} enableArchive true", shell=True)
+        subprocess.check_call(f"imeta set -C {self.project_path} enableUnarchive true", shell=True)
 
     def test_tape_running_archive_process(self):
         # setup
-        modify_archive_state = "imeta -M {{action}} -C {} archiveState in-queue-for-archival".format(self.project_collection_path)
-        subprocess.check_call(modify_archive_state.format(action="set"), shell=True)
+        subprocess.check_call(
+            f"imeta -M set -C {self.project_collection_path} archiveState in-queue-for-archival", shell=True
+        )
 
         # assert
         with pytest.raises(subprocess.CalledProcessError):
@@ -144,12 +142,15 @@ class BaseTestTapeArchive:
             self.run_unarchive(self.project_collection_path)
 
         # teardown
-        subprocess.check_call(modify_archive_state.format(action="rm"), shell=True)
+        subprocess.check_call(
+            f"imeta -M rm -C {self.project_collection_path} archiveState in-queue-for-archival", shell=True
+        )
 
     def test_tape_running_unarchive_process(self):
         # setup
-        modify_unarchive_state = "imeta -M {{action}} -C {} unArchiveState in-queue-for-unarchival".format(self.project_collection_path)
-        subprocess.check_call(modify_unarchive_state.format(action="set"), shell=True)
+        subprocess.check_call(
+            f"imeta -M set -C {self.project_collection_path} unArchiveState in-queue-for-unarchival", shell=True
+        )
 
         # assert
         with pytest.raises(subprocess.CalledProcessError):
@@ -159,12 +160,13 @@ class BaseTestTapeArchive:
             self.run_unarchive(self.project_collection_path)
 
         # teardown
-        subprocess.check_call(modify_unarchive_state.format(action="rm"), shell=True)
+        subprocess.check_call(
+            f"imeta -M rm -C {self.project_collection_path} unArchiveState in-queue-for-unarchival", shell=True
+        )
 
     def test_tape_when_tape_resc_is_down(self):
         # setup
-        modify_resc_availability = "iadmin modresc arcRescSURF01 status {}"
-        subprocess.check_call(modify_resc_availability.format("down"), shell=True)
+        subprocess.check_call("iadmin modresc arcRescSURF01 status down", shell=True)
 
         # assert
         with pytest.raises(subprocess.CalledProcessError):
@@ -174,12 +176,11 @@ class BaseTestTapeArchive:
             self.run_unarchive(self.project_collection_path)
 
         # teardown
-        subprocess.check_call(modify_resc_availability.format("up"), shell=True)
+        subprocess.check_call("iadmin modresc arcRescSURF01 status up", shell=True)
 
     def test_tape_when_destination_resc_is_down(self):
         # setup
-        modify_resc_availability = "iadmin modresc {} status {{status}}".format(self.destination_resource)
-        subprocess.check_call(modify_resc_availability.format(status="down"), shell=True)
+        subprocess.check_call(f"iadmin modresc {self.destination_resource} status down", shell=True)
 
         # assert
         with pytest.raises(subprocess.CalledProcessError):
@@ -189,7 +190,7 @@ class BaseTestTapeArchive:
             self.run_unarchive(self.project_collection_path)
 
         # teardown
-        subprocess.check_call(modify_resc_availability.format(status="up"), shell=True)
+        subprocess.check_call(f"iadmin modresc {self.destination_resource} status up", shell=True)
 
     def test_unarchive_invalid_path(self):
         # assert
@@ -197,28 +198,20 @@ class BaseTestTapeArchive:
             self.run_unarchive("/nlmumc/home/rods")
 
     def test_archive_without_service_account(self):
-        rule_archive = '/rules/tests/run_test.sh -r start_archive -a "{},{}" -u {}'.format(
-            self.project_collection_path, self.manager1, "rods"
-        )
+        rule_archive = f'/rules/tests/run_test.sh -r start_archive -a "{self.project_collection_path},{self.manager1}" -u rods'
         # assert
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(rule_archive, shell=True)
 
     def test_unarchive_without_service_account(self):
-        rule_unarchive = '/rules/tests/run_test.sh -r start_unarchive -a "{},{}" -u {}'.format(
-            self.project_collection_path, self.manager1, "rods"
-        )
+        rule_unarchive = f'/rules/tests/run_test.sh -r start_unarchive -a "{self.project_collection_path},{self.manager1}" -u rods'
         # assert
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(rule_unarchive, shell=True)
 
     def test_tape_with_non_existent_pc(self):
-        rule_unarchive = '/rules/tests/run_test.sh -r start_unarchive -a "{},{}" -u {}'.format(
-            "/nlmumc/projects/P100000000/C000000001", self.manager1, self.service_account
-        )
-        rule_archive = '/rules/tests/run_test.sh -r start_archive -a "{},{}" -u {}'.format(
-            "/nlmumc/projects/P100000000/C000000001", self.manager1, self.service_account
-        )
+        rule_unarchive = f'/rules/tests/run_test.sh -r start_unarchive -a "/nlmumc/projects/P100000000/C000000001,{self.manager1}" -u {self.service_account}'
+        rule_archive = f'/rules/tests/run_test.sh -r start_archive -a "/nlmumc/projects/P100000000/C000000001,{self.manager1}" -u {self.service_account}'
         # assert
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(rule_unarchive, shell=True)
@@ -232,9 +225,7 @@ class BaseTestTapeArchive:
     def run_archive(self):
         # Setup Archive
         subprocess.check_call(self.run_ichmod, shell=True)
-        rule_archive = '/rules/tests/run_test.sh -r start_archive -a "{},{}" -u {}'.format(
-            self.project_collection_path, self.manager1, self.service_account
-        )
+        rule_archive = f'/rules/tests/run_test.sh -r start_archive -a "{self.project_collection_path},{self.manager1}" -u {self.service_account}'
         subprocess.check_call(rule_archive, shell=True)
 
         ret = subprocess.check_output(self.rule_status, shell=True)
@@ -253,9 +244,7 @@ class BaseTestTapeArchive:
     def run_unarchive(self, unarchive_path):
         # Setup Un-archive
         subprocess.check_call(self.run_ichmod, shell=True)
-        rule_unarchive = '/rules/tests/run_test.sh -r start_unarchive -a "{},{}" -u {}'.format(
-            unarchive_path, self.manager1, self.service_account
-        )
+        rule_unarchive = f'/rules/tests/run_test.sh -r start_unarchive -a "{unarchive_path},{self.manager1}" -u {self.service_account}'
         subprocess.check_call(rule_unarchive, shell=True)
 
         ret = subprocess.check_output(self.rule_status, shell=True)

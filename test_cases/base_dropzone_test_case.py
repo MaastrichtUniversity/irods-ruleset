@@ -40,26 +40,24 @@ class BaseTestCaseDropZones:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     def test_dropzone_avu(self):
-        rule = '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
-            self.token, self.dropzone_type
-        )
+        rule = f'/rules/tests/run_test.sh -r get_active_drop_zone -a "{self.token},false,{self.dropzone_type}"'
         ret = subprocess.check_output(rule, shell=True)
 
         drop_zone = json.loads(ret)
@@ -83,18 +81,16 @@ class BaseTestCaseDropZones:
         dropzone_path = formatters.format_dropzone_path(new_token, self.dropzone_type)
 
         # Make sure rods has own access
-        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "recursive,admin:own,{},{}"'.format(
-            "rods", dropzone_path
-        )
+        rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "recursive,admin:own,rods,{dropzone_path}"'
         subprocess.check_call(rule_set_acl, shell=True)
 
         # Check that the depositor lost access on the dropzone collection (not all files)
-        acl = "ils -A {}".format(dropzone_path)
+        acl = f"ils -A {dropzone_path}"
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         # 3 => dropzone collection, instance.json & schema.json
         assert ret_acl.count(self.depositor) == 3
 
-        rule_remove_acl = '/rules/tests/run_test.sh -r remove_users_dropzone_acl -a "{}"'.format(dropzone_path)
+        rule_remove_acl = f'/rules/tests/run_test.sh -r remove_users_dropzone_acl -a "{dropzone_path}"'
         subprocess.check_call(rule_remove_acl, shell=True)
 
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
@@ -103,13 +99,12 @@ class BaseTestCaseDropZones:
 
         # Put the dropzone deletion to the queue
         rule_remove_dropzone = (
-            "irule -r irods_rule_engine_plugin-irods_rule_language-instance "
-            "-F /rules/native_irods_ruleset/ingest/closeDropZone.r \"*token='{}'\"".format(new_token)
+            f"irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/ingest/closeDropZone.r \"*token='{new_token}'\""
         )
         subprocess.check_call(rule_remove_dropzone, shell=True)
 
         # Check the deletion
-        run_iquest = 'iquest "%s" "SELECT COLL_NAME WHERE COLL_NAME = \'{}\' "'.format(dropzone_path)
+        run_iquest = f'iquest "%s" "SELECT COLL_NAME WHERE COLL_NAME = \'{dropzone_path}\' "'
 
         fail_safe = 100
         while fail_safe != 0:

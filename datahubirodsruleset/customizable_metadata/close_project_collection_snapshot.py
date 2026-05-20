@@ -40,9 +40,7 @@ def close_project_collection_snapshot(ctx, project_id, collection_id, username):
         # Because the user have been granted write access on the collection's root, '.metadata_versions' will be created
         # during the execution of create_collection_metadata_snapshot and therefore have 'write' access to it.
         ctx.callback.msiWriteRodsLog(
-            "DEBUG: '{}' doesn't exist yet while setting ACL for '{}' in close_project_collection_snapshot".format(
-                metadata_folder_path, username
-            ),
+            f"DEBUG: '{metadata_folder_path}' doesn't exist yet while setting ACL for '{username}' in close_project_collection_snapshot",
             0,
         )
 

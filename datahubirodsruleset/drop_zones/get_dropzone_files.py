@@ -27,13 +27,13 @@ def get_dropzone_files(ctx, token, directory):
 
     output = []
     dropzone_path = formatters.format_dropzone_path(token, "direct")
-    absolute_path = "{}{}".format(dropzone_path, directory)
+    absolute_path = f"{dropzone_path}{directory}"
 
     if absolute_path[-1] == "/":
         absolute_path = absolute_path[:-1]
 
     for result in row_iterator(
-        "COLL_NAME, COLL_CREATE_TIME", "COLL_PARENT_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback
+        "COLL_NAME, COLL_CREATE_TIME", f"COLL_PARENT_NAME = '{absolute_path}'", AS_LIST, ctx.callback
     ):
         # Extract only the name of the sub-folder from the full name/path
         name = result[0].rsplit("/", 1)[1]
@@ -49,7 +49,7 @@ def get_dropzone_files(ctx, token, directory):
         output.append(folder_node)
 
     for result in row_iterator(
-        "DATA_NAME, DATA_SIZE, DATA_CREATE_TIME", "COLL_NAME = '{}'".format(absolute_path), AS_LIST, ctx.callback
+        "DATA_NAME, DATA_SIZE, DATA_CREATE_TIME", f"COLL_NAME = '{absolute_path}'", AS_LIST, ctx.callback
     ):
         relative_data_path = absolute_path + "/" + result[0]
         relative_data_path = relative_data_path.replace(dropzone_path, "")

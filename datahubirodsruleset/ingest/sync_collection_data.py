@@ -54,7 +54,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
     if state == DropzoneState.ERROR_INGESTION.value:
         ingest_restart = True
         before = time.time()
-        ctx.callback.msiWriteRodsLog("Restarting ingestion {}".format(dropzone_path), 0)
+        ctx.callback.msiWriteRodsLog(f"Restarting ingestion {dropzone_path}", 0)
         # If we are restarting the ingestion, make sure that the rods user has access to both the source and destination collection
         ctx.callback.msiSetACL("default", "admin:own", "rods", destination_collection)
         if dropzone_type == "direct":
@@ -70,9 +70,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
         ctx.remoteExec(
             ingest_resource_host,
             "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "perform_irsync('{}', '{}', '{}', '{}', '{}')".format(
-                destination_resource, token, destination_collection, depositor, dropzone_type
-            ),
+            f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', '{depositor}', '{dropzone_type}')",
             "",
         )
     # Execute the irsync on iCAT locally if its a direct ingest, since it's all virtual
@@ -81,7 +79,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
 
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
     if state == DropzoneState.ERROR_INGESTION.value:
-        ctx.callback.msiExit("-1", "Stop sync_collection_data for {}'".format(dropzone_path))
+        ctx.callback.msiExit("-1", f"Stop sync_collection_data for {dropzone_path}'")
 
     if dropzone_type == "mounted":
         ctx.callback.replace_metadata_placeholder_files(token, project_id, collection_id, depositor)

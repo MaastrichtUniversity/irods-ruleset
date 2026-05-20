@@ -22,16 +22,14 @@ class BaseTestTapeArchiveMounted(BaseTestTapeArchive):
 
     @classmethod
     def give_user_ingest_access(cls, user):
-        run_ichmod = "ichmod -M write {} /nlmumc/ingest/zones".format(user)
+        run_ichmod = f"ichmod -M write {user} /nlmumc/ingest/zones"
         subprocess.check_call(run_ichmod, shell=True)
 
     @classmethod
     def add_archive_data_to_mounted_dropzone(cls):
-        run_iquest = 'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{}\'"'.format(cls.ingest_resource)
+        run_iquest = f'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{cls.ingest_resource}\'"'
         remote_resource = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
-        rule = "irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeTapeFile.r '*dropzonePath=\"/mnt/ingest/zones/{}\"' '*remoteResource=\"{}\"'".format(
-            cls.token, remote_resource
-        )
+        rule = f"irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeTapeFile.r '*dropzonePath=\"/mnt/ingest/zones/{cls.token}\"' '*remoteResource=\"{remote_resource}\"'"
         subprocess.check_call(rule, shell=True)
 
 

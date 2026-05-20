@@ -23,6 +23,6 @@ def get_user_id(ctx, username):
         The user id.
     """
     user_id = ""
-    for result in row_iterator("USER_ID", "USER_NAME = '{}'".format(username), AS_LIST, ctx.callback):
+    for result in row_iterator("USER_ID", f"USER_NAME = '{username}'", AS_LIST, ctx.callback):
         user_id = result[0]
     return user_id

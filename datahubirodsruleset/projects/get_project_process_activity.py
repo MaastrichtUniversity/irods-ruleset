@@ -55,7 +55,7 @@ def check_project_process_activity(ctx, project_id):
     bool
         True, if there is any active process linked to the project.
     """
-    query_project_condition = "COLL_PARENT_NAME LIKE '/nlmumc/projects/{}'".format(project_id)
+    query_project_condition = f"COLL_PARENT_NAME LIKE '/nlmumc/projects/{project_id}'"
 
     return check_collection_active_process(ctx, query_project_condition)
 
@@ -78,13 +78,11 @@ def check_active_dropzone_by_project_id(ctx, project_id):
     """
     parameters = "COLL_NAME, META_COLL_ATTR_VALUE"
     conditions = (
-        "COLL_PARENT_NAME in ('/nlmumc/ingest/zones','/nlmumc/ingest/direct') "
-        "AND META_COLL_ATTR_NAME = 'project' "
-        "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+        f"COLL_PARENT_NAME in ('/nlmumc/ingest/zones','/nlmumc/ingest/direct') AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{project_id}'"
     )
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         token = result[0]
-        ctx.callback.msiWriteRodsLog("ERROR: Project '{}' has an active dropzone '{}'".format(project_id, token), 0)
+        ctx.callback.msiWriteRodsLog(f"ERROR: Project '{project_id}' has an active dropzone '{token}'", 0)
 
         return True
 
@@ -93,18 +91,14 @@ def check_active_dropzone_by_project_id(ctx, project_id):
 
 def check_pending_deletions_by_project_id(ctx, project_id):
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
-        DataDeletionAttribute.STATE.value,
-        DataDeletionState.PENDING.value,
-        project_id,
-    )
+    conditions = f"META_COLL_ATTR_NAME = '{DataDeletionAttribute.STATE.value}' AND META_COLL_ATTR_VALUE = '{DataDeletionState.PENDING.value}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{project_id}' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         collection_path = result[0]
         attribute = result[1]
         value = result[1]
         ctx.callback.msiWriteRodsLog(
-            "ERROR: Project '{}' has '{}' with state: {}:{}".format(project_id, collection_path, attribute, value), 0
+            f"ERROR: Project '{project_id}' has '{collection_path}' with state: {attribute}:{value}", 0
         )
 
         return True
@@ -134,19 +128,13 @@ def check_project_has_active_collection(ctx, project_id):
 
     # Query the total number of project collection
     parameters = "count(COLL_NAME)"
-    conditions = "COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
-        project_id,
-    )
+    conditions = f"COLL_PARENT_NAME LIKE '/nlmumc/projects/{project_id}' "
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         number_collections = result[0]
 
     # Query the total number of deleted project collection
     parameters = "count(COLL_NAME)"
-    conditions = "META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{}' ".format(
-        DataDeletionAttribute.STATE.value,
-        DataDeletionState.DELETED.value,
-        project_id,
-    )
+    conditions = f"META_COLL_ATTR_NAME = '{DataDeletionAttribute.STATE.value}' AND META_COLL_ATTR_VALUE = '{DataDeletionState.DELETED.value}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/{project_id}' "
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         number_deleted_collections = result[0]
 

@@ -79,50 +79,47 @@ class TestProjects:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         # Running the index all rule: delete the current elasticsearch index that could be in a bad state
         run_index_all_project_collections_metadata()
         create_user(cls.depositor)
         create_data_steward(cls.data_steward)
         create_user(cls.new_user)
         for project_index in range(cls.number_of_projects):
-            cls.project_title = "{}{}".format(cls.project_title_base, project_index)
+            cls.project_title = f"{cls.project_title_base}{project_index}"
             project = create_project(cls)
             cls.project_paths.append(project["project_path"])
             cls.project_ids.append(project["project_id"])
             cls.project_titles.append(cls.project_title)
             time.sleep(1)
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         for project_path in cls.project_paths:
             remove_project(project_path)
 
         remove_user(cls.depositor)
         remove_user(cls.new_user)
         remove_user(cls.data_steward)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     def test_project_manager_access(self):
-        cmd = '/rules/tests/run_test.sh -r get_project_acl_for_manager -a "{},false" -u {}'
-        rule = cmd.format(self.project_ids[0], self.depositor)
+        rule = f'/rules/tests/run_test.sh -r get_project_acl_for_manager -a "{self.project_ids[0]},false" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert self.depositor in project["managers"]["users"]
 
-        rule = cmd.format(self.project_ids[0], self.new_user)
+        rule = f'/rules/tests/run_test.sh -r get_project_acl_for_manager -a "{self.project_ids[0]},false" -u {self.new_user}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert not project
 
     def test_project_roles(self):
         project_id = self.project_ids[0]
-        rule = '/rules/tests/run_test.sh -r get_project_contributors_metadata -a "{}" -u {}'.format(
-            project_id, self.depositor
-        )
+        rule = f'/rules/tests/run_test.sh -r get_project_contributors_metadata -a "{project_id}" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         roles = json.loads(ret)
 
@@ -137,9 +134,7 @@ class TestProjects:
     def test_project_details(self):
         project_path = self.project_paths[0]
         project_id = self.project_ids[0]
-        rule = '/rules/tests/run_test.sh -r get_project_details -a "{},false" -u {}'.format(
-            project_path, self.depositor
-        )
+        rule = f'/rules/tests/run_test.sh -r get_project_details -a "{project_path},false" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
 
@@ -162,7 +157,7 @@ class TestProjects:
         start_and_wait_for_ingest(self)
 
         # asserts
-        rule = "/rules/tests/run_test.sh -r get_projects_finance -u {}".format(self.depositor)
+        rule = f"/rules/tests/run_test.sh -r get_projects_finance -u {self.depositor}"
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
 
@@ -190,8 +185,8 @@ class TestProjects:
                 assert project["collections"] == []
 
         # teardown
-        subprocess.check_call("ichmod -rM own rods {}".format(project_collection_path), shell=True)
-        subprocess.check_call("irm -rf {}".format(project_collection_path), shell=True)
+        subprocess.check_call(f"ichmod -rM own rods {project_collection_path}", shell=True)
+        subprocess.check_call(f"irm -rf {project_collection_path}", shell=True)
         revert_latest_project_collection_number(self.project_paths[0])
 
     def test_project_resource_availability(self):
@@ -215,8 +210,7 @@ class TestProjects:
 
     def test_list_contributing_projects(self):
         # assert depositor has contributing access to all projects
-        cmd = '/rules/tests/run_test.sh -r list_contributing_projects -a "false" -u {}'
-        rule_as_depositor = cmd.format(self.depositor)
+        rule_as_depositor = f'/rules/tests/run_test.sh -r list_contributing_projects -a "false" -u {self.depositor}'
         ret = subprocess.check_output(rule_as_depositor, shell=True)
         projects = json.loads(ret)
 
@@ -233,7 +227,7 @@ class TestProjects:
 
         # setup new user
         project_path = self.project_paths[0]
-        rule_as_new_user = cmd.format(self.new_user)
+        rule_as_new_user = f'/rules/tests/run_test.sh -r list_contributing_projects -a "false" -u {self.new_user}'
 
         # assert new user has no project access
         ret = subprocess.check_output(rule_as_new_user, shell=True)
@@ -241,22 +235,19 @@ class TestProjects:
         assert len(projects) == 0
 
         # assert new user has one project access
-        ichmod = "ichmod -rM {} {} {}"
-        run_ichmod = ichmod.format("write", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM write {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         projects = json.loads(ret)
         assert len(projects) == 1
 
         # teardown
-        run_ichmod = ichmod.format("null", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM null {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
 
     def test_list_contributing_projects_by_attribute(self):
         # assert no project with ENABLE_ARCHIVE true
-        rule = '/rules/tests/run_test.sh -r list_contributing_projects_by_attribute -a "{}" -u {}'.format(
-            ProjectAVUs.ENABLE_ARCHIVE.value, self.depositor
-        )
+        rule = f'/rules/tests/run_test.sh -r list_contributing_projects_by_attribute -a "{ProjectAVUs.ENABLE_ARCHIVE.value}" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
         assert len(projects) == 0
@@ -282,8 +273,7 @@ class TestProjects:
         # assert depositor has manager access to all projects
         project_id = self.project_ids[0]
         project_path = self.project_paths[0]
-        cmd = '/rules/tests/run_test.sh -r list_project_managers -a "{},false" -u {}'
-        rule = cmd.format(project_id, self.depositor)
+        rule = f'/rules/tests/run_test.sh -r list_project_managers -a "{project_id},false" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert len(project["users"]) == 2
@@ -291,14 +281,13 @@ class TestProjects:
         assert self.manager2 in project["users"]
 
         # assert new user has no access
-        rule_as_new_user = cmd.format(project_id, self.new_user)
+        rule_as_new_user = f'/rules/tests/run_test.sh -r list_project_managers -a "{project_id},false" -u {self.new_user}'
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         project = json.loads(ret)
         assert len(project["users"]) == 0
 
         # assert new user has access
-        ichmod = "ichmod -rM {} {} {}"
-        run_ichmod = ichmod.format("own", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM own {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         project = json.loads(ret)
@@ -308,15 +297,14 @@ class TestProjects:
         assert self.new_user in project["users"]
 
         # teardown
-        run_ichmod = ichmod.format("null", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM null {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
 
     def test_list_project_contributors(self):
         # assert depositor has contributing access to all projects (inherited by being manager)
         project_id = self.project_ids[0]
         project_path = self.project_paths[0]
-        cmd = '/rules/tests/run_test.sh -r list_project_contributors -a "{},{},false" -u {}'
-        rule = cmd.format(project_id, "true", self.depositor)
+        rule = f'/rules/tests/run_test.sh -r list_project_contributors -a "{project_id},true,false" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert len(project["users"]) == 2
@@ -324,14 +312,15 @@ class TestProjects:
         assert self.manager2 in project["users"]
 
         # assert new user has no access
-        rule_as_new_user = cmd.format(project_id, "false", self.new_user)
+        rule_as_new_user = (
+            f'/rules/tests/run_test.sh -r list_project_contributors -a "{project_id},false,false" -u {self.new_user}'
+        )
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         project = json.loads(ret)
         assert len(project["users"]) == 0
 
         # assert new user has access
-        ichmod = "ichmod -rM {} {} {}"
-        run_ichmod = ichmod.format("write", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM write {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         project = json.loads(ret)
@@ -339,15 +328,14 @@ class TestProjects:
         assert self.new_user in project["users"]
 
         # teardown
-        run_ichmod = ichmod.format("null", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM null {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
 
     def test_list_project_viewers(self):
         # assert depositor has contributing access to all projects (inherited by being manager)
         project_id = self.project_ids[0]
         project_path = self.project_paths[0]
-        cmd = '/rules/tests/run_test.sh -r list_project_viewers -a "{},{},false" -u {}'
-        rule = cmd.format(project_id, "true", self.depositor)
+        rule = f'/rules/tests/run_test.sh -r list_project_viewers -a "{project_id},true,false" -u {self.depositor}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert len(project["users"]) == 2
@@ -355,14 +343,15 @@ class TestProjects:
         assert self.manager2 in project["users"]
 
         # assert new user has no access
-        rule_as_new_user = cmd.format(project_id, "false", self.new_user)
+        rule_as_new_user = (
+            f'/rules/tests/run_test.sh -r list_project_viewers -a "{project_id},false,false" -u {self.new_user}'
+        )
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         project = json.loads(ret)
         assert len(project["users"]) == 0
 
         # assert new user has access
-        ichmod = "ichmod -rM {} {} {}"
-        run_ichmod = ichmod.format("read", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM read {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
         ret = subprocess.check_output(rule_as_new_user, shell=True)
         project = json.loads(ret)
@@ -370,11 +359,11 @@ class TestProjects:
         assert self.new_user in project["users"]
 
         # teardown
-        run_ichmod = ichmod.format("null", self.new_user, project_path)
+        run_ichmod = f"ichmod -rM null {self.new_user} {project_path}"
         subprocess.check_call(run_ichmod, shell=True)
 
     def test_list_projects_minimal(self):
-        rule = "/rules/tests/run_test.sh -r list_projects_minimal -u {}".format(self.depositor)
+        rule = f"/rules/tests/run_test.sh -r list_projects_minimal -u {self.depositor}"
         ret = subprocess.check_output(rule, shell=True)
         projects = json.loads(ret)
         assert len(projects) == self.number_of_projects
@@ -385,9 +374,7 @@ class TestProjects:
     def test_get_contributing_project(self, project_index=0):
         project_id = self.project_ids[project_index]
         project_title = self.project_titles[project_index]
-        rule = '/rules/tests/run_test.sh -r get_contributing_project -a "{},false" -u {}'.format(
-            project_id, self.manager1
-        )
+        rule = f'/rules/tests/run_test.sh -r get_contributing_project -a "{project_id},false" -u {self.manager1}'
         ret = subprocess.check_output(rule, shell=True)
         project = json.loads(ret)
         assert project["id"] == project_id
@@ -404,12 +391,12 @@ class TestProjects:
 
     @staticmethod
     def update_resource_availability(resource, availability):
-        run_imeta = "iadmin modresc {} status {}".format(resource, availability)
+        run_imeta = f"iadmin modresc {resource} status {availability}"
         subprocess.check_call(run_imeta, shell=True)
 
     @staticmethod
     def get_project_resource_availability(project_id):
-        rule = '/rules/tests/run_test.sh -r get_project_resource_availability -a "{},true,true,true"'.format(project_id)
+        rule = f'/rules/tests/run_test.sh -r get_project_resource_availability -a "{project_id},true,true,true"'
         ret = subprocess.check_output(rule, shell=True)
         available = json.loads(ret)
 

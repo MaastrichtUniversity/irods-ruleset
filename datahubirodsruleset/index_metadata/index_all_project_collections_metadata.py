@@ -41,8 +41,8 @@ def index_all_project_collections_metadata(ctx):
         es.indices.delete(index=COLLECTION_METADATA_INDEX, ignore=[400, 404])
     except ElasticsearchException:
         message = message.format(success_count, total)
-        ctx.callback.writeLine("stdout", "ERROR: {}".format(message))
-        ctx.callback.msiWriteRodsLog("ERROR: {}".format(message), 0)
+        ctx.callback.writeLine("stdout", f"ERROR: {message}")
+        ctx.callback.msiWriteRodsLog(f"ERROR: {message}", 0)
         ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised during index deletion", 0)
         return
 
@@ -58,7 +58,7 @@ def index_all_project_collections_metadata(ctx):
 
     message = message.format(success_count, total)
     ctx.callback.writeLine("stdout", message)
-    ctx.callback.msiWriteRodsLog("DEBUG: {}".format(message), 0)
+    ctx.callback.msiWriteRodsLog(f"DEBUG: {message}", 0)
 
 
 def index_project_collection(ctx, es, project_collection_path):
@@ -74,26 +74,24 @@ def index_project_collection(ctx, es, project_collection_path):
     deletion_state = json.loads(ret)["value"]
 
     if deletion_state != "":
-        message = "DEBUG: Skip metadata index update, deletionState '{}' for '{}'".format(
-            deletion_state, project_collection_path
-        )
+        message = f"DEBUG: Skip metadata index update, deletionState '{deletion_state}' for '{project_collection_path}'"
         ctx.callback.msiWriteRodsLog(message, 0)
         return True
 
     try:
         ctx.callback.msiObjStat(instance_path, irods_types.RodsObjStat())
     except RuntimeError:
-        ctx.callback.msiWriteRodsLog("ERROR: msiObjStat RuntimeError raised for {}".format(project_collection_path), 0)
+        ctx.callback.msiWriteRodsLog(f"ERROR: msiObjStat RuntimeError raised for {project_collection_path}", 0)
         return False
 
     try:
         instance = read_data_object_from_irods(ctx, instance_path)
         instance_object = json.loads(instance)
     except ValueError:
-        ctx.callback.msiWriteRodsLog("ERROR: JSONDecodeError raised for {}".format(project_collection_path), 0)
+        ctx.callback.msiWriteRodsLog(f"ERROR: JSONDecodeError raised for {project_collection_path}", 0)
         return False
     except RuntimeError:
-        ctx.callback.msiWriteRodsLog("ERROR: RuntimeError raised for {}".format(project_collection_path), 0)
+        ctx.callback.msiWriteRodsLog(f"ERROR: RuntimeError raised for {project_collection_path}", 0)
         return False
 
     # AVU metadata
@@ -117,12 +115,12 @@ def index_project_collection(ctx, es, project_collection_path):
         )
     except ElasticsearchException as err:
         ctx.callback.msiWriteRodsLog(
-            "ERROR: ElasticsearchException raised for {} {}".format(project_collection_path, err), 0
+            f"ERROR: ElasticsearchException raised for {project_collection_path} {err}", 0
         )
         return False
 
     if "result" in res and res["result"] == "created":
         return True
 
-    ctx.callback.msiWriteRodsLog("ERROR: Collection metadata indexing failed for {}".format(project_collection_path), 0)
+    ctx.callback.msiWriteRodsLog(f"ERROR: Collection metadata indexing failed for {project_collection_path}", 0)
     return False

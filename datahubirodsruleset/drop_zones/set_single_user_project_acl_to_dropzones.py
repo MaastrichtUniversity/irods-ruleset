@@ -45,9 +45,7 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
 
     query_parameters = "COLL_NAME"
     query_conditions = (
-        "COLL_PARENT_NAME = '/nlmumc/ingest/direct' "
-        "AND META_COLL_ATTR_NAME = 'project' "
-        "AND META_COLL_ATTR_VALUE = '{}'".format(project_id)
+        f"COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{project_id}'"
     )
 
     for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
@@ -131,7 +129,7 @@ def get_username_permission(ctx, project_path, username):
     access_name = ""
     for result in row_iterator(
         "COLL_ACCESS_NAME",
-        "COLL_ACCESS_USER_ID = '{}' AND ".format(user_id) + "COLL_NAME = '{}'".format(project_path),
+        f"COLL_ACCESS_USER_ID = '{user_id}' AND " + f"COLL_NAME = '{project_path}'",
         AS_LIST,
         ctx.callback,
     ):

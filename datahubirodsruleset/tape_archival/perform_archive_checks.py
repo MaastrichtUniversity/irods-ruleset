@@ -34,7 +34,7 @@ def perform_archive_checks(ctx, archival_path):
         project_collection_path = formatters.format_project_collection_path(project_id, project_collection_id)
         project_path = formatters.format_project_path(project_id)
     except exceptions.ValidationError:
-        error_message = "Invalid path to archive: '{}'".format(archival_path)
+        error_message = f"Invalid path to archive: '{archival_path}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -42,7 +42,7 @@ def perform_archive_checks(ctx, archival_path):
         ctx.callback.msiObjStat(project_path, irods_types.RodsObjStat())
         ctx.callback.msiObjStat(project_collection_path, irods_types.RodsObjStat())
     except RuntimeError:
-        error_message = "Project or project_collection does not exist".format(project_path)
+        error_message = "Project or project_collection does not exist"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -50,7 +50,7 @@ def perform_archive_checks(ctx, archival_path):
         project_path, ProjectAVUs.ENABLE_ARCHIVE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
     if not formatters.format_string_to_boolean(archive_enabled):
-        error_message = "Archiving is disabled for this project: '{}'".format(project_path)
+        error_message = f"Archiving is disabled for this project: '{project_path}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -76,7 +76,7 @@ def perform_archive_checks(ctx, archival_path):
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     if current_user != service_account:
-        error_message = "Archiving is only possible when being called by '{}'".format(service_account)
+        error_message = f"Archiving is only possible when being called by '{service_account}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -88,9 +88,7 @@ def perform_archive_checks(ctx, archival_path):
     )["arguments"][2]
 
     if archive_state != "" or unarchive_state != "":
-        error_message = "Not permitted to start archival in state 'archive_state:{}' 'unarchive_state:{}".format(
-            archive_state, unarchive_state
-        )
+        error_message = f"Not permitted to start archival in state 'archive_state:{archive_state}' 'unarchive_state:{unarchive_state}"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 

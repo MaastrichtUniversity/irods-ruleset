@@ -36,18 +36,18 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
             edit_json_file.write(json.dumps(instance, sort_keys=True, indent=4))
 
         instance_collection_path = formatters.format_instance_collection_path(cls.project_id, cls.collection_id)
-        iput_instance = "iput -f {} {}".format(tmp_edit_instance_path, instance_collection_path)
+        iput_instance = f"iput -f {tmp_edit_instance_path} {instance_collection_path}"
         subprocess.check_call(iput_instance, shell=True)
 
     def test_collection_instance_version(self):
         tmp_instance_path = "/tmp/tmp_instance.json"
-        iget = "iget -f {}/{}/instance.json {}".format(self.project_path, self.collection_id, tmp_instance_path)
+        iget = f"iget -f {self.project_path}/{self.collection_id}/instance.json {tmp_instance_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_instance_path) as tmp_instance_file:
             tmp_instance = json.load(tmp_instance_file)
             pid = tmp_instance["@id"]
             assert pid.startswith("https://hdl.handle.net/")
-            assert pid.endswith("{}{}instance.2".format(self.project_id, self.collection_id))
+            assert pid.endswith(f"{self.project_id}{self.collection_id}instance.2")
 
             collection_title = tmp_instance["3_Title"]["title"]["@value"]
             assert collection_title == self.new_collection_title
@@ -59,13 +59,13 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
 
     def test_collection_schema_version(self):
         tmp_schema_path = "/tmp/tmp_schema.json"
-        iget = "iget -f {}/{}/schema.json {}".format(self.project_path, self.collection_id, tmp_schema_path)
+        iget = f"iget -f {self.project_path}/{self.collection_id}/schema.json {tmp_schema_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_schema_path) as tmp_schema_file:
             tmp_instance = json.load(tmp_schema_file)
             pid = tmp_instance["@id"]
             assert pid.startswith("https://hdl.handle.net/")
-            assert pid.endswith("{}{}schema.2".format(self.project_id, self.collection_id))
+            assert pid.endswith(f"{self.project_id}{self.collection_id}schema.2")
 
 
 class TestEditCollectionMetadataUM(BaseEditCollectionMetadata):

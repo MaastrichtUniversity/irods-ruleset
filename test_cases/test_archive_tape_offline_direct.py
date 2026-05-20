@@ -25,12 +25,12 @@ class BaseTestTapeArchiveDirect(BaseTestTapeArchive):
     def add_archive_data_to_dropzone_direct(cls):
         dropzone_path = formatters.format_dropzone_path(cls.token, cls.dropzone_type)
         large_file_path = "/tmp/large_file"
-        logical_path = "{}/large_file".format(dropzone_path)
+        logical_path = f"{dropzone_path}/large_file"
 
         with open(large_file_path, "wb") as large_file:
             num_chars = 262144001
             large_file.write(b"0" * num_chars)
-        iput = "iput -R stagingResc01 {} {}".format(large_file_path, logical_path)
+        iput = f"iput -R stagingResc01 {large_file_path} {logical_path}"
         subprocess.check_call(iput, shell=True)
 
 

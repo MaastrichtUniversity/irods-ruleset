@@ -21,10 +21,10 @@ def remove_size_ingested_avu(ctx, project_collection_path):
     value = json.loads(output)["value"]
 
     if value != "":
-        kvp = ctx.callback.msiString2KeyValPair("{}={}".format(attribute, value), irods_types.BytesBuf())["arguments"][
+        kvp = ctx.callback.msiString2KeyValPair(f"{attribute}={value}", irods_types.BytesBuf())["arguments"][
             1
         ]
         ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, project_collection_path, "-C")
         ctx.callback.msiWriteRodsLog(
-            "INFO: {}: Remove AVU '{}':'{}'".format(project_collection_path, attribute, value), 0
+            f"INFO: {project_collection_path}: Remove AVU '{attribute}':'{value}'", 0
         )

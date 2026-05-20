@@ -22,7 +22,7 @@ def main(rule_args, callback, rei):
             user_output["display_name"] = user
             # Get display name
             for displayName in row_iterator("META_USER_ATTR_VALUE",
-                                            "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(user),
+                                            f"USER_NAME = '{user}' AND META_USER_ATTR_NAME = 'displayName'",
                                             AS_LIST,
                                             callback):
                 display_name = displayName[0]
@@ -31,7 +31,7 @@ def main(rule_args, callback, rei):
             user_output["email"] = user
             # Get display email
             for email_result in row_iterator("META_USER_ATTR_VALUE",
-                                            "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'email'".format(user),
+                                            f"USER_NAME = '{user}' AND META_USER_ATTR_NAME = 'email'",
                                             AS_LIST,
                                             callback):
                 email = email_result[0]
@@ -41,7 +41,7 @@ def main(rule_args, callback, rei):
             groups = []
             # Get user group membership
             for result in row_iterator("order(USER_GROUP_NAME)",
-                                       "USER_ID = '{}'".format(user_id),
+                                       f"USER_ID = '{user_id}'",
                                        AS_LIST,
                                        callback):
 
@@ -56,7 +56,7 @@ def main(rule_args, callback, rei):
 
             groups = ""
             for result in row_iterator("USER_GROUP_ID",
-                              "USER_ID = '{}'".format(user_id),
+                              f"USER_ID = '{user_id}'",
                               AS_LIST,
                               callback):
                 group_id = "'" + result[0] + "'"
@@ -65,8 +65,8 @@ def main(rule_args, callback, rei):
             groups = groups[1:]
             parameters = "COLL_NAME"
             conditions = "COLL_ACCESS_NAME in ('own', 'modify_object', 'read_object') " \
-                         "and COLL_ACCESS_USER_ID in ({}) " \
-                         "and COLL_PARENT_NAME = '/nlmumc/projects'".format(groups)
+                         f"and COLL_ACCESS_USER_ID in ({groups}) " \
+                         "and COLL_PARENT_NAME = '/nlmumc/projects'"
 
             dataStewards = []
             # Get all projects with read access

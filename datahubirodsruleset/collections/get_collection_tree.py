@@ -32,7 +32,7 @@ def get_collection_tree(ctx, relative_path):
     # Get sub-folders
     for result in row_iterator(
         "COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME",
-        "COLL_PARENT_NAME = '{}'".format(absolute_path),
+        f"COLL_PARENT_NAME = '{absolute_path}'",
         AS_LIST,
         ctx.callback,
     ):
@@ -56,7 +56,7 @@ def get_collection_tree(ctx, relative_path):
 
     for result in row_iterator(
         "DATA_NAME, DATA_SIZE, DATA_RESC_NAME, DATA_CREATE_TIME, DATA_MODIFY_TIME",
-        "COLL_NAME = '{}'".format(absolute_path),
+        f"COLL_NAME = '{absolute_path}'",
         AS_LIST,
         ctx.callback,
     ):

@@ -28,9 +28,7 @@ def perform_unarchive(ctx, check_results, username_initiator):
     files_unarchived = 0
     if files_to_unarchive:
         ctx.callback.msiWriteRodsLog(
-            "INFO: UnArchival workflow started for {} ({} file(s))".format(
-                check_results["unarchival_path"], str(len(files_to_unarchive))
-            ),
+            f"INFO: UnArchival workflow started for {check_results['unarchival_path']} ({len(files_to_unarchive)!s} file(s))",
             0,
         )
         files_unarchived = unarchive_files(ctx, files_to_unarchive, check_results, username_initiator)
@@ -74,7 +72,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         # We perform checksums beforehand because the 'irepl' command does not include checksumming
         try:
             checksum = ctx.callback.msiDataObjChksum(file["virtual_path"], "", "")["arguments"][2]
-            ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
+            ctx.callback.msiWriteRodsLog(f"DEBUG: chksum done {checksum}", 0)
         except RuntimeError as err:
             ctx.callback.msiWriteRodsLog(err, 0)
             ctx.callback.set_tape_error_avu(
@@ -82,7 +80,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.UNARCHIVE.value,
                 UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Checksum of {} from {} FAILED.".format(file["virtual_path"], check_results["tape_resource"]),
+                f"Checksum of {file['virtual_path']} from {check_results['tape_resource']} FAILED.",
             )
 
         # Replicate
@@ -103,9 +101,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.UNARCHIVE.value,
                 UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Replication of {} from {} to {} FAILED.".format(
-                    file["virtual_path"], check_results["tape_resource"], check_results["project_resource"]
-                ),
+                f"Replication of {file['virtual_path']} from {check_results['tape_resource']} to {check_results['project_resource']} FAILED.",
             )
 
         # Trim
@@ -125,7 +121,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 username_initiator,
                 ProcessAttribute.UNARCHIVE.value,
                 UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Trim of {} from {} FAILED.".format(file["virtual_path"], check_results["tape_resource"]),
+                f"Trim of {file['virtual_path']} from {check_results['tape_resource']} FAILED.",
             )
 
         files_unarchived += 1
@@ -148,10 +144,10 @@ def clean_up_and_inform(ctx, check_results, files_unarchived):
         The amount of files unarchived by this rule
     """
     set_tape_avu(ctx, check_results["project_collection_path"], UnarchiveState.UNARCHIVE_DONE.value)
-    ctx.callback.msiWriteRodsLog("DEBUG: surfArchiveScanner unarchived {} files".format(files_unarchived), 0)
+    ctx.callback.msiWriteRodsLog(f"DEBUG: surfArchiveScanner unarchived {files_unarchived} files", 0)
 
     kvp = ctx.callback.msiString2KeyValPair(
-        "{}={}".format(ProcessAttribute.UNARCHIVE.value, UnarchiveState.UNARCHIVE_DONE.value), irods_types.BytesBuf()
+        f"{ProcessAttribute.UNARCHIVE.value}={UnarchiveState.UNARCHIVE_DONE.value}", irods_types.BytesBuf()
     )["arguments"][1]
     ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
 

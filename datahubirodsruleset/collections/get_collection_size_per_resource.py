@@ -40,7 +40,7 @@ def get_collection_size_per_resource(ctx, project_id):
     total_sizes = {}
     for row in row_iterator(
         "COLL_NAME, META_COLL_ATTR_VALUE",
-        "META_COLL_ATTR_NAME like 'dcat:byteSize' AND COLL_NAME like '{}'".format(project_path_wilcard),
+        f"META_COLL_ATTR_NAME like 'dcat:byteSize' AND COLL_NAME like '{project_path_wilcard}'",
         AS_LIST,
         ctx.callback,
     ):
@@ -50,7 +50,7 @@ def get_collection_size_per_resource(ctx, project_id):
     # query size of collection per resource attribute (resource ID)
     for row in row_iterator(
         "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
-        "META_COLL_ATTR_NAME like 'dcat:byteSize_resc%' AND COLL_NAME like '{}'".format(project_path_wilcard),
+        f"META_COLL_ATTR_NAME like 'dcat:byteSize_resc%' AND COLL_NAME like '{project_path_wilcard}'",
         AS_LIST,
         ctx.callback,
     ):

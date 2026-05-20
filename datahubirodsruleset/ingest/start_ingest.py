@@ -34,7 +34,7 @@ def start_ingest(ctx, depositor, token, dropzone_type):
 
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        "process_dropzone('{}', '{}', '{}')".format(token, depositor, dropzone_type),
+        f"process_dropzone('{token}', '{depositor}', '{dropzone_type}')",
         "",
     )
 

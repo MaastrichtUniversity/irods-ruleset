@@ -142,10 +142,7 @@ def get_list_active_project_processes(ctx, output):
         The rule output to extend
     """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(
-        ProcessAttribute.ARCHIVE.value,
-        ProcessAttribute.UNARCHIVE.value,
-    )
+    conditions = f"META_COLL_ATTR_NAME in ('{ProcessAttribute.ARCHIVE.value}', '{ProcessAttribute.UNARCHIVE.value}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         attribute = result[1]
@@ -172,7 +169,7 @@ def get_list_active_project_process(ctx, attribute, process_type, output):
         The rule output to extend
     """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
-    conditions = "META_COLL_ATTR_NAME = '{}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' ".format(attribute.value)
+    conditions = f"META_COLL_ATTR_NAME = '{attribute.value}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         process = get_project_process_information(ctx, result, process_type)

@@ -34,7 +34,7 @@ def check_project_collection_process_activity(ctx, project_collection_path):
     Private function of 'get_project_collection_process_activity'.
     Meant to be call as a python function and not as a rule with @make
     """
-    query_collection_condition = "COLL_NAME = '{}'".format(project_collection_path)
+    query_collection_condition = f"COLL_NAME = '{project_collection_path}'"
 
     active_process = check_collection_active_process(ctx, query_collection_condition)
     active_dropzone = check_active_dropzone_by_project_collection_path(ctx, project_collection_path)
@@ -61,18 +61,12 @@ def check_collection_active_process(ctx, query_collection_condition):
         True, if there is any active process linked to the project.
     """
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-    conditions = "META_COLL_ATTR_NAME in ('{}', '{}') AND {} ".format(
-        ProcessAttribute.ARCHIVE.value,
-        ProcessAttribute.UNARCHIVE.value,
-        query_collection_condition,
-    )
+    conditions = f"META_COLL_ATTR_NAME in ('{ProcessAttribute.ARCHIVE.value}', '{ProcessAttribute.UNARCHIVE.value}') AND {query_collection_condition} "
 
     for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         process = result[1]
         state = result[2]
-        message = "ERROR: '{}' has an active process '{}' with state: '{}'".format(
-            query_collection_condition, process, state
-        )
+        message = f"ERROR: '{query_collection_condition}' has an active process '{process}' with state: '{state}'"
         ctx.callback.msiWriteRodsLog(message, 0)
 
         return True
@@ -104,9 +98,7 @@ def check_active_dropzone_by_project_collection_path(ctx, project_collection_pat
 
     for drop_zone in drop_zones:
         if drop_zone["project"] == project_id and drop_zone["destination"] == collection_id:
-            message = "ERROR: '{}' has an active dropzone '{}' with state: '{}'".format(
-                project_collection_path, drop_zone["token"], drop_zone["state"]
-            )
+            message = f"ERROR: '{project_collection_path}' has an active dropzone '{drop_zone['token']}' with state: '{drop_zone['state']}'"
             ctx.callback.msiWriteRodsLog(message, 0)
 
             return True

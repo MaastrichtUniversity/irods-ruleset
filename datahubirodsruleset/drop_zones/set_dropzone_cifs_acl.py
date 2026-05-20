@@ -31,7 +31,7 @@ def set_dropzone_cifs_acl(ctx, token, access):
     # * source_collection, token is validated with format_dropzone_path & check the ACL with getCollectionAVU creator
     from subprocess import CalledProcessError, check_call  # nosec
 
-    source_collection = "/mnt/ingest/zones/{}".format(token)
+    source_collection = f"/mnt/ingest/zones/{token}"
     dropzone_path = format_dropzone_path(ctx, token, "mounted")
 
     script_path = ""
@@ -40,7 +40,7 @@ def set_dropzone_cifs_acl(ctx, token, access):
     elif access == "write":
         script_path = "/var/lib/irods/msiExecCmd_bin/add-ingest-zone-access.sh"
     else:
-        ctx.callback.msiExit("-1", "Invalid setcifsacl access parameter '{}'! Aborting perform_irsync".format(access))
+        ctx.callback.msiExit("-1", f"Invalid setcifsacl access parameter '{access}'! Aborting perform_irsync")
 
     creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
     ret = ctx.callback.get_user_attribute_value(creator, "voPersonExternalID", TRUE_AS_STRING, "")["arguments"][3]
@@ -48,5 +48,5 @@ def set_dropzone_cifs_acl(ctx, token, access):
     try:
         check_call([script_path, vo_person_external_id, source_collection], shell=False)
     except CalledProcessError as err:
-        message = "ERROR: set_dropzone_cifs_acl: cmd '{}' retcode'{}'".format(err.cmd, err.returncode)
+        message = f"ERROR: set_dropzone_cifs_acl: cmd '{err.cmd}' retcode'{err.returncode}'"
         ctx.callback.msiWriteRodsLog(message, 0)

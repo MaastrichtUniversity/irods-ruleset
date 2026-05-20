@@ -24,17 +24,17 @@ def validate_metadata(ctx, source_collection):
     import jsonschema
 
     try:
-        instance = read_data_object_from_irods(ctx, "{}/instance.json".format(source_collection))
-        schema = read_data_object_from_irods(ctx, "{}/schema.json".format(source_collection))
+        instance = read_data_object_from_irods(ctx, f"{source_collection}/instance.json")
+        schema = read_data_object_from_irods(ctx, f"{source_collection}/schema.json")
     except RuntimeError:
-        ctx.callback.msiWriteRodsLog("Empty/Missing json files '{}'".format(source_collection), 0)
+        ctx.callback.msiWriteRodsLog(f"Empty/Missing json files '{source_collection}'", 0)
         return False
 
     try:
         instance_object = json.loads(instance)
     except ValueError:
         ctx.callback.msiWriteRodsLog(
-            "JSONschema validation failed to parse instance.json for '{}'".format(source_collection), 0
+            f"JSONschema validation failed to parse instance.json for '{source_collection}'", 0
         )
         return False
 
@@ -42,7 +42,7 @@ def validate_metadata(ctx, source_collection):
         schema_object = json.loads(schema)
     except ValueError:
         ctx.callback.msiWriteRodsLog(
-            "JSONschema validation failed to parse schema.json for '{}'".format(source_collection), 0
+            f"JSONschema validation failed to parse schema.json for '{source_collection}'", 0
         )
         return False
 
@@ -51,8 +51,8 @@ def validate_metadata(ctx, source_collection):
         jsonschema.validate(instance_object, schema_object)
         return True
     except jsonschema.exceptions.ValidationError:
-        ctx.callback.msiWriteRodsLog("JSONschema validation error occurred for '{}'".format(source_collection), 0)
+        ctx.callback.msiWriteRodsLog(f"JSONschema validation error occurred for '{source_collection}'", 0)
     except jsonschema.exceptions.SchemaError:
-        ctx.callback.msiWriteRodsLog("JSONschema schema error occurred for '{}'".format(source_collection), 0)
+        ctx.callback.msiWriteRodsLog(f"JSONschema schema error occurred for '{source_collection}'", 0)
 
     return False

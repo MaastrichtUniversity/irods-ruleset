@@ -29,11 +29,12 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
             "irule -r irods_rule_engine_plugin-irods_rule_language-instance"
             " \"changeProjectPermissions('{}','{}:{}')\" null  ruleExecOut"
         )
-        rule_project_details = '/rules/tests/run_test.sh -r get_project_details -a "{},false"'.format(self.project_path)
+        rule_project_details = f'/rules/tests/run_test.sh -r get_project_details -a "{self.project_path},false"'
 
         # Add write rights for user_to_check to the project
         subprocess.check_output(
-            change_project_permissions_rule.format(self.project_id, user_to_check, "write"), shell=True
+            f'irule -r irods_rule_engine_plugin-irods_rule_language-instance "changeProjectPermissions(\'{self.project_id}\',\'{user_to_check}:write\')" null  ruleExecOut',
+            shell=True,
         )
 
         # Check that user_to_check is in project contributors
@@ -48,29 +49,25 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
         # Check that user_to_check is still not part of the project collection ACL.
         # changeProjectPermissions mustn't give access (back) to user to project collection that are deleted
         # or pending-for-deletion.
-        acl = "ils -A {}".format(self.project_collection_path)
+        acl = f"ils -A {self.project_collection_path}"
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:read".format(user_to_check) not in ret_acl
+        assert f"{user_to_check}#nlmumc:read" not in ret_acl
 
 
 class TestRevokeProjectUserAccessWithActiveProcess(BaseDataDelete):
     def test_revoke_project_collection_user_access(self):
-        mod_acl = "ichmod -M own rods {}".format(self.project_collection_path)
+        mod_acl = f"ichmod -M own rods {self.project_collection_path}"
         subprocess.check_call(mod_acl, shell=True)
 
         # Archive
-        set_enable_archive = "imeta set -C {} {} stuff".format(
-            self.project_collection_path, ProcessAttribute.ARCHIVE.value
-        )
+        set_enable_archive = f"imeta set -C {self.project_collection_path} {ProcessAttribute.ARCHIVE.value} stuff"
         subprocess.check_call(set_enable_archive, shell=True)
 
         with pytest.raises(subprocess.CalledProcessError):
             subprocess.check_call(self.revoke_rule, shell=True)
 
         # Un-Archive
-        set_enable_archive = "imeta set -C {} {} stuff".format(
-            self.project_collection_path, ProcessAttribute.UNARCHIVE.value
-        )
+        set_enable_archive = f"imeta set -C {self.project_collection_path} {ProcessAttribute.UNARCHIVE.value} stuff"
         subprocess.check_call(set_enable_archive, shell=True)
 
         with pytest.raises(subprocess.CalledProcessError):

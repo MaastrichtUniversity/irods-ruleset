@@ -43,10 +43,10 @@ def perform_ingest_post_hook(ctx, project_id, collection_id, source_collection, 
     size_gib = float(collection_size) / 1024 / 1024 / 1024
 
     ctx.callback.msiWriteRodsLog(
-        "{} : Ingested {} GiB in {} files".format(source_collection, size_gib, collection_num_files), 0
+        f"{source_collection} : Ingested {size_gib} GiB in {collection_num_files} files", 0
     )
-    ctx.callback.msiWriteRodsLog("{} : Sync took {} seconds".format(source_collection, difference), 0)
-    ctx.callback.msiWriteRodsLog("{} : AVG speed was {} MiB/s".format(source_collection, avg_speed), 0)
+    ctx.callback.msiWriteRodsLog(f"{source_collection} : Sync took {difference} seconds", 0)
+    ctx.callback.msiWriteRodsLog(f"{source_collection} : AVG speed was {avg_speed} MiB/s", 0)
 
     ctx.callback.validate_data_post_ingestion(
         destination_project_collection_path, source_collection, dropzone_type, depositor

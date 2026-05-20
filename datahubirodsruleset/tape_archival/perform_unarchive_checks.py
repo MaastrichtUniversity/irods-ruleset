@@ -42,7 +42,7 @@ def perform_unarchive_checks(ctx, unarchival_path):
         project_collection_path = formatters.format_project_collection_path(project_id, project_collection_id)
         project_path = formatters.format_project_path(project_id)
     except exceptions.ValidationError:
-        error_message = "Invalid path to unarchive: '{}'".format(unarchival_path)
+        error_message = f"Invalid path to unarchive: '{unarchival_path}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -50,7 +50,7 @@ def perform_unarchive_checks(ctx, unarchival_path):
         ctx.callback.msiObjStat(project_path, irods_types.RodsObjStat())
         ctx.callback.msiObjStat(project_collection_path, irods_types.RodsObjStat())
     except RuntimeError:
-        error_message = "Project or project_collection does not exist".format(project_path)
+        error_message = "Project or project_collection does not exist"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -58,7 +58,7 @@ def perform_unarchive_checks(ctx, unarchival_path):
         project_path, ProjectAVUs.ENABLE_UNARCHIVE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
     if not formatters.format_string_to_boolean(unarchive_enabled):
-        error_message = "Unarchiving is disabled for this project: '{}'".format(project_path)
+        error_message = f"Unarchiving is disabled for this project: '{project_path}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -81,7 +81,7 @@ def perform_unarchive_checks(ctx, unarchival_path):
 
     current_user = ctx.callback.get_client_username("")["arguments"][0]
     if current_user != service_account:
-        error_message = "Unarchiving is only possible when being called by '{}'".format(service_account)
+        error_message = f"Unarchiving is only possible when being called by '{service_account}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
@@ -93,19 +93,17 @@ def perform_unarchive_checks(ctx, unarchival_path):
     )["arguments"][2]
 
     if archive_state != "" or unarchive_state != "":
-        error_message = "Not permitted to start unarchival in state 'archive_state:{}' 'unarchive_state:{}".format(
-            archive_state, unarchive_state
-        )
+        error_message = f"Not permitted to start unarchival in state 'archive_state:{archive_state}' 'unarchive_state:{unarchive_state}"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
-    for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(tape_resource), AS_LIST, ctx.callback):
+    for row in row_iterator("RESC_LOC", f"RESC_NAME = '{tape_resource}'", AS_LIST, ctx.callback):
         tape_resource_location = row[0]
 
     # Get the amount of children the project resource has, so we know how many files we should have left after trimming
-    for result in row_iterator("RESC_ID", "RESC_NAME = '{}'".format(project_resource), AS_LIST, ctx.callback):
+    for result in row_iterator("RESC_ID", f"RESC_NAME = '{project_resource}'", AS_LIST, ctx.callback):
         resc_id = result[0]
-    for result in row_iterator("COUNT(RESC_ID)", "RESC_PARENT = '{}'".format(resc_id), AS_LIST, ctx.callback):
+    for result in row_iterator("COUNT(RESC_ID)", f"RESC_PARENT = '{resc_id}'", AS_LIST, ctx.callback):
         total_project_resource_children = result[0]
 
     return {

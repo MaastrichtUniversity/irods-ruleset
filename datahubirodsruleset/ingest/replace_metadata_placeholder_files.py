@@ -57,23 +57,21 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
             project_id,
             collection_id,
             dropzone_path,
-            "Abort replace_metadata_placeholder_files: Rule client user '{}' is not the depositor '{}'".format(
-                depositor, current_user
-            ),
+            f"Abort replace_metadata_placeholder_files: Rule client user '{depositor}' is not the depositor '{current_user}'",
             depositor,
         )
 
     try:
         check_call(["ichmod", "own", depositor, pc_instance_path], shell=False)
-        ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_instance_path), 0)
+        ctx.callback.msiWriteRodsLog(f"INFO: Updating '{pc_instance_path}' ACL was successful", 0)
         check_call(["ichmod", "own", depositor, pc_schema_path], shell=False)
-        ctx.callback.msiWriteRodsLog("INFO: Updating '{}' ACL was successful".format(pc_schema_path), 0)
+        ctx.callback.msiWriteRodsLog(f"INFO: Updating '{pc_schema_path}' ACL was successful", 0)
     except CalledProcessError:
         ctx.callback.set_post_ingestion_error_avu(
             project_id,
             collection_id,
             dropzone_path,
-            "Update metadata files ACL failed for '{}/{}'".format(project_id, collection_id),
+            f"Update metadata files ACL failed for '{project_id}/{collection_id}'",
             depositor,
         )
 

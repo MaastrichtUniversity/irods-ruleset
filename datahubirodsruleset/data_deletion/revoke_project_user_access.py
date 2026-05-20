@@ -39,22 +39,22 @@ def revoke_project_user_access(ctx, user_project, reason, description):
     process_activity = json.loads(output)
 
     if process_activity["has_process_activity"]:
-        ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for project {}".format(user_project))
+        ctx.callback.msiExit("-1", f"Stop execution, active proces(ses) found for project {user_project}")
         return
 
     backup_project = IRODS_BACKUP_ACL_BASE_PATH + user_project.replace(IRODS_ZONE_BASE_PATH, "")
     try:
         ctx.callback.msiCollCreate(backup_project, 1, 0)
     except RuntimeError:
-        ctx.callback.msiWriteRodsLog("ERROR: Could not create backup project '{}'".format(backup_project), 0)
-        ctx.callback.msiExit("-1", "Stop execution, could not create backup project '{}'".format(backup_project))
+        ctx.callback.msiWriteRodsLog(f"ERROR: Could not create backup project '{backup_project}'", 0)
+        ctx.callback.msiExit("-1", f"Stop execution, could not create backup project '{backup_project}'")
         return
 
-    ctx.callback.msiWriteRodsLog("INFO: Create ACL backup for project '{}'".format(backup_project), 0)
+    ctx.callback.msiWriteRodsLog(f"INFO: Create ACL backup for project '{backup_project}'", 0)
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
-        "COLL_NAME = '{}'".format(user_project),
+        f"COLL_NAME = '{user_project}'",
         AS_LIST,
         ctx.callback,
     ):
@@ -62,7 +62,7 @@ def revoke_project_user_access(ctx, user_project, reason, description):
         account_access = result[1]
         user_access = map_access_name_to_access_level(account_access)
 
-        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             account_name = account[0]
             account_type = account[1]
             ctx.callback.msiSetACL("default", user_access, account_name, backup_project)
@@ -70,10 +70,10 @@ def revoke_project_user_access(ctx, user_project, reason, description):
             if account_type != "rodsadmin" and account_name not in SERVICE_ACCOUNT_ALLOW_LIST:
                 ctx.callback.msiSetACL("default", "null", account_name, user_project)
 
-    ctx.callback.msiWriteRodsLog("INFO: Users ACL revoked for project '{}'".format(user_project), 0)
+    ctx.callback.msiWriteRodsLog(f"INFO: Users ACL revoked for project '{user_project}'", 0)
 
-    ctx.callback.msiWriteRodsLog("INFO: Revoke users ACL for collections in project '{}'".format(user_project), 0)
-    for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(user_project), AS_LIST, ctx.callback):
+    ctx.callback.msiWriteRodsLog(f"INFO: Revoke users ACL for collections in project '{user_project}'", 0)
+    for proj_coll in row_iterator("COLL_NAME", f"COLL_PARENT_NAME = '{user_project}'", AS_LIST, ctx.callback):
         project_collection_path = proj_coll[0]
         # For already deleted collections we do not revoke anything, this is already done
         output = ctx.callback.get_collection_attribute_value(

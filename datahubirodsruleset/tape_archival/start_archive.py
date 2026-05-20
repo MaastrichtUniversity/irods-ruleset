@@ -22,9 +22,9 @@ def start_archive(ctx, archival_path, username_initiator):
     results = json.loads(ctx.callback.perform_archive_checks(archival_path, username_initiator, "")["arguments"][1])
 
     # Log statements
-    ctx.callback.msiWriteRodsLog("DEBUG: Data will be moved onto resource {}".format(results["tape_resource"]), 0)
-    ctx.callback.msiWriteRodsLog("DEBUG: Service account used is {}".format(results["service_account"]), 0)
-    ctx.callback.msiWriteRodsLog("DEBUG: {} is the initiator".format(username_initiator), 0)
+    ctx.callback.msiWriteRodsLog(f"DEBUG: Data will be moved onto resource {results['tape_resource']}", 0)
+    ctx.callback.msiWriteRodsLog(f"DEBUG: Service account used is {results['service_account']}", 0)
+    ctx.callback.msiWriteRodsLog(f"DEBUG: {username_initiator} is the initiator", 0)
 
     # Open the PC up for the service account (which should be an admin)
     ctx.callback.msiSetACL("default", "admin:own", results["service_account"], results["project_collection_path"])
@@ -35,16 +35,12 @@ def start_archive(ctx, archival_path, username_initiator):
     )
 
     # Perform the recursive SetACL call in the delay queue to not lock up on very large collections
-    set_acl_call = "msiSetACL('recursive', 'admin:own', '{}', '{}')".format(
-        results["service_account"], results["project_collection_path"]
-    )
-    perform_archive_call = "perform_archive('{}', '{}', '{}')".format(
-        archival_path, json.dumps(results), username_initiator
-    )
+    set_acl_call = f"msiSetACL('recursive', 'admin:own', '{results['service_account']}', '{results['project_collection_path']}')"
+    perform_archive_call = f"perform_archive('{archival_path}', '{json.dumps(results)}', '{username_initiator}')"
 
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        "{};{}".format(set_acl_call, perform_archive_call),
+        f"{set_acl_call};{perform_archive_call}",
         "",
     )

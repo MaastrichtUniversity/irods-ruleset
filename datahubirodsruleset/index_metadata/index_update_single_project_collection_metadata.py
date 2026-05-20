@@ -34,7 +34,7 @@ def index_update_single_project_collection_metadata(ctx, project_id, collection_
     es = get_elastic_search_connection(ctx)
 
     project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
-    error_message = "ERROR: Elasticsearch update index failed for {}".format(project_collection_path)
+    error_message = f"ERROR: Elasticsearch update index failed for {project_collection_path}"
 
     try:
         es.delete(index=COLLECTION_METADATA_INDEX, id=project_id + "_" + collection_id, ignore=[400, 404])

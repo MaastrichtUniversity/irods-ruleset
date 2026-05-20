@@ -40,12 +40,12 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
 
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
     if dropzone_type == "mounted":
-        source_collection = "/mnt/ingest/zones/{}".format(token)
+        source_collection = f"/mnt/ingest/zones/{token}"
         # Revoke the user CIFS ACL on the mounted network dropzone folder
         ctx.callback.set_dropzone_cifs_acl(token, "null")
     elif dropzone_type == "direct":
         # We need to prefix the dropzone path with 'i:' to indicate to iRODS that it is an iRODS - iRODS sync
-        source_collection = "i:{}".format(dropzone_path)
+        source_collection = f"i:{dropzone_path}"
 
     RETRY_MAX_NUMBER = 5
     RETRY_SLEEP_NUMBER = 20
@@ -68,17 +68,17 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
                 shell=False,
             )
         except CalledProcessError as err:
-            ctx.callback.msiWriteRodsLog("ERROR: irsync: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
+            ctx.callback.msiWriteRodsLog(f"ERROR: irsync: cmd '{err.cmd}' retcode'{err.returncode}'", 0)
             return_code = 1
 
         if return_code != 0:
             retry_counter -= 1
-            ctx.callback.msiWriteRodsLog("DEBUG: Decrement irsync retry_counter: {}".format(str(retry_counter)), 0)
+            ctx.callback.msiWriteRodsLog(f"DEBUG: Decrement irsync retry_counter: {retry_counter!s}", 0)
             time.sleep(RETRY_SLEEP_NUMBER)
         else:
             retry_counter = 0
             ctx.callback.msiWriteRodsLog(
-                "INFO: Ingest collection data '{}' was successful".format(source_collection), 0
+                f"INFO: Ingest collection data '{source_collection}' was successful", 0
             )
 
     if return_code != 0:
@@ -92,7 +92,5 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
         # create a Jira ticket and *not* set the error-ingestion AVU.
         ctx.callback.msiExit(
             "-1",
-            "Error while performing perform_irsync towards '{}:{}'".format(
-                destination_collection, destination_resource
-            ),
+            f"Error while performing perform_irsync towards '{destination_collection}:{destination_resource}'",
         )

@@ -22,9 +22,7 @@ class BaseTestCaseMountedIngestAsContributor(BaseTestCaseDirectIngest):
     def perform_tasks_after_project_creation(cls):
         cls.depositor = "dlinssen"
         cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
-        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,write,{},{}"'.format(
-            cls.depositor, cls.project_path
-        )
+        rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "default,write,{cls.depositor},{cls.project_path}"'
         subprocess.check_call(rule_set_acl, shell=True)
 
 class TestDirectIngestUM(BaseTestCaseDirectIngest):

@@ -42,9 +42,7 @@ def list_collections(ctx, project_path):
         project_collection["id"] = formatters.get_collection_id_from_project_collection_path(proj_coll[0])
 
         parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-        conditions = "META_COLL_ATTR_NAME in ('dcat:byteSize', 'title', 'creator', 'PID', 'numFiles', 'latest_version_number') AND COLL_NAME = '{}' ".format(
-            proj_coll[0]
-        )
+        conditions = f"META_COLL_ATTR_NAME in ('dcat:byteSize', 'title', 'creator', 'PID', 'numFiles', 'latest_version_number') AND COLL_NAME = '{proj_coll[0]}' "
         latest_version_number = ""
         for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
             # Loop over metadata
@@ -71,7 +69,7 @@ def list_collections(ctx, project_path):
 
         for row in row_iterator(
             "DATA_NAME",
-            "COLL_NAME = '{}' AND DATA_NAME in ({})".format(project_collection_path, num_files_exclusion),
+            f"COLL_NAME = '{project_collection_path}' AND DATA_NAME in ({num_files_exclusion})",
             AS_LIST,
             ctx.callback,
         ):

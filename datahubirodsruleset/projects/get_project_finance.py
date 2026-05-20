@@ -27,7 +27,7 @@ def get_project_finance(ctx, project_path):
     project_collections_output = []
 
     # Get all project's collections
-    for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '{}'".format(project_path), AS_LIST, ctx.callback):
+    for result in row_iterator("COLL_NAME", f"COLL_PARENT_NAME = '{project_path}'", AS_LIST, ctx.callback):
         # collections.append(result[0])
 
         project_collection_path = result[0]
@@ -37,9 +37,7 @@ def get_project_finance(ctx, project_path):
 
         # Get the collection size on each resource
         parameters = "META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-        conditions = "META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{}'".format(
-            project_collection_path
-        )
+        conditions = f"META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{project_collection_path}'"
         for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
             resource_id = collection_result[0].replace("dcat:byteSize_resc_", "")
             collection_size_on_resource = float(collection_result[1])
@@ -53,7 +51,7 @@ def get_project_finance(ctx, project_path):
             if query_resource_price:
                 for resource_result in row_iterator(
                     "META_RESC_ATTR_VALUE",
-                    "RESC_ID = '{}' and META_RESC_ATTR_NAME = 'NCIT:C88193'".format(resource_id),
+                    f"RESC_ID = '{resource_id}' and META_RESC_ATTR_NAME = 'NCIT:C88193'",
                     AS_LIST,
                     ctx.callback,
                 ):

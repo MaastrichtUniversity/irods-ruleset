@@ -49,9 +49,7 @@ def is_dropzone_ingestable(ctx, dropzone_path):
 
 def ingest(ctx, dropzone_path, project_id, username, token, dropzone_type):
     ctx.callback.msiWriteRodsLog(
-        "Validation result OK {}. Setting status to '{}'".format(
-            dropzone_path, DropzoneState.IN_QUEUE_FOR_INGESTION.value
-        ),
+        f"Validation result OK {dropzone_path}. Setting status to '{DropzoneState.IN_QUEUE_FOR_INGESTION.value}'",
         0,
     )
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_INGESTION.value)
@@ -67,10 +65,10 @@ def stop_ingestion(ctx, dropzone_path, validation_errors):
         value = DropzoneState.WARNING_VALIDATION_INCORRECT.value
     for validation_error in validation_errors:
         ctx.callback.msiWriteRodsLog(
-            "Validation error '{}' occurred for dropzone '{}'".format(validation_error, dropzone_path), 0
+            f"Validation error '{validation_error}' occurred for dropzone '{dropzone_path}'", 0
         )
 
     ctx.callback.setCollectionAVU(dropzone_path, "state", value)
-    ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
+    ctx.callback.msiWriteRodsLog(f"Ingest failed of {dropzone_path} with error status {value}", 0)
     ctx.callback.msiWriteRodsLog(message, 0)
-    ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))
+    ctx.callback.msiExit("-1", f"{message} for {dropzone_path}")

@@ -33,19 +33,11 @@ def set_acl_for_metadata_snapshot(ctx, project_id, collection_id, username, open
     ctx.callback.open_project_collection_snapshot(project_id, collection_id, username, access)
 
     if formatters.format_string_to_boolean(close_acl):
-        set_collection_size_call = "setCollectionSize('{}', '{}', 'false', 'false')".format(project_id, collection_id)
-        close_project_collection_snapshot_user_call = "close_project_collection_snapshot('{}', '{}', '{}')".format(
-            project_id, collection_id, username
-        )
-        close_project_collection_snapshot_rods_call = "close_project_collection_snapshot('{}', '{}', '{}')".format(
-            project_id, collection_id, "rods"
-        )
+        set_collection_size_call = f"setCollectionSize('{project_id}', '{collection_id}', 'false', 'false')"
+        close_project_collection_snapshot_user_call = f"close_project_collection_snapshot('{project_id}', '{collection_id}', '{username}')"
+        close_project_collection_snapshot_rods_call = f"close_project_collection_snapshot('{project_id}', '{collection_id}', 'rods')"
         ctx.delayExec(
             "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "{};{};{};".format(
-                set_collection_size_call,
-                close_project_collection_snapshot_user_call,
-                close_project_collection_snapshot_rods_call,
-            ),
+            f"{set_collection_size_call};{close_project_collection_snapshot_user_call};{close_project_collection_snapshot_rods_call};",
             "",
         )

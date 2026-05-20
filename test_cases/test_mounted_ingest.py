@@ -18,11 +18,9 @@ class BaseTestCaseMountedIngest(BaseTestCaseIngest):
 
     @classmethod
     def add_data_to_dropzone(cls):
-        run_iquest = 'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{}\'"'.format(cls.ingest_resource)
+        run_iquest = f'iquest "%s" "SELECT RESC_LOC WHERE RESC_NAME = \'{cls.ingest_resource}\'"'
         remote_resource = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
-        rule = "irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeFiles.r '*dropzonePath=\"/mnt/ingest/zones/{}\"' '*remoteResource=\"{}\"'".format(
-            cls.token, remote_resource
-        )
+        rule = f"irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeFiles.r '*dropzonePath=\"/mnt/ingest/zones/{cls.token}\"' '*remoteResource=\"{remote_resource}\"'"
         subprocess.check_call(rule, shell=True)
 
 class BaseTestCaseMountedIngestAsContributor(BaseTestCaseMountedIngest):
@@ -30,9 +28,7 @@ class BaseTestCaseMountedIngestAsContributor(BaseTestCaseMountedIngest):
     def perform_tasks_after_project_creation(cls):
         cls.depositor = "dlinssen"
         cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
-        rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,write,{},{}"'.format(
-            cls.depositor, cls.project_path
-        )
+        rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "default,write,{cls.depositor},{cls.project_path}"'
         subprocess.check_call(rule_set_acl, shell=True)
 
 class TestMountedIngestUM(BaseTestCaseMountedIngest):

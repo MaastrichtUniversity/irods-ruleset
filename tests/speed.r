@@ -132,7 +132,7 @@ def speed_get_service_accounts_id(callback):
     names = "'rods', 'service-mdl', 'service-pid', 'service-disqover', 'service-surfarchive'"
 
     for account in row_iterator("USER_ID",
-                                "USER_NAME in ({})".format(names),
+                                f"USER_NAME in ({names})",
                                 AS_LIST,
                                 callback):
         output.append(account[0])

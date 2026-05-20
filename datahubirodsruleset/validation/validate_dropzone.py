@@ -38,7 +38,7 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     has_dropzone_permission = ctx.callback.checkDropZoneACL(username, dropzone_type, "")["arguments"][2]
     if not formatters.format_string_to_boolean(has_dropzone_permission):
         validation_errors.append(
-            "User '{}' has insufficient DropZone permissions on '{}'".format(username, dropzone_path)
+            f"User '{username}' has insufficient DropZone permissions on '{dropzone_path}'"
         )
 
     # Check if dropzone exists
@@ -63,9 +63,9 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
 
     # Project or ingest resource is not available, abort ingest
     if not formatters.format_string_to_boolean(available):
-        validation_errors.append("The project or ingest resource is disabled for this project '{}'".format(project_id))
+        validation_errors.append(f"The project or ingest resource is disabled for this project '{project_id}'")
 
-    ctx.callback.msiWriteRodsLog("Starting validation of {}:".format(dropzone_path), 0)
+    ctx.callback.msiWriteRodsLog(f"Starting validation of {dropzone_path}:", 0)
 
     # Set 'state' AVU to 'validating'
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.VALIDATING.value)
@@ -98,7 +98,7 @@ def check_if_dropzone_exists(ctx, dropzone_path, validation_errors):
     try:
         ctx.callback.msiObjStat(dropzone_path, irods_types.RodsObjStat())
     except RuntimeError:
-        validation_errors.append("Dropzone '{}' does not exist".format(dropzone_path))
+        validation_errors.append(f"Dropzone '{dropzone_path}' does not exist")
     return validation_errors
 
 
@@ -106,7 +106,7 @@ def check_if_project_exists(ctx, project_path, project_id, validation_errors):
     try:
         ctx.callback.msiObjStat(project_path, irods_types.RodsObjStat())
     except RuntimeError:
-        validation_errors.append("Unknown project: {}".format(project_id))
+        validation_errors.append(f"Unknown project: {project_id}")
     return validation_errors
 
 
@@ -116,13 +116,13 @@ def create_pre_ingest_document(ctx, dropzone_type, project_id, dropzone_path, us
         ctx.remoteExec(
             ingest_resource_host,
             "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            "save_dropzone_pre_ingest_info('{}', '{}', '{}')".format(dropzone_path, username, dropzone_type),
+            f"save_dropzone_pre_ingest_info('{dropzone_path}', '{username}', '{dropzone_type}')",
             "",
         )
     except RuntimeError:
         validation_errors.append("Failed creating dropzone pre-ingest information")
     ctx.callback.msiWriteRodsLog(
-        "DEBUG: dropzone pre-ingest information created on {} for {}".format(ingest_resource_host, dropzone_path), 0
+        f"DEBUG: dropzone pre-ingest information created on {ingest_resource_host} for {dropzone_path}", 0
     )
     return validation_errors
 
@@ -139,5 +139,5 @@ def check_if_user_is_allowed_to_start_ingest(
     if dropzone_type == "direct" and username != "rods" and not sharing_enabled:
         creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
         if creator != username:
-            validation_errors.append("User '{}' is not the creator of dropzone '{}'".format(username, dropzone_path))
+            validation_errors.append(f"User '{username}' is not the creator of dropzone '{dropzone_path}'")
     return validation_errors

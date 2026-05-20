@@ -57,7 +57,7 @@ class BaseDataDelete:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
@@ -76,18 +76,16 @@ class BaseDataDelete:
         # for *irodsIngestRemoveDelay* (5 minutes).
         remove_dropzone(cls.token, cls.dropzone_type)
 
-        cls.revoke_rule = '/rules/tests/run_test.sh -r revoke_project_user_access -a "{},{},{}" '.format(
-            cls.project_path, cls.deletion_reason, cls.deletion_description
-        )
+        cls.revoke_rule = f'/rules/tests/run_test.sh -r revoke_project_user_access -a "{cls.project_path},{cls.deletion_reason},{cls.deletion_description}" '
         cls.run_after_ingest()
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     @classmethod
     def run_after_ingest(cls):
@@ -96,38 +94,38 @@ class BaseDataDelete:
 
 class BaseDataDeleteTestCase(BaseDataDelete):
     def test_revoke_project_collection_user_acl(self):
-        acl = "ils -A {}".format(self.project_collection_path)
+        acl = f"ils -A {self.project_collection_path}"
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc".format(self.manager1) not in ret_acl
-        assert "{}#nlmumc".format(self.manager2) not in ret_acl
+        assert f"{self.manager1}#nlmumc" not in ret_acl
+        assert f"{self.manager2}#nlmumc" not in ret_acl
 
-        assert "{}#nlmumc:read_object".format("rods") in ret_acl
-        assert "{}#nlmumc:read_object".format("service-disqover") in ret_acl
-        assert "{}#nlmumc:read_object".format("service-pid") in ret_acl
+        assert "rods#nlmumc:read_object" in ret_acl
+        assert "service-disqover#nlmumc:read_object" in ret_acl
+        assert "service-pid#nlmumc:read_object" in ret_acl
 
         # Check the ACL of a file in a sub-folder
         version_schema = formatters.format_schema_versioned_collection_path(self.project_id, self.collection_id, "1")
-        acl_version_schema = "ils -A {}".format(version_schema)
+        acl_version_schema = f"ils -A {version_schema}"
         ret_acl_version_schema = subprocess.check_output(acl_version_schema, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc".format(self.manager1) not in ret_acl_version_schema
-        assert "{}#nlmumc".format(self.manager2) not in ret_acl_version_schema
+        assert f"{self.manager1}#nlmumc" not in ret_acl_version_schema
+        assert f"{self.manager2}#nlmumc" not in ret_acl_version_schema
 
-        assert "{}#nlmumc:read_object".format("rods") in ret_acl_version_schema
-        assert "{}#nlmumc:read_object".format("service-disqover") in ret_acl_version_schema
-        assert "{}#nlmumc:read_object".format("service-pid") in ret_acl_version_schema
+        assert "rods#nlmumc:read_object" in ret_acl_version_schema
+        assert "service-disqover#nlmumc:read_object" in ret_acl_version_schema
+        assert "service-pid#nlmumc:read_object" in ret_acl_version_schema
 
     def test_set_collection_deletion_metadata(self):
-        metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.REASON.value)
+        metadata = f"imeta ls -C {self.project_collection_path} {DataDeletionAttribute.REASON.value}"
         ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
-        assert "value: {}".format(self.deletion_reason) in ret_metadata
+        assert f"value: {self.deletion_reason}" in ret_metadata
 
-        metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.DESCRIPTION.value)
+        metadata = f"imeta ls -C {self.project_collection_path} {DataDeletionAttribute.DESCRIPTION.value}"
         ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
-        assert "value: {}".format(self.deletion_description) in ret_metadata
+        assert f"value: {self.deletion_description}" in ret_metadata
 
-        metadata = "imeta ls -C {} {}".format(self.project_collection_path, DataDeletionAttribute.STATE.value)
+        metadata = f"imeta ls -C {self.project_collection_path} {DataDeletionAttribute.STATE.value}"
         ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
-        assert "value: {}".format(self.deletion_state) in ret_metadata
+        assert f"value: {self.deletion_state}" in ret_metadata
 
     def test_project_collection_metadata_removal_from_index(self):
         result = self.get_metadata_in_elastic_search()
@@ -149,8 +147,8 @@ class BaseDataDeleteTestCase(BaseDataDelete):
         elastic_host = os.environ.get("ENV_ELASTIC_HOST")
         elastic_port = os.environ.get("ENV_ELASTIC_PORT")
         elastic_password = os.environ.get("ENV_ELASTIC_PASSWORD")
-        search_url = "{}:{}/collection_metadata/_doc/_search".format(elastic_host, elastic_port)
-        query = "curl -u elastic:{} {}?q={}".format(elastic_password, search_url, self.project_id)
+        search_url = f"{elastic_host}:{elastic_port}/collection_metadata/_doc/_search"
+        query = f"curl -u elastic:{elastic_password} {search_url}?q={self.project_id}"
 
         ret = subprocess.check_output(query, shell=True)
         return json.loads(ret)

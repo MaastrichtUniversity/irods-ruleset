@@ -32,7 +32,7 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
     dict
         collection_id, destination_collection & ingest_resource_host
     """
-    ctx.callback.msiWriteRodsLog("Starting ingestion {}".format(dropzone_path), 0)
+    ctx.callback.msiWriteRodsLog(f"Starting ingestion {dropzone_path}", 0)
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
 
     title = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
@@ -43,7 +43,7 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
         ctx.callback.set_ingestion_error_avu(dropzone_path, "Error creating projectCollection", project_id, depositor)
 
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
-    ctx.callback.msiWriteRodsLog("Ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0)
+    ctx.callback.msiWriteRodsLog(f"Ingesting {dropzone_path} to {destination_project_collection_path}", 0)
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
     total_size = ctx.callback.getCollectionAVU(dropzone_path, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
@@ -52,12 +52,7 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
     )["arguments"][2]
 
     ctx.callback.msiWriteRodsLog(
-        "Starting the ingestion of {} to {} ({})({})".format(
-            dropzone_path,
-            destination_project_collection_path,
-            destination_resource,
-            str(format_human_bytes(total_size)),
-        ),
+        f"Starting the ingestion of {dropzone_path} to {destination_project_collection_path} ({destination_resource})({format_human_bytes(total_size)!s})",
         0,
     )
     return {

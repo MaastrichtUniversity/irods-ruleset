@@ -29,7 +29,7 @@ def get_user_group_memberships(ctx, show_special_groups, username):
     output = []
 
     for result in row_iterator(
-        "order(USER_GROUP_NAME), USER_GROUP_ID", "USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback
+        "order(USER_GROUP_NAME), USER_GROUP_ID", f"USER_ID = '{user_id}'", AS_LIST, ctx.callback
     ):
 
         group_name = result[0]
@@ -40,7 +40,7 @@ def get_user_group_memberships(ctx, show_special_groups, username):
         if group_name != username:
             for metadata_result in row_iterator(
                 "META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
-                "USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{}'".format(group_id),
+                f"USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{group_id}'",
                 AS_LIST,
                 ctx.callback,
             ):

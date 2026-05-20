@@ -91,7 +91,7 @@ class BaseTestCaseIngest:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         # Running the index all rule: delete the current elasticsearch index that could be in a bad state
         run_index_all_project_collections_metadata()
         project = create_project(cls)
@@ -102,24 +102,22 @@ class BaseTestCaseIngest:
         cls.add_metadata_files_to_dropzone(cls.token)
         cls.add_data_to_dropzone()
         start_and_wait_for_ingest(cls)
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     def test_collection_avu(self):
-        rule_list_collections = '/rules/tests/run_test.sh -r list_collections -a "{}"'.format(self.project_path)
+        rule_list_collections = f'/rules/tests/run_test.sh -r list_collections -a "{self.project_path}"'
         ret_list_collections = subprocess.check_output(rule_list_collections, shell=True)
         list_collections = json.loads(ret_list_collections)
         assert list_collections[0]["id"] == self.collection_id
 
-        rule_collection_detail = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
-            self.project_id, self.collection_id
-        )
+        rule_collection_detail = f'/rules/tests/run_test.sh -r detailsProjectCollection -a "{self.project_id},{self.collection_id},false"'
         ret_collection_detail = subprocess.check_output(rule_collection_detail, shell=True)
         collection_detail = json.loads(ret_collection_detail)
         assert collection_detail["creator"] == self.collection_creator
@@ -132,39 +130,39 @@ class BaseTestCaseIngest:
 
     def test_collection_instance(self):
         tmp_instance_path = "/tmp/tmp_instance.json"
-        iget = "iget -f {}/{}/instance.json {}".format(self.project_path, self.collection_id, tmp_instance_path)
+        iget = f"iget -f {self.project_path}/{self.collection_id}/instance.json {tmp_instance_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_instance_path) as tmp_instance_file:
             tmp_instance = json.load(tmp_instance_file)
             pid = tmp_instance["@id"]
             assert pid.startswith("https://hdl.handle.net/")
-            assert pid.endswith("{}{}instance.1".format(self.project_id, self.collection_id))
+            assert pid.endswith(f"{self.project_id}{self.collection_id}instance.1")
 
     def test_collection_schema(self):
         tmp_schema_path = "/tmp/tmp_schema.json"
-        iget = "iget -f {}/{}/schema.json {}".format(self.project_path, self.collection_id, tmp_schema_path)
+        iget = f"iget -f {self.project_path}/{self.collection_id}/schema.json {tmp_schema_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_schema_path) as tmp_schema_file:
             tmp_instance = json.load(tmp_schema_file)
             pid = tmp_instance["@id"]
             assert pid.startswith("https://hdl.handle.net/")
-            assert pid.endswith("{}{}schema.1".format(self.project_id, self.collection_id))
+            assert pid.endswith(f"{self.project_id}{self.collection_id}schema.1")
 
     def test_collection_acl(self):
         """
         Check the project collection acl; assume that all members only have read access.
         """
-        acl = "ils -A {}/{}".format(self.project_path, self.collection_id)
+        acl = f"ils -A {self.project_path}/{self.collection_id}"
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
         assert "own" not in ret
-        assert "{}#nlmumc:read_object".format(self.manager1) in ret
-        assert "{}#nlmumc:read_object".format(self.manager2) in ret
+        assert f"{self.manager1}#nlmumc:read_object" in ret
+        assert f"{self.manager2}#nlmumc:read_object" in ret
 
     def test_project_acl(self):
-        acl = "ils -A {}".format(self.project_path)
+        acl = f"ils -A {self.project_path}"
         ret = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(self.manager1) in ret
-        assert "{}#nlmumc:own".format(self.manager2) in ret
+        assert f"{self.manager1}#nlmumc:own" in ret
+        assert f"{self.manager2}#nlmumc:own" in ret
 
     def test_collection_pid(self):
         import requests
@@ -173,13 +171,11 @@ class BaseTestCaseIngest:
         # Note: This test can start to fail when reaching high project_id number (e.g: P000000150).
         # A potential first time PID registration can cause a synchronization timing issue between the EpicPID
         # registration service and the global Handle URL resolving service.
-        rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
-            self.project_id, self.collection_id
-        )
+        rule = f'/rules/tests/run_test.sh -r detailsProjectCollection -a "{self.project_id},{self.collection_id},false"'
         ret = subprocess.check_output(rule, shell=True)
         collection_detail = json.loads(ret)
 
-        url = "https://hdl.handle.net/{}".format(collection_detail["PID"])
+        url = f"https://hdl.handle.net/{collection_detail['PID']}"
         response = requests.get(url, allow_redirects=False)
         assert response.status_code == 302
 
@@ -187,9 +183,7 @@ class BaseTestCaseIngest:
         """
         Check the data object that are in the project collection use the correct project destination resource.
         """
-        query = 'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
-            self.project_path, self.collection_id
-        )
+        query = f'iquest --no-page "%s" "SELECT DATA_RESC_HIER WHERE COLL_PARENT_NAME = \'{self.project_path}/{self.collection_id}\'"'
         ret = subprocess.check_output(query, shell=True, encoding="UTF-8")
         resources = ret.splitlines()
         if "repl" in self.destination_resource:
@@ -204,9 +198,7 @@ class BaseTestCaseIngest:
         """
         Check that data objects (instance.json & schema.json) at the root of project collection are correctly replicated
         """
-        query = 'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'{}/{}\'"'.format(
-            self.project_path, self.collection_id
-        )
+        query = f'iquest --no-page "%s" "SELECT count(DATA_RESC_NAME) WHERE COLL_PARENT_NAME = \'{self.project_path}/{self.collection_id}\'"'
         ret = subprocess.check_output(query, shell=True)
         if "repl" in self.destination_resource:
             assert int(ret) == 4
@@ -233,13 +225,18 @@ class BaseTestCaseIngest:
     def test_dropzone_pre_ingest_avu(self):
         """This test asserts that the dropzone AVUs set with the rule 'save_dropzone_pre_ingest_info' are correct."""
 
-        query = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}' \""
         dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
 
-        run_iquest = query.format(dropzone_path, "totalSize")
+        run_iquest = (
+            f'iquest "%s" "SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = \'{dropzone_path}\' '
+            'and META_COLL_ATTR_NAME = \'totalSize\' "'
+        )
         total_size = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
 
-        run_iquest = query.format(dropzone_path, "numFiles")
+        run_iquest = (
+            f'iquest "%s" "SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = \'{dropzone_path}\' '
+            'and META_COLL_ATTR_NAME = \'numFiles\' "'
+        )
         num_files = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
 
         assert total_size == self.dropzone_total_size

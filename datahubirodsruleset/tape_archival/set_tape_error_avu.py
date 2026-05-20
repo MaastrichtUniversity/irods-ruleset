@@ -25,7 +25,7 @@ def set_tape_error_avu(ctx, project_collection_path, username_initiator, attribu
     """
     ctx.callback.setCollectionAVU(project_collection_path, attribute, value)
     ctx.callback.msiWriteRodsLog(
-        "Tape archival/unarchival failed {} with error status '{}'".format(project_collection_path, value), 0
+        f"Tape archival/unarchival failed {project_collection_path} with error status '{value}'", 0
     )
 
     project_id = formatters.get_project_id_from_project_collection_path(project_collection_path)
@@ -33,12 +33,12 @@ def set_tape_error_avu(ctx, project_collection_path, username_initiator, attribu
     description = ""
 
     if "value" == ArchiveState.ERROR_ARCHIVE_FAILED.value:
-        description = "Archival failed for collection {} in project {}".format(project_collection_id, project_id)
+        description = f"Archival failed for collection {project_collection_id} in project {project_id}"
     elif "value" == UnarchiveState.ERROR_UNARCHIVE_FAILED.value:
-        description = "Un-archival failed for collection {} in project {}".format(project_collection_id, project_id)
+        description = f"Un-archival failed for collection {project_collection_id} in project {project_id}"
 
     # if this go wrong always continue
     try:
         ctx.callback.submit_automated_support_request(username_initiator, description, message)
     finally:
-        ctx.callback.msiExit("-1", "{} for {}".format(message, project_collection_path))
+        ctx.callback.msiExit("-1", f"{message} for {project_collection_path}")

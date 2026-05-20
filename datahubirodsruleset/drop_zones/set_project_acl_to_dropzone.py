@@ -139,13 +139,13 @@ def get_contributors_for_project_or_dropzone(ctx, path):
     output = []
     for result in row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
-        "COLL_ACCESS_NAME in ({}) AND ".format(criteria) + "COLL_NAME = '{}'".format(path),
+        f"COLL_ACCESS_NAME in ({criteria}) AND " + f"COLL_NAME = '{path}'",
         AS_LIST,
         ctx.callback,
     ):
         account_id = result[0]
 
-        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             account_name = account[0]
             account_type = account[1]
 

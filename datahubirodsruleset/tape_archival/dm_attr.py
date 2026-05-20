@@ -25,13 +25,11 @@ def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
     input_type = ctx.callback.msiGetObjType(unarchival_path, "")["arguments"][1]
     query = ""
     if input_type == "-c":
-        query = "DATA_RESC_NAME = '{}' AND COLL_NAME LIKE '%{}%'".format(tape_resource, unarchival_path)
+        query = f"DATA_RESC_NAME = '{tape_resource}' AND COLL_NAME LIKE '%{unarchival_path}%'"
     elif input_type == "-d":
         file_name = Path(unarchival_path).name
-        folder_name = unarchival_path.replace("/{}".format(file_name), "")
-        query = "DATA_RESC_NAME = '{}' AND COLL_NAME = '{}' AND DATA_NAME = '{}'".format(
-            tape_resource, folder_name, file_name
-        )
+        folder_name = unarchival_path.replace(f"/{file_name}", "")
+        query = f"DATA_RESC_NAME = '{tape_resource}' AND COLL_NAME = '{folder_name}' AND DATA_NAME = '{file_name}'"
 
     count = 0
     files = []
@@ -44,7 +42,7 @@ def dm_attr(ctx, unarchival_path, tape_resource, tape_resource_location):
         output = ctx.callback.dmattr(file_path, tape_resource_location, "")["arguments"][2].rstrip()
         file_status = output.split("+")[0]
         files.append(
-            {"physical_path": file_path, "virtual_path": "{}/{}".format(row[1], row[2]), "status": file_status}
+            {"physical_path": file_path, "virtual_path": f"{row[1]}/{row[2]}", "status": file_status}
         )
 
     files_offline = [file for file in files if file["status"] == "OFL"]

@@ -37,14 +37,12 @@ def get_schema():
 def add_metadata_files_to_dropzone(token, dropzone_type):
     get_instance()
     instance_path = formatters.format_instance_dropzone_path(token, dropzone_type)
-    iput_instance = "iput -R stagingResc01 {} {}".format(
-        TMP_INSTANCE_PATH, instance_path
-    )
+    iput_instance = f"iput -R stagingResc01 {TMP_INSTANCE_PATH} {instance_path}"
     subprocess.check_call(iput_instance, shell=True)
 
     get_schema()
     schema_path = formatters.format_schema_dropzone_path(token, dropzone_type)
-    iput_schema = "iput -R stagingResc01 {} {}".format(TMP_SCHEMA_PATH, schema_path)
+    iput_schema = f"iput -R stagingResc01 {TMP_SCHEMA_PATH} {schema_path}"
     subprocess.check_call(iput_schema, shell=True)
 
 
@@ -58,56 +56,45 @@ def add_metadata_files_to_direct_dropzone(token):
 
 def add_data_to_direct_dropzone(dropzone_info):
     for filename, size in dropzone_info.files_per_protocol.items():
-        file_path = "/tmp/{}".format(filename)
+        file_path = f"/tmp/{filename}"
         dropzone_path = formatters.format_dropzone_path(
             dropzone_info.token, dropzone_info.dropzone_type
         )
-        logical_path = "{}/{}".format(dropzone_path, filename)
+        logical_path = f"{dropzone_path}/{filename}"
 
         with open(file_path, "wb") as file_buffer:
             file_buffer.write(b"0" * size)
-        iput = "iput -R stagingResc01 {} {}".format(file_path, logical_path)
+        iput = f"iput -R stagingResc01 {file_path} {logical_path}"
         subprocess.check_call(iput, shell=True)
 
 
 def revert_latest_project_collection_number(project_path):
-    run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'latestProjectCollectionNumber' \"".format(
-        project_path
-    )
+    run_iquest = f"iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{project_path}' and META_COLL_ATTR_NAME = 'latestProjectCollectionNumber' \""
     latest_project_number = subprocess.check_output(run_iquest, shell=True).strip()
     assert latest_project_number.isdigit()
     revert_value = int(latest_project_number) - 1
 
-    run_set_meta = "imeta set -C {} latest_project_number {}".format(
-        project_path, revert_value
-    )
+    run_set_meta = f"imeta set -C {project_path} latest_project_number {revert_value}"
     subprocess.check_call(run_set_meta, shell=True)
 
 
 def remove_project(project_path):
-    set_acl = "ichmod -rM own rods {}".format(project_path)
+    set_acl = f"ichmod -rM own rods {project_path}"
     subprocess.check_call(set_acl, shell=True)
-    run_remove_project = "irm -rf {}".format(project_path)
+    run_remove_project = f"irm -rf {project_path}"
     subprocess.check_call(run_remove_project, shell=True)
 
 
 def remove_dropzone(token, dropzone_type):
     dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
-    set_dropzone_acl = "ichmod -rM own rods {}".format(dropzone_path)
+    set_dropzone_acl = f"ichmod -rM own rods {dropzone_path}"
     subprocess.check_call(set_dropzone_acl, shell=True)
-    run_remove_dropzone = "irm -rf {}".format(dropzone_path)
+    run_remove_dropzone = f"irm -rf {dropzone_path}"
     subprocess.check_call(run_remove_dropzone, shell=True)
 
 
 def create_project(test_case):
-    rule_create_new_project = "/rules/tests/run_test.sh -r create_new_project -a \"{},{},{},{},{},{},{{'enableDropzoneSharing':'true'}}\"".format(
-        test_case.ingest_resource,
-        test_case.destination_resource,
-        test_case.project_title,
-        test_case.manager1,
-        test_case.manager2,
-        test_case.budget_number,
-    )
+    rule_create_new_project = f"/rules/tests/run_test.sh -r create_new_project -a \"{test_case.ingest_resource},{test_case.destination_resource},{test_case.project_title},{test_case.manager1},{test_case.manager2},{test_case.budget_number},{{'enableDropzoneSharing':'true'}}\""
     ret_create_new_project = subprocess.check_output(
         rule_create_new_project, shell=True
     )
@@ -116,13 +103,9 @@ def create_project(test_case):
     assert validators.validate_project_id(str(project["project_id"]))
     assert validators.validate_project_path(project["project_path"])
 
-    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(
-        test_case.manager1, project["project_path"]
-    )
+    rule_set_acl = f"/rules/tests/run_test.sh -r set_acl -a \"default,own,{test_case.manager1},{project['project_path']}\""
     subprocess.check_call(rule_set_acl, shell=True)
-    rule_set_acl = '/rules/tests/run_test.sh -r set_acl -a "default,own,{},{}"'.format(
-        test_case.manager2, project["project_path"]
-    )
+    rule_set_acl = f"/rules/tests/run_test.sh -r set_acl -a \"default,own,{test_case.manager2},{project['project_path']}\""
     subprocess.check_call(rule_set_acl, shell=True)
 
     return project
@@ -130,14 +113,7 @@ def create_project(test_case):
 
 def create_dropzone(test_case):
     rule_create_drop_zone = (
-        '/rules/tests/run_test.sh -r create_drop_zone -a "{},{},{},{},{},{}"'.format(
-            test_case.dropzone_type,
-            test_case.depositor,
-            test_case.project_id,
-            test_case.collection_title,
-            test_case.schema_name,
-            test_case.schema_version,
-        )
+        f'/rules/tests/run_test.sh -r create_drop_zone -a "{test_case.dropzone_type},{test_case.depositor},{test_case.project_id},{test_case.collection_title},{test_case.schema_name},{test_case.schema_version}"'
     )
     ret_create_drop_zone = subprocess.check_output(rule_create_drop_zone, shell=True)
     token = json.loads(ret_create_drop_zone)
@@ -157,12 +133,10 @@ def start_and_wait_for_ingest(test_case):
     rule_start_ingest = (f'/rules/tests/run_test.sh -r start_ingest -a "{test_case.depositor},{test_case.token},{test_case.dropzone_type}"')
     subprocess.check_call(rule_start_ingest, shell=True)
     print(
-        "Starting {} ingestion of '{}'".format(test_case.dropzone_type, test_case.token)
+        f"Starting {test_case.dropzone_type} ingestion of '{test_case.token}'"
     )
     rule_get_active_drop_zone = (
-        '/rules/tests/run_test.sh -r get_active_drop_zone -a "{},false,{}"'.format(
-            test_case.token, test_case.dropzone_type
-        )
+        f'/rules/tests/run_test.sh -r get_active_drop_zone -a "{test_case.token},false,{test_case.dropzone_type}"'
     )
     ret_get_active_drop_zone = subprocess.check_output(
         rule_get_active_drop_zone, shell=True
@@ -196,7 +170,7 @@ def wait_for_set_acl_for_metadata_snapshot_to_finish(project_id):
     project_id : str
         The project to request and set a pid for (e.g: P000000010)
     """
-    cmd = "iqstat -a | grep \"setCollectionSize('{}'\"".format(project_id)
+    cmd = f"iqstat -a | grep \"setCollectionSize('{project_id}'\""
     fail_safe = 30
     output = ""
     while fail_safe != 0:
@@ -249,7 +223,7 @@ def wait_for_revoke_project_collection_user_acl():
 
 
 def does_path_exist(absolute_path):
-    run_ilocate = "ilocate {}".format(absolute_path)
+    run_ilocate = f"ilocate {absolute_path}"
     try:
         subprocess.check_output(run_ilocate, shell=True).strip()
     except subprocess.CalledProcessError:
@@ -259,28 +233,28 @@ def does_path_exist(absolute_path):
 
 
 def set_collection_avu(collection_path, attribute, value):
-    run_imeta = 'imeta set -C {} {} "{}"'.format(collection_path, attribute, value)
+    run_imeta = f'imeta set -C {collection_path} {attribute} "{value}"'
     subprocess.check_call(run_imeta, shell=True)
 
 
 def create_user(username):
-    run_imeta = "iadmin mkuser {} rodsuser".format(username)
+    run_imeta = f"iadmin mkuser {username} rodsuser"
     try:
         subprocess.check_call(run_imeta, shell=True)
     except subprocess.CalledProcessError:
-        print("User {} already exists, continuing code execution".format(username))
+        print(f"User {username} already exists, continuing code execution")
 
-    set_user_avu(username, "displayName", "{} LastName".format(username))
-    set_user_avu(username, "eduPersonUniqueID", "{}@sram.surf.nl".format(username))
-    set_user_avu(username, "email", "{}@maastrichtuniversity.nl".format(username))
+    set_user_avu(username, "displayName", f"{username} LastName")
+    set_user_avu(username, "eduPersonUniqueID", f"{username}@sram.surf.nl")
+    set_user_avu(username, "email", f"{username}@maastrichtuniversity.nl")
     set_user_avu(
         username,
         "voPersonExternalAffiliation",
-        "{}@maastrichtuniversity.nl".format(username),
+        f"{username}@maastrichtuniversity.nl",
     )
-    set_user_avu(username, "voPersonExternalID", "{}@unimaas.nl".format(username))
+    set_user_avu(username, "voPersonExternalID", f"{username}@unimaas.nl")
 
-    run_ichmod = "ichmod -M write {} /nlmumc/ingest/direct".format(username)
+    run_ichmod = f"ichmod -M write {username} /nlmumc/ingest/direct"
     subprocess.check_call(run_ichmod, shell=True)
 
 
@@ -290,40 +264,40 @@ def create_data_steward(username):
 
 
 def create_group(groupname):
-    run_iadmin = "iadmin mkgroup {}".format(groupname)
+    run_iadmin = f"iadmin mkgroup {groupname}"
     subprocess.check_call(run_iadmin, shell=True)
-    set_user_avu(groupname, "description", "{} is a cool group!".format(groupname))
-    set_user_avu(groupname, "displayName", "{}".format(groupname))
-    set_user_avu(groupname, "uniqueIdentifier", "{}".format(str(uuid.uuid1())))
+    set_user_avu(groupname, "description", f"{groupname} is a cool group!")
+    set_user_avu(groupname, "displayName", f"{groupname}")
+    set_user_avu(groupname, "uniqueIdentifier", f"{uuid.uuid1()!s}")
 
 
 def remove_group(groupname):
-    run_iadmin = "iadmin rmgroup {}".format(groupname)
+    run_iadmin = f"iadmin rmgroup {groupname}"
     subprocess.check_call(run_iadmin, shell=True)
 
 
 def add_user_to_group(groupname, username):
-    run_iadmin = "iadmin atg {} {}".format(groupname, username)
+    run_iadmin = f"iadmin atg {groupname} {username}"
     subprocess.check_call(run_iadmin, shell=True)
 
 
 def remove_user_from_group(groupname, username):
-    run_iadmin = "iadmin rfg {} {}".format(groupname, username)
+    run_iadmin = f"iadmin rfg {groupname} {username}"
     subprocess.check_call(run_iadmin, shell=True)
 
 
 def remove_user(username):
-    run_imeta = "iadmin rmuser {}".format(username)
+    run_imeta = f"iadmin rmuser {username}"
     subprocess.check_call(run_imeta, shell=True)
 
 
 def set_user_avu(username, attribute, value):
-    run_imeta = 'imeta set -u {} {} "{}"'.format(username, attribute, value)
+    run_imeta = f'imeta set -u {username} {attribute} "{value}"'
     subprocess.check_call(run_imeta, shell=True)
 
 
 def set_irods_collection_avu(collection_path, attribute, value):
-    run_imeta = 'imeta set -C {} {} "{}"'.format(collection_path, attribute, value)
+    run_imeta = f'imeta set -C {collection_path} {attribute} "{value}"'
     subprocess.check_call(run_imeta, shell=True)
 
 
@@ -344,12 +318,8 @@ def get_project_collection_instance_in_elastic(project_id):
     elastic_host = os.environ.get("ENV_ELASTIC_HOST")
     elastic_port = os.environ.get("ENV_ELASTIC_PORT")
     elastic_password = os.environ.get("ENV_ELASTIC_PASSWORD")
-    search_url = "{}:{}/collection_metadata/_doc/_search".format(
-        elastic_host, elastic_port
-    )
-    query = "curl -u elastic:{} {}?q={}".format(
-        elastic_password, search_url, project_id
-    )
+    search_url = f"{elastic_host}:{elastic_port}/collection_metadata/_doc/_search"
+    query = f"curl -u elastic:{elastic_password} {search_url}?q={project_id}"
 
     instance = ""
     # The AVU 'ingested' is set before calling index_add_single_project_collection_metadata in finish_ingest.py

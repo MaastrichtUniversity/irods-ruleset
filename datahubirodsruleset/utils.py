@@ -322,8 +322,9 @@ def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', recu
         # Need to run nosec here. We need the shell=true because we run 'export clientUserName'
         check_call(irepl_cmd, shell=True) # nosec
     except CalledProcessError as err:
-        ctx.callback.msiWriteRodsLog(f"ERROR: irepl: cmd '{err.cmd}' retcode'{err.returncode}'", 0)
-        ctx.callback.msiExit("-1", f"ERROR: irepl failed for '{path}'->'{destination_resource}'")
+        error_message = f"ERROR: irepl failed for '{path}'->'{destination_resource}' (retcode {err.returncode})"
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+        raise RuntimeError(error_message) from err
 
 
 def apply_batch_acl_operation(ctx, collection_path, acl_operations):

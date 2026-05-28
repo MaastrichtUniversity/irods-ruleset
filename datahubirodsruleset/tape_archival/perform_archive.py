@@ -1,5 +1,4 @@
 # Part of the archival flow. Not to be called by user
-import irods_types  # pylint: disable=import-error
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 import json
 
@@ -7,6 +6,7 @@ from dhpythonirodsutils.enums import ProcessAttribute, ArchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
+from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, retry_runtime_error
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -77,48 +77,83 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
 
         # Checksum
         # We perform checksums beforehand because the 'irepl' command does not include checksumming
-        try:
-            checksum = ctx.callback.msiDataObjChksum(file["path"], "", "")["arguments"][2]
-            ctx.callback.msiWriteRodsLog(f"DEBUG: chksum done {checksum}", 0)
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(err, 0)
-            ctx.callback.set_tape_error_avu(
-                check_results["project_collection_path"],
-                username_initiator,
-                ProcessAttribute.ARCHIVE.value,
-                ArchiveState.ERROR_ARCHIVE_FAILED.value,
-                f"Checksum of {file['path']} from {file['coordinating_resource']} FAILED.",
-            )
+        if not _run_archive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Checksum {file['path']}",
+            f"Checksum of {file['path']} from {file['coordinating_resource']} FAILED.",
+            lambda: checksum_file(ctx, file["path"]),
+        ):
+            continue
 
         # Replicate
-        try:
-            # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
-            irepl_wrapper(ctx, file["path"], check_results["tape_resource"], check_results["service_account"], False, True)
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(err, 0)
-            ctx.callback.set_tape_error_avu(
-                check_results["project_collection_path"],
-                username_initiator,
-                ProcessAttribute.ARCHIVE.value,
-                ArchiveState.ERROR_ARCHIVE_FAILED.value,
-                f"Replication of {file['path']} from {file['coordinating_resource']} to {check_results['tape_resource']} FAILED.",
-            )
+        if not _run_archive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Replication {file['path']} to {check_results['tape_resource']}",
+            f"Replication of {file['path']} from {file['coordinating_resource']} to {check_results['tape_resource']} FAILED.",
+            lambda: irepl_wrapper(
+                ctx,
+                file["path"],
+                check_results["tape_resource"],
+                check_results["service_account"],
+                False,
+                True,
+            ),
+        ):
+            continue
 
         # Trim
-        try:
-            ctx.callback.msiDataObjTrim(file["path"], file["coordinating_resource"], "null", "1", "null", 0)
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(err, 0)
-            ctx.callback.set_tape_error_avu(
-                check_results["project_collection_path"],
-                username_initiator,
-                ProcessAttribute.ARCHIVE.value,
-                ArchiveState.ERROR_ARCHIVE_FAILED.value,
-                f"Trim of {file['path']} from {file['coordinating_resource']} FAILED.",
-            )
+        if not _run_archive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Trim {file['path']} from {file['coordinating_resource']}",
+            f"Trim of {file['path']} from {file['coordinating_resource']} FAILED.",
+            lambda: ctx.callback.msiDataObjTrim(file["path"], file["coordinating_resource"], "null", "1", "null", 0),
+        ):
+            continue
 
         files_archived += 1
     return files_archived
+
+
+def _run_archive_step(ctx, check_results, username_initiator, operation_name, failure_message, operation):
+    """
+    Run a single archive step with retries, setting the error AVU on failure.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    check_results : dict
+        The dict containing all the information gained by the 'perform_archive_checks' rule.
+    username_initiator : str
+        The user that initiated this entire flow.
+    operation_name : str
+        Human-readable descriptor for log messages, e.g. 'Checksum /path/to/file'
+    failure_message : str
+        Message to pass to set_tape_error_avu on failure.
+    operation : Callable
+        The operation to attempt.
+
+    Returns
+    -------
+    bool
+        True on success, False if all retries failed.
+    """
+    success = retry_runtime_error(ctx, operation_name, operation)
+    if not success:
+        ctx.callback.set_tape_error_avu(
+            check_results["project_collection_path"],
+            username_initiator,
+            ProcessAttribute.ARCHIVE.value,
+            ArchiveState.ERROR_ARCHIVE_FAILED.value,
+            failure_message,
+        )
+    return success
 
 
 def get_coordinating_resources(ctx):
@@ -166,20 +201,14 @@ def clean_up_and_inform(ctx, check_results, files_archived):
     files_archived: int
         The amount of files archived by this rule
     """
-    set_tape_avu(ctx, check_results["project_collection_path"], ArchiveState.ARCHIVE_DONE.value)
-    ctx.callback.msiWriteRodsLog(f"DEBUG: surfArchiveScanner archived {files_archived} files", 0)
-
-    kvp = ctx.callback.msiString2KeyValPair(
-        f"{ProcessAttribute.ARCHIVE.value}={ArchiveState.ARCHIVE_DONE.value}", irods_types.BytesBuf()
-    )["arguments"][1]
-    ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
-
-    if files_archived:
-        ctx.callback.setCollectionSize(
-            check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
-        )
-        ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
-    ctx.callback.close_project_collection(check_results["project_id"], check_results["project_collection_id"])
+    finalize_tape_operation(
+        ctx,
+        check_results,
+        files_archived,
+        ArchiveState.ARCHIVE_DONE.value,
+        ProcessAttribute.ARCHIVE.value,
+        "archived",
+    )
 
 
 def set_tape_avu(ctx, project_collection_path, value):

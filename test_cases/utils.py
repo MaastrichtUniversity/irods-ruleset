@@ -288,7 +288,10 @@ def remove_user_from_group(groupname, username):
 
 def remove_user(username):
     run_imeta = f"iadmin rmuser {username}"
-    subprocess.check_call(run_imeta, shell=True)
+    try:
+        subprocess.check_call(run_imeta, shell=True)
+    except subprocess.CalledProcessError:
+        print(f"User {username} does not exist, continuing code execution")
 
 
 def set_user_avu(username, attribute, value):

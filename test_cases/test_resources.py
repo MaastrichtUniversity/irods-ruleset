@@ -55,7 +55,7 @@ class TestResources:
 
     @classmethod
     def setup_class(cls):
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
@@ -63,30 +63,26 @@ class TestResources:
         cls.add_metadata_files_to_dropzone(cls.token)
         start_and_wait_for_ingest(cls)
         subprocess.check_call(
-            "ichmod own -M rods /nlmumc/projects/{}/{}".format(cls.project_id, cls.collection_id), shell=True
+            f"ichmod own -M rods /nlmumc/projects/{cls.project_id}/{cls.collection_id}", shell=True
         )
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     def test_calc_collection_files_across_resc(self):
         resc_found = False
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\"".format(
-            self.project_id, self.collection_id
-        )
+        rule = f"irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionFilesAcrossResc.r \"*collection='/nlmumc/projects/{self.project_id}/{self.collection_id}'\""
         rule_output = subprocess.check_output(rule, shell=True)
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["numFilesPerResc"][0]["numFiles"] == "4"
         assert rule_parsed["numFilesPerResc"][0]["resourceID"].isnumeric()
         subprocess.check_call(
-            "iput -R replRescAZM02 {} /nlmumc/projects/{}/{}/temp_file".format(
-                TMP_INSTANCE_PATH, self.project_id, self.collection_id
-            ),
+            f"iput -R replRescAZM02 {TMP_INSTANCE_PATH} /nlmumc/projects/{self.project_id}/{self.collection_id}/temp_file",
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
@@ -100,22 +96,18 @@ class TestResources:
                 resc_found = True
         assert resc_found == True
         subprocess.check_call(
-            "irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True
+            f"irm -f /nlmumc/projects/{self.project_id}/{self.collection_id}/temp_file", shell=True
         )
 
     def test_calc_collection_size_across_resc(self):
         resc_found = False
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{}/{}'\" \"*unit='KiB'\" \"*round='ceiling'\"".format(
-            self.project_id, self.collection_id
-        )
+        rule = f"irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/calcCollectionSizeAcrossResc.r \"*collection='/nlmumc/projects/{self.project_id}/{self.collection_id}'\" \"*unit='KiB'\" \"*round='ceiling'\""
         rule_output = subprocess.check_output(rule, shell=True, encoding="UTF-8")
         rule_parsed = json.loads(rule_output)
         assert rule_parsed["sizePerResc"][0]["dataSize"] == "532"
         assert rule_parsed["sizePerResc"][0]["resourceID"].isnumeric()
         subprocess.check_call(
-            "iput -R replRescAZM02 {} /nlmumc/projects/{}/{}/temp_file".format(
-                TMP_INSTANCE_PATH, self.project_id, self.collection_id
-            ),
+            f"iput -R replRescAZM02 {TMP_INSTANCE_PATH} /nlmumc/projects/{self.project_id}/{self.collection_id}/temp_file",
             shell=True,
         )
         rule_output = subprocess.check_output(rule, shell=True)
@@ -129,7 +121,7 @@ class TestResources:
                 resc_found = True
         assert resc_found == True
         subprocess.check_call(
-            "irm -f /nlmumc/projects/{}/{}/temp_file".format(self.project_id, self.collection_id), shell=True
+            f"irm -f /nlmumc/projects/{self.project_id}/{self.collection_id}/temp_file", shell=True
         )
 
     def test_get_destination_resources(self):
@@ -154,18 +146,31 @@ class TestResources:
             ]
 
     def test_get_resource_avu(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getResourceAVU.r \"*resourceName='arcRescSURF01'\" \"*attribute='{}'\" \"*overrideValue='{}'\" \"*fatal='{}'\""
+        base_rule = (
+            "irule -r irods_rule_engine_plugin-irods_rule_language-instance "
+            "-F /rules/native_irods_ruleset/misc/getResourceAVU.r "
+            "\"*resourceName='arcRescSURF01'\""
+        )
         rule_output = subprocess.check_output(
-            rule.format("archiveDestResc", "", "true"), shell=True, encoding="UTF-8"
+            f"{base_rule} \"*attribute='archiveDestResc'\" \"*overrideValue=''\" \"*fatal='true'\"",
+            shell=True,
+            encoding="UTF-8",
         ).strip()
         assert rule_output == "true"
         rule_output = subprocess.check_output(
-            rule.format("non_existing", "", "false"), shell=True, encoding="UTF-8"
+            f"{base_rule} \"*attribute='non_existing'\" \"*overrideValue=''\" \"*fatal='false'\"",
+            shell=True,
+            encoding="UTF-8",
         ).strip()
         assert rule_output != "override"
         rule_output = subprocess.check_output(
-            rule.format("non_existing", "override", "false"), shell=True, encoding="UTF-8"
+            f"{base_rule} \"*attribute='non_existing'\" \"*overrideValue='override'\" \"*fatal='false'\"",
+            shell=True,
+            encoding="UTF-8",
         ).strip()
         assert rule_output == "override"
         with pytest.raises(subprocess.CalledProcessError) as e_info:
-            subprocess.check_call(rule.format("non_existing", "", "true"), shell=True)
+            subprocess.check_call(
+                f"{base_rule} \"*attribute='non_existing'\" \"*overrideValue=''\" \"*fatal='true'\"",
+                shell=True,
+            )

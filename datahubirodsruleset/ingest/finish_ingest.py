@@ -48,7 +48,7 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, dropzone_typ
     destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     # Set the Creator AVU
     ctx.callback.msiWriteRodsLog(
-        "{} : Setting AVUs to {}".format(dropzone_path, destination_project_collection_path), 0
+        f"{dropzone_path} : Setting AVUs to {destination_project_collection_path}", 0
     )
     # fatal = "false", because we want to raise the exception with set_post_ingestion_error_avu.
     # This allows to update the state AVU to 'error-post-ingestion'
@@ -60,7 +60,7 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, dropzone_typ
             project_id,
             collection_id,
             dropzone_path,
-            "User '{}' doesn't have an email AVU".format(dropzone_creator),
+            f"User '{dropzone_creator}' doesn't have an email AVU",
             depositor,
         )
     ctx.callback.setCollectionAVU(destination_project_collection_path, "creator", email)
@@ -134,5 +134,5 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, dropzone_typ
     ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
     ctx.callback.delayRemoveDropzone(dropzone_path, ingest_resource_host, token, dropzone_type)
     ctx.callback.msiWriteRodsLog(
-        "Finished ingesting {} to {}".format(dropzone_path, destination_project_collection_path), 0
+        f"Finished ingesting {dropzone_path} to {destination_project_collection_path}", 0
     )

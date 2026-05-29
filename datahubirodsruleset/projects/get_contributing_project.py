@@ -37,7 +37,7 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
     username = ctx.callback.get_client_username("")["arguments"][0]
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
 
-    for result in row_iterator("USER_GROUP_ID", "USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback):
+    for result in row_iterator("USER_GROUP_ID", f"USER_ID = '{user_id}'", AS_LIST, ctx.callback):
         group_id = "'" + result[0] + "'"
         groups = groups + "," + group_id
 
@@ -47,9 +47,7 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
     # Get the collection size on each resources
     parameters = "COLL_NAME"
     conditions = (
-        "COLL_ACCESS_NAME in ('own', 'modify_object') "
-        "and COLL_ACCESS_USER_ID in ({}) "
-        "and COLL_NAME = '{}'".format(groups, format_project_path(ctx, project_id))
+        f"COLL_ACCESS_NAME in ('own', 'modify_object') and COLL_ACCESS_USER_ID in ({groups}) and COLL_NAME = '{format_project_path(ctx, project_id)}'"
     )
 
     for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):

@@ -25,7 +25,7 @@ def get_dropzone_folders(ctx, token, path):
        The recursive folders list at the requested path
     """
     dropzone_path = formatters.format_dropzone_path(token, "direct")
-    absolute_path = "{}{}".format(dropzone_path, path)
+    absolute_path = f"{dropzone_path}{path}"
 
     root = []
     walk_dropzone_folders(ctx, root, absolute_path, absolute_path)
@@ -56,7 +56,7 @@ def get_collection_sub_folders(ctx, parent, parent_path, dropzone_root):
     """
     for result in row_iterator(
         "COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME",
-        "COLL_PARENT_NAME = '{}'".format(parent_path),
+        f"COLL_PARENT_NAME = '{parent_path}'",
         AS_LIST,
         ctx.callback,
     ):

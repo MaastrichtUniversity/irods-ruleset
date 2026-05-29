@@ -25,6 +25,6 @@ def get_dropzone_resource_host(ctx, dropzone_type, project_id):
             format_project_path(ctx, project_id), ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
         # Obtain the resource host from the specified ingest resource
-        for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(ingest_resource), AS_LIST, ctx.callback):
+        for row in row_iterator("RESC_LOC", f"RESC_NAME = '{ingest_resource}'", AS_LIST, ctx.callback):
             ingest_resource_host = row[0]
     return ingest_resource_host

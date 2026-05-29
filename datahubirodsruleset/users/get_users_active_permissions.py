@@ -25,10 +25,10 @@ def get_users_active_permissions(ctx, username):
     # Check if the user exists
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
     if not user_id:
-        ctx.callback.msiExit("-1", "Username {} does not exist".format(username))
+        ctx.callback.msiExit("-1", f"Username {username} does not exist")
 
     # Get the ACLs
-    for acl in row_iterator("COLL_NAME, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME", "COLL_PARENT_NAME = '/nlmumc/projects' AND COLL_ACCESS_USER_ID = '{}'".format(user_id), AS_LIST, ctx.callback):
+    for acl in row_iterator("COLL_NAME, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME", f"COLL_PARENT_NAME = '/nlmumc/projects' AND COLL_ACCESS_USER_ID = '{user_id}'", AS_LIST, ctx.callback):
         acls.append(
         {
             "project": acl[0],

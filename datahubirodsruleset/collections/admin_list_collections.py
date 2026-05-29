@@ -73,7 +73,7 @@ def admin_list_collections(ctx, project_path):
 
         for row in row_iterator(
             "DATA_NAME",
-            "COLL_NAME = '{}' AND DATA_NAME in ({})".format(project_collection_path, num_files_exclusion),
+            f"COLL_NAME = '{project_collection_path}' AND DATA_NAME in ({num_files_exclusion})",
             AS_LIST,
             ctx.callback,
         ):

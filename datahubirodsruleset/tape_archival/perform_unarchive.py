@@ -1,11 +1,11 @@
 # Part of the unarchival flow. Not to be called by user
-import irods_types  # pylint: disable=import-error
 import json
 
 from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
+from datahubirodsruleset.utils import irepl_wrapper
+from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, retry_runtime_error
 from datahubirodsruleset.tape_archival.dm_attr import dm_attr
 
 
@@ -28,9 +28,7 @@ def perform_unarchive(ctx, check_results, username_initiator):
     files_unarchived = 0
     if files_to_unarchive:
         ctx.callback.msiWriteRodsLog(
-            "INFO: UnArchival workflow started for {} ({} file(s))".format(
-                check_results["unarchival_path"], str(len(files_to_unarchive))
-            ),
+            f"INFO: UnArchival workflow started for {check_results['unarchival_path']} ({len(files_to_unarchive)!s} file(s))",
             0,
         )
         files_unarchived = unarchive_files(ctx, files_to_unarchive, check_results, username_initiator)
@@ -72,65 +70,92 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Checksum
         # We perform checksums beforehand because the 'irepl' command does not include checksumming
-        try:
-            checksum = ctx.callback.msiDataObjChksum(file["virtual_path"], "", "")["arguments"][2]
-            ctx.callback.msiWriteRodsLog("DEBUG: chksum done {}".format(checksum), 0)
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(err, 0)
-            ctx.callback.set_tape_error_avu(
-                check_results["project_collection_path"],
-                username_initiator,
-                ProcessAttribute.UNARCHIVE.value,
-                UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Checksum of {} from {} FAILED.".format(file["virtual_path"], check_results["tape_resource"]),
-            )
+        if not _run_unarchive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Checksum {file['virtual_path']}",
+            f"Checksum of {file['virtual_path']} from {check_results['tape_resource']} FAILED.",
+            lambda: checksum_file(ctx, file["virtual_path"]),
+        ):
+            continue
 
         # Replicate
-        try:
-            # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
-            irepl_wrapper(
+        # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
+        if not _run_unarchive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Replication {file['virtual_path']} to {check_results['project_resource']}",
+            f"Replication of {file['virtual_path']} from {check_results['tape_resource']} to {check_results['project_resource']} FAILED.",
+            lambda: irepl_wrapper(
                 ctx,
                 file["virtual_path"],
                 check_results["project_resource"],
                 check_results["service_account"],
                 False,
                 True,
-            )
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(err, 0)
-            ctx.callback.set_tape_error_avu(
-                check_results["project_collection_path"],
-                username_initiator,
-                ProcessAttribute.UNARCHIVE.value,
-                UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Replication of {} from {} to {} FAILED.".format(
-                    file["virtual_path"], check_results["tape_resource"], check_results["project_resource"]
-                ),
-            )
+            ),
+        ):
+            continue
 
         # Trim
-        try:
-            ctx.callback.msiDataObjTrim(
+        if not _run_unarchive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Trim {file['virtual_path']} from {check_results['tape_resource']}",
+            f"Trim of {file['virtual_path']} from {check_results['tape_resource']} FAILED.",
+            lambda: ctx.callback.msiDataObjTrim(
                 file["virtual_path"],
                 check_results["tape_resource"],
                 "null",
                 check_results["project_resource_children"],
                 "null",
                 0,
-            )
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(err, 0)
-            ctx.callback.set_tape_error_avu(
-                check_results["project_collection_path"],
-                username_initiator,
-                ProcessAttribute.UNARCHIVE.value,
-                UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
-                "Trim of {} from {} FAILED.".format(file["virtual_path"], check_results["tape_resource"]),
-            )
+            ),
+        ):
+            continue
 
         files_unarchived += 1
 
     return files_unarchived
+
+
+def _run_unarchive_step(ctx, check_results, username_initiator, operation_name, failure_message, operation):
+    """
+    Run a single unarchive step with retries, setting the error AVU on failure.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    check_results : dict
+        The dict containing all the information gained by the 'perform_unarchive_checks' rule.
+    username_initiator : str
+        The user that initiated this entire flow.
+    operation_name : str
+        Human-readable descriptor for log messages, e.g. 'Checksum /path/to/file'
+    failure_message : str
+        Message to pass to set_tape_error_avu on failure.
+    operation : Callable
+        The operation to attempt.
+
+    Returns
+    -------
+    bool
+        True on success, False if all retries failed.
+    """
+    success = retry_runtime_error(ctx, operation_name, operation)
+    if not success:
+        ctx.callback.set_tape_error_avu(
+            check_results["project_collection_path"],
+            username_initiator,
+            ProcessAttribute.UNARCHIVE.value,
+            UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
+            failure_message,
+        )
+    return success
 
 
 def clean_up_and_inform(ctx, check_results, files_unarchived):
@@ -147,20 +172,14 @@ def clean_up_and_inform(ctx, check_results, files_unarchived):
     files_unarchived: int
         The amount of files unarchived by this rule
     """
-    set_tape_avu(ctx, check_results["project_collection_path"], UnarchiveState.UNARCHIVE_DONE.value)
-    ctx.callback.msiWriteRodsLog("DEBUG: surfArchiveScanner unarchived {} files".format(files_unarchived), 0)
-
-    kvp = ctx.callback.msiString2KeyValPair(
-        "{}={}".format(ProcessAttribute.UNARCHIVE.value, UnarchiveState.UNARCHIVE_DONE.value), irods_types.BytesBuf()
-    )["arguments"][1]
-    ctx.callback.msiRemoveKeyValuePairsFromObj(kvp, check_results["project_collection_path"], "-C")
-
-    if files_unarchived:
-        ctx.callback.setCollectionSize(
-            check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
-        )
-        ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
-    ctx.callback.close_project_collection(check_results["project_id"], check_results["project_collection_id"])
+    finalize_tape_operation(
+        ctx,
+        check_results,
+        files_unarchived,
+        UnarchiveState.UNARCHIVE_DONE.value,
+        ProcessAttribute.UNARCHIVE.value,
+        "unarchived",
+    )
 
 
 def set_tape_avu(ctx, project_collection_path, value):

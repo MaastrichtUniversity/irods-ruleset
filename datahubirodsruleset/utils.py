@@ -106,7 +106,7 @@ def get_env(ctx, key, fatal="false"):
 
     value = os.environ.get(key)
     if fatal == TRUE_AS_STRING and not value:
-        ctx.callback.msiExit("-1", "Environment variable '{}' has no value".format(key))
+        ctx.callback.msiExit("-1", f"Environment variable '{key}' has no value")
     return value
 
 
@@ -145,9 +145,7 @@ def submit_automated_support_request(ctx, username, description, error_message):
 
     # Get the Help Center Backend url
     help_center_backend_base = ctx.callback.get_env("HC_BACKEND_URL", TRUE_AS_STRING, "")["arguments"][2]
-    help_center_request_endpoint = "{}/help_backend/submit_request/automated_process_support".format(
-        help_center_backend_base
-    )
+    help_center_request_endpoint = f"{help_center_backend_base}/help_backend/submit_request/automated_process_support"
 
     error_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -164,15 +162,15 @@ def submit_automated_support_request(ctx, username, description, error_message):
         )
         if response.ok:
             issue_key = response.json()["issueKey"]
-            ctx.callback.msiWriteRodsLog("Support ticket '{}' created after process error".format(issue_key), 0)
+            ctx.callback.msiWriteRodsLog(f"Support ticket '{issue_key}' created after process error", 0)
 
         else:
             ctx.callback.msiWriteRodsLog(
-                "ERROR: Response Help center backend not HTTP OK: '{}'".format(response.status_code), 0
+                f"ERROR: Response Help center backend not HTTP OK: '{response.status_code}'", 0
             )
     except requests.exceptions.RequestException as e:
         ctx.callback.msiWriteRodsLog(
-            "ERROR: Exception while requesting Support ticket after process error '{}'".format(e), 0
+            f"ERROR: Exception while requesting Support ticket after process error '{e}'", 0
         )
 
 
@@ -250,8 +248,8 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
         check_call(["ichmod", "-M", "own", "rods", source], shell=False)
         check_call(icp_cmd, shell=False)
     except CalledProcessError as err:
-        ctx.callback.msiWriteRodsLog("ERROR: icp: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
-        ctx.callback.msiExit("-1", "ERROR: icp failed for '{}'->'{}'".format(source, destination))
+        ctx.callback.msiWriteRodsLog(f"ERROR: icp: cmd '{err.cmd}' retcode'{err.returncode}'", 0)
+        ctx.callback.msiExit("-1", f"ERROR: icp failed for '{source}'->'{destination}'")
 
 
 def iput_wrapper(ctx, source, destination, project_id, overwrite):
@@ -287,8 +285,8 @@ def iput_wrapper(ctx, source, destination, project_id, overwrite):
         check_call(["ichmod", "-M", "own", "rods", destination], shell=False)
         check_call(iput_cmd, shell=False)
     except CalledProcessError as err:
-        ctx.callback.msiWriteRodsLog("ERROR: iput: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
-        ctx.callback.msiExit("-1", "ERROR: iput failed for '{}'->'{}'".format(source, destination))
+        ctx.callback.msiWriteRodsLog(f"ERROR: iput: cmd '{err.cmd}' retcode'{err.returncode}'", 0)
+        ctx.callback.msiExit("-1", f"ERROR: iput failed for '{source}'->'{destination}'")
 
 def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', recursive = False, single_threaded = False):
     """
@@ -313,19 +311,20 @@ def irepl_wrapper(ctx, path, destination_resource, executing_user = 'rods', recu
     single_threaded: bool
         To run the replication with only 1 thread (not utilising the 'high' ports)
     """
-    options = "-R {}".format(destination_resource)
+    options = f"-R {destination_resource}"
     if recursive:
         options += " -r"
     if single_threaded:
         options += " -N1"
         
-    irepl_cmd = "export clientUserName={} && irepl {} \"{}\"".format(executing_user, options, path)
+    irepl_cmd = f"export clientUserName={executing_user} && irepl {options} \"{path}\""
     try:
         # Need to run nosec here. We need the shell=true because we run 'export clientUserName'
         check_call(irepl_cmd, shell=True) # nosec
     except CalledProcessError as err:
-        ctx.callback.msiWriteRodsLog("ERROR: irepl: cmd '{}' retcode'{}'".format(err.cmd, err.returncode), 0)
-        ctx.callback.msiExit("-1", "ERROR: irepl failed for '{}'->'{}'".format(path, destination_resource))
+        error_message = f"ERROR: irepl failed for '{path}'->'{destination_resource}' (retcode {err.returncode})"
+        ctx.callback.msiWriteRodsLog(error_message, 0)
+        raise RuntimeError(error_message) from err
 
 
 def apply_batch_acl_operation(ctx, collection_path, acl_operations):
@@ -347,7 +346,7 @@ def apply_batch_acl_operation(ctx, collection_path, acl_operations):
     }
     str_json_input = json.dumps(json_input)
     ctx.msi_atomic_apply_acl_operations(str_json_input, "")
-    message = "INFO: Apply batch ACL operations for {}".format(collection_path)
+    message = f"INFO: Apply batch ACL operations for {collection_path}"
     ctx.callback.msiWriteRodsLog(message, 0)
 
 
@@ -373,7 +372,7 @@ def apply_batch_collection_avu_operation(ctx, collection_path, operation_type, m
     }
     str_json_input = json.dumps(json_input)
     ctx.msi_atomic_apply_metadata_operations(str_json_input, "")
-    message = "INFO: {} deletion metadata for {}".format(operation_type.capitalize(), collection_path)
+    message = f"INFO: {operation_type.capitalize()} deletion metadata for {collection_path}"
     ctx.callback.msiWriteRodsLog(message, 0)
 
 

@@ -84,7 +84,7 @@ def check_collection_delete_data_state(ctx, collection_path, value_to_check):
     value = json.loads(output)["value"]
 
     if value != value_to_check:
-        message = "Deletion state is not valid for: {}; Got '{}', but expected '{}'".format(collection_path, value, value_to_check)
+        message = f"Deletion state is not valid for: {collection_path}; Got '{value}', but expected '{value_to_check}'"
         ctx.callback.msiExit("-1", message)
 
 
@@ -103,17 +103,17 @@ def restore_project_collection_user_acl(ctx, user_project, user_project_collecti
     """
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",
-        "COLL_NAME = '{}'".format(user_project),
+        f"COLL_NAME = '{user_project}'",
         AS_LIST,
         ctx.callback,
     ):
         account_id = result[0]
 
-        for account in row_iterator("USER_NAME", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             account_name = account[0]
             ctx.callback.msiSetACL("recursive", "admin:read", account_name, user_project_collection)
 
-    ctx.callback.msiWriteRodsLog("INFO: Users ACL restored for '{}'".format(user_project_collection), 0)
+    ctx.callback.msiWriteRodsLog(f"INFO: Users ACL restored for '{user_project_collection}'", 0)
 
 
 def restore_project_collection_metadata_from_index(ctx, user_project_collection):
@@ -131,7 +131,7 @@ def restore_project_collection_metadata_from_index(ctx, user_project_collection)
     project_id = formatters.get_project_id_from_project_collection_path(user_project_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)
     ctx.callback.index_update_single_project_collection_metadata(project_id, collection_id, "")
-    message = "INFO: Restore to Elasticsearch index the metadata of {}/{}".format(project_id, collection_id)
+    message = f"INFO: Restore to Elasticsearch index the metadata of {project_id}/{collection_id}"
     ctx.callback.msiWriteRodsLog(message, 0)
 
 

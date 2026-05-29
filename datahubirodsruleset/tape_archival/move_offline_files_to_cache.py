@@ -30,8 +30,8 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
     check_results["unarchival_path"] = unarchival_path
 
     log_message = "msiWriteRodsLog('DEBUG: SURFSara Archive - delay 30s, before retry', 0)"
-    rule_call = "move_offline_files_to_cache('{}', '{}', '')".format(unarchival_path, json.dumps(check_results))
-    recurse = "{};{}".format(log_message, rule_call)
+    rule_call = f"move_offline_files_to_cache('{unarchival_path}', '{json.dumps(check_results)}', '')"
+    recurse = f"{log_message};{rule_call}"
 
     if dm_attr_output["files_offline"]:
         ctx.callback.setCollectionAVU(

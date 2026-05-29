@@ -120,7 +120,7 @@ def format_output(output):
                     "budget_number": project["budget_number"],
                     "data_steward": project["data_steward"],
                     "principal_investigator": project["principal_investigator"],
-                    "id": "{}_{}".format(project["id"], resource),
+                    "id": f"{project['id']}_{resource}",
                     "project_id": project["id"],
                     "title": project["title"],
                     "resource": {

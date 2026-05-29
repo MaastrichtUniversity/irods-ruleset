@@ -52,7 +52,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     # Check if user is allowed to edit metadata for this project
     can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, "")["arguments"][1]
     if not formatters.format_string_to_boolean(can_edit_metadata):
-        ctx.callback.msiExit("-1", "ERROR: User has no edit metadata rights for  '{}'".format(project_id))
+        ctx.callback.msiExit("-1", f"ERROR: User has no edit metadata rights for  '{project_id}'")
 
     # Check .metadata_versions folder exists
     try:
@@ -63,9 +63,9 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     if not metadata_folder_exist:
         try:
             ctx.callback.msiCollCreate(metadata_folder_path, 0, 0)
-            ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
+            ctx.callback.msiWriteRodsLog(f"DEBUG: '{metadata_folder_path}' created", 0)
         except RuntimeError:
-            ctx.callback.msiExit("-1", "ERROR: Couldn't create '{}'".format(metadata_folder_path))
+            ctx.callback.msiExit("-1", f"ERROR: Couldn't create '{metadata_folder_path}'")
 
     source_schema = format_schema_collection_path(ctx, project_id, collection_id)
     source_instance = format_instance_collection_path(ctx, project_id, collection_id)
@@ -80,7 +80,7 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     except ValueError:
         ctx.callback.msiExit(
             "-1",
-            "ERROR: 'Cannot increment version number '{}' for collection '{}'".format(version, project_collection_path),
+            f"ERROR: 'Cannot increment version number '{version}' for collection '{project_collection_path}'",
         )
 
     destination_schema = format_schema_versioned_collection_path(ctx, project_id, collection_id, new_version)
@@ -101,14 +101,14 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     try:
         ctx.callback.update_metadata_during_edit_collection(project_id, collection_id, str(new_version))
     except RuntimeError:
-        ctx.callback.msiExit("-1", "ERROR: Couldn't update the instance snapshot '{}'".format(destination_instance))
+        ctx.callback.msiExit("-1", f"ERROR: Couldn't update the instance snapshot '{destination_instance}'")
 
     # Copy current metadata json files to /.metadata_versions
     try:
         icp_wrapper(ctx, source_schema, destination_schema, project_id, False)
         icp_wrapper(ctx, source_instance, destination_instance, project_id, False)
     except RuntimeError:
-        ctx.callback.msiExit("-1", "ERROR: Couldn't create the metadata snapshots '{}'".format(metadata_folder_path))
+        ctx.callback.msiExit("-1", f"ERROR: Couldn't create the metadata snapshots '{metadata_folder_path}'")
 
     # Only set latest_version_number if everything went fine.
     ctx.callback.setCollectionAVU(project_collection_path, "latest_version_number", str(new_version))

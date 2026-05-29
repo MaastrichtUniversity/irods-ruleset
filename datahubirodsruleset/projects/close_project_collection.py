@@ -36,7 +36,7 @@ def close_project_collection(ctx, project_id, collection_id):
         ctx.callback,
     ):
         account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             # Remove permissions for all users on the PC that have access on the instance.json 
             # This is to mitigate an issue where individual users, that are part of a group, still have own access on their 
             # individual account
@@ -49,6 +49,6 @@ def close_project_collection(ctx, project_id, collection_id):
         ctx.callback,
     ):
         account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             # Add back read permissions for all users that have rights on the project.
             ctx.callback.msiSetACL("recursive", "admin:read", account[0], project_collection_path)

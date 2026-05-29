@@ -48,7 +48,7 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
     if not metadata_folder_exist:
         try:
             ctx.callback.msiCollCreate(metadata_folder_path, 0, 0)
-            ctx.callback.msiWriteRodsLog("DEBUG: '{}' created".format(metadata_folder_path), 0)
+            ctx.callback.msiWriteRodsLog(f"DEBUG: '{metadata_folder_path}' created", 0)
         except RuntimeError:
             ctx.callback.set_post_ingestion_error_avu(
                 project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", username

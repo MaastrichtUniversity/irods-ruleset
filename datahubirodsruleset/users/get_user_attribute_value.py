@@ -30,13 +30,13 @@ def get_user_attribute_value(ctx, username, attribute, fatal):
     value = ""
     for result in row_iterator(
         "META_USER_ATTR_VALUE",
-        "USER_NAME = '{}' AND META_USER_ATTR_NAME = '{}'".format(username, attribute),
+        f"USER_NAME = '{username}' AND META_USER_ATTR_NAME = '{attribute}'",
         AS_LIST,
         ctx.callback,
     ):
         value = result[0]
 
     if formatters.format_string_to_boolean(fatal) and value == "":
-        ctx.callback.msiExit("-807000", "AVU {} is missing for user {}".format(attribute, username))
+        ctx.callback.msiExit("-807000", f"AVU {attribute} is missing for user {username}")
 
     return {"value": value}

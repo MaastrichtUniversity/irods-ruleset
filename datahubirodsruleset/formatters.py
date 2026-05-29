@@ -15,7 +15,7 @@ def format_dropzone_path(ctx, token, dropzone_type):
         dropzone_path = formatters.format_dropzone_path(token, dropzone_type)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid dropzone type, supported 'mounted' and 'direct', got '{}'.".format(dropzone_type)
+            "-1", f"Invalid dropzone type, supported 'mounted' and 'direct', got '{dropzone_type}'."
         )
     return dropzone_path
 
@@ -24,7 +24,7 @@ def format_project_path(ctx, project_id):
     try:
         project_path = formatters.format_project_path(project_id)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "Invalid project ID format: '{}'".format(project_id))
+        ctx.callback.msiExit("-1", f"Invalid project ID format: '{project_id}'")
     return project_path
 
 
@@ -33,7 +33,7 @@ def format_project_collection_path(ctx, project_id, collection_id):
         project_collection_path = formatters.format_project_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+            "-1", f"Invalid project ID or collection ID format: '{project_id}/{collection_id}'"
         )
     return project_collection_path
 
@@ -43,7 +43,7 @@ def format_instance_collection_path(ctx, project_id, collection_id):
         instance_path = formatters.format_instance_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+            "-1", f"Invalid project ID or collection ID format: '{project_id}/{collection_id}'"
         )
     return instance_path
 
@@ -53,7 +53,7 @@ def format_schema_collection_path(ctx, project_id, collection_id):
         schema_path = formatters.format_schema_collection_path(project_id, collection_id)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+            "-1", f"Invalid project ID or collection ID format: '{project_id}/{collection_id}'"
         )
     return schema_path
 
@@ -63,7 +63,7 @@ def format_instance_versioned_collection_path(ctx, project_id, collection_id, ve
         instance_path = formatters.format_instance_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+            "-1", f"Invalid project ID or collection ID format: '{project_id}/{collection_id}'"
         )
     return instance_path
 
@@ -73,7 +73,7 @@ def format_schema_versioned_collection_path(ctx, project_id, collection_id, vers
         schema_path = formatters.format_schema_versioned_collection_path(project_id, collection_id, version)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+            "-1", f"Invalid project ID or collection ID format: '{project_id}/{collection_id}'"
         )
     return schema_path
 
@@ -83,7 +83,7 @@ def format_metadata_versions_path(ctx, project_id, collection_id):
         metadata_versions_path = formatters.format_metadata_versions_path(project_id, collection_id)
     except exceptions.ValidationError:
         ctx.callback.msiExit(
-            "-1", "Invalid project ID or collection ID format: '{}/{}'".format(project_id, collection_id)
+            "-1", f"Invalid project ID or collection ID format: '{project_id}/{collection_id}'"
         )
     return metadata_versions_path
 
@@ -99,12 +99,12 @@ def format_human_bytes(B):
     TB = float(KB**4)  # 1,099,511,627,776
 
     if B < KB:
-        return "{0} {1}".format(B, "Bytes" if 0 == B > 1 else "Byte")
+        return f"{B} {'Bytes' if 0 == B > 1 else 'Byte'}"
     elif KB <= B < MB:
-        return "{0:.2f} KB".format(B / KB)
+        return f"{B / KB:.2f} KB"
     elif MB <= B < GB:
-        return "{0:.2f} MB".format(B / MB)
+        return f"{B / MB:.2f} MB"
     elif GB <= B < TB:
-        return "{0:.2f} GB".format(B / GB)
+        return f"{B / GB:.2f} GB"
     elif TB <= B:
-        return "{0:.2f} TB".format(B / TB)
+        return f"{B / TB:.2f} TB"

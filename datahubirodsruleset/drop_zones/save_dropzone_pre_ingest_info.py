@@ -153,14 +153,10 @@ def save_pre_ingest_document(ctx, document, token):
     timestamp = time.time()
 
     creation_date = datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-    filename = "{project_id}_{dropzone_token}_{date}.json".format(
-        project_id=document["project"],
-        dropzone_token=token,
-        date=creation_date,
-    )
+    filename = f"{document['project']}_{token}_{creation_date}.json"
 
-    document_path = "{document_folder}/{filename}".format(document_folder=document_folder, filename=filename)
+    document_path = f"{document_folder}/{filename}"
     with open(document_path, "w") as outfile:
         outfile.write(json.dumps(document, indent=4))
-        ctx.callback.msiWriteRodsLog("DEBUG: Writing pre-ingest document {}".format(document_path), 0)
+        ctx.callback.msiWriteRodsLog(f"DEBUG: Writing pre-ingest document {document_path}", 0)
     return document_path

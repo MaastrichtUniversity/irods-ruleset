@@ -101,7 +101,7 @@ def create_new_project(
 
     # Make the rule fail if it doesn't succeed in creating the project
     if error < 0 and retry >= 10:
-        msg = "ERROR: Collection '{}' attempt no. {} : Unable to create {}".format(title, retry, new_project_path)
+        msg = f"ERROR: Collection '{title}' attempt no. {retry} : Unable to create {new_project_path}"
         ctx.callback.msiExit(str(error), msg)
 
     ctx.callback.setCollectionAVU(new_project_path, ProjectAVUs.INGEST_RESOURCE.value, ingest_resource)

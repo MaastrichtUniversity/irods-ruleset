@@ -39,7 +39,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
     ret = ctx.callback.checkDropZoneACL(username, dropzone_type, "*has_dropzone_permission")
     has_dropzone_permission = ret["arguments"][2]
     if not formatters.format_string_to_boolean(has_dropzone_permission):
-        msg = "User '{}' has insufficient DropZone permissions on /nlmumc/ingest/zones".format(username)
+        msg = f"User '{username}' has insufficient DropZone permissions on /nlmumc/ingest/zones"
         # -818000 CAT_NO_ACCESS_PERMISSION
         ctx.callback.msiExit("-818000", msg)
 
@@ -73,7 +73,7 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
     # Query the dropzone metadata
     for result in row_iterator(
         "COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
-        "COLL_NAME = '{}'".format(dropzone_path),
+        f"COLL_NAME = '{dropzone_path}'",
         AS_LIST,
         ctx.callback,
     ):

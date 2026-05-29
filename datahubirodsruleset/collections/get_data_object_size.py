@@ -24,7 +24,7 @@ def get_data_object_size(ctx, collection_path, data_object_name):
         The data object byte size; Returns also 0 if the data object doesn't exist
     """
     query_parameters = "DATA_ID, DATA_SIZE"
-    query_conditions = "COLL_NAME = '{}' AND DATA_NAME = '{}'".format(collection_path, data_object_name)
+    query_conditions = f"COLL_NAME = '{collection_path}' AND DATA_NAME = '{data_object_name}'"
 
     size = 0
 

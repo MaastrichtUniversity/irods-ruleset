@@ -17,10 +17,10 @@ class TestDeleteProjectData(BaseDataDeleteTestCase):
         subprocess.check_call(cls.revoke_rule, shell=True)
         wait_for_revoke_project_collection_user_acl()
 
-        delete_rule = '/rules/tests/run_test.sh -r delete_project_data -a "{},true" '.format(cls.project_path)
+        delete_rule = f'/rules/tests/run_test.sh -r delete_project_data -a "{cls.project_path},true" '
         subprocess.check_call(delete_rule, shell=True)
 
     def test_number_files_after_deletion(self):
-        metadata = "imeta ls -C {} {}".format(self.project_collection_path, "numFiles")
+        metadata = f"imeta ls -C {self.project_collection_path} numFiles"
         ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
-        assert "value: {}".format(self.number_metadata_files) in ret_metadata
+        assert f"value: {self.number_metadata_files}" in ret_metadata

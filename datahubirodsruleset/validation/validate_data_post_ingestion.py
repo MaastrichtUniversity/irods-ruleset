@@ -49,10 +49,10 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
         dropzone_schema_size = int(ret)
 
         ctx.callback.msiWriteRodsLog(
-            "DEBUG: '{}' dropzone_instance_size: {}".format(dropzone, str(dropzone_instance_size)), 0
+            f"DEBUG: '{dropzone}' dropzone_instance_size: {dropzone_instance_size!s}", 0
         )
         ctx.callback.msiWriteRodsLog(
-            "DEBUG: '{}' dropzone_schema_size: {}".format(dropzone, str(dropzone_schema_size)), 0
+            f"DEBUG: '{dropzone}' dropzone_schema_size: {dropzone_schema_size!s}", 0
         )
 
     # Project collection
@@ -66,9 +66,7 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
 
     match_num_files = int(dropzone_num_files) == int(collection_num_files)
     ctx.callback.msiWriteRodsLog(
-        "DEBUG: dropzone_num_files = {} ;; collection_num_files = {}".format(
-            str(dropzone_num_files), str(collection_num_files)
-        ),
+        f"DEBUG: dropzone_num_files = {dropzone_num_files!s} ;; collection_num_files = {collection_num_files!s}",
         0,
     )
     match_size = False
@@ -76,9 +74,7 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
         collection_user_size = int(collection_size) - collection_instance_size - collection_schema_size
         if not (collection_instance_size > 0 and collection_schema_size > 0):
             ctx.callback.msiWriteRodsLog(
-                "DEBUG: collection_instance_size = {} ;; collection_schema_size = {}".format(
-                    str(collection_instance_size), str(collection_schema_size)
-                ),
+                f"DEBUG: collection_instance_size = {collection_instance_size!s} ;; collection_schema_size = {collection_schema_size!s}",
                 0,
             )
             ctx.callback.msiWriteRodsLog(
@@ -89,31 +85,24 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
             match_size = True
 
         ctx.callback.msiWriteRodsLog(
-            "DEBUG: Calculation: {} (collection_size) - {} (collection_instance_size) - {} (collection_schema_size) = {}".format(
-                str(collection_size),
-                str(collection_instance_size),
-                str(collection_schema_size),
-                str(collection_user_size),
-            ),
+            f"DEBUG: Calculation: {collection_size!s} (collection_size) - {collection_instance_size!s} (collection_instance_size) - {collection_schema_size!s} (collection_schema_size) = {collection_user_size!s}",
             0,
         )
         ctx.callback.msiWriteRodsLog(
-            "DEBUG: dropzone_size = {} ;; collection_user_size = {}".format(
-                str(dropzone_size), str(collection_user_size)
-            ),
+            f"DEBUG: dropzone_size = {dropzone_size!s} ;; collection_user_size = {collection_user_size!s}",
             0,
         )
     elif dropzone_type == "direct":
         match_size = int(dropzone_size) == int(collection_size)
         ctx.callback.msiWriteRodsLog(
-            "DEBUG: dropzone_size = {} ;; collection_size = {}".format(str(dropzone_size), str(collection_size)), 0
+            f"DEBUG: dropzone_size = {dropzone_size!s} ;; collection_size = {collection_size!s}", 0
         )
 
     ctx.callback.msiWriteRodsLog(
-        "DEBUG: Match dropzone '{}' to '{}' size: {}".format(dropzone, project_collection, str(match_size)), 0
+        f"DEBUG: Match dropzone '{dropzone}' to '{project_collection}' size: {match_size!s}", 0
     )
     ctx.callback.msiWriteRodsLog(
-        "DEBUG: Match dropzone '{}' to '{}' file_count: {}".format(dropzone, project_collection, str(match_num_files)),
+        f"DEBUG: Match dropzone '{dropzone}' to '{project_collection}' file_count: {match_num_files!s}",
         0,
     )
 

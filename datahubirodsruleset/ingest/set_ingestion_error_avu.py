@@ -24,16 +24,15 @@ def set_ingestion_error_avu(ctx, dropzone_path, message, project_id, depositor):
     """
     value = DropzoneState.ERROR_INGESTION.value
     ctx.callback.setCollectionAVU(dropzone_path, "state", value)
-    ctx.callback.msiWriteRodsLog("Ingest failed of {} with error status {}".format(dropzone_path, value), 0)
+    ctx.callback.msiWriteRodsLog(f"Ingest failed of {dropzone_path} with error status {value}", 0)
     ctx.callback.msiWriteRodsLog(message, 0)
     # if this go wrong always continue
     try:
         dropzone_token = dropzone_path.split("/")[-1]
         description = (
-            'Ingest for dropzone "{}" (Project {}) has failed, we will contact you when we have more information '
-            "available".format(dropzone_token, project_id)
+            f'Ingest for dropzone "{dropzone_token}" (Project {project_id}) has failed, we will contact you when we have more information available'
         )
-        error_message = "{} set to {} because of: {}".format(dropzone_path, value, message)
+        error_message = f"{dropzone_path} set to {value} because of: {message}"
         ctx.callback.submit_automated_support_request(depositor, description, error_message)
     finally:
-        ctx.callback.msiExit("-1", "{} for {}".format(message, dropzone_path))
+        ctx.callback.msiExit("-1", f"{message} for {dropzone_path}")

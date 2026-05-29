@@ -39,7 +39,7 @@ def revoke_project_collection_user_access(ctx, user_project_collection, reason, 
     collection_id = formatters.get_collection_id_from_project_collection_path(user_project_collection)
 
     if check_project_collection_process_activity(ctx, user_project_collection):
-        ctx.callback.msiExit("-1", "Stop execution, active proces(ses) found for {}".format(user_project_collection))
+        ctx.callback.msiExit("-1", f"Stop execution, active proces(ses) found for {user_project_collection}")
         return
 
     ctx.callback.msiSetACL("default", "admin:own", "rods", user_project_collection)
@@ -71,10 +71,10 @@ def delete_project_collection_metadata_from_index(ctx, project_id, collection_id
         es.delete(index=COLLECTION_METADATA_INDEX, id=project_id + "_" + collection_id, ignore=[400, 404])
     except ElasticsearchException:
         ctx.callback.msiWriteRodsLog("ERROR: ElasticsearchException raised during document deletion", 0)
-        error_message = "ERROR: Elasticsearch update index failed for {}/{}".format(project_id, collection_id)
+        error_message = f"ERROR: Elasticsearch update index failed for {project_id}/{collection_id}"
         ctx.callback.msiWriteRodsLog(error_message, 0)
 
-    message = "INFO: Remove from Elasticsearch index the metadata of {}/{}".format(project_id, collection_id)
+    message = f"INFO: Remove from Elasticsearch index the metadata of {project_id}/{collection_id}"
     ctx.callback.msiWriteRodsLog(message, 0)
 
 
@@ -95,13 +95,13 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
     delay_set_acl_rule_body = ""
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",
-        "COLL_NAME = '{}'".format(user_project_collection),
+        f"COLL_NAME = '{user_project_collection}'",
         AS_LIST,
         ctx.callback,
     ):
         account_id = result[0]
 
-        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             account_name = account[0]
             account_type = account[1]
 
@@ -112,9 +112,7 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
                 }
                 acl_operations.append(acl_operation)
 
-                rule_body = "msiSetACL('recursive', 'admin:null', '{}', '{}');".format(
-                    account_name, user_project_collection
-                )
+                rule_body = f"msiSetACL('recursive', 'admin:null', '{account_name}', '{user_project_collection}');"
                 delay_set_acl_rule_body += rule_body
 
     apply_batch_acl_operation(ctx, user_project_collection, acl_operations)
@@ -124,7 +122,7 @@ def revoke_project_collection_user_acl(ctx, user_project_collection):
         "",
     )
     ctx.callback.msiWriteRodsLog(
-        "INFO: Users ACL revoked for project collection '{}'".format(user_project_collection), 0
+        f"INFO: Users ACL revoked for project collection '{user_project_collection}'", 0
     )
 
 

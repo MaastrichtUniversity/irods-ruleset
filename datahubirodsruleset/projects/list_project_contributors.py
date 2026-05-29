@@ -41,13 +41,13 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
 
     for result in row_iterator(
         "COLL_ACCESS_USER_ID",
-        "COLL_ACCESS_NAME in ({}) AND ".format(criteria) + "COLL_NAME = '/nlmumc/projects/{}'".format(project_id),
+        f"COLL_ACCESS_NAME in ({criteria}) AND " + f"COLL_NAME = '/nlmumc/projects/{project_id}'",
         AS_LIST,
         ctx.callback,
     ):
 
         account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             account_name = account[0]
             account_type = account[1]
             display_name = account_name
@@ -56,7 +56,7 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
             if account_type == "rodsgroup":
                 for group_result in row_iterator(
                     "META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
-                    "USER_TYPE = 'rodsgroup' AND " "USER_GROUP_ID = '{}'".format(account_id),
+                    f"USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{account_id}'",
                     AS_LIST,
                     ctx.callback,
                 ):
@@ -83,7 +83,7 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
 
                 for user_result in row_iterator(
                     "META_USER_ATTR_VALUE",
-                    "USER_NAME = '{}' AND META_USER_ATTR_NAME = 'displayName'".format(account_name),
+                    f"USER_NAME = '{account_name}' AND META_USER_ATTR_NAME = 'displayName'",
                     AS_LIST,
                     ctx.callback,
                 ):

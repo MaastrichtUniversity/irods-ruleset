@@ -2,14 +2,22 @@
 # /rules/tests/run_test.sh -r perform_unarchive_checks -a "/nlmumc/projects/P000000017/C000000001,dlinssen" -j -u service-surfarchive
 # Single file:
 # /rules/tests/run_test.sh -r perform_unarchive_checks -a "/nlmumc/projects/P000000017/C000000001/data/test/300MiB.log,dlinssen" -j -u service-surfarchive
-import irods_types  # pylint: disable=import-error
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from dhpythonirodsutils import formatters, exceptions
-from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
+from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ProjectAVUs
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.tape_archival.tape_utils import (
+    check_project_collection_exists,
+    check_resources_available,
+    get_project_resources,
+    get_service_account,
+    parse_project_collection_path,
+    validate_caller_is_service_account,
+    validate_no_active_process,
+)
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -36,76 +44,33 @@ def perform_unarchive_checks(ctx, unarchival_path):
     dict
         A dictionary containing information obtained with verification and needed in the unarchival process
     """
-    try:
-        project_id = formatters.get_project_id_from_project_collection_path(unarchival_path)
-        project_collection_id = formatters.get_collection_id_from_project_collection_path(unarchival_path)
-        project_collection_path = formatters.format_project_collection_path(project_id, project_collection_id)
-        project_path = formatters.format_project_path(project_id)
-    except exceptions.ValidationError:
-        error_message = "Invalid path to unarchive: '{}'".format(unarchival_path)
-        ctx.callback.msiWriteRodsLog(error_message, 0)
-        ctx.callback.msiExit("-1", error_message)
-
-    try:
-        ctx.callback.msiObjStat(project_path, irods_types.RodsObjStat())
-        ctx.callback.msiObjStat(project_collection_path, irods_types.RodsObjStat())
-    except RuntimeError:
-        error_message = "Project or project_collection does not exist".format(project_path)
-        ctx.callback.msiWriteRodsLog(error_message, 0)
-        ctx.callback.msiExit("-1", error_message)
+    project_id, project_collection_id, project_collection_path, project_path = parse_project_collection_path(
+        ctx, unarchival_path, "unarchive"
+    )
+    check_project_collection_exists(ctx, project_path, project_collection_path)
 
     unarchive_enabled = ctx.callback.getCollectionAVU(
         project_path, ProjectAVUs.ENABLE_UNARCHIVE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
     )["arguments"][2]
     if not formatters.format_string_to_boolean(unarchive_enabled):
-        error_message = "Unarchiving is disabled for this project: '{}'".format(project_path)
+        error_message = f"Unarchiving is disabled for this project: '{project_path}'"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
 
-    tape_resource = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
-    )["arguments"][2]
+    tape_resource, project_resource = get_project_resources(ctx, project_path)
+    check_resources_available(ctx, tape_resource, project_resource, "unarchiving")
 
-    project_resource = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING)[
-        "arguments"
-    ][2]
+    service_account = get_service_account(ctx, tape_resource)
+    validate_caller_is_service_account(ctx, service_account, "Unarchiving")
+    validate_no_active_process(ctx, project_collection_path, "unarchival")
 
-    tape_resource_status = ctx.callback.get_resource_status(tape_resource, "")["arguments"][1]
-    project_resource_status = ctx.callback.get_resource_status(project_resource, "")["arguments"][1]
-    if tape_resource_status == "down" or project_resource_status == "down":
-        error_message = "The project or tape resource is currently unavailable: unarchiving is not possible"
-        ctx.callback.msiWriteRodsLog(error_message, 0)
-        ctx.callback.msiExit("-1", error_message)
-
-    service_account = ctx.callback.getResourceAVU(tape_resource, "service-account", "", "0", "false")["arguments"][2]
-
-    current_user = ctx.callback.get_client_username("")["arguments"][0]
-    if current_user != service_account:
-        error_message = "Unarchiving is only possible when being called by '{}'".format(service_account)
-        ctx.callback.msiWriteRodsLog(error_message, 0)
-        ctx.callback.msiExit("-1", error_message)
-
-    archive_state = ctx.callback.getCollectionAVU(
-        project_collection_path, ProcessAttribute.ARCHIVE.value, "", "", FALSE_AS_STRING
-    )["arguments"][2]
-    unarchive_state = ctx.callback.getCollectionAVU(
-        project_collection_path, ProcessAttribute.UNARCHIVE.value, "", "", FALSE_AS_STRING
-    )["arguments"][2]
-
-    if archive_state != "" or unarchive_state != "":
-        error_message = "Not permitted to start unarchival in state 'archive_state:{}' 'unarchive_state:{}".format(
-            archive_state, unarchive_state
-        )
-        ctx.callback.msiWriteRodsLog(error_message, 0)
-        ctx.callback.msiExit("-1", error_message)
-
-    for row in row_iterator("RESC_LOC", "RESC_NAME = '{}'".format(tape_resource), AS_LIST, ctx.callback):
+    for row in row_iterator("RESC_LOC", f"RESC_NAME = '{tape_resource}'", AS_LIST, ctx.callback):
         tape_resource_location = row[0]
 
     # Get the amount of children the project resource has, so we know how many files we should have left after trimming
-    for result in row_iterator("RESC_ID", "RESC_NAME = '{}'".format(project_resource), AS_LIST, ctx.callback):
+    for result in row_iterator("RESC_ID", f"RESC_NAME = '{project_resource}'", AS_LIST, ctx.callback):
         resc_id = result[0]
-    for result in row_iterator("COUNT(RESC_ID)", "RESC_PARENT = '{}'".format(resc_id), AS_LIST, ctx.callback):
+    for result in row_iterator("COUNT(RESC_ID)", f"RESC_PARENT = '{resc_id}'", AS_LIST, ctx.callback):
         total_project_resource_children = result[0]
 
     return {

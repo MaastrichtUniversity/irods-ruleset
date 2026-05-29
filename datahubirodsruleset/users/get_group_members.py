@@ -27,9 +27,7 @@ def get_group_members(ctx, group_name):
 
     query_parameters = "USER_NAME, META_USER_ATTR_VALUE"
     query_conditions = (
-        "USER_GROUP_NAME = '{}' "
-        "AND USER_TYPE = 'rodsuser' "
-        "AND META_USER_ATTR_NAME = 'displayName'".format(group_name)
+        f"USER_GROUP_NAME = '{group_name}' AND USER_TYPE = 'rodsuser' AND META_USER_ATTR_NAME = 'displayName'"
     )
 
     for result in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):

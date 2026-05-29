@@ -38,7 +38,7 @@ def restore_project_user_access(ctx, user_project_path):
 
     # Clean-up
     ctx.callback.msiRmColl(backup_project_path, "forceFlag=", 0)
-    ctx.callback.msiWriteRodsLog("INFO: Deleted backup project '{}'".format(backup_project_path), 0)
+    ctx.callback.msiWriteRodsLog(f"INFO: Deleted backup project '{backup_project_path}'", 0)
     ctx.callback.remove_collection_attribute_value(user_project_path, DataDeletionAttribute.STATE.value)
 
 
@@ -58,7 +58,7 @@ def restore_project_user_acl(ctx, user_project_path, backup_project_path):
     acl_operations = []
     for result in row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
-        "COLL_NAME = '{}'".format(backup_project_path),
+        f"COLL_NAME = '{backup_project_path}'",
         AS_LIST,
         ctx.callback,
     ):
@@ -66,7 +66,7 @@ def restore_project_user_acl(ctx, user_project_path, backup_project_path):
         account_access = result[1]
         user_access = map_access_name_to_access_level(account_access)
 
-        for account in row_iterator("USER_NAME", "USER_ID = '{}'".format(account_id), AS_LIST, ctx.callback):
+        for account in row_iterator("USER_NAME", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
             account_name = account[0]
             acl_operation = {
                 "entity_name": account_name,
@@ -75,4 +75,4 @@ def restore_project_user_acl(ctx, user_project_path, backup_project_path):
             acl_operations.append(acl_operation)
 
     apply_batch_acl_operation(ctx, user_project_path, acl_operations)
-    ctx.callback.msiWriteRodsLog("INFO: Users ACL restored  for '{}'".format(user_project_path), 0)
+    ctx.callback.msiWriteRodsLog(f"INFO: Users ACL restored  for '{user_project_path}'", 0)

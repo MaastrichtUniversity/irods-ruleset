@@ -30,7 +30,7 @@ def delete_user(ctx, username):
 
     is_deletable = json.loads(ctx.callback.check_user_is_deletable(username, "result")["arguments"][1])["is_deletable"]
     if not is_deletable:
-        ctx.callback.msiExit("-1", "User '{}' is not valid for deletion!".format(username))
+        ctx.callback.msiExit("-1", f"User '{username}' is not valid for deletion!")
     else:
         try:
             check_call(
@@ -42,6 +42,6 @@ def delete_user(ctx, username):
                 shell=False,
             )
         except CalledProcessError as err:
-            ctx.callback.msiExit("-1", "ERROR: iadmin rmuser: cmd '{}' retcode'{}'".format(err.cmd, err.returncode))
+            ctx.callback.msiExit("-1", f"ERROR: iadmin rmuser: cmd '{err.cmd}' retcode'{err.returncode}'")
 
     return json.dumps({"success": True, "deleted_user": username})

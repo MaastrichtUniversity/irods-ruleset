@@ -49,7 +49,7 @@ class BaseTestCaseCustomizableMetadata:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
@@ -62,15 +62,15 @@ class BaseTestCaseCustomizableMetadata:
         cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
         cls.edit_collection_metadata()
 
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         wait_for_set_acl_for_metadata_snapshot_to_finish(cls.project_id)
         remove_project(cls.project_path)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     # region extended setup
 
@@ -93,31 +93,23 @@ class BaseTestCaseCustomizableMetadata:
 
                 pid_request_status = self.create_collection_metadata_snapshot(project_id, collection_id)
         """
-        open_acl = '/rules/tests/run_test.sh -r set_acl_for_metadata_snapshot -a "{},{},{},true,false"'.format(
-            cls.project_id, cls.collection_id, cls.depositor
-        )
+        open_acl = f'/rules/tests/run_test.sh -r set_acl_for_metadata_snapshot -a "{cls.project_id},{cls.collection_id},{cls.depositor},true,false"'
         subprocess.check_call(open_acl, shell=True)
 
         cls.edit_metadata_instance()
         cls.edit_metadata_schema()
         cls.update_avu()
 
-        metadata_snapshot = '/rules/tests/run_test.sh -r create_collection_metadata_snapshot -a "{},{}" -u {}'.format(
-            cls.project_id, cls.collection_id, cls.depositor
-        )
+        metadata_snapshot = f'/rules/tests/run_test.sh -r create_collection_metadata_snapshot -a "{cls.project_id},{cls.collection_id}" -u {cls.depositor}'
         pid_request_status = subprocess.check_output(metadata_snapshot, shell=True, encoding="UTF-8").strip()
         assert pid_request_status == "true"
 
         # setCollectionSize is also called in set_acl_for_metadata_snapshot but in a delay queue
         # to avoid using a sleep call, we execute it synchronously to have the updated value during the test.
-        set_size = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/setCollectionSize.r \"*project='{}'\" \"*projectCollection='{}'\" \"*openPC='false'\" \"*closePC='false'\"".format(
-            cls.project_id, cls.collection_id
-        )
+        set_size = f"irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/setCollectionSize.r \"*project='{cls.project_id}'\" \"*projectCollection='{cls.collection_id}'\" \"*openPC='false'\" \"*closePC='false'\""
         subprocess.check_call(set_size, shell=True)
 
-        close_acl = '/rules/tests/run_test.sh -r set_acl_for_metadata_snapshot -a "{},{},{},false,true"'.format(
-            cls.project_id, cls.collection_id, cls.depositor
-        )
+        close_acl = f'/rules/tests/run_test.sh -r set_acl_for_metadata_snapshot -a "{cls.project_id},{cls.collection_id},{cls.depositor},false,true"'
         subprocess.check_call(close_acl, shell=True)
 
     @classmethod
@@ -139,9 +131,7 @@ class BaseTestCaseCustomizableMetadata:
     # region default tests
 
     def test_collection_avu(self):
-        rule_collection_detail = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
-            self.project_id, self.collection_id
-        )
+        rule_collection_detail = f'/rules/tests/run_test.sh -r detailsProjectCollection -a "{self.project_id},{self.collection_id},false"'
         ret_collection_detail = subprocess.check_output(rule_collection_detail, shell=True)
         collection_detail = json.loads(ret_collection_detail)
         assert collection_detail["creator"] == self.collection_creator
@@ -150,9 +140,7 @@ class BaseTestCaseCustomizableMetadata:
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 
-        run_iquest = "iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'latest_version_number' \"".format(
-            self.project_collection_path
-        )
+        run_iquest = f"iquest \"%s\" \"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{self.project_collection_path}' and META_COLL_ATTR_NAME = 'latest_version_number' \""
         latest_version_number = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
         assert latest_version_number.isdigit()
         assert int(latest_version_number) == 2
@@ -163,10 +151,10 @@ class BaseTestCaseCustomizableMetadata:
     def test_collection_metadata_version_folder(self):
         metadata_versions_path = formatters.format_metadata_versions_path(self.project_id, self.collection_id)
         for version in [1, 2]:
-            instance_path = "{}/instance.{}.json".format(metadata_versions_path, version)
+            instance_path = f"{metadata_versions_path}/instance.{version}.json"
             assert does_path_exist(instance_path)
 
-            schema_path = "{}/schema.{}.json".format(metadata_versions_path, version)
+            schema_path = f"{metadata_versions_path}/schema.{version}.json"
             assert does_path_exist(schema_path)
 
     # endregion

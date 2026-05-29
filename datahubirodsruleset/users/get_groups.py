@@ -33,7 +33,7 @@ def get_groups(ctx, show_special_groups):
 
         for meta in row_iterator(
             "META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
-            "USER_TYPE = 'rodsgroup' and USER_GROUP_ID = '{}'".format(group_id),
+            f"USER_TYPE = 'rodsgroup' and USER_GROUP_ID = '{group_id}'",
             AS_LIST,
             ctx.callback,
         ):

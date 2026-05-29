@@ -24,14 +24,14 @@ def get_expanded_user_group_information(ctx, participant_names):
         A flat dictionary with users and expanded groups
     """
     participant_names = participant_names.split(";")
-    participant_names = ", ".join("'{0}'".format(name) for name in participant_names)
+    participant_names = ", ".join(f"'{name}'" for name in participant_names)
     attribute_to_query = "'displayName', 'email'"
     rule_result = {}
 
     # We can expand a group by passing its name to USER_GROUP_NAME to get its members list with USER_NAME.
     for query_result in row_iterator(
         "USER_NAME, META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
-        "USER_GROUP_NAME in ({}) AND META_USER_ATTR_NAME in ({})".format(participant_names, attribute_to_query),
+        f"USER_GROUP_NAME in ({participant_names}) AND META_USER_ATTR_NAME in ({attribute_to_query})",
         AS_LIST,
         ctx.callback,
     ):

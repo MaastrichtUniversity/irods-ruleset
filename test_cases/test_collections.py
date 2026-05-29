@@ -92,26 +92,26 @@ class TestCollections:
     @classmethod
     def setup_class(cls):
         print()
-        print("Start {}.setup_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.setup_class")
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
         for collection_index in range(cls.number_of_collections):
-            cls.collection_title = "{}{}".format(cls.collection_title_base, collection_index)
+            cls.collection_title = f"{cls.collection_title_base}{collection_index}"
             cls.token = create_dropzone(cls)
             add_metadata_files_to_direct_dropzone(cls.token)
             start_and_wait_for_ingest(cls)
-        print("End {}.setup_class".format(cls.__name__))
+        print(f"End {cls.__name__}.setup_class")
 
     @classmethod
     def teardown_class(cls):
         print()
-        print("Start {}.teardown_class".format(cls.__name__))
+        print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
-        print("End {}.teardown_class".format(cls.__name__))
+        print(f"End {cls.__name__}.teardown_class")
 
     def test_list_collections(self):
-        rule_list_collections = '/rules/tests/run_test.sh -r list_collections -a "{}"'.format(self.project_path)
+        rule_list_collections = f'/rules/tests/run_test.sh -r list_collections -a "{self.project_path}"'
         ret_list_collections = subprocess.check_output(rule_list_collections, shell=True)
         list_collections = json.loads(ret_list_collections)
 
@@ -125,13 +125,11 @@ class TestCollections:
             assert list_collections[collection_index]["size"] == 544610.0
             collection_id = self.collection_id[:-1] + str(collection_index + 1)
             assert list_collections[collection_index]["id"] == collection_id
-            pid_suffix = "{}{}".format(self.project_id, collection_id)
+            pid_suffix = f"{self.project_id}{collection_id}"
             assert list_collections[collection_index]["PID"].endswith(pid_suffix)
 
     def test_collection_details(self):
-        rule = '/rules/tests/run_test.sh -r detailsProjectCollection -a "{},{},false"'.format(
-            self.project_id, self.collection_id
-        )
+        rule = f'/rules/tests/run_test.sh -r detailsProjectCollection -a "{self.project_id},{self.collection_id},false"'
         ret = subprocess.check_output(rule, shell=True)
         collection_detail = json.loads(ret)
 
@@ -161,8 +159,8 @@ class TestCollections:
         assert collection_detail["viewers"]["userObjects"][0]["userId"].isnumeric()
 
     def test_collection_tree(self):
-        project_collection_path = "{}/{}".format(self.project_id, self.collection_id)
-        rule = '/rules/tests/run_test.sh -r get_collection_tree -a "{}"'.format(project_collection_path)
+        project_collection_path = f"{self.project_id}/{self.collection_id}"
+        rule = f'/rules/tests/run_test.sh -r get_collection_tree -a "{project_collection_path}"'
         ret = subprocess.check_output(rule, shell=True)
         collection_tree = json.loads(ret)
         if "pass" in self.destination_resource:
@@ -173,24 +171,22 @@ class TestCollections:
     def test_set_acl(self):
         collection_path = "/nlmumc/home/jmelius"
         user_to_check = "auser"
-        acl = "ils -A {}".format(collection_path)
+        acl = f"ils -A {collection_path}"
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
+        assert f"{user_to_check}#nlmumc:own" not in ret_acl
 
-        rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{},{}"'.format(user_to_check, collection_path)
+        rule = f'/rules/tests/run_test.sh -r set_acl -a "default,admin:own,{user_to_check},{collection_path}"'
         subprocess.check_call(rule, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(user_to_check) in ret_acl
+        assert f"{user_to_check}#nlmumc:own" in ret_acl
 
-        rule = '/rules/tests/run_test.sh -r set_acl -a "default,admin:null,{},{}"'.format(
-            user_to_check, collection_path
-        )
+        rule = f'/rules/tests/run_test.sh -r set_acl -a "default,admin:null,{user_to_check},{collection_path}"'
         subprocess.check_call(rule, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
+        assert f"{user_to_check}#nlmumc:own" not in ret_acl
 
     def test_collection_size_per_resource(self):
-        rule = '/rules/tests/run_test.sh -r get_collection_size_per_resource -a "{}"'.format(self.project_id)
+        rule = f'/rules/tests/run_test.sh -r get_collection_size_per_resource -a "{self.project_id}"'
         ret = subprocess.check_output(rule, shell=True)
         list_collections = json.loads(ret)
 
@@ -206,18 +202,16 @@ class TestCollections:
     def test_project_collection_acl_open_close_state(self):
         project_collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
         user_to_check = "rods"
-        acl = "ils -A {}".format(project_collection_path)
+        acl = f"ils -A {project_collection_path}"
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
+        assert f"{user_to_check}#nlmumc:own" not in ret_acl
 
-        rule_open = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r \"*project='{}'\" \"*projectCollection='{}'\" \"*user='{}'\" \"*rights='own'\"".format(
-            self.project_id, self.collection_id, user_to_check
-        )
+        rule_open = f"irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/projectCollection/openProjectCollection.r \"*project='{self.project_id}'\" \"*projectCollection='{self.collection_id}'\" \"*user='{user_to_check}'\" \"*rights='own'\""
         subprocess.check_call(rule_open, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(user_to_check) in ret_acl
+        assert f"{user_to_check}#nlmumc:own" in ret_acl
 
         rule_close = f'/rules/tests/run_test.sh -r close_project_collection -a "{self.project_id},{self.collection_id}"'
         subprocess.check_call(rule_close, shell=True)
         ret_acl = subprocess.check_output(acl, shell=True, encoding="UTF-8")
-        assert "{}#nlmumc:own".format(user_to_check) not in ret_acl
+        assert f"{user_to_check}#nlmumc:own" not in ret_acl

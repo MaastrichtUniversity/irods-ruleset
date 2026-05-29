@@ -53,7 +53,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     instance_object["8_Date"]["datasetDateType"]["@id"] = "http://vocab.fairdatacollective.org/gdmt/Submitted"
 
     # Overwriting the schema:isBasedOn with the PID for schema version
-    schema_url = "https://hdl.handle.net/{}{}.{}".format(handle, "schema", version)
+    schema_url = f"https://hdl.handle.net/{handle}schema.{version}"
     instance_object["schema:isBasedOn"] = schema_url
 
     tmp_instance = tempfile.NamedTemporaryFile(delete=True, mode = "w")

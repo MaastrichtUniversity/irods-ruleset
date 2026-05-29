@@ -27,9 +27,7 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
     # Getting the EpicPID url
     epicpid_base = ctx.callback.get_env("EPICPID_URL", "true", "")["arguments"][2]
     ctx.callback.msiWriteRodsLog(
-        "Requesting multiple PID's with base url: {} project: {} collection: {} version: {}".format(
-            epicpid_base, project_id, collection_id, version
-        ),
+        f"Requesting multiple PID's with base url: {epicpid_base} project: {project_id} collection: {collection_id} version: {version}",
         0,
     )
     epicpid_url = epicpid_base + "multiple/" + project_id + collection_id
@@ -66,51 +64,45 @@ def get_versioned_pids(ctx, project_id, collection_id, version=None):
                 return_code = 0
             else:
                 ctx.callback.msiWriteRodsLog(
-                    "ERROR: Response EpicPID not HTTP OK: '{}'".format(response.status_code), 0
+                    f"ERROR: Response EpicPID not HTTP OK: '{response.status_code}'", 0
                 )
                 return_code = 1
 
         except requests.exceptions.RequestException as e:
-            ctx.callback.msiWriteRodsLog("Exception while requesting PID: '{}'".format(e), 0)
+            ctx.callback.msiWriteRodsLog(f"Exception while requesting PID: '{e}'", 0)
             return_code = 1
         except KeyError as e:
-            ctx.callback.msiWriteRodsLog("KeyError while requesting PID: '{}'".format(e), 0)
+            ctx.callback.msiWriteRodsLog(f"KeyError while requesting PID: '{e}'", 0)
             return_code = 1
 
         destination_project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
         if not handle:
             ctx.callback.msiWriteRodsLog(
-                "Retrieving multiple PID's failed for {}, leaving blank".format(destination_project_collection_path), 0
+                f"Retrieving multiple PID's failed for {destination_project_collection_path}, leaving blank", 0
             )
             return_code = 1
         if "collection" not in handle or handle["collection"]["handle"] == "":
             ctx.callback.msiWriteRodsLog(
-                "Retrieving PID for root collection failed for {}, leaving blank".format(
-                    destination_project_collection_path
-                ),
+                f"Retrieving PID for root collection failed for {destination_project_collection_path}, leaving blank",
                 0,
             )
             return_code = 1
         if "schema" not in handle or handle["schema"]["handle"] == "":
             ctx.callback.msiWriteRodsLog(
-                "Retrieving PID for root collection schema failed for {}, leaving blank".format(
-                    destination_project_collection_path
-                ),
+                f"Retrieving PID for root collection schema failed for {destination_project_collection_path}, leaving blank",
                 0,
             )
             return_code = 1
         if "instance" not in handle or handle["instance"]["handle"] == "":
             ctx.callback.msiWriteRodsLog(
-                "Retrieving PID for root collection instance failed for {}, leaving blank".format(
-                    destination_project_collection_path
-                ),
+                f"Retrieving PID for root collection instance failed for {destination_project_collection_path}, leaving blank",
                 0,
             )
             return_code = 1
 
         if return_code != 0:
             retry_counter -= 1
-            ctx.callback.msiWriteRodsLog("DEBUG: Decrement retry_counter: {}".format(str(retry_counter)), 0)
+            ctx.callback.msiWriteRodsLog(f"DEBUG: Decrement retry_counter: {retry_counter!s}", 0)
             time.sleep(RETRY_SLEEP_NUMBER)
         else:
             retry_counter = 0

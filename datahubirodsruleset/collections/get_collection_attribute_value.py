@@ -26,7 +26,7 @@ def get_collection_attribute_value(ctx, irods_collection_path, attribute):
     value = ""
     for result in row_iterator(
         "META_COLL_ATTR_VALUE",
-        "COLL_NAME = '{}' AND META_COLL_ATTR_NAME = '{}' ".format(irods_collection_path, attribute),
+        f"COLL_NAME = '{irods_collection_path}' AND META_COLL_ATTR_NAME = '{attribute}' ",
         AS_LIST,
         ctx.callback,
     ):

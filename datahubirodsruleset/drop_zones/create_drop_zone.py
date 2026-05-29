@@ -56,9 +56,7 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
         # -818000 CAT_NO_ACCESS_PERMISSION
         ctx.callback.msiExit(
             "-818000",
-            "User '{}' has insufficient DropZone permissions on for a dropzone of type '{}'".format(
-                username, dropzone_type
-            ),
+            f"User '{username}' has insufficient DropZone permissions on for a dropzone of type '{dropzone_type}'",
         )
 
     # Check if the ingestion resource is up
@@ -67,7 +65,7 @@ def create_drop_zone(ctx, dropzone_type, username, project_id, title, schema_nam
     )["arguments"][4]
     if not formatters.format_string_to_boolean(ingest_resource_available):
         ctx.callback.msiExit(
-            "-1", "Ingest resource is down for project '{}'! Aborting dropzone creation.".format(project_id)
+            "-1", f"Ingest resource is down for project '{project_id}'! Aborting dropzone creation."
         )
 
     # Create the dropzone

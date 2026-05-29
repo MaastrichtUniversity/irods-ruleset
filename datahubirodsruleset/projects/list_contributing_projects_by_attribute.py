@@ -28,13 +28,13 @@ def list_contributing_projects_by_attribute(ctx, attribute):
     try:
         validators.validate_project_collections_action_avu(attribute)
     except exceptions.ValidationError:
-        ctx.callback.msiExit("-1", "ERROR: ProjectCollectionActions AVU '{}' is not valid".format(attribute))
+        ctx.callback.msiExit("-1", f"ERROR: ProjectCollectionActions AVU '{attribute}' is not valid")
 
     projects = []
     access_user_id = ""
     username = ctx.callback.get_client_username("")["arguments"][0]
 
-    for result in row_iterator("USER_GROUP_ID", "USER_NAME = '{}'".format(username), AS_LIST, ctx.callback):
+    for result in row_iterator("USER_GROUP_ID", f"USER_NAME = '{username}'", AS_LIST, ctx.callback):
         group_id = "'" + result[0] + "'"
         access_user_id = access_user_id + "," + group_id
 
@@ -43,10 +43,7 @@ def list_contributing_projects_by_attribute(ctx, attribute):
 
     parameters = "COLL_NAME"
     conditions = (
-        "COLL_ACCESS_NAME in ('own', 'modify_object') "
-        "and COLL_ACCESS_USER_ID in ({}) "
-        "and COLL_PARENT_NAME = '/nlmumc/projects' "
-        "and META_COLL_ATTR_NAME = '{}' AND META_COLL_ATTR_VALUE = 'true'".format(access_user_id, attribute)
+        f"COLL_ACCESS_NAME in ('own', 'modify_object') and COLL_ACCESS_USER_ID in ({access_user_id}) and COLL_PARENT_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = '{attribute}' AND META_COLL_ATTR_VALUE = 'true'"
     )
 
     for project_path in row_iterator(parameters, conditions, AS_LIST, ctx.callback):

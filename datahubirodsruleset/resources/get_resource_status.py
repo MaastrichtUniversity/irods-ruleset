@@ -16,7 +16,7 @@ def get_resource_status(ctx, resource_name):
     """
     for result in row_iterator(
         "RESC_STATUS",
-        "RESC_NAME = '{}'".format(resource_name),
+        f"RESC_NAME = '{resource_name}'",
         AS_LIST,
         ctx.callback,
     ):

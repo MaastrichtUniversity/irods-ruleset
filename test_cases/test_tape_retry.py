@@ -46,6 +46,10 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
     # How long to wait for the operation to complete after restoring tape access
     PROCESS_COMPLETION_TIMEOUT_SECONDS = 300
 
+    # Paths to the shell scripts invoked by the tape MSIs
+    DMATTR_PATH = "/var/lib/irods/msiExecCmd_bin/dmattr"
+    DMGET_PATH = "/var/lib/irods/msiExecCmd_bin/dmget"
+
     @classmethod
     def add_metadata_files_to_dropzone(cls, token):
         add_metadata_files_to_direct_dropzone(token)
@@ -167,6 +171,124 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
                 self.project_collection_path, "unarchiveState", "error-unarchive-failed"
             )
 
+    def test_dm_attr_retries_on_transient_failure(self):
+        """
+        Verify that move_offline_files_to_cache retries the dm_attr call when
+        the underlying dmattr shell script fails transiently and completes
+        successfully once the script is restored.
+
+        Flow:
+        1. Archive the collection (files land on tape)
+        2. Set the dmattr script to exit 1 (simulate transient failure)
+        3. start_unarchive  (checks pass, resource status is UP)
+        4. move_offline_files_to_cache calls dm_attr → dmattr exits 1 → RuntimeError
+           → retry_runtime_error logs "WARNING: dm_attr for ... retrying in Xs"
+        5. Detect the retry log message → confirm retries fire
+        6. Restore the dmattr script to exit 0
+        7. Unarchive completes successfully
+        8. Assert the large file is on the destination resource
+        """
+        self.run_archive()
+
+        try:
+            self._set_script_exit_code(self.DMATTR_PATH, 1)
+
+            subprocess.check_call(self.run_ichmod, shell=True)
+            log_position = self._get_log_position()
+            rule_unarchive = (
+                f'/rules/tests/run_test.sh -r start_unarchive'
+                f' -a "{self.project_collection_path},{self.manager1}"'
+                f' -u {self.service_account}'
+            )
+            subprocess.check_call(rule_unarchive, shell=True)
+
+            if not self._wait_for_retry_log(log_position):
+                pytest.fail(
+                    f"No retry log message detected within"
+                    f" {self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS}s;"
+                    f" the dm_attr retry mechanism may not be functioning"
+                )
+
+            self._set_script_exit_code(self.DMATTR_PATH, 0)
+
+            self._wait_for_process_completion()
+
+            output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
+            assert self.destination_resource in output
+
+        finally:
+            self._set_script_exit_code(self.DMATTR_PATH, 0)
+            self._remove_collection_avu(
+                self.project_collection_path, "unarchiveState", "error-unarchive-failed"
+            )
+
+    def test_dmget_retries_on_transient_failure(self):
+        """
+        Verify that move_offline_files_to_cache retries dmget calls when the
+        underlying dmget shell script fails transiently and completes
+        successfully once the script is restored.
+
+        dmget is only invoked for files in the 'OFL' (offline) bucket, so the
+        dmattr script is temporarily patched to echo 'OFL' instead of 'DUL'.
+        Once the retry is confirmed, both scripts are restored: dmget to exit 0
+        and dmattr back to 'DUL', so the next 30s move_offline_files_to_cache
+        cycle sees the files as online and hands off to perform_unarchive.
+
+        Flow:
+        1. Archive the collection (files land on tape)
+        2. Patch dmattr to echo 'OFL' so dm_attr reports files as offline
+        3. Set the dmget script to exit 1 (simulate transient failure)
+        4. start_unarchive  (checks pass, resource status is UP)
+        5. move_offline_files_to_cache: dm_attr sees OFL → dmget is called
+           → exits 1 → RuntimeError
+           → retry_runtime_error logs "WARNING: dmget ... retrying in Xs"
+        6. Detect the retry log message → confirm retries fire
+        7. Restore dmget to exit 0 and dmattr to echo 'DUL'
+        8. Unarchive completes successfully
+        9. Assert the large file is on the destination resource
+        """
+        self.run_archive()
+
+        try:
+            self._set_dmattr_status("OFL")
+            self._set_script_exit_code(self.DMGET_PATH, 1)
+
+            subprocess.check_call(self.run_ichmod, shell=True)
+            log_position = self._get_log_position()
+            rule_unarchive = (
+                f'/rules/tests/run_test.sh -r start_unarchive'
+                f' -a "{self.project_collection_path},{self.manager1}"'
+                f' -u {self.service_account}'
+            )
+            subprocess.check_call(rule_unarchive, shell=True)
+
+            if not self._wait_for_log_matching(
+                log_position,
+                lambda msg: "retrying in" in msg and "dmget" in msg,
+            ):
+                pytest.fail(
+                    f"No retry log message detected within"
+                    f" {self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS}s;"
+                    f" the dmget retry mechanism may not be functioning"
+                )
+
+            # Retry confirmed — restore dmget and report files as online so the
+            # next move_offline_files_to_cache cycle hands off to perform_unarchive
+            self._set_script_exit_code(self.DMGET_PATH, 0)
+            self._set_dmattr_status("DUL")
+
+            self._wait_for_process_completion()
+
+            output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
+            assert self.destination_resource in output
+
+        finally:
+            self._set_script_exit_code(self.DMGET_PATH, 0)
+            self._set_dmattr_status("DUL")
+            self._remove_collection_avu(
+                self.project_collection_path, "unarchiveState", "error-unarchive-failed"
+            )
+
     # endregion
 
     # region helpers
@@ -239,18 +361,10 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
             True if a matching retry log entry is found before the timeout,
             False otherwise.
         """
-        deadline = time.time() + self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS
-        while time.time() < deadline:
-            for line in self._read_new_log_lines(from_position):
-                try:
-                    entry = json.loads(line)
-                    log_message = entry.get("log_message", "")
-                    if "retrying in" in log_message and self.project_collection_path in log_message:
-                        return True
-                except (json.JSONDecodeError, AttributeError):
-                    pass
-            time.sleep(2)
-        return False
+        return self._wait_for_log_matching(
+            from_position,
+            lambda msg: "retrying in" in msg and self.project_collection_path in msg,
+        )
 
     def _wait_for_process_completion(self):
         """
@@ -315,6 +429,74 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
             )
         except subprocess.CalledProcessError:
             pass  # AVU may already be absent; not an error
+
+    def _set_script_exit_code(self, script_path, exit_code):
+        """
+        Replace the trailing 'exit N' line in *script_path* with 'exit *exit_code*'.
+
+        Parameters
+        ----------
+        script_path : str
+            Absolute path to the shell script to modify.
+        exit_code : int
+            The exit code to set (0 for success, non-zero for failure).
+        """
+        subprocess.check_call(
+            f"sed -i 's/^exit [0-9]\\+$/exit {exit_code}/' {script_path}",
+            shell=True,
+        )
+
+    def _set_dmattr_status(self, status):
+        """
+        Replace the DMF status code echoed by the dmattr script.
+
+        The script echoes a line of the form 'STATUS+FLAGS' (e.g. 'DUL+2147483648').
+        This patches just the status prefix so the rest of the line is preserved.
+
+        dmget is only triggered for files in the 'OFL' bucket; files in 'QUE' or
+        'STG' land in files_unmigrating and are waited on without calling dmget.
+
+        Parameters
+        ----------
+        status : str
+            The DMF status code to echo, e.g. 'DUL' (online), 'OFL' (offline).
+        """
+        subprocess.check_call(
+            f"sed -i 's/^echo \"[A-Z]*+/echo \"{status}+/' {self.DMATTR_PATH}",
+            shell=True,
+        )
+
+    def _wait_for_log_matching(self, from_position, predicate):
+        """
+        Poll the iRODS log for any entry whose log_message satisfies *predicate*,
+        up to RETRY_LOG_DETECTION_TIMEOUT_SECONDS.
+
+        Parameters
+        ----------
+        from_position : int
+            Byte offset in the log file captured before the operation started.
+        predicate : Callable[[str], bool]
+            A function that receives the log_message string and returns True when
+            the expected entry is found.
+
+        Returns
+        -------
+        bool
+            True if a matching log entry is found before the timeout,
+            False otherwise.
+        """
+        deadline = time.time() + self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS
+        while time.time() < deadline:
+            for line in self._read_new_log_lines(from_position):
+                try:
+                    entry = json.loads(line)
+                    log_message = entry.get("log_message", "")
+                    if predicate(log_message):
+                        return True
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+            time.sleep(2)
+        return False
 
     # endregion
 

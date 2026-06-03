@@ -32,9 +32,9 @@ def set_tape_error_avu(ctx, project_collection_path, username_initiator, attribu
     project_collection_id = formatters.get_collection_id_from_project_collection_path(project_collection_path)
     description = ""
 
-    if "value" == ArchiveState.ERROR_ARCHIVE_FAILED.value:
+    if value == ArchiveState.ERROR_ARCHIVE_FAILED.value:
         description = f"Archival failed for collection {project_collection_id} in project {project_id}"
-    elif "value" == UnarchiveState.ERROR_UNARCHIVE_FAILED.value:
+    elif value == UnarchiveState.ERROR_UNARCHIVE_FAILED.value:
         description = f"Un-archival failed for collection {project_collection_id} in project {project_id}"
 
     # if this go wrong always continue

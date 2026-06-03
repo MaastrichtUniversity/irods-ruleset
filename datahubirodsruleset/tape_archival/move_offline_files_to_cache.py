@@ -5,7 +5,7 @@ from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.tape_archival.dm_attr import dm_attr
-
+from datahubirodsruleset.utils import retry_runtime_error
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_initiator):
@@ -25,7 +25,25 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
         The username of the initiator, e.g. dlinssen
     """
     check_results = json.loads(check_results)
-    dm_attr_output = dm_attr(ctx, unarchival_path, check_results["tape_resource"], check_results["tape_resource_location"])
+
+    dm_attr_result = [None]
+
+    def _call_dm_attr():
+        dm_attr_result[0] = dm_attr(
+            ctx, unarchival_path, check_results["tape_resource"], check_results["tape_resource_location"]
+        )
+
+    if not retry_runtime_error(ctx, f"dm_attr for {unarchival_path}", _call_dm_attr):
+        ctx.callback.set_tape_error_avu(
+            check_results["project_collection_path"],
+            username_initiator,
+            ProcessAttribute.UNARCHIVE.value,
+            UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
+            f"dm_attr failed for {unarchival_path}",
+        )
+        return
+
+    dm_attr_output = dm_attr_result[0]
 
     check_results["unarchival_path"] = unarchival_path
 
@@ -40,7 +58,19 @@ def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_in
             UnarchiveState.NUMBER_OF_FILES_OFFLINE.value.format(str(dm_attr_output["count"])),
         )
         for file_offline in dm_attr_output["files_offline"]:
-            ctx.callback.dmget(file_offline["physical_path"], check_results["tape_resource_location"])
+            if not retry_runtime_error(
+                ctx,
+                f"dmget {file_offline['physical_path']}",
+                lambda: ctx.callback.dmget(file_offline["physical_path"], check_results["tape_resource_location"]),
+            ):
+                ctx.callback.set_tape_error_avu(
+                    check_results["project_collection_path"],
+                    username_initiator,
+                    ProcessAttribute.UNARCHIVE.value,
+                    UnarchiveState.ERROR_UNARCHIVE_FAILED.value,
+                    f"dmget failed for {file_offline['physical_path']}",
+                )
+                return
         ctx.delayExec(
             "<PLUSET>30s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
             recurse,

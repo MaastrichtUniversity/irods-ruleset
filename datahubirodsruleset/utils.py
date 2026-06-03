@@ -1,5 +1,6 @@
 # TODO explain the nosec
 import json
+import time
 from subprocess import check_call, CalledProcessError  # nosec
 
 import irods_types  # pylint: disable=import-error
@@ -402,6 +403,56 @@ def create_metadata_operations(operation_type, metadata):
         operations.append(operation)
 
     return operations
+
+
+# ---------------------------------------------------------------------------
+# Shared retry infrastructure
+# ---------------------------------------------------------------------------
+
+MAX_RETRIES = 10
+RETRY_DELAY_SECONDS = 60
+
+
+def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, delay_seconds=RETRY_DELAY_SECONDS):
+    """
+    Retry a callable that may transiently fail with RuntimeError.
+
+    Parameters
+    ----------
+    ctx : Context
+        Combined type of callback and rei struct.
+    operation_name : str
+        Human-readable operation descriptor for log messages.
+    operation : Callable
+        The operation to attempt.
+    retries : int
+        Total number of attempts.
+    delay_seconds : int
+        Seconds to sleep between attempts.
+
+    Returns
+    -------
+    bool
+        True if the operation succeeds, False if all retries are exhausted.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            operation()
+            return True
+        except RuntimeError as err:
+            ctx.callback.msiWriteRodsLog(str(err), 0)
+            if attempt == retries:
+                ctx.callback.msiWriteRodsLog(
+                    f"ERROR: {operation_name} failed after {retries} attempts",
+                    0,
+                )
+                return False
+
+            ctx.callback.msiWriteRodsLog(
+                f"WARNING: {operation_name} failed (attempt {attempt}/{retries}), retrying in {delay_seconds}s",
+                0,
+            )
+            time.sleep(delay_seconds)
 
 
 def map_access_name_to_access_level(access_name):

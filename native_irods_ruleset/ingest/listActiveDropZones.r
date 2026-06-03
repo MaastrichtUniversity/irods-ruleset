@@ -56,6 +56,8 @@ IRULE_listActiveDropZones(*report, *result) {
         *destination = "";
         *creator = ""
         *enableDropzoneSharing = "";
+        *dropzoneSize = "";
+        *dropzoneSizeUpdated = "";
         # Get contents of AVU's
         foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*dropzone_path") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {

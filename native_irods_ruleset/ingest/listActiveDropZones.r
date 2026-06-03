@@ -91,6 +91,12 @@ IRULE_listActiveDropZones(*report, *result) {
             if ( *av.META_COLL_ATTR_NAME == "creator" ) {
                 *creator = *av.META_COLL_ATTR_VALUE;
             }
+            if( *av.META_COLL_ATTR_NAME == "dropzoneSize" ) {
+                *dropzoneSize = *av.META_COLL_ATTR_VALUE;
+            }
+            if ( *av.META_COLL_ATTR_NAME == "dropzoneSizeUpdated" ) {
+                *dropzoneSizeUpdated = *av.META_COLL_ATTR_VALUE;
+            }
         }
 
         msiString2KeyValPair("", *kvp);
@@ -146,6 +152,18 @@ IRULE_listActiveDropZones(*report, *result) {
             msiAddKeyVal(*kvp, 'destination', "");
         } else {
             msiAddKeyVal(*kvp, 'destination', *destination);
+        }
+
+        if (*dropzoneSize == "") {
+            msiAddKeyVal(*kvp, 'dropzoneSize', "0");
+        } else {
+            msiAddKeyVal(*kvp, 'dropzoneSize', *dropzoneSize);
+        }
+
+        if (*dropzoneSizeUpdated == "") {
+            msiAddKeyVal(*kvp, 'dropzoneSizeUpdated', "0");
+        } else {
+            msiAddKeyVal(*kvp, 'dropzoneSizeUpdated', *dropzoneSizeUpdated);
         }
 
         *creatorDisplayName = *creator;

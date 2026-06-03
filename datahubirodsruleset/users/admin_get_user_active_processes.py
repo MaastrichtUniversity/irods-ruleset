@@ -1,4 +1,4 @@
-# /rules/tests/run_test.sh -r admin_get_user_active_processes -a "true,true,true,true" -j
+# /rules/tests/run_test.sh -r admin_get_user_active_processes -a "true,true,true" -j
 import json
 
 from dhpythonirodsutils.enums import (

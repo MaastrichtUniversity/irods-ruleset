@@ -1,15 +1,13 @@
 """Shared helpers for the tape archive and unarchive flows."""
+from subprocess import check_call, CalledProcessError  # nosec
+
 import irods_types  # pylint: disable=import-error
-import time
+from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from dhpythonirodsutils import formatters, exceptions
 from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
 
 from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
-
-
-MAX_RETRIES = 10
-RETRY_DELAY_SECONDS = 60
 
 
 # ---------------------------------------------------------------------------
@@ -225,46 +223,60 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
 # ---------------------------------------------------------------------------
 
 
-def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, delay_seconds=RETRY_DELAY_SECONDS):
+def reset_locked_replicas(ctx, file_path, resource_name):
     """
-    Retry a callback operation that may transiently fail with RuntimeError.
+    Reset any locked (DATA_REPL_STATUS=2) replicas of file_path on resource_name to stale (0).
+
+    A replica can be left in a locked state when a previous archive or unarchive run was
+    interrupted mid-transfer.  iRODS will refuse subsequent replication attempts to the same
+    resource while the replica is locked, so all retries would fail without this fix.
+    Resetting the status to 0 (stale) allows 'irepl' to overwrite the partial replica.
 
     Parameters
     ----------
     ctx : Context
         Combined type of callback and rei struct.
-    operation_name : str
-        Human-readable operation descriptor for logs.
-    operation : Callable
-        The operation to run.
-    retries : int
-        Total amount of attempts.
-    delay_seconds : int
-        Delay between attempts.
-
-    Returns
-    -------
-    bool
-        True if operation succeeds, False if all retries fail.
+    file_path : str
+        Full logical path of the data object, e.g. '/nlmumc/projects/P000000017/C000000001/file.txt'
+    resource_name : str
+        Name of the resource whose locked replicas should be cleared.
     """
-    for attempt in range(1, retries + 1):
-        try:
-            operation()
-            return True
-        except RuntimeError as err:
-            ctx.callback.msiWriteRodsLog(str(err), 0)
-            if attempt == retries:
-                ctx.callback.msiWriteRodsLog(
-                    f"ERROR: {operation_name} failed after {retries} attempts",
-                    0,
-                )
-                return False
+    coll_name, data_name = file_path.rsplit("/", 1)
 
+    locked_replicas = []
+    for result in row_iterator(
+        "DATA_REPL_NUM",
+        f"COLL_NAME = '{coll_name}' AND DATA_NAME = '{data_name}'"
+        f" AND DATA_RESC_HIER like '%{resource_name}%' AND DATA_REPL_STATUS = '2'",
+        AS_LIST,
+        ctx.callback,
+    ):
+        locked_replicas.append(result[0])
+
+    for repl_num in locked_replicas:
+        ctx.callback.msiWriteRodsLog(
+            f"INFO: Resetting locked replica {file_path} (repl {repl_num}) on {resource_name} to stale (0) before retry",
+            0,
+        )
+        try:
+            check_call(
+                [
+                    "iadmin",
+                    "modrepl",
+                    "logical_path",
+                    file_path,
+                    "replica_number",
+                    repl_num,
+                    "DATA_REPL_STATUS",
+                    "0",
+                ],
+                shell=False,
+            )
+        except CalledProcessError as err:
             ctx.callback.msiWriteRodsLog(
-                f"WARNING: {operation_name} failed (attempt {attempt}/{retries}), retrying in {delay_seconds}s",
+                f"WARNING: iadmin modrepl failed for {file_path} replica {repl_num} (retcode {err.returncode})",
                 0,
             )
-            time.sleep(delay_seconds)
 
 
 def checksum_file(ctx, path):

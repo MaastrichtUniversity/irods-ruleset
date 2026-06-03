@@ -5,8 +5,7 @@ from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.tape_archival.dm_attr import dm_attr
-from datahubirodsruleset.tape_archival.tape_utils import retry_runtime_error
-
+from datahubirodsruleset.utils import retry_runtime_error
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def move_offline_files_to_cache(ctx, unarchival_path, check_results, username_initiator):

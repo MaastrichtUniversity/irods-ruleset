@@ -6,8 +6,8 @@ from dhpythonirodsutils.enums import ProcessAttribute, ArchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
-from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, retry_runtime_error
-
+from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, reset_locked_replicas
+from datahubirodsruleset.utils import retry_runtime_error
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
 def perform_archive(ctx, archival_path, check_results, username_initiator):
@@ -88,20 +88,26 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
             continue
 
         # Replicate
-        if not _run_archive_step(
-            ctx,
-            check_results,
-            username_initiator,
-            f"Replication {file['path']} to {check_results['tape_resource']}",
-            f"Replication of {file['path']} from {file['coordinating_resource']} to {check_results['tape_resource']} FAILED.",
-            lambda: irepl_wrapper(
+        # Before each attempt, reset any locked (DATA_REPL_STATUS=2) replica on tape left by a
+        # previous interrupted run, otherwise all retries will fail as well.
+        def _do_archive_repl():
+            reset_locked_replicas(ctx, file["path"], check_results["tape_resource"])
+            irepl_wrapper(
                 ctx,
                 file["path"],
                 check_results["tape_resource"],
                 check_results["service_account"],
                 False,
                 True,
-            ),
+            )
+
+        if not _run_archive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Replication {file['path']} to {check_results['tape_resource']}",
+            f"Replication of {file['path']} from {file['coordinating_resource']} to {check_results['tape_resource']} FAILED.",
+            _do_archive_repl,
         ):
             continue
 

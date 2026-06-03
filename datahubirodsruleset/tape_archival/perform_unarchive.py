@@ -5,9 +5,9 @@ from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import irepl_wrapper
-from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, retry_runtime_error
+from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, reset_locked_replicas
 from datahubirodsruleset.tape_archival.dm_attr import dm_attr
-
+from datahubirodsruleset.utils import retry_runtime_error
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
 def perform_unarchive(ctx, check_results, username_initiator):
@@ -82,20 +82,26 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Replicate
         # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
-        if not _run_unarchive_step(
-            ctx,
-            check_results,
-            username_initiator,
-            f"Replication {file['virtual_path']} to {check_results['project_resource']}",
-            f"Replication of {file['virtual_path']} from {check_results['tape_resource']} to {check_results['project_resource']} FAILED.",
-            lambda: irepl_wrapper(
+        # Before each attempt, reset any locked (DATA_REPL_STATUS=2) replica(s) on the project resource left by a
+        # previous interrupted run. On unarchive there can be multiple such replicas, so we clear all of them.
+        def _do_unarchive_repl():
+            reset_locked_replicas(ctx, file["virtual_path"], check_results["project_resource"])
+            irepl_wrapper(
                 ctx,
                 file["virtual_path"],
                 check_results["project_resource"],
                 check_results["service_account"],
                 False,
                 True,
-            ),
+            )
+
+        if not _run_unarchive_step(
+            ctx,
+            check_results,
+            username_initiator,
+            f"Replication {file['virtual_path']} to {check_results['project_resource']}",
+            f"Replication of {file['virtual_path']} from {check_results['tape_resource']} to {check_results['project_resource']} FAILED.",
+            _do_unarchive_repl,
         ):
             continue
 

@@ -65,17 +65,21 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
     ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
 
     # Execute the irsync call remotely for mounted ingests, as it needs access to the physical path
-    if dropzone_type == "mounted":
-        # Remotely execute the actual irsync
-        ctx.remoteExec(
-            ingest_resource_host,
-            "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', '{depositor}', '{dropzone_type}')",
-            "",
-        )
-    # Execute the irsync on iCAT locally if its a direct ingest, since it's all virtual
-    elif dropzone_type == "direct":
-        ctx.callback.perform_irsync(destination_resource, token, destination_collection, depositor, dropzone_type)
+    try:
+        if dropzone_type == "mounted":
+            # Remotely execute the actual irsync
+            ctx.remoteExec(
+                ingest_resource_host,
+                "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
+                f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', '{depositor}', '{dropzone_type}')",
+                "",
+            )
+        # Execute the irsync on iCAT locally if its a direct ingest, since it's all virtual
+        elif dropzone_type == "direct":
+            ctx.callback.perform_irsync(destination_resource, token, destination_collection, depositor, dropzone_type)
+    except RuntimeError:
+        ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.ERROR_INGESTION.value)
+        raise RuntimeError(f"Error syncing collection data for {dropzone_path}")
 
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
     if state == DropzoneState.ERROR_INGESTION.value:

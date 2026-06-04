@@ -37,5 +37,5 @@ def calculate_mounted_dropzone_sizes(ctx, list_of_tokens):
         size = get_directory_size(physical_dropzone_path)
         ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", str(size))
         ctx.callback.setCollectionAVU(
-            dropzone_path, "dropzoneSizeUpdated", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            dropzone_path, "dropzoneSizeUpdated", str(int(datetime.now().timestamp()))
         )

@@ -2,6 +2,7 @@
 
 # Public rules
 from datahubirodsruleset.ingest.start_ingest import start_ingest
+from datahubirodsruleset.ingest.restart_ingest import restart_ingest
 from datahubirodsruleset.ingest.set_ingestion_error_avu import set_ingestion_error_avu
 
 # Private rules

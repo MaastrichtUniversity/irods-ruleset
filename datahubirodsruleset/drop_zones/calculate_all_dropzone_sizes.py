@@ -13,7 +13,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 
 RULE_ENGINE_INSTANCE = "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>"
-CURRENT_TIMESTAMP = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+CURRENT_TIMESTAMP = str(int(datetime.now().timestamp()))
 
 
 def _calculate_direct_dropzone_size(ctx, token):

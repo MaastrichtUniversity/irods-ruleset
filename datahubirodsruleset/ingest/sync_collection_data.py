@@ -3,7 +3,6 @@
 # /rules/tests/run_test.sh -r sync_collection_data -a "handsome-snake,/nlmumc/projects/P000000019/C000000001,dlinssen,direct"
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import DropzoneState, ProjectAVUs
-from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_path

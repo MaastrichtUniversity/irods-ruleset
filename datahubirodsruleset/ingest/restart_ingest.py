@@ -1,8 +1,5 @@
 # To be called as an admin at all times
 # /rules/tests/run_test.sh -r restart_ingest -a "handsome-snake,direct"
-from dhpythonirodsutils.enums import DropzoneState
-from dhpythonirodsutils import formatters
-
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING

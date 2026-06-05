@@ -89,6 +89,11 @@ class BaseTestCaseIngest:
         pass
 
     @classmethod
+    def calculate_all_dropzone_sizes(cls):
+        rule = '/rules/tests/run_test.sh -r calculate_all_dropzone_sizes'
+        subprocess.check_call(rule, shell=True)
+
+    @classmethod
     def setup_class(cls):
         print()
         print(f"Start {cls.__name__}.setup_class")
@@ -101,6 +106,7 @@ class BaseTestCaseIngest:
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
         cls.add_data_to_dropzone()
+        cls.calculate_all_dropzone_sizes()
         start_and_wait_for_ingest(cls)
         print(f"End {cls.__name__}.setup_class")
 
@@ -110,6 +116,16 @@ class BaseTestCaseIngest:
         print(f"Start {cls.__name__}.teardown_class")
         remove_project(cls.project_path)
         print(f"End {cls.__name__}.teardown_class")
+
+    def test_verify_dropzone_size_is_correct(self):
+        # Implementation for verifying dropzone size
+        dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
+        metadata = f"imeta ls -C {dropzone_path} dropzoneSize"
+        ret_metadata = subprocess.check_output(metadata, shell=True, encoding="UTF-8")
+        if self.dropzone_type == "direct":
+            assert f"value: 63169378" in ret_metadata
+        if self.dropzone_type == "mounted":
+            assert f"value: 62965760" in ret_metadata
 
     def test_collection_avu(self):
         rule_list_collections = f'/rules/tests/run_test.sh -r list_collections -a "{self.project_path}"'

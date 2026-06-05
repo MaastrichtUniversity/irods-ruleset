@@ -56,8 +56,11 @@ IRULE_listActiveDropZones(*report, *result) {
         *destination = "";
         *creator = ""
         *enableDropzoneSharing = "";
+        *dropzoneSize = "";
+        *dropzoneSizeUpdated = "";
+        *creationDate = "";
         # Get contents of AVU's
-        foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*dropzone_path") {
+        foreach (*av in SELECT COLL_MODIFY_TIME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, COLL_CREATE_TIME WHERE COLL_NAME == "*dropzone_path") {
             if ( *av.META_COLL_ATTR_NAME == "title" ) {
                 *title = *av.META_COLL_ATTR_VALUE;
             }
@@ -82,6 +85,7 @@ IRULE_listActiveDropZones(*report, *result) {
                 }
             }
             *date = *av.COLL_MODIFY_TIME;
+            *creationDate = *av.COLL_CREATE_TIME;
             if( *av.META_COLL_ATTR_NAME == "totalSize" ) {
                 *totalSize = *av.META_COLL_ATTR_VALUE;
             }
@@ -90,6 +94,12 @@ IRULE_listActiveDropZones(*report, *result) {
             }
             if ( *av.META_COLL_ATTR_NAME == "creator" ) {
                 *creator = *av.META_COLL_ATTR_VALUE;
+            }
+            if( *av.META_COLL_ATTR_NAME == "dropzoneSize" ) {
+                *dropzoneSize = *av.META_COLL_ATTR_VALUE;
+            }
+            if ( *av.META_COLL_ATTR_NAME == "dropzoneSizeUpdated" ) {
+                *dropzoneSizeUpdated = *av.META_COLL_ATTR_VALUE;
             }
         }
 
@@ -135,6 +145,8 @@ IRULE_listActiveDropZones(*report, *result) {
         }
 
         msiAddKeyVal(*kvp, 'date', *date);
+        msiAddKeyVal(*kvp, 'modifyDate', *date);
+        msiAddKeyVal(*kvp, 'creationDate', *creationDate);
 
         if ( *totalSize == "" ) {
             msiAddKeyVal(*kvp, 'totalSize', "0");
@@ -146,6 +158,18 @@ IRULE_listActiveDropZones(*report, *result) {
             msiAddKeyVal(*kvp, 'destination', "");
         } else {
             msiAddKeyVal(*kvp, 'destination', *destination);
+        }
+
+        if (*dropzoneSize == "") {
+            msiAddKeyVal(*kvp, 'dropzoneSize', "0");
+        } else {
+            msiAddKeyVal(*kvp, 'dropzoneSize', *dropzoneSize);
+        }
+
+        if (*dropzoneSizeUpdated == "") {
+            msiAddKeyVal(*kvp, 'dropzoneSizeUpdated', "0");
+        } else {
+            msiAddKeyVal(*kvp, 'dropzoneSizeUpdated', *dropzoneSizeUpdated);
         }
 
         *creatorDisplayName = *creator;

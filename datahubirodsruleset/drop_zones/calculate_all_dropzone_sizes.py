@@ -21,7 +21,6 @@ def _calculate_direct_dropzone_size(ctx, token):
     dropzone_path = f"/nlmumc/ingest/direct/{token}"
     size = ctx.callback.calcCollectionSize(dropzone_path, "B", "ceiling", "")["arguments"][3]
     
-    ctx.callback.msiWriteRodsLog(f"Size of direct dropzone with token {token}: {size}B", 0)
     ctx.callback.msiSetACL("default", "admin:own", "rods", dropzone_path)
     ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", size)
     ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSizeUpdated", CURRENT_TIMESTAMP)

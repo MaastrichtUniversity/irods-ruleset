@@ -4,6 +4,7 @@ import subprocess
 import time
 import uuid
 from os import path
+from typing import Callable
 
 import requests
 from dhpythonirodsutils import formatters, validators
@@ -341,3 +342,81 @@ def get_project_collection_instance_in_elastic(project_id):
     assert instance
 
     return instance
+
+
+IRODS_LOG_PATH = "/var/log/irods/irods.log"
+
+
+def get_log_position(log_path: str = IRODS_LOG_PATH) -> int:
+    """Return the current byte offset at the end of the iRODS log file."""
+    try:
+        with open(log_path, "rb") as f:
+            f.seek(0, 2)
+            return f.tell()
+    except OSError:
+        return 0
+
+
+def read_new_log_lines(from_position: int, log_path: str = IRODS_LOG_PATH) -> list:
+    """
+    Return all lines added to the iRODS log file since *from_position*.
+
+    Parameters
+    ----------
+    from_position : int
+        Byte offset to start reading from (as returned by get_log_position).
+    log_path : str
+        Path to the log file.
+
+    Returns
+    -------
+    list[str]
+    """
+    try:
+        with open(log_path, "r", errors="replace") as f:
+            f.seek(from_position)
+            return f.readlines()
+    except OSError:
+        return []
+
+
+def wait_for_log_matching(
+    from_position: int,
+    predicate: Callable[[str], bool],
+    timeout_seconds: int = 120,
+    log_path: str = IRODS_LOG_PATH,
+) -> bool:
+    """
+    Poll the iRODS log for any entry whose log_message satisfies *predicate*,
+    up to *timeout_seconds*.
+
+    Parameters
+    ----------
+    from_position : int
+        Byte offset in the log file captured before the operation started.
+    predicate : Callable[[str], bool]
+        A function that receives the log_message string and returns True when
+        the expected entry is found.
+    timeout_seconds : int
+        How long to wait for a matching log entry before giving up.
+    log_path : str
+        Path to the log file.
+
+    Returns
+    -------
+    bool
+        True if a matching log entry is found before the timeout,
+        False otherwise.
+    """
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        for line in read_new_log_lines(from_position, log_path):
+            try:
+                entry = json.loads(line)
+                log_message = entry.get("log_message", "")
+                if predicate(log_message):
+                    return True
+            except (json.JSONDecodeError, AttributeError):
+                pass
+        time.sleep(2)
+    return False

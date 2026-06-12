@@ -7,7 +7,12 @@ from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProcessState
 
 from test_cases.base_tape_archive import BaseTestTapeArchive
-from test_cases.utils import add_metadata_files_to_direct_dropzone
+from test_cases.utils import (
+    add_metadata_files_to_direct_dropzone,
+    get_log_position,
+    read_new_log_lines,
+    wait_for_log_matching,
+)
 
 
 class BaseTestTapeRetry(BaseTestTapeArchive):
@@ -34,9 +39,6 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
 
     # Base path of the tape resource vault as mounted inside the container
     SURF_ARCHIVE_PROJECTS_PATH = "/mnt/SURF-Archive/projects"
-
-    # Path to the iRODS server log (JSON-formatted entries, one per line)
-    IRODS_LOG_PATH = "/var/log/irods/irods.log"
 
     dropzone_type = "direct"
 
@@ -317,12 +319,7 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
 
     def _get_log_position(self):
         """Return the current byte offset at the end of the iRODS log file."""
-        try:
-            with open(self.IRODS_LOG_PATH, "rb") as f:
-                f.seek(0, 2)
-                return f.tell()
-        except OSError:
-            return 0
+        return get_log_position()
 
     def _read_new_log_lines(self, from_position):
         """
@@ -337,12 +334,7 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         -------
         list[str]
         """
-        try:
-            with open(self.IRODS_LOG_PATH, "r", errors="replace") as f:
-                f.seek(from_position)
-                return f.readlines()
-        except OSError:
-            return []
+        return read_new_log_lines(from_position)
 
     def _wait_for_retry_log(self, from_position):
         """
@@ -361,9 +353,10 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
             True if a matching retry log entry is found before the timeout,
             False otherwise.
         """
-        return self._wait_for_log_matching(
+        return wait_for_log_matching(
             from_position,
             lambda msg: "retrying in" in msg and self.project_collection_path in msg,
+            self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS,
         )
 
     def _wait_for_process_completion(self):
@@ -485,18 +478,11 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
             True if a matching log entry is found before the timeout,
             False otherwise.
         """
-        deadline = time.time() + self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS
-        while time.time() < deadline:
-            for line in self._read_new_log_lines(from_position):
-                try:
-                    entry = json.loads(line)
-                    log_message = entry.get("log_message", "")
-                    if predicate(log_message):
-                        return True
-                except (json.JSONDecodeError, AttributeError):
-                    pass
-            time.sleep(2)
-        return False
+        return wait_for_log_matching(
+            from_position,
+            predicate,
+            self.RETRY_LOG_DETECTION_TIMEOUT_SECONDS,
+        )
 
     # endregion
 

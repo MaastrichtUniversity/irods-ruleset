@@ -452,7 +452,20 @@ def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, del
                 f"WARNING: {operation_name} failed (attempt {attempt}/{retries}), retrying in {delay_seconds}s",
                 0,
             )
-            time.sleep(delay_seconds)
+            tick = 10
+            remaining = delay_seconds
+            while remaining > 0:
+                time.sleep(tick)
+                remaining -= tick
+                if remaining > 0:
+                    ctx.callback.msiWriteRodsLog(
+                        f"INFO: {operation_name} retrying in {remaining}s",
+                        0,
+                    )
+            ctx.callback.msiWriteRodsLog(
+                f"INFO: Retrying {operation_name} now",
+                0,
+            )
 
 
 def map_access_name_to_access_level(access_name):

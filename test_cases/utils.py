@@ -223,9 +223,9 @@ def wait_for_revoke_project_collection_user_acl():
 
 
 def does_path_exist(absolute_path):
-    run_ilocate = f"ilocate {absolute_path}"
+    run_ils = f"ils {absolute_path}"
     try:
-        subprocess.check_output(run_ilocate, shell=True).strip()
+        subprocess.check_output(run_ils, shell=True).strip()
     except subprocess.CalledProcessError:
         return False
 

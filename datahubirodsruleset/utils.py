@@ -452,7 +452,74 @@ def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, del
                 f"WARNING: {operation_name} failed (attempt {attempt}/{retries}), retrying in {delay_seconds}s",
                 0,
             )
-            time.sleep(delay_seconds)
+            tick = 10
+            remaining = delay_seconds
+            while remaining > 0:
+                time.sleep(tick)
+                remaining -= tick
+                if remaining > 0:
+                    ctx.callback.msiWriteRodsLog(
+                        f"INFO: {operation_name} retrying in {remaining}s",
+                        0,
+                    )
+            ctx.callback.msiWriteRodsLog(
+                f"INFO: Retrying {operation_name} now",
+                0,
+            )
+
+
+def _get_resource_child_count(ctx, resource_name):
+    """Return the number of direct child resources of resource_name."""
+    resc_id = None
+    for result in row_iterator("RESC_ID", f"RESC_NAME = '{resource_name}'", AS_LIST, ctx.callback):
+        resc_id = result[0]
+    if resc_id is None:
+        return 0
+    for result in row_iterator("COUNT(RESC_ID)", f"RESC_PARENT = '{resc_id}'", AS_LIST, ctx.callback):
+        return int(result[0])
+    return 0
+
+
+def get_bad_status_replicas(ctx, collection):
+    """
+    Return a list of (path, repl_num, repl_status) for every replica under collection
+    whose replication status is not '1' (good).
+    """
+    bad = []
+    for result in row_iterator(
+        "COLL_NAME, DATA_NAME, DATA_REPL_NUM, DATA_REPL_STATUS",
+        f"COLL_NAME LIKE '{collection}%' AND DATA_REPL_STATUS != '1'",
+        AS_LIST,
+        ctx.callback,
+    ):
+        path = f"{result[0]}/{result[1]}"
+        bad.append((path, result[2], result[3]))
+    return bad
+
+
+def get_under_replicated_data_objects(ctx, collection, resource):
+    """
+    Return a list of (path, actual_count, expected_count) for every data object under
+    collection whose total replica count does not match the expected count for resource.
+    The expected count equals the number of direct children of resource, or 1 for a
+    leaf resource.
+    """
+    child_count = _get_resource_child_count(ctx, resource)
+    expected = child_count if child_count > 0 else 1
+
+    under_replicated = []
+    for result in row_iterator(
+        "COLL_NAME, DATA_NAME, COUNT(DATA_REPL_NUM)",
+        f"COLL_NAME LIKE '{collection}%'",
+        AS_LIST,
+        ctx.callback,
+    ):
+        path = f"{result[0]}/{result[1]}"
+        actual = int(result[2])
+        if actual != expected:
+            under_replicated.append((path, actual, expected))
+
+    return under_replicated
 
 
 def map_access_name_to_access_level(access_name):

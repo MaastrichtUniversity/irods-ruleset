@@ -11,7 +11,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
-from datahubirodsruleset.utils import retry_runtime_error
+from datahubirodsruleset.utils import get_bad_status_replicas, get_under_replicated_data_objects, retry_runtime_error
 
 def _clean_failed_replicas(ctx, destination_collection):
     """
@@ -28,15 +28,7 @@ def _clean_failed_replicas(ctx, destination_collection):
     # deletion.  Attempting to delete while a sibling replica is still in state '2'
     # would be rejected by iRODS.
     failed_replicas = {}
-    for result in row_iterator(
-        "COLL_NAME, DATA_NAME, DATA_REPL_NUM, DATA_REPL_STATUS",
-        f"COLL_NAME LIKE '{destination_collection}%' AND DATA_REPL_STATUS != '1'",
-        AS_LIST,
-        ctx.callback,
-    ):
-        full_data_obj_path = f"{result[0]}/{result[1]}"
-        repl_num = result[2]
-        repl_status = result[3]
+    for full_data_obj_path, repl_num, repl_status in get_bad_status_replicas(ctx, destination_collection):
         failed_replicas.setdefault(full_data_obj_path, []).append((repl_num, repl_status))
 
     for full_data_obj_path, replicas in failed_replicas.items():
@@ -76,45 +68,17 @@ def _clean_failed_replicas(ctx, destination_collection):
     return len(failed_replicas)
 
 
-def _get_resource_child_count(ctx, resource_name):
-    """Return the number of direct child resources of resource_name."""
-    resc_id = None
-    for result in row_iterator("RESC_ID", f"RESC_NAME = '{resource_name}'", AS_LIST, ctx.callback):
-        resc_id = result[0]
-    if resc_id is None:
-        return 0
-    for result in row_iterator("COUNT(RESC_ID)", f"RESC_PARENT = '{resc_id}'", AS_LIST, ctx.callback):
-        return int(result[0])
-    return 0
-
-
 def _check_replica_count(ctx, destination_collection, destination_resource):
     """
     Verify that every data object in destination_collection has the expected number
-    of replicas.  The expected count equals the number of direct children of
-    destination_resource, or 1 for a leaf resource.
-
-    Objects with a mismatched replica count are removed so a subsequent irsync can
-    recreate them cleanly.
+    of replicas.  Objects with a mismatched count are removed so a subsequent irsync
+    can recreate them cleanly.
 
     Returns the number of objects removed.
     """
-    child_count = _get_resource_child_count(ctx, destination_resource)
-    expected_replica_count = child_count if child_count > 0 else 1
+    under_replicated = get_under_replicated_data_objects(ctx, destination_collection, destination_resource)
 
-    under_replicated = []
-    for result in row_iterator(
-        "COLL_NAME, DATA_NAME, COUNT(DATA_REPL_NUM)",
-        f"COLL_NAME LIKE '{destination_collection}%'",
-        AS_LIST,
-        ctx.callback,
-    ):
-        full_data_obj_path = f"{result[0]}/{result[1]}"
-        actual_replica_count = int(result[2])
-        if actual_replica_count != expected_replica_count:
-            under_replicated.append((full_data_obj_path, actual_replica_count))
-
-    for full_data_obj_path, actual_replica_count in under_replicated:
+    for full_data_obj_path, actual_replica_count, expected_replica_count in under_replicated:
         ctx.callback.msiWriteRodsLog(
             f"INFO: Removing under-replicated data object {full_data_obj_path}"
             f" (expected {expected_replica_count} replica(s), found {actual_replica_count})",
@@ -208,9 +172,19 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
     )
 
     if success:
-        ctx.callback.msiWriteRodsLog(
-            f"INFO: Ingest collection data '{source_collection}' was successful", 0
-        )
+        # NOTE: if perform_irsync was called via remoteExec, time.sleep() inside
+        # retry_runtime_error may have caused the icat connection to time out.
+        # In that case this msiWriteRodsLog call itself will raise, which propagates
+        # up through remoteExec as a RuntimeError on the icat side — making a
+        # successful ingest appear as a failure (false negative).  The try/except
+        # here prevents that post-retry callback from masking the successful outcome;
+        # the actual data integrity is verified downstream by validate_data_post_ingestion.
+        try:
+            ctx.callback.msiWriteRodsLog(
+                f"INFO: Ingest collection data '{source_collection}' was successful", 0
+            )
+        except Exception:  # pylint: disable=broad-except
+            pass
     else:
         if dropzone_type == "mounted":
             # Re-set the user CIFS ACL on the mounted network dropzone folder

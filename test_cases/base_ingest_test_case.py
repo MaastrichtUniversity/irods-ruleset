@@ -1,5 +1,6 @@
 import json
 import subprocess
+import pytest
 
 from dhpythonirodsutils import formatters
 
@@ -10,6 +11,8 @@ from test_cases.utils import (
     start_and_wait_for_ingest,
     run_index_all_project_collections_metadata,
     get_project_collection_instance_in_elastic,
+    get_log_position,
+    wait_for_log_matching,
 )
 
 
@@ -40,6 +43,10 @@ listActiveDropZones:
 
 
 class BaseTestCaseIngest:
+    # How long to wait for the first size ingested log message before failing the test
+    SIZE_INGESTED_LOG_DETECTION_TIMEOUT_SECONDS = 10
+    log_position_before_ingest = 0
+
     project_path = ""
     project_id = ""
     project_title = "PROJECTNAME"
@@ -107,6 +114,7 @@ class BaseTestCaseIngest:
         cls.add_metadata_files_to_dropzone(cls.token)
         cls.add_data_to_dropzone()
         cls.calculate_all_dropzone_sizes()
+        cls.log_position_before_ingest = get_log_position()
         start_and_wait_for_ingest(cls)
         print(f"End {cls.__name__}.setup_class")
 
@@ -117,6 +125,7 @@ class BaseTestCaseIngest:
         remove_project(cls.project_path)
         print(f"End {cls.__name__}.teardown_class")
 
+    # region tests
     def test_verify_dropzone_size_is_correct(self):
         # Implementation for verifying dropzone size
         dropzone_path = formatters.format_dropzone_path(self.token, self.dropzone_type)
@@ -257,3 +266,17 @@ class BaseTestCaseIngest:
 
         assert total_size == self.dropzone_total_size
         assert num_files == self.dropzone_num_files
+    
+    def test_size_ingested_avu(self):
+        if not wait_for_log_matching(
+            self.log_position_before_ingest,
+            lambda msg: "sizeIngested" in msg and self.dropzone_total_size in msg,
+            self.SIZE_INGESTED_LOG_DETECTION_TIMEOUT_SECONDS,
+        ):
+            pytest.fail(
+                f"No size ingested log message detected within"
+                f" {self.SIZE_INGESTED_LOG_DETECTION_TIMEOUT_SECONDS}s;"
+                f" the size ingested mechanism may not be functioning"
+            )
+        
+    # endregion tests

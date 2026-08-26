@@ -330,7 +330,7 @@ class TestValidateDropzone:
             remove_dropzone(token, self.dropzone_type)
 
     def test_validate_dropzone_locked_file_direct(self):
-        """Direct dropzone containing a locked file replica (DATA_REPL_STATUS = 2) is reported as an error.
+        """Direct dropzone containing a locked file replica (DATA_REPL_STATUS = 2, 3, or 4) is reported as an error.
 
         Steps to create a locked replica:
           1. iput a file to stagingResc01 (replica 0, status = good).
@@ -351,26 +351,27 @@ class TestValidateDropzone:
                 shell=True,
             )
             print(subprocess.check_output(f"ils -l {file_logical_path}", shell=True, encoding="UTF-8"))
-            subprocess.check_call(
-                [
-                    "iadmin",
-                    "modrepl",
-                    "logical_path",
-                    file_logical_path,
-                    "replica_number",
-                    "0",
-                    "DATA_REPL_STATUS",
-                    "2",
-                ],
-                shell=False,
-            )
-            result = self._run_validate_dropzone(dropzone_path)
+            for repl_status in ("2", "3", "4"):
+                subprocess.check_call(
+                    [
+                        "iadmin",
+                        "modrepl",
+                        "logical_path",
+                        file_logical_path,
+                        "replica_number",
+                        "0",
+                        "DATA_REPL_STATUS",
+                        repl_status,
+                    ],
+                    shell=False,
+                )
+                result = self._run_validate_dropzone(dropzone_path)
 
-            assert any("locked file" in err for err in result["validation_errors"])
-            assert any(
-                "validate_dz_locked.dat" in err for err in result["validation_errors"]
-            )
-            self._assert_state_avu(dropzone_path, "validating")
+                assert any("locked file" in err for err in result["validation_errors"])
+                assert any(
+                    "validate_dz_locked.dat" in err for err in result["validation_errors"]
+                )
+                self._assert_state_avu(dropzone_path, "validating")
         finally:
             subprocess.check_call(
                 [

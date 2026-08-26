@@ -161,7 +161,7 @@ def does_dropzone_contain_stale_or_locked_files(ctx, dropzone_path, validation_e
         data_path = f"{failed_data_object[0]}/{failed_data_object[1]}"
         if failed_data_object[3] == "0":
             validation_errors.append(f"Dropzone contains stale file '{data_path}'")
-        elif failed_data_object[3] == "2":
+        elif failed_data_object[3] in ("2", "3", "4"):
             validation_errors.append(f"Dropzone contains locked file '{data_path}'")
         else:
             validation_errors.append(f"Dropzone contains file with unknown replication status '{data_path}'")

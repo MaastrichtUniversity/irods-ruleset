@@ -88,7 +88,7 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
             continue
 
         # Replicate
-        # Before each attempt, reset any locked (DATA_REPL_STATUS=2) replica on tape left by a
+        # Before each attempt, reset any locked (DATA_REPL_STATUS in ('2', '3', '4')) replica on tape left by a
         # previous interrupted run, otherwise all retries will fail as well.
         def _do_archive_repl():
             reset_locked_replicas(ctx, file["path"], check_results["tape_resource"])

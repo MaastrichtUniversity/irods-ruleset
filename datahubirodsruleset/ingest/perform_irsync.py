@@ -18,14 +18,14 @@ def _clean_failed_replicas(ctx, destination_collection):
     Remove all data objects under destination_collection whose replica status is not
     '1' (good), so that a subsequent irsync can recreate them from scratch.
 
-    Replicas with status '2' are first reset to '0' via 'iadmin modrepl' because
+    Replicas with status '2', '3', or '4' are first reset to '0' via 'iadmin modrepl' because
     iRODS treats them as authoritative and may refuse to overwrite them otherwise.
     Each unique data object is deleted at most once even if multiple failed replicas
     are reported for it.
     """
     # Collect all failed replicas grouped by data object path first, so that every
-    # locked replica (status '2') of the same object is reset to '0' before we attempt
-    # deletion.  Attempting to delete while a sibling replica is still in state '2'
+    # locked replica (status '2', '3', or '4') of the same object is reset to '0' before we attempt
+    # deletion.  Attempting to delete while a sibling replica is still locked
     # would be rejected by iRODS.
     failed_replicas = {}
     for full_data_obj_path, repl_num, repl_status in get_bad_status_replicas(ctx, destination_collection):
@@ -33,9 +33,9 @@ def _clean_failed_replicas(ctx, destination_collection):
 
     for full_data_obj_path, replicas in failed_replicas.items():
         for repl_num, repl_status in replicas:
-            # repl_status '2' means locked replica, which can happen if a previous irsync partially succeeded and got interrupted (e.g. by a timeout).
+            # repl_status '2', '3', or '4' means a locked replica, which can happen if a previous irsync partially succeeded and got interrupted (e.g. by a timeout).
             # locked files cant be removed by iRODS, and they will also cause subsequent irsync calls to fail, so we reset the status to '0' (stale) to allow cleanup and retry.
-            if repl_status == "2":
+            if repl_status in ("2", "3", "4"):
                 ctx.callback.msiWriteRodsLog(
                     f"INFO: Resetting stale replica {full_data_obj_path} (repl {repl_num}) status to 0 before removal",
                     0,

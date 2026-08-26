@@ -225,7 +225,7 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
 
 def reset_locked_replicas(ctx, file_path, resource_name):
     """
-    Reset any locked (DATA_REPL_STATUS=2) replicas of file_path on resource_name to stale (0).
+    Reset any locked (DATA_REPL_STATUS in ('2', '3', '4')) replicas of file_path on resource_name to stale (0).
 
     A replica can be left in a locked state when a previous archive or unarchive run was
     interrupted mid-transfer.  iRODS will refuse subsequent replication attempts to the same
@@ -247,7 +247,7 @@ def reset_locked_replicas(ctx, file_path, resource_name):
     for result in row_iterator(
         "DATA_REPL_NUM",
         f"COLL_NAME = '{coll_name}' AND DATA_NAME = '{data_name}'"
-        f" AND DATA_RESC_HIER like '%{resource_name}%' AND DATA_REPL_STATUS = '2'",
+        f" AND DATA_RESC_HIER like '%{resource_name}%' AND DATA_REPL_STATUS in ('2', '3', '4')",
         AS_LIST,
         ctx.callback,
     ):

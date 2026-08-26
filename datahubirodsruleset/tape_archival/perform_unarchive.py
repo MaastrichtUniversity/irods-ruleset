@@ -82,7 +82,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Replicate
         # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
-        # Before each attempt, reset any locked (DATA_REPL_STATUS=2) replica(s) on the project resource left by a
+        # Before each attempt, reset any locked (DATA_REPL_STATUS in ('2', '3', '4')) replica(s) on the project resource left by a
         # previous interrupted run. On unarchive there can be multiple such replicas, so we clear all of them.
         def _do_unarchive_repl():
             reset_locked_replicas(ctx, file["virtual_path"], check_results["project_resource"])

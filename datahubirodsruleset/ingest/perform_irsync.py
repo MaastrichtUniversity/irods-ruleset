@@ -112,10 +112,8 @@ def _run_irsync(source_collection, destination_collection, destination_resource)
         raise RuntimeError(f"irsync: cmd '{err.cmd}' retcode '{err.returncode}'") from err
 
 
-@make(inputs=range(6), outputs=[], handler=Output.STORE)
-def perform_irsync(
-    ctx, destination_resource, token, destination_collection, depositor, dropzone_type, ingest_restart
-):
+@make(inputs=range(5), outputs=[], handler=Output.STORE)
+def perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart):
     """
     This rule is part the ingest workflow.
     It takes care of actually copying (syncing) the content of the drop-zone into the destination collection.
@@ -132,8 +130,6 @@ def perform_irsync(
         The dropzone token, to locate the source collection; e.g: 'handsome-snake'
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
-    depositor: str
-        The iRODS username of the user who started the ingestion
     dropzone_type: str
         The type of dropzone to be ingested (mounted or direct)
     ingest_restart: str

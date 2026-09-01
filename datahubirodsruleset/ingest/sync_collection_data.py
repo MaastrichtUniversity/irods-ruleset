@@ -70,7 +70,7 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
             ctx.remoteExec(
                 ingest_resource_host,
                 "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-                f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', '{depositor}', "
+                f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', "
                 f"'{dropzone_type}', '{str(ingest_restart).lower()}')",
                 "",
             )
@@ -80,7 +80,6 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
                 destination_resource,
                 token,
                 destination_collection,
-                depositor,
                 dropzone_type,
                 str(ingest_restart).lower(),
             )

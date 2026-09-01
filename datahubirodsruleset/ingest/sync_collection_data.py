@@ -70,12 +70,20 @@ def sync_collection_data(ctx, token, destination_collection, depositor, dropzone
             ctx.remoteExec(
                 ingest_resource_host,
                 "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-                f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', '{depositor}', '{dropzone_type}')",
+                f"perform_irsync('{destination_resource}', '{token}', '{destination_collection}', '{depositor}', "
+                f"'{dropzone_type}', '{str(ingest_restart).lower()}')",
                 "",
             )
         # Execute the irsync on iCAT locally if its a direct ingest, since it's all virtual
         elif dropzone_type == "direct":
-            ctx.callback.perform_irsync(destination_resource, token, destination_collection, depositor, dropzone_type)
+            ctx.callback.perform_irsync(
+                destination_resource,
+                token,
+                destination_collection,
+                depositor,
+                dropzone_type,
+                str(ingest_restart).lower(),
+            )
     except RuntimeError:
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.ERROR_INGESTION.value)
         raise RuntimeError(f"Error syncing collection data for {dropzone_path}")

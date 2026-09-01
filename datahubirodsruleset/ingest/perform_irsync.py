@@ -112,8 +112,10 @@ def _run_irsync(source_collection, destination_collection, destination_resource)
         raise RuntimeError(f"irsync: cmd '{err.cmd}' retcode '{err.returncode}'") from err
 
 
-@make(inputs=range(5), outputs=[], handler=Output.STORE)
-def perform_irsync(ctx, destination_resource, token, destination_collection, depositor, dropzone_type):
+@make(inputs=range(6), outputs=[], handler=Output.STORE)
+def perform_irsync(
+    ctx, destination_resource, token, destination_collection, depositor, dropzone_type, ingest_restart
+):
     """
     This rule is part the ingest workflow.
     It takes care of actually copying (syncing) the content of the drop-zone into the destination collection.
@@ -134,6 +136,8 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
         The iRODS username of the user who started the ingestion
     dropzone_type: str
         The type of dropzone to be ingested (mounted or direct)
+    ingest_restart: str
+        Whether this invocation restarts an ingestion from the error-ingestion state.
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
     if dropzone_type == "mounted":
@@ -143,6 +147,13 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
     elif dropzone_type == "direct":
         # We need to prefix the dropzone path with 'i:' to indicate to iRODS that it is an iRODS - iRODS sync
         source_collection = f"i:{dropzone_path}"
+
+    if ingest_restart == "true":
+        # A restarted ingestion can already have stale, locked, or incomplete
+        # destination replicas before its first irsync attempt. Clean those up
+        # now so the initial attempt can recreate them instead of requiring a retry.
+        _clean_failed_replicas(ctx, destination_collection)
+        _check_replica_count(ctx, destination_collection, destination_resource)
 
     def _irsync_with_cleanup():
         try:

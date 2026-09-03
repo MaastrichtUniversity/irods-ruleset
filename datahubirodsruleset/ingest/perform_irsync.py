@@ -1,11 +1,11 @@
 # Part of the ingest workflow. To use, call the rule sync_collection_data
 # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
-# subprocess is only used for check_call to execute irsync.
-# The irsync check_call has 3 variable inputs:
+# subprocess is only used to execute iRODS commands.
+# The irsync command has 3 variable inputs:
 # * destination_resource, queried directly from iCAT with getCollectionAVU ProjectAVUs.RESOURCE
 # * source_collection, token is validated with format_dropzone_path & check the ACL with getCollectionAVU state
 # * destination_collection, validated with the formatter functions get_*_from_project_collection_path
-from subprocess import CalledProcessError, check_call  # nosec
+from subprocess import PIPE, STDOUT, CalledProcessError, Popen, check_call  # nosec
 
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
@@ -89,25 +89,47 @@ def _check_replica_count(ctx, destination_collection, destination_resource):
     return len(under_replicated)
 
 
-def _run_irsync(source_collection, destination_collection, destination_resource):
+def _run_irsync(ctx, source_collection, destination_collection, destination_resource):
     """
     Execute a single irsync call, converting CalledProcessError to RuntimeError
-    so that retry_runtime_error can catch transient failures uniformly.
+    so that retry_runtime_error can catch transient failures uniformly. Stream
+    stdout and stderr to rodsLog so transfer details are visible to operators.
     """
+    irsync_command = ["irsync", 
+                      "-K", 
+                      "-v", 
+                      "-R", 
+                      destination_resource,
+                      "-r",
+                      source_collection,
+                      "i:" + destination_collection]
+    
     try:
-        check_call(
-            [
-                "irsync",
-                "-K",
-                "-v",
-                "-R",
-                destination_resource,
-                "-r",
-                source_collection,
-                "i:" + destination_collection,
-            ],
+        with open("/tmp/irsync.log", "a", encoding="utf-8") as log_file:
+            log_file.write(f"{irsync_command!r}\n")
+
+        rods_log_available = True
+        with Popen(
+            irsync_command,
+            stdout=PIPE,
+            stderr=STDOUT,
+            text=True,
+            bufsize=1,
             shell=False,
-        )
+        ) as process:
+            for output_line in process.stdout:
+                output_line = output_line.rstrip("\r\n")
+                if not output_line or not rods_log_available:
+                    continue
+                try:
+                    ctx.callback.msiWriteRodsLog(f"INFO: irsync {destination_collection}: {output_line}", 0)
+                except Exception:  # pylint: disable=broad-except
+                    # Logging must not interrupt the transfer. Keep draining the
+                    # pipe so irsync cannot block when its output buffer fills.
+                    rods_log_available = False
+
+        if process.returncode:
+            raise CalledProcessError(process.returncode, irsync_command)
     except CalledProcessError as err:
         raise RuntimeError(f"irsync: cmd '{err.cmd}' retcode '{err.returncode}'") from err
 
@@ -153,7 +175,7 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dro
 
     def _irsync_with_cleanup():
         try:
-            _run_irsync(source_collection, destination_collection, destination_resource)
+            _run_irsync(ctx, source_collection, destination_collection, destination_resource)
         except RuntimeError:
             # Clean up all issues in one pass so the retry starts from a consistent state.
             _clean_failed_replicas(ctx, destination_collection)

@@ -214,6 +214,9 @@ class TestUserGroups:
     def test_get_user_active_processes(self):
         self.dropzone_type = "direct"
         token = create_dropzone(self)
+        dropzone_title = "2024.10"
+        set_dropzone_title = f"imeta set -C /nlmumc/ingest/direct/{token} title '{dropzone_title}'"
+        subprocess.check_call(set_dropzone_title, shell=True)
         for i in range(1, 4):
             collection_path_formatted = f"/nlmumc/projects/{self.project_id}/C00000000{i}"
             create_collection = f"imkdir {collection_path_formatted}"
@@ -242,7 +245,7 @@ class TestUserGroups:
         assert all_processes_output[ProcessState.IN_PROGRESS.value][1]["process_type"] == ProcessType.UNARCHIVE.value
 
         assert all_processes_output[ProcessState.OPEN.value][0]["validateState"] == "N/A"
-        assert all_processes_output[ProcessState.OPEN.value][0]["title"] == self.collection_title
+        assert all_processes_output[ProcessState.OPEN.value][0]["title"] == dropzone_title
         assert all_processes_output[ProcessState.OPEN.value][0]["type"] == self.dropzone_type
         assert all_processes_output[ProcessState.OPEN.value][0]["token"] == token
         assert all_processes_output[ProcessState.OPEN.value][0]["state"] == "open"

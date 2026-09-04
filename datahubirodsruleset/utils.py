@@ -548,6 +548,12 @@ def map_access_name_to_access_level(access_name):
     return user_access
 
 
+@make(inputs=[0], outputs=[0], handler=Output.STORE)
+def json_encode_string(ctx, value):
+    """Encode a string so JSON helpers do not interpret it as another JSON type."""
+    return json.dumps(value)
+
+
 @make(inputs=[0, 1], outputs=[0], handler=Output.STORE)
 def json_arrayops_add(ctx, json_str, item):
     """

@@ -1,4 +1,3 @@
-# BEGIN temporary iRODS security mitigations
 # 20260824 - remove after 5.1.0
 # prevents direct Python rule execution via EXEC_RULE_EXPRESSION_AN 1206
 # allows irodsDelayServer proxy for queued delay rules
@@ -59,4 +58,3 @@ pep_api_reg_data_obj_pre(*INSTANCE_NAME, *COMM, *DATAOBJINFO, *OUTDATAOBJINFO){
    failmsg(-169000, 'rcRegDataObj is not allowed'); # SYS_NOT_ALLOWED
  }
 }
-# END temporary iRODS security mitigations

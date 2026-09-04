@@ -5,7 +5,7 @@
 
 # Input files.
 
-RULE_FILES = $(wildcard *.r)
+RULE_FILES = $(wildcard *.r mitigations/*.r)
 
 # Output files.
 
@@ -19,4 +19,3 @@ all: $(RULESET_FILE)
 
 $(RULESET_FILE): $(RULE_FILES)
 	cat $(RULE_FILES) | sed '/^\s*\(#.*\)\?$$/d' | sed -E '/^(INPUT|OUTPUT).*/d' | sed 's/IRULE_//' > $(RULESET_FILE)
-

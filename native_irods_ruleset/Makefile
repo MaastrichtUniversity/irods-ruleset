@@ -4,7 +4,7 @@
 #
 
 # The rule dirs to be processed
-RULEDIRS = ingest misc policies projects projectCollection tapeArchive mitigations
+RULEDIRS = ingest misc policies projects projectCollection tapeArchive
 
 # The make target
 all: $(RULEDIRS)

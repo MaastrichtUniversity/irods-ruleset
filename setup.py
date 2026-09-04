@@ -24,7 +24,7 @@ setuptools.setup(
         "cryptography",
         "jsonschema==3.0.2",
         "pyrsistent==0.16.1",
-        "requests==2.25.1",
+        "requests==2.31.0",
         "requests_cache==0.5.2",
         "elasticsearch==7.17.6",
         "pytest",

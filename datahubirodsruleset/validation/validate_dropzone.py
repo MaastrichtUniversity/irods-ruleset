@@ -1,4 +1,6 @@
 # DONOTCALLDIRECTLY
+import json
+
 import irods_types  # pylint: disable=import-error
 
 from dhpythonirodsutils import formatters
@@ -82,25 +84,16 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
     if not validation_result:
         validation_errors.append("Metadata validation failed")
 
-    # Create a document with the dropzone info at this stage of the ingest procedure
+    if dropzone_type == "direct":
+        validation_errors = does_dropzone_contain_stale_or_locked_files(ctx, dropzone_path, validation_errors)
+
+    # Create the pre-ingest document last, after all other validation errors are known.
+    # The physical content scan performed by this rule can add the unsupported-path error.
     validation_errors = create_pre_ingest_document(
         ctx, dropzone_type, project_id, dropzone_path, username, validation_errors
     )
 
-    # Check if the dropzone is valid for ingestion
-    # see bug https://github.com/irods/irods/issues/7302
-    validation_errors = is_dropzone_ingestable(ctx, dropzone_path, validation_errors)
-    if dropzone_type == "direct":
-        validation_errors = does_dropzone_contain_stale_or_locked_files(ctx, dropzone_path, validation_errors)
-
     return {"project_id": project_id, "validation_errors": validation_errors}
-
-
-def is_dropzone_ingestable(ctx, dropzone_path, validation_errors):
-    is_ingestable = ctx.callback.getCollectionAVU(dropzone_path, "isIngestable", "", "", TRUE_AS_STRING)["arguments"][2]
-    if not formatters.format_string_to_boolean(is_ingestable):
-        validation_errors.append("Dropzone contains unsupported characters in filenames and/or directories")
-    return validation_errors
 
 
 def check_if_dropzone_exists(ctx, dropzone_path, validation_errors):
@@ -122,18 +115,22 @@ def check_if_project_exists(ctx, project_path, project_id, validation_errors):
 def create_pre_ingest_document(ctx, dropzone_type, project_id, dropzone_path, username, validation_errors):
     ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
     try:
-        ctx.remoteExec(
+        result = ctx.callback.saveDropzonePreIngestInfo(
             ingest_resource_host,
-            "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-            f"save_dropzone_pre_ingest_info('{dropzone_path}', '{username}', '{dropzone_type}')",
+            dropzone_path,
+            username,
+            dropzone_type,
+            json.dumps(validation_errors),
             "",
         )
     except RuntimeError:
         validation_errors.append("Failed creating dropzone pre-ingest information")
+        return validation_errors
+
     ctx.callback.msiWriteRodsLog(
         f"DEBUG: dropzone pre-ingest information created on {ingest_resource_host} for {dropzone_path}", 0
     )
-    return validation_errors
+    return json.loads(result["arguments"][5])
 
 
 def check_if_user_is_allowed_to_start_ingest(
@@ -150,6 +147,7 @@ def check_if_user_is_allowed_to_start_ingest(
         if creator != username:
             validation_errors.append(f"User '{username}' is not the creator of dropzone '{dropzone_path}'")
     return validation_errors
+
 
 def does_dropzone_contain_stale_or_locked_files(ctx, dropzone_path, validation_errors):
     for failed_data_object in row_iterator(

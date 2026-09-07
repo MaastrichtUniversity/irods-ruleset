@@ -17,7 +17,7 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
         # Disabling the network mounted ingest zone needs to be executed on remote ires server
         if ( *dropzoneType == "mounted" ){
             remote(*ingestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
-              msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);
             }
         }
         *directIngestResourceHost = "";
@@ -25,11 +25,11 @@ delayRemoveDropzone(*srcColl, *ingestResourceHost, *token, *dropzoneType) {
         remote(*directIngestResourceHost, "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>") {
            # Only the metadata files exist on stagingResc01 and need to be deleted
            if ( *dropzoneType == "mounted" ){
-              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/zones/" ++ *token, "null", "null", "null", *OUT);
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/zones/" ++ *token, "null", "null", "null", *ExecOUT);
            }
            # Disabling the ingest zone needs to be executed on remote ires server
            else if ( *dropzoneType == "direct" ){
-              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/direct/" ++ *token, "null", "null", "null", *OUT);
+              msiExecCmd("disable-ingest-zone.sh", "/mnt/stagingResc01/ingest/direct/" ++ *token, "null", "null", "null", *ExecOUT);
            }
         }
     }

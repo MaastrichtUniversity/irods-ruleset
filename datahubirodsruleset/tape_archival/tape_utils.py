@@ -222,6 +222,7 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
             check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
         )
         ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
+    ctx.callback.remove_collection_attribute_value(check_results["project_collection_path"], "unArchivePath")
     ctx.callback.close_project_collection(check_results["project_id"], check_results["project_collection_id"])
 
 

@@ -78,9 +78,12 @@ def project():
         command("irm", "-rf", path)
 
 
-@pytest.mark.parametrize("operation,single_file", [("archive", False), ("unarchive", False), ("unarchive", True)])
+@pytest.mark.parametrize("operation,single_file,stored_scope", [
+    ("archive", False, False), ("unarchive", False, True),
+    ("unarchive", True, True), ("unarchive", False, False),
+])
 @pytest.mark.parametrize("status", ["0", "2", "3", "4"])
-def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation, single_file, status):
+def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation, single_file, stored_scope, status):
     source, destination = (DISK, TAPE) if operation == "archive" else (TAPE, DISK)
     file_path = f"{project}/interrupted"
     completed_path = f"{project}/completed"
@@ -89,6 +92,10 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
     command("iput", "-K", "-R", source, str(payload), file_path)
     command("iput", "-K", "-R", destination, str(small), completed_path)
     completed_replicas = replicas(completed_path)
+    if single_file:
+        untouched_path = f"{project}/untouched"
+        command("iput", "-K", "-R", TAPE, str(small), untouched_path)
+        untouched_replicas = replicas(untouched_path)
     command("ichmod", "-rM", "own", "service-surfarchive", project)
     command("env", "clientUserName=service-surfarchive", "irepl", "-R", destination, file_path)
     replica_number = next(number for number, _, hierarchy in replicas(file_path) if destination in hierarchy.split(";"))
@@ -97,7 +104,11 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
     attribute = ProcessAttribute.ARCHIVE.value if operation == "archive" else ProcessAttribute.UNARCHIVE.value
     error = ArchiveState.ERROR_ARCHIVE_FAILED.value if operation == "archive" else UnarchiveState.ERROR_UNARCHIVE_FAILED.value
     command("imeta", "-M", "set", "-C", project, attribute, error)
-    run_rule(f"restart_{operation}", file_path if single_file else project)
+    if stored_scope:
+        command("imeta", "-M", "set", "-C", project, "unArchivePath", file_path if single_file else project)
+    # A legacy request falls back to the collection even when the caller supplies a file.
+    restart_path = file_path if operation == "unarchive" and not stored_scope else project
+    run_rule(f"restart_{operation}", restart_path)
 
     deadline = time.monotonic() + 120
     while time.monotonic() < deadline:
@@ -107,7 +118,12 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
         )
         assert "error-" not in state, state
         if not state or "CAT_NO_ROWS_FOUND" in state:
-            break
+            scope = command(
+                "iquest", "%s",
+                f"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{project}' AND META_COLL_ATTR_NAME = 'unArchivePath'",
+            )
+            if not scope or "CAT_NO_ROWS_FOUND" in scope:
+                break
         time.sleep(1)
     else:
         pytest.fail(f"Restart did not complete: {state}")
@@ -115,8 +131,30 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
     remaining = replicas(file_path)
     assert remaining and all(value == "1" and destination in hierarchy.split(";") for _, value, hierarchy in remaining)
     assert replicas(completed_path) == completed_replicas
+    if single_file:
+        assert replicas(untouched_path) == untouched_replicas
     command("env", "clientUserName=service-surfarchive", "iget", "-K", file_path, str(tmp_path / "restored"))
     assert (tmp_path / "restored").stat().st_size == payload.stat().st_size
+
+
+@pytest.mark.parametrize("target_suffix", ["0/file", "/../C000000002/file"])
+def test_restart_unarchive_rejects_scope_outside_collection(project, target_suffix):
+    target = f"{project}{target_suffix}"
+    command("imeta", "-M", "set", "-C", project, "unArchivePath", target)
+    command("imeta", "-M", "set", "-C", project, ProcessAttribute.UNARCHIVE.value,
+            UnarchiveState.ERROR_UNARCHIVE_FAILED.value)
+    with pytest.raises(subprocess.CalledProcessError) as failure:
+        run_rule("restart_unarchive", project)
+    assert "Stored unArchivePath is outside project collection" in failure.value.output
+    assert command(
+        "iquest", "%s",
+        f"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{project}' AND META_COLL_ATTR_NAME = 'unArchivePath'",
+    ) == target
+    assert command(
+        "iquest", "%s",
+        f"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{project}'"
+        f" AND META_COLL_ATTR_NAME = '{ProcessAttribute.UNARCHIVE.value}'",
+    ) == UnarchiveState.ERROR_UNARCHIVE_FAILED.value
 
 
 def test_preparation_preserves_sources_good_replicas_and_scope(project, tmp_path):

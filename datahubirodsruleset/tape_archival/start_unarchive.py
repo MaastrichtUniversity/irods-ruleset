@@ -37,6 +37,9 @@ def queue_unarchive(ctx, unarchival_path, username_initiator, results, restart=F
     # Open the PC up for the service account (which should be an admin)
     ctx.callback.msiSetACL("default", "admin:own", results["service_account"], results["project_collection_path"])
 
+    # Preserve the original scope so a restart can distinguish a file from a collection request.
+    ctx.callback.setCollectionAVU(results["project_collection_path"], "unArchivePath", unarchival_path)
+
     # Set the tape AVU so the user sees the active process even if it has not started yet
     ctx.callback.setCollectionAVU(
         results["project_collection_path"],

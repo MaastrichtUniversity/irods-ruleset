@@ -143,11 +143,15 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
     assert (tmp_path / "restored").stat().st_size == payload.stat().st_size
 
 
-@pytest.mark.parametrize("project,destination,expected_replicas", [
-    (DISK, DISK, 1), (REPLICATED_DISK, REPLICATED_DISK, 2),
+@pytest.mark.parametrize("project,destination,expected_replicas,keep_good_sibling", [
+    (DISK, DISK, 1, False),
+    (REPLICATED_DISK, REPLICATED_DISK, 2, False),
+    (REPLICATED_DISK, REPLICATED_DISK, 2, True),
 ], indirect=["project"])
-@pytest.mark.parametrize("status", ["0", "2", "3", "4"])
-def test_restart_unarchive_restores_expected_replicas(project, tmp_path, status, destination, expected_replicas):
+@pytest.mark.parametrize("status", ["0", "1", "2", "3", "4"])
+def test_restart_unarchive_restores_expected_replicas(
+    project, tmp_path, status, destination, expected_replicas, keep_good_sibling,
+):
     payload = tmp_path / "payload"
     payload.write_text("Unarchive must restore the expected destination replicas.")
     file_path = f"{project}/interrupted"
@@ -164,13 +168,16 @@ def test_restart_unarchive_restores_expected_replicas(project, tmp_path, status,
     assert len(child_hierarchies) == expected_replicas
 
     failed = destination_replicas[0]
-    if expected_replicas == 2:
+    if expected_replicas == 2 and not keep_good_sibling:
         missing = destination_replicas[1]
         command("itrim", "-n", missing[0], "-N", "1", file_path)
     command("iadmin", "modrepl", "logical_path", file_path, "replica_number", failed[0], "DATA_REPL_STATUS", status)
     before = replicas(file_path)
     assert len(source_replicas) == 1 and source_replicas[0][1] == "1"
-    assert sorted(before) == sorted(source_replicas + [(failed[0], status, failed[2])])
+    expected_before = source_replicas + [(failed[0], status, failed[2])]
+    if keep_good_sibling:
+        expected_before.append(destination_replicas[1])
+    assert sorted(before) == sorted(expected_before)
 
     command("imeta", "-M", "set", "-C", project, "unArchivePath", file_path)
     command("imeta", "-M", "set", "-C", project, ProcessAttribute.UNARCHIVE.value,
@@ -182,6 +189,8 @@ def test_restart_unarchive_restores_expected_replicas(project, tmp_path, status,
     assert len(after) == expected_replicas and all(row[1] == "1" for row in after)
     assert {row[2] for row in after} == child_hierarchies
     assert all(TAPE not in row[2].split(";") for row in after)
+    if status == "1" and (expected_replicas == 1 or keep_good_sibling):
+        assert sorted(after) == sorted(destination_replicas)
     assert replicas(untouched_path) == untouched_replicas
     command("env", "clientUserName=service-surfarchive", "iget", "-K", file_path, str(tmp_path / "restored"))
     assert (tmp_path / "restored").read_bytes() == payload.read_bytes()

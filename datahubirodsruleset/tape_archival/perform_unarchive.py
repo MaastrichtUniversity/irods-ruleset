@@ -1,6 +1,8 @@
 # Part of the unarchival flow. Not to be called by user
 import json
 
+from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
+
 from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
@@ -82,9 +84,13 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
 
         # Replicate
         # DHDO-1556 Tape now runs single-threaded since there are network issues preventing multi-threaded running
-        # Remove failed project replicas before each attempt so replication can recreate missing children.
+        # Rebuild incomplete project replicas, including good siblings that make irepl skip missing children.
         def _do_unarchive_repl():
-            clean_failed_destination_replicas(ctx, file["virtual_path"], check_results["project_resource"])
+            clean_failed_destination_replicas(
+                ctx, file["virtual_path"], check_results["project_resource"],
+                expected_replicas=int(check_results["project_resource_children"]),
+                source_resource=check_results["tape_resource"],
+            )
             irepl_wrapper(
                 ctx,
                 file["virtual_path"],
@@ -93,6 +99,7 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
                 False,
                 True,
             )
+            check_unarchive_replica_count(ctx, file["virtual_path"], check_results)
 
         if not _run_unarchive_step(
             ctx,
@@ -125,6 +132,23 @@ def unarchive_files(ctx, files_to_unarchive, check_results, username_initiator):
         files_unarchived += 1
 
     return files_unarchived
+
+
+def check_unarchive_replica_count(ctx, file_path, check_results):
+    """Require a good replica on every project child before trimming the tape source."""
+    collection, name = file_path.rsplit("/", 1)
+    hierarchies = {
+        row[0] for row in row_iterator(
+            "DATA_RESC_HIER",
+            f"COLL_NAME = '{collection}' AND DATA_NAME = '{name}' AND DATA_REPL_STATUS = '1'",
+            AS_LIST, ctx.callback,
+        ) if check_results["project_resource"] in row[0].split(";")
+    }
+    expected = int(check_results["project_resource_children"])
+    if len(hierarchies) != expected:
+        raise RuntimeError(
+            f"Incomplete unarchive of {file_path}: expected {expected} good destination replicas, found {len(hierarchies)}"
+        )
 
 
 def _run_unarchive_step(ctx, check_results, username_initiator, operation_name, failure_message, operation):

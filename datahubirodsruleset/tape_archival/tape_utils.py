@@ -259,9 +259,9 @@ def prepare_tape_restart(ctx, path, destination_resource):
         clean_failed_destination_replicas(ctx, file_path, destination_resource)
 
 
-def clean_failed_destination_replicas(ctx, file_path, resource_name):
+def clean_failed_destination_replicas(ctx, file_path, resource_name, expected_replicas=None, source_resource=None):
     """
-    Remove stale and locked destination replicas while preserving good and source replicas.
+    Remove failed destination replicas, optionally rebuilding an incomplete destination.
 
     Unlock every failed destination replica before trimming any of them. Leaving a
     stale replica can cause irepl to repair only that replica, without creating a
@@ -275,10 +275,15 @@ def clean_failed_destination_replicas(ctx, file_path, resource_name):
         Full logical path of the data object, e.g. '/nlmumc/projects/P000000017/C000000001/file.txt'
     resource_name : str
         Name of the destination resource whose failed replicas should be removed.
+    expected_replicas : int, optional
+        If fewer good destination replicas exist, remove all destination replicas
+        so irepl can recreate every child. Otherwise preserve good replicas.
+    source_resource : str, optional
+        Require the good source replica to belong to this resource before cleanup.
     """
     coll_name, data_name = file_path.rsplit("/", 1)
 
-    failed_replicas = []
+    destination_replicas = []
     good_source = False
     for repl_num, status, hierarchy in row_iterator(
         "DATA_REPL_NUM, DATA_REPL_STATUS, DATA_RESC_HIER",
@@ -287,18 +292,23 @@ def clean_failed_destination_replicas(ctx, file_path, resource_name):
         ctx.callback,
     ):
         if resource_name in hierarchy.split(";"):
-            if status in ("0", "2", "3", "4"):
-                failed_replicas.append((repl_num, status))
-        elif status == "1":
+            destination_replicas.append((repl_num, status))
+        elif status == "1" and (source_resource is None or source_resource in hierarchy.split(";")):
             good_source = True
 
-    if not failed_replicas:
+    replicas_to_trim = [(number, status) for number, status in destination_replicas if status in ("0", "2", "3", "4")]
+    if expected_replicas is not None:
+        good_replicas = sum(status == "1" for _, status in destination_replicas)
+        if good_replicas < expected_replicas:
+            replicas_to_trim = destination_replicas
+
+    if not replicas_to_trim:
         return
     if not good_source:
         raise RuntimeError(f"Cannot clean failed replicas of {file_path} on {resource_name}: no good source replica")
 
-    for repl_num, status in failed_replicas:
-        if status == "0":
+    for repl_num, status in replicas_to_trim:
+        if status not in ("2", "3", "4"):
             continue
         ctx.callback.msiWriteRodsLog(
             f"INFO: Resetting locked replica {file_path} (repl {repl_num}) on {resource_name} to stale (0) before retry",
@@ -323,9 +333,9 @@ def clean_failed_destination_replicas(ctx, file_path, resource_name):
                 f"iadmin modrepl failed for {file_path} replica {repl_num} (retcode {err.returncode})"
             ) from err
 
-    for repl_num, _ in failed_replicas:
+    for repl_num, _ in replicas_to_trim:
         ctx.callback.msiWriteRodsLog(
-            f"INFO: Trimming failed replica {file_path} (repl {repl_num}) on {resource_name} before retry",
+            f"INFO: Trimming destination replica {file_path} (repl {repl_num}) on {resource_name} before retry",
             0,
         )
         ctx.callback.msiDataObjTrim(file_path, "null", repl_num, "1", "null", 0)

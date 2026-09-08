@@ -7,6 +7,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 from dhpythonirodsutils import formatters, exceptions
 from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
 
+from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
 
 
@@ -146,7 +147,9 @@ def validate_caller_is_service_account(ctx, service_account, operation):
         ctx.callback.msiExit("-1", error_message)
 
 
-def validate_no_active_process(ctx, project_collection_path, operation):
+def validate_no_active_process(
+    ctx, project_collection_path, operation, expected_archive_state="", expected_unarchive_state=""
+):
     """
     Exit with an error if an archive or unarchive process is already active.
 
@@ -157,6 +160,10 @@ def validate_no_active_process(ctx, project_collection_path, operation):
     project_collection_path : str
     operation : str
         Human-readable label for the error message, e.g. 'archival' or 'unarchival'
+    expected_archive_state : str
+        Required archive state; empty for normal starts, the archive failure state for restarts.
+    expected_unarchive_state : str
+        Required unarchive state; empty for normal starts, the unarchive failure state for restarts.
     """
     archive_state = ctx.callback.getCollectionAVU(
         project_collection_path, ProcessAttribute.ARCHIVE.value, "", "", FALSE_AS_STRING
@@ -164,7 +171,7 @@ def validate_no_active_process(ctx, project_collection_path, operation):
     unarchive_state = ctx.callback.getCollectionAVU(
         project_collection_path, ProcessAttribute.UNARCHIVE.value, "", "", FALSE_AS_STRING
     )["arguments"][2]
-    if archive_state != "" or unarchive_state != "":
+    if archive_state != expected_archive_state or unarchive_state != expected_unarchive_state:
         error_message = (
             f"Not permitted to start {operation} in state "
             f"'archive_state:{archive_state}' 'unarchive_state:{unarchive_state}"
@@ -221,6 +228,34 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
 # ---------------------------------------------------------------------------
 # Retry infrastructure shared by perform_archive and perform_unarchive
 # ---------------------------------------------------------------------------
+
+
+@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
+def prepare_tape_restart(ctx, path, destination_resource):
+    """Reset locked destination replicas before restarting transfer or tape staging.
+
+    Private delayed rule, called after validation and recursive ACL setup. Scope
+    cleanup to the requested collection (including descendants) or single file.
+    Stale replicas are left for replication to overwrite, as in existing retries.
+    """
+    path = path.rstrip("/")
+    object_type = ctx.callback.msiGetObjType(path, "")["arguments"][1]
+    if object_type == "-c":
+        conditions = [f"COLL_NAME = '{path}'", f"COLL_NAME LIKE '{path}/%'"]
+    elif object_type == "-d":
+        collection, name = path.rsplit("/", 1)
+        conditions = [f"COLL_NAME = '{collection}' AND DATA_NAME = '{name}'"]
+    else:
+        ctx.callback.msiExit("-1", f"Invalid path to restart tape operation: '{path}'")
+        return
+
+    paths = set()
+    for condition in conditions:
+        for collection, name in row_iterator("COLL_NAME,DATA_NAME", condition, AS_LIST, ctx.callback):
+            paths.add(f"{collection}/{name}")
+
+    for file_path in sorted(paths):
+        reset_locked_replicas(ctx, file_path, destination_resource)
 
 
 def reset_locked_replicas(ctx, file_path, resource_name):

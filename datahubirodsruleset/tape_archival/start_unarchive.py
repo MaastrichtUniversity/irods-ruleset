@@ -23,6 +23,11 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
         The username of the initiator, e.g. dlinssen
     """
     results = json.loads(ctx.callback.perform_unarchive_checks(unarchival_path, "")["arguments"][1])
+    queue_unarchive(ctx, unarchival_path, username_initiator, results)
+
+
+def queue_unarchive(ctx, unarchival_path, username_initiator, results, restart=False):
+    """Queue tape staging and unarchive, preparing destination replicas on restart."""
 
     # Log statements
     ctx.callback.msiWriteRodsLog(f"DEBUG: Data will be moved from resource {results['tape_resource']}", 0)
@@ -42,10 +47,13 @@ def start_unarchive(ctx, unarchival_path, username_initiator):
     # Perform the recursive SetACL call in the delay queue to not lock up on very large collections
     set_acl_call = f"msiSetACL('recursive', 'admin:own', '{results['service_account']}', '{results['project_collection_path']}')"
     move_offline_files_to_cache_call = f"move_offline_files_to_cache('{unarchival_path}', '{json.dumps(results)}', '{username_initiator}')"
+    calls = [set_acl_call, move_offline_files_to_cache_call]
+    if restart:
+        calls.insert(1, f"prepare_tape_restart('{unarchival_path}', '{results['project_resource']}')")
 
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        f"{set_acl_call};{move_offline_files_to_cache_call}",
+        ";".join(calls),
         "",
     )

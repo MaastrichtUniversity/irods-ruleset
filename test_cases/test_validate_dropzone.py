@@ -1,5 +1,8 @@
 import json
+import os
 import subprocess
+
+import pytest
 
 from dhpythonirodsutils import formatters
 
@@ -355,6 +358,72 @@ class TestValidateDropzone:
             self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
+            remove_dropzone(token, self.dropzone_type)
+
+    @pytest.mark.parametrize("state", ["open", "warning-validation-incorrect", "warning-unsupported-character"])
+    def test_admin_unlock_direct_dropzone(self, tmp_path, state):
+        token = self._fresh_dropzone_with_metadata()
+        dropzone_path = formatters.format_dropzone_path(token, "direct")
+        local_file = tmp_path / "upload.dat"
+        local_file.write_bytes(b"original upload content")
+        nested = dropzone_path + "/nested"
+        files = [(dropzone_path, "locked'file.dat", "2"), (nested, "locked3.dat", "3"),
+                 (nested, "locked4.dat", "4"), (nested, "stale.dat", "0"), (nested, "good.dat", "1")]
+        uploaded = []
+
+        def run(*args, **kwargs):
+            return subprocess.check_output(list(args), text=True, **kwargs)
+
+        def statuses():
+            result = {}
+            for collection in (dropzone_path, nested):
+                output = run("iquest", "%s:%s", "SELECT DATA_NAME, DATA_REPL_STATUS "
+                             f"WHERE COLL_NAME = '{collection}'")
+                result.update({collection + "/" + line.rsplit(":", 1)[0]: line.rsplit(":", 1)[1]
+                               for line in output.splitlines()})
+            return result
+
+        try:
+            run("imkdir", nested)
+            for collection, name, status in files:
+                logical_path = collection + "/" + name
+                run("iput", "-R", "stagingResc01", str(local_file), logical_path)
+                uploaded.append(logical_path)
+                run("iadmin", "modrepl", "logical_path", logical_path,
+                    "replica_number", "0", "DATA_REPL_STATUS", status)
+            run("imeta", "set", "-C", dropzone_path, "state", "validating")
+            command = ["/rules/tests/run_test.sh", "-r", "admin_unlock_direct_dropzone", "-a", token]
+            rejected = subprocess.run(command, text=True, capture_output=True)
+            assert rejected.returncode != 0
+            assert all(statuses()[collection + "/" + name] == status for collection, name, status in files)
+
+            run("imeta", "set", "-C", dropzone_path, "state", state)
+            # jmelius belongs to DH-project-admins, but is a rodsuser.
+            rejected = subprocess.run(command + ["-u", self.depositor], text=True, capture_output=True)
+            assert rejected.returncode != 0
+
+            result = json.loads(run(*command).splitlines()[0])
+            assert result == {"unlocked_replica_count": 3}
+            repaired = statuses()
+            for collection, name, status in files:
+                assert repaired[collection + "/" + name] == ("1" if status == "1" else "0")
+            self._assert_state_avu(dropzone_path, state)
+            assert json.loads(run(*command).splitlines()[0]) == {"unlocked_replica_count": 0}
+
+            for logical_path in uploaded:
+                downloaded = tmp_path / "download.dat"
+                run("iget", "-f", "-n", "0", logical_path, str(downloaded))
+                assert downloaded.read_bytes() == local_file.read_bytes()
+
+            local_file.write_bytes(b"user reuploaded content")
+            user_env = dict(os.environ, clientUserName=self.depositor)
+            for logical_path in uploaded:
+                run("iput", "-f", "-R", "stagingResc01", str(local_file), logical_path, env=user_env)
+            assert all(statuses()[logical_path] == "1" for logical_path in uploaded)
+        finally:
+            for logical_path in uploaded:
+                run("iadmin", "modrepl", "logical_path", logical_path,
+                    "replica_number", "0", "DATA_REPL_STATUS", "0")
             remove_dropzone(token, self.dropzone_type)
 
     def test_validate_dropzone_locked_file_direct(self):

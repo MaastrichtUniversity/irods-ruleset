@@ -233,11 +233,11 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
 def prepare_tape_restart(ctx, path, destination_resource):
-    """Reset locked destination replicas before restarting transfer or tape staging.
+    """Remove failed destination replicas before restarting transfer or tape staging.
 
     Private delayed rule, called after validation and recursive ACL setup. Scope
     cleanup to the requested collection (including descendants) or single file.
-    Stale replicas are left for replication to overwrite, as in existing retries.
+    Unlock all failed replicas of each object before trimming them for replication.
     """
     path = path.rstrip("/")
     object_type = ctx.callback.msiGetObjType(path, "")["arguments"][1]
@@ -256,17 +256,16 @@ def prepare_tape_restart(ctx, path, destination_resource):
             paths.add(f"{collection}/{name}")
 
     for file_path in sorted(paths):
-        reset_locked_replicas(ctx, file_path, destination_resource)
+        clean_failed_destination_replicas(ctx, file_path, destination_resource)
 
 
-def reset_locked_replicas(ctx, file_path, resource_name):
+def clean_failed_destination_replicas(ctx, file_path, resource_name):
     """
-    Reset any locked (DATA_REPL_STATUS in ('2', '3', '4')) replicas of file_path on resource_name to stale (0).
+    Remove stale and locked destination replicas while preserving good and source replicas.
 
-    A replica can be left in a locked state when a previous archive or unarchive run was
-    interrupted mid-transfer.  iRODS will refuse subsequent replication attempts to the same
-    resource while the replica is locked, so all retries would fail without this fix.
-    Resetting the status to 0 (stale) allows 'irepl' to overwrite the partial replica.
+    Unlock every failed destination replica before trimming any of them. Leaving a
+    stale replica can cause irepl to repair only that replica, without creating a
+    missing replica on another child of a replication resource.
 
     Parameters
     ----------
@@ -275,21 +274,32 @@ def reset_locked_replicas(ctx, file_path, resource_name):
     file_path : str
         Full logical path of the data object, e.g. '/nlmumc/projects/P000000017/C000000001/file.txt'
     resource_name : str
-        Name of the resource whose locked replicas should be cleared.
+        Name of the destination resource whose failed replicas should be removed.
     """
     coll_name, data_name = file_path.rsplit("/", 1)
 
-    locked_replicas = []
-    for result in row_iterator(
-        "DATA_REPL_NUM",
-        f"COLL_NAME = '{coll_name}' AND DATA_NAME = '{data_name}'"
-        f" AND DATA_RESC_HIER like '%{resource_name}%' AND DATA_REPL_STATUS in ('2', '3', '4')",
+    failed_replicas = []
+    good_source = False
+    for repl_num, status, hierarchy in row_iterator(
+        "DATA_REPL_NUM, DATA_REPL_STATUS, DATA_RESC_HIER",
+        f"COLL_NAME = '{coll_name}' AND DATA_NAME = '{data_name}'",
         AS_LIST,
         ctx.callback,
     ):
-        locked_replicas.append(result[0])
+        if resource_name in hierarchy.split(";"):
+            if status in ("0", "2", "3", "4"):
+                failed_replicas.append((repl_num, status))
+        elif status == "1":
+            good_source = True
 
-    for repl_num in locked_replicas:
+    if not failed_replicas:
+        return
+    if not good_source:
+        raise RuntimeError(f"Cannot clean failed replicas of {file_path} on {resource_name}: no good source replica")
+
+    for repl_num, status in failed_replicas:
+        if status == "0":
+            continue
         ctx.callback.msiWriteRodsLog(
             f"INFO: Resetting locked replica {file_path} (repl {repl_num}) on {resource_name} to stale (0) before retry",
             0,
@@ -309,10 +319,16 @@ def reset_locked_replicas(ctx, file_path, resource_name):
                 shell=False,
             )
         except CalledProcessError as err:
-            ctx.callback.msiWriteRodsLog(
-                f"WARNING: iadmin modrepl failed for {file_path} replica {repl_num} (retcode {err.returncode})",
-                0,
-            )
+            raise RuntimeError(
+                f"iadmin modrepl failed for {file_path} replica {repl_num} (retcode {err.returncode})"
+            ) from err
+
+    for repl_num, _ in failed_replicas:
+        ctx.callback.msiWriteRodsLog(
+            f"INFO: Trimming failed replica {file_path} (repl {repl_num}) on {resource_name} before retry",
+            0,
+        )
+        ctx.callback.msiDataObjTrim(file_path, "null", repl_num, "1", "null", 0)
 
 
 def checksum_file(ctx, path):

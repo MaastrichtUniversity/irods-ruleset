@@ -97,7 +97,7 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
     attribute = ProcessAttribute.ARCHIVE.value if operation == "archive" else ProcessAttribute.UNARCHIVE.value
     error = ArchiveState.ERROR_ARCHIVE_FAILED.value if operation == "archive" else UnarchiveState.ERROR_UNARCHIVE_FAILED.value
     command("imeta", "-M", "set", "-C", project, attribute, error)
-    run_rule(f"restart_{operation}", file_path if single_file else project, "rods")
+    run_rule(f"restart_{operation}", file_path if single_file else project)
 
     deadline = time.monotonic() + 120
     while time.monotonic() < deadline:

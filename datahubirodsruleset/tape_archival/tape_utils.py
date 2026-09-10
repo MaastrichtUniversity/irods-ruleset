@@ -7,6 +7,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 from dhpythonirodsutils import formatters, exceptions
 from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
 
+from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
 
 
@@ -146,7 +147,9 @@ def validate_caller_is_service_account(ctx, service_account, operation):
         ctx.callback.msiExit("-1", error_message)
 
 
-def validate_no_active_process(ctx, project_collection_path, operation):
+def validate_no_active_process(
+    ctx, project_collection_path, operation, expected_archive_state="", expected_unarchive_state=""
+):
     """
     Exit with an error if an archive or unarchive process is already active.
 
@@ -157,6 +160,10 @@ def validate_no_active_process(ctx, project_collection_path, operation):
     project_collection_path : str
     operation : str
         Human-readable label for the error message, e.g. 'archival' or 'unarchival'
+    expected_archive_state : str
+        Required archive state; empty for normal starts, the archive failure state for restarts.
+    expected_unarchive_state : str
+        Required unarchive state; empty for normal starts, the unarchive failure state for restarts.
     """
     archive_state = ctx.callback.getCollectionAVU(
         project_collection_path, ProcessAttribute.ARCHIVE.value, "", "", FALSE_AS_STRING
@@ -164,7 +171,7 @@ def validate_no_active_process(ctx, project_collection_path, operation):
     unarchive_state = ctx.callback.getCollectionAVU(
         project_collection_path, ProcessAttribute.UNARCHIVE.value, "", "", FALSE_AS_STRING
     )["arguments"][2]
-    if archive_state != "" or unarchive_state != "":
+    if archive_state != expected_archive_state or unarchive_state != expected_unarchive_state:
         error_message = (
             f"Not permitted to start {operation} in state "
             f"'archive_state:{archive_state}' 'unarchive_state:{unarchive_state}"
@@ -215,6 +222,7 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
             check_results["project_id"], check_results["project_collection_id"], FALSE_AS_STRING, FALSE_AS_STRING
         )
         ctx.callback.msiWriteRodsLog("DEBUG: dcat:byteSize and numFiles have been re-calculated and adjusted", 0)
+    ctx.callback.remove_collection_attribute_value(check_results["project_collection_path"], "unArchivePath")
     ctx.callback.close_project_collection(check_results["project_id"], check_results["project_collection_id"])
 
 
@@ -223,14 +231,41 @@ def finalize_tape_operation(ctx, check_results, files_processed, done_state, pro
 # ---------------------------------------------------------------------------
 
 
-def reset_locked_replicas(ctx, file_path, resource_name):
-    """
-    Reset any locked (DATA_REPL_STATUS in ('2', '3', '4')) replicas of file_path on resource_name to stale (0).
+@make(inputs=[0, 1], outputs=[], handler=Output.STORE)
+def prepare_tape_restart(ctx, path, destination_resource):
+    """Remove failed destination replicas before restarting transfer or tape staging.
 
-    A replica can be left in a locked state when a previous archive or unarchive run was
-    interrupted mid-transfer.  iRODS will refuse subsequent replication attempts to the same
-    resource while the replica is locked, so all retries would fail without this fix.
-    Resetting the status to 0 (stale) allows 'irepl' to overwrite the partial replica.
+    Private delayed rule, called after validation and recursive ACL setup. Scope
+    cleanup to the requested collection (including descendants) or single file.
+    Unlock all failed replicas of each object before trimming them for replication.
+    """
+    path = path.rstrip("/")
+    object_type = ctx.callback.msiGetObjType(path, "")["arguments"][1]
+    if object_type == "-c":
+        conditions = [f"COLL_NAME = '{path}'", f"COLL_NAME LIKE '{path}/%'"]
+    elif object_type == "-d":
+        collection, name = path.rsplit("/", 1)
+        conditions = [f"COLL_NAME = '{collection}' AND DATA_NAME = '{name}'"]
+    else:
+        ctx.callback.msiExit("-1", f"Invalid path to restart tape operation: '{path}'")
+        return
+
+    paths = set()
+    for condition in conditions:
+        for collection, name in row_iterator("COLL_NAME,DATA_NAME", condition, AS_LIST, ctx.callback):
+            paths.add(f"{collection}/{name}")
+
+    for file_path in sorted(paths):
+        clean_failed_destination_replicas(ctx, file_path, destination_resource)
+
+
+def clean_failed_destination_replicas(ctx, file_path, resource_name, expected_replicas=None, source_resource=None):
+    """
+    Remove failed destination replicas, optionally rebuilding an incomplete destination.
+
+    Unlock every failed destination replica before trimming any of them. Leaving a
+    stale replica can cause irepl to repair only that replica, without creating a
+    missing replica on another child of a replication resource.
 
     Parameters
     ----------
@@ -239,21 +274,42 @@ def reset_locked_replicas(ctx, file_path, resource_name):
     file_path : str
         Full logical path of the data object, e.g. '/nlmumc/projects/P000000017/C000000001/file.txt'
     resource_name : str
-        Name of the resource whose locked replicas should be cleared.
+        Name of the destination resource whose failed replicas should be removed.
+    expected_replicas : int, optional
+        If fewer good destination replicas exist, remove all destination replicas
+        so irepl can recreate every child. Otherwise preserve good replicas.
+    source_resource : str, optional
+        Require the good source replica to belong to this resource before cleanup.
     """
     coll_name, data_name = file_path.rsplit("/", 1)
 
-    locked_replicas = []
-    for result in row_iterator(
-        "DATA_REPL_NUM",
-        f"COLL_NAME = '{coll_name}' AND DATA_NAME = '{data_name}'"
-        f" AND DATA_RESC_HIER like '%{resource_name}%' AND DATA_REPL_STATUS in ('2', '3', '4')",
+    destination_replicas = []
+    good_source = False
+    for repl_num, status, hierarchy in row_iterator(
+        "DATA_REPL_NUM, DATA_REPL_STATUS, DATA_RESC_HIER",
+        f"COLL_NAME = '{coll_name}' AND DATA_NAME = '{data_name}'",
         AS_LIST,
         ctx.callback,
     ):
-        locked_replicas.append(result[0])
+        if resource_name in hierarchy.split(";"):
+            destination_replicas.append((repl_num, status))
+        elif status == "1" and (source_resource is None or source_resource in hierarchy.split(";")):
+            good_source = True
 
-    for repl_num in locked_replicas:
+    replicas_to_trim = [(number, status) for number, status in destination_replicas if status in ("0", "2", "3", "4")]
+    if expected_replicas is not None:
+        good_replicas = sum(status == "1" for _, status in destination_replicas)
+        if good_replicas < expected_replicas:
+            replicas_to_trim = destination_replicas
+
+    if not replicas_to_trim:
+        return
+    if not good_source:
+        raise RuntimeError(f"Cannot clean failed replicas of {file_path} on {resource_name}: no good source replica")
+
+    for repl_num, status in replicas_to_trim:
+        if status not in ("2", "3", "4"):
+            continue
         ctx.callback.msiWriteRodsLog(
             f"INFO: Resetting locked replica {file_path} (repl {repl_num}) on {resource_name} to stale (0) before retry",
             0,
@@ -273,10 +329,16 @@ def reset_locked_replicas(ctx, file_path, resource_name):
                 shell=False,
             )
         except CalledProcessError as err:
-            ctx.callback.msiWriteRodsLog(
-                f"WARNING: iadmin modrepl failed for {file_path} replica {repl_num} (retcode {err.returncode})",
-                0,
-            )
+            raise RuntimeError(
+                f"iadmin modrepl failed for {file_path} replica {repl_num} (retcode {err.returncode})"
+            ) from err
+
+    for repl_num, _ in replicas_to_trim:
+        ctx.callback.msiWriteRodsLog(
+            f"INFO: Trimming destination replica {file_path} (repl {repl_num}) on {resource_name} before retry",
+            0,
+        )
+        ctx.callback.msiDataObjTrim(file_path, "null", repl_num, "1", "null", 0)
 
 
 def checksum_file(ctx, path):

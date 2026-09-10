@@ -6,7 +6,7 @@ from dhpythonirodsutils.enums import ProcessAttribute, ArchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, irepl_wrapper
-from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, reset_locked_replicas
+from datahubirodsruleset.tape_archival.tape_utils import checksum_file, finalize_tape_operation, clean_failed_destination_replicas
 from datahubirodsruleset.utils import retry_runtime_error
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -88,10 +88,9 @@ def archive_files(ctx, files_to_archive, check_results, username_initiator):
             continue
 
         # Replicate
-        # Before each attempt, reset any locked (DATA_REPL_STATUS in ('2', '3', '4')) replica on tape left by a
-        # previous interrupted run, otherwise all retries will fail as well.
+        # Remove failed tape replicas before each attempt so replication can recreate them.
         def _do_archive_repl():
-            reset_locked_replicas(ctx, file["path"], check_results["tape_resource"])
+            clean_failed_destination_replicas(ctx, file["path"], check_results["tape_resource"])
             irepl_wrapper(
                 ctx,
                 file["path"],

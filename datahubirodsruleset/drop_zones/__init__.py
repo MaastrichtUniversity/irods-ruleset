@@ -1,5 +1,6 @@
 """This sub-package contains the rules related to DataHub (mounted & direct) drop-zones"""
 # Public rules
+from datahubirodsruleset.drop_zones.admin_unlock_direct_dropzone import admin_unlock_direct_dropzone
 from datahubirodsruleset.drop_zones.calculate_direct_dropzone_size_files import calculate_direct_dropzone_size_files
 from datahubirodsruleset.drop_zones.create_drop_zone import create_drop_zone
 from datahubirodsruleset.drop_zones.get_active_drop_zone import get_active_drop_zone

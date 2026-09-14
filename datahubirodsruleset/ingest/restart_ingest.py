@@ -3,6 +3,7 @@
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.ingest.ingest_control import require_inactive_transfer
 
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
@@ -23,6 +24,7 @@ def restart_ingest(ctx, token, dropzone_type):
         The type of dropzone, 'mounted' or 'direct'
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
+    require_inactive_transfer(ctx, dropzone_path)
     check_if_state_is_valid_to_restart_ingestion(ctx, dropzone_path)
     destination_collection = ctx.callback.getCollectionAVU(dropzone_path, "destination", "", "", TRUE_AS_STRING)["arguments"][2]
     destination_project = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]

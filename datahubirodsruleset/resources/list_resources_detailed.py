@@ -23,9 +23,6 @@ def list_resources_detailed(ctx):
 
     Examples
     --------
-    Call from admin-tools:
-        irule -F list_resources_detailed.r
-
     Or via run_test.sh:
         ./run_test.sh -r list_resources_detailed -j
 
@@ -43,10 +40,11 @@ def list_resources_detailed(ctx):
     - context is only populated for S3 resources
     """
     resources = []
-    for result in row_iterator("RESC_NAME, RESC_STATUS, RESC_CONTEXT", "", AS_LIST, ctx.callback):
+    for result in row_iterator("RESC_NAME, RESC_STATUS, RESC_CONTEXT, RESC_TYPE_NAME", "", AS_LIST, ctx.callback):
         resc_name = result[0]
         resc_status = result[1]
         resc_context = result[2]
+        resc_type = result[3]
 
         # Only include context for S3 resources
         context = resc_context if "S3" in resc_name else ""
@@ -55,6 +53,7 @@ def list_resources_detailed(ctx):
             "name": resc_name,
             "status": resc_status,  # "" = up, "down" = down
             "context": context,
+            "type": resc_type
         })
 
     return json.dumps(resources)

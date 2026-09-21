@@ -35,6 +35,9 @@ def modify_resource_status(ctx, resource_name, status):
     """
     from subprocess import CalledProcessError, check_call  # nosec
 
+    if ctx.callback.get_client_username("")["arguments"][0] != "rods":
+        ctx.callback.msiExit("-1", "This rule can only be called by RODS!")
+
     valid_statuses = ["up", "down"]
     if status not in valid_statuses:
         return json.dumps({

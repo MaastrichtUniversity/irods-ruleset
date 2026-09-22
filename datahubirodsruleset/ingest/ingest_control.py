@@ -13,6 +13,12 @@ WORKER_RESULT = "ingestWorkerResult"
 STOP_MESSAGE = "Ingest stopped by rods"
 
 
+def get_ingest_avu(ctx, dropzone_path, attribute):
+    return ctx.callback.getCollectionAVU(
+        dropzone_path, attribute, "", "", FALSE_AS_STRING,
+    )["arguments"][2]
+
+
 class IngestStopped(Exception):
     """An intentional stop, deliberately not caught by RuntimeError retries."""
 

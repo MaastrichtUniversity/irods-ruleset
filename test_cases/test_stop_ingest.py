@@ -137,15 +137,8 @@ class BaseTestCaseStopIngest:
         assert self.get_dropzone_avu("ingestTransferState") == "stopped"
         assert self.get_dropzone_avu("ingestStopRequested") == "true"
         assert self.get_dropzone_avu("ingestWorkerResult") == "stopped"
-        self.stopped_pids = get_irsync_pids_from_log(self.log_position, self.destination)
-
-        # Observe longer than the ordinary 60-second retry interval.
-        deadline = time.monotonic() + 70
-        while time.monotonic() < deadline:
-            assert self.get_dropzone_avu("state") == DropzoneState.ERROR_INGESTION.value
-            assert get_irsync_pids_from_log(self.log_position, self.destination) == self.stopped_pids
-            assert not is_irsync_process_running(self.transfer_pid, self.destination)
-            time.sleep(1)
+        # stop_ingest returns after worker exit and coordinator acknowledgement.
+        # Retry cancellation is covered by the mocked tests; no fixed wait here.
         subprocess.check_call(["ils", f"{self.dropzone_path}/instance.json"])
         if self.dropzone_type == "mounted":
             assert self.source_file.stat().st_size == self.file_size

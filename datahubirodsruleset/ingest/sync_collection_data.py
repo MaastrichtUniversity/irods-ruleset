@@ -51,7 +51,6 @@ def _sync_collection_data(ctx, token, destination_collection, depositor, dropzon
 
     before = 0
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
-    require_inactive_transfer(ctx, dropzone_path)
 
     project_id = formatters.get_project_id_from_project_collection_path(destination_collection)
     collection_id = formatters.get_collection_id_from_project_collection_path(destination_collection)
@@ -67,11 +66,11 @@ def _sync_collection_data(ctx, token, destination_collection, depositor, dropzon
         ingest_restart = True
         before = time.time()
         ctx.callback.msiWriteRodsLog(f"Restarting ingestion {dropzone_path}", 0)
-        # If we are restarting the ingestion, make sure that the rods user has access to both the source and destination collection
         ctx.callback.msiSetACL("default", "admin:own", "rods", destination_collection)
         if dropzone_type == "direct":
             ctx.callback.msiSetACL("default", "admin:own", "rods", dropzone_path)
-        ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
+    else:
+        require_inactive_transfer(ctx, dropzone_path)
 
     # Get the ingest resource host
     ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
@@ -79,6 +78,7 @@ def _sync_collection_data(ctx, token, destination_collection, depositor, dropzon
     ctx.callback.setCollectionAVU(dropzone_path, STOP_REQUESTED, FALSE_AS_STRING)
     ctx.callback.remove_collection_attribute_value(dropzone_path, WORKER_RESULT)
     ctx.callback.setCollectionAVU(dropzone_path, TRANSFER_STATE, "active")
+    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
     completed_state = "finished"
     worker_returned = False
 

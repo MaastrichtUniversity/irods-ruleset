@@ -3,7 +3,6 @@
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_collection_path
 from datahubirodsruleset.utils import TRUE_AS_STRING
-from datahubirodsruleset.ingest.ingest_control import require_inactive_transfer
 
 
 @make(inputs=[0, 1], outputs=[], handler=Output.STORE)
@@ -24,13 +23,14 @@ def restart_ingest(ctx, token, dropzone_type):
         The type of dropzone, 'mounted' or 'direct'
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
-    require_inactive_transfer(ctx, dropzone_path)
     check_if_state_is_valid_to_restart_ingestion(ctx, dropzone_path)
     destination_collection = ctx.callback.getCollectionAVU(dropzone_path, "destination", "", "", TRUE_AS_STRING)["arguments"][2]
     destination_project = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
     project_collection_path = format_project_collection_path(ctx, destination_project, destination_collection)
     creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
 
+    # The admin must confirm the previous coordinator and worker have exited.
+    # A stale active transfer AVU must not prevent this explicit restart.
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
         f"sync_collection_data('{token}', '{project_collection_path}', '{creator}', '{dropzone_type}')",

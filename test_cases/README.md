@@ -108,7 +108,7 @@ Overlapping administrative commands are not supported. Calling `stop_ingest`
 without an active transfer, including calling it again after a successful stop,
 returns **No active ingest transfer**.
 
-Coordination uses only three single-value dropzone AVUs:
+Coordination uses these single-value dropzone AVUs:
 
 | AVU | Values | Writer |
 | --- | --- | --- |
@@ -122,17 +122,41 @@ before becoming active; an absent worker result reads as empty.
 imply successful ingestion. `stopped` coordinator state confirms worker exit,
 mounted-access restoration, and completed failure handling with `error-ingestion`.
 An ordinary failure or normal completion is never reported as a confirmed stop.
-No run identifiers or completed-run history are stored.
+No attempt identifiers, worker hosts, phases, or completed-run history are stored.
 
 If a remote callback fails without evidence of worker exit, the coordinator
-retains `active` and rejects restart. Do not manually clear it while a worker
-might still be running. A timeout leaves the stop flag set; confirm worker exit
-before recovery or restart.
+retains `active`. Explicit admin restart can override this stale state, so the
+admin must first confirm that the old coordinator and worker have exited.
+A timeout leaves the stop flag set and does not establish worker exit.
 
 Deploy the coordinator and worker changes together after existing transfers
 finish. Workers already running older code cannot use the new protocol. Legacy
 run-history AVUs are ignored and need not be removed; `ingestStopRequested` is
 reused and reset to `false` when the next transfer starts.
+
+# Restart an ingest after service restart
+
+Before validation, `process_dropzone` checks the dropzone's state and destination.
+An unfinished dropzone with a destination is marked `error-ingestion` and left
+for an admin to restart; validation and collection creation are skipped.
+Completed or removed dropzones are skipped, and `error-post-ingestion` is
+preserved for manual finalization repair. Fresh dropzones follow the normal flow.
+
+Run `restart_ingest` explicitly as rods after confirming the old coordinator,
+worker, and any `irsync` child have exited. It requires `error-ingestion` and the
+recorded project/destination, and resumes copying into that same collection.
+It permits stale `ingestTransferState=active` and resets the stop flag and worker
+result before copying. There are no worker checks, locks, or automatic recovery
+retries: confirming shutdown is the admin's responsibility. Do not overlap
+restart commands or restart a still-running ingest.
+
+The old `ingestAttempt`, `ingestWorkerHost`, and `ingestPhase` AVUs are ignored;
+they do not need to be removed from existing dropzones. Coordinator and worker
+code must be updated together after existing transfers finish because the
+internal `perform_irsync` rule no longer takes an attempt argument.
+
+Run the mocked replay, restart, and stop regressions with
+`python3 -m pytest -v tests/unit`.
 
 # Stop-ingest tests
 
@@ -146,9 +170,11 @@ python3 -m pytest -v tests/unit/test_stop_ingest.py
 
 The direct and mounted live test classes share an ordered stop/restart scenario
 and are skipped by default. Each creates a project/dropzone, transfers a
-2 GiB test file, stops a confirmed running `irsync`, checks for no retry over
-70 seconds, restarts and stops a second transfer, then restarts again and
-verifies successful ingestion and checksums.
+2 GiB test file, stops a confirmed running `irsync`, verifies process exit and
+worker/coordinator stop acknowledgement, restarts and stops a second transfer,
+then restarts again and verifies successful ingestion and checksums. The test
+continues immediately after stop confirmation; retry cancellation is covered
+by the mocked tests rather than fixed 70-second observation windows.
 Normal support-ticket creation is exercised. Use the full-suite prerequisites
 above and the `irods` OS account with `rods` iRODS credentials.
 

@@ -17,14 +17,20 @@ $(RULEDIRS):
 	$(MAKE) -C $(@:build-%=%)
 
 # pip install the DataHub iRODS ruleset
+# A local source install reinstalls the ruleset even when its version is unchanged.
+# Build the selected utility tag before replacing the installed utility package.
 pip-install:
 	echo "from datahubirodsruleset import *\n" > /etc/irods/core.py
-	pip3 uninstall -y dh-python-irods-utils $(PIP_BREAK_FLAG)
-	tmpdir="$$(mktemp -d /tmp/datahub-irods-ruleset.XXXXXX)"; \
+	set -e; tmpdir="$$(mktemp -d /tmp/datahub-irods-ruleset.XXXXXX)"; \
 	trap 'rm -rf "$$tmpdir"' EXIT; \
 	cp -a . "$$tmpdir/src"; \
 	rm -rf "$$tmpdir/src/build" "$$tmpdir/src/datahub_irods_ruleset.egg-info"; \
+	(cd "$$tmpdir/src" && python3 setup.py egg_info); \
+	utils_requirement="$$(grep '^dh-python-irods-utils[[:space:]@]' "$$tmpdir/src/datahub_irods_ruleset.egg-info/requires.txt")"; \
+	pip3 wheel --no-deps --wheel-dir "$$tmpdir/wheels" "$$utils_requirement"; \
+	pip3 install --user --no-deps --force-reinstall "$$tmpdir"/wheels/dh_python_irods_utils-*.whl $(PIP_BREAK_FLAG) --no-warn-script-location; \
 	pip3 install --user "$$tmpdir/src" $(PIP_BREAK_FLAG) --no-warn-script-location
+	rm -rf build datahub_irods_ruleset.egg-info
 
 .PHONY: subdirs $(RULEDIRS)
 .PHONY: all

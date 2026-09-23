@@ -30,7 +30,6 @@ pip-install:
 	pip3 wheel --no-deps --wheel-dir "$$tmpdir/wheels" "$$utils_requirement"; \
 	pip3 install --user --no-deps --force-reinstall "$$tmpdir"/wheels/dh_python_irods_utils-*.whl $(PIP_BREAK_FLAG) --no-warn-script-location; \
 	pip3 install --user "$$tmpdir/src" $(PIP_BREAK_FLAG) --no-warn-script-location
-	rm -rf build datahub_irods_ruleset.egg-info
 
 .PHONY: subdirs $(RULEDIRS)
 .PHONY: all

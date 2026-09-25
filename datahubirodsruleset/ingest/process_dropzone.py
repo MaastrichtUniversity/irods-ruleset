@@ -7,6 +7,7 @@ from dhpythonirodsutils.enums import DropzoneState
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
 from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.ingest.ingest_control import get_ingest_avu
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -26,6 +27,16 @@ def process_dropzone(ctx, token, username, dropzone_type):
     dropzone_type: str
         The type of dropzone, e.g. direct or mounted
     """
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
+    state = get_ingest_avu(ctx, dropzone_path, "state")
+    if not state or state in (DropzoneState.INGESTED.value, DropzoneState.ERROR_POST_INGESTION.value):
+        return
+    if get_ingest_avu(ctx, dropzone_path, "destination"):
+        ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.ERROR_INGESTION.value)
+        ctx.callback.msiWriteRodsLog(f"Ingest already has a destination for {dropzone_path}; admin restart required", 0)
+        return
+    if state not in ("in-queue-for-validation", "validating", "in-queue-for-ingestion"):
+        return
     validation_results, dropzone_path = validate(ctx, token, username, dropzone_type)
 
     if not validation_results["validation_errors"]:

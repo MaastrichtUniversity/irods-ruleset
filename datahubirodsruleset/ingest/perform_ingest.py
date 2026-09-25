@@ -2,6 +2,8 @@ import json
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
+from datahubirodsruleset.ingest.ingest_control import IngestStopped
+from datahubirodsruleset.ingest.sync_collection_data import _sync_collection_data
 
 
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
@@ -39,7 +41,12 @@ def perform_ingest(ctx, project_id, depositor, token, dropzone_type):
 
     # Ingest the files from local directory on resource server (mounted) or a iRODS virtual collection to iRODS destination collection
     try:
-        ctx.callback.sync_collection_data(token, destination_collection, depositor, dropzone_type)
+        # Keep the typed cancellation exception inside Python; iRODS callback
+        # boundaries turn it into an ordinary RuntimeError.
+        _sync_collection_data(ctx, token, destination_collection, depositor, dropzone_type)
+    except IngestStopped:
+        # The sync coordinator has already reported this intentional failure.
+        return
     except RuntimeError:
         # A sync failure belongs to the ingestion phase. Stop here so mounted
         # post-ingest processing cannot overwrite error-ingestion with

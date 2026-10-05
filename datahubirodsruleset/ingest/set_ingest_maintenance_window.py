@@ -1,3 +1,6 @@
+# /rules/tests/run_test.sh -r set_ingest_maintenance_window -a "2000000000,2000086400" -u rods
+# Ubuntu: current time to epoch seconds: date +%s
+# Ubuntu: epoch seconds to UTC time: date -u -d @2000000000
 """Set the zone-wide ingest maintenance window."""
 
 from datahubirodsruleset.decorator import make, Output

@@ -48,6 +48,8 @@ class MaintenanceSchedulingTests(unittest.TestCase):
         fake_modules["dhpythonirodsutils.formatters"].format_string_to_boolean = lambda value: value == "true"
         fake_modules["dhpythonirodsutils"].formatters = fake_modules["dhpythonirodsutils.formatters"]
         fake_modules["dhpythonirodsutils.enums"].DropzoneState = SimpleNamespace(
+            INGESTED=SimpleNamespace(value="ingested"),
+            ERROR_POST_INGESTION=SimpleNamespace(value="error-post-ingestion"),
             IN_QUEUE_FOR_VALIDATION=SimpleNamespace(value="in-queue-for-validation"),
             IN_QUEUE_FOR_INGESTION=SimpleNamespace(value="in-queue-for-ingestion"),
             WARNING_VALIDATION_INCORRECT=SimpleNamespace(value="warning-validation-incorrect"),
@@ -60,6 +62,7 @@ class MaintenanceSchedulingTests(unittest.TestCase):
         cls.start_rule = importlib.import_module("datahubirodsruleset.ingest.start_ingest")
         cls.scheduler = importlib.import_module("datahubirodsruleset.ingest.schedule_maintenance_ingest")
         cls.setter = importlib.import_module("datahubirodsruleset.ingest.set_ingest_maintenance_window")
+        cls.getter = importlib.import_module("datahubirodsruleset.ingest.get_ingest_maintenance_window")
 
     @classmethod
     def tearDownClass(cls):
@@ -233,6 +236,7 @@ class MaintenanceSchedulingTests(unittest.TestCase):
         self.submit(now)
         self.preflight(now)
         self.assert_waiting_until_end(now)
+        self.catalog[(DROPZONE, "state")] = "in-queue-for-validation"
         self.callback.validate_dropzone.return_value = {"arguments": [
             DROPZONE, "alice", "direct",
             json.dumps({"project_id": "P000000001", "validation_errors": ["project changed"]}),
@@ -253,6 +257,25 @@ class MaintenanceSchedulingTests(unittest.TestCase):
         self.preflight(now, "mounted")
         self.assert_waiting_until_end(now, "mounted")
         self.scheduler.validate.assert_called_once()
+
+    def test_getter_returns_stored_window(self):
+        arguments = [""]
+        self.getter.get_ingest_maintenance_window(arguments, self.callback, None)
+        self.assertEqual(json.loads(arguments[0]), {"maintenanceStart": START, "maintenanceEnd": END})
+
+    def test_getter_returns_nulls_when_no_window_is_set(self):
+        del self.catalog[(self.maintenance.MAINTENANCE_COLLECTION, "maintenanceStart")]
+        del self.catalog[(self.maintenance.MAINTENANCE_COLLECTION, "maintenanceEnd")]
+        arguments = [""]
+        self.getter.get_ingest_maintenance_window(arguments, self.callback, None)
+        self.assertEqual(json.loads(arguments[0]), {"maintenanceStart": None, "maintenanceEnd": None})
+
+    def test_getter_rejects_partial_or_invalid_window(self):
+        for end in ("", "bad", str(START)):
+            with self.subTest(end=end):
+                self.catalog[(self.maintenance.MAINTENANCE_COLLECTION, "maintenanceEnd")] = end
+                with self.assertRaisesRegex(ValueError, "Invalid ingest maintenance window"):
+                    self.getter.get_ingest_maintenance_window([""], self.callback, None)
 
     def test_setter_requires_rods_and_valid_timestamps(self):
         self.callback.get_client_username.return_value = {"arguments": ["alice"]}

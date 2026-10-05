@@ -9,6 +9,7 @@ remain mocked in test_maintenance_ingest.py.
 """
 
 from contextlib import ExitStack
+import json
 import os
 import re
 import subprocess
@@ -188,6 +189,21 @@ def live(tmp_path):
             print(f"{token}: start_ingest returned after {time.monotonic() - started:.2f}s", flush=True)
 
         yield SimpleNamespace(make=make, submit=submit)
+
+
+def test_get_ingest_maintenance_window(live):
+    result = rule("get_ingest_maintenance_window")
+    assert json.loads(result.stdout) == {"maintenanceStart": None, "maintenanceEnd": None}
+
+    start = int(time.time()) + HOUR
+    end = start + HOUR
+    set_window(start, end)
+    result = rule("get_ingest_maintenance_window")
+    assert json.loads(result.stdout) == {"maintenanceStart": start, "maintenanceEnd": end}
+
+    set_window(start, end + HOUR)
+    result = rule("get_ingest_maintenance_window")
+    assert json.loads(result.stdout) == {"maintenanceStart": start, "maintenanceEnd": end + HOUR}
 
 
 @pytest.mark.parametrize("kind", ["direct", "mounted"])

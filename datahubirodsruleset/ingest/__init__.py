@@ -5,6 +5,7 @@ from datahubirodsruleset.ingest.start_ingest import start_ingest
 from datahubirodsruleset.ingest.restart_ingest import restart_ingest
 from datahubirodsruleset.ingest.stop_ingest import stop_ingest
 from datahubirodsruleset.ingest.set_ingestion_error_avu import set_ingestion_error_avu
+from datahubirodsruleset.ingest.set_ingest_maintenance_window import set_ingest_maintenance_window
 
 # Private rules
 from datahubirodsruleset.ingest.finish_ingest import finish_ingest
@@ -17,3 +18,4 @@ from datahubirodsruleset.ingest.replace_metadata_placeholder_files import replac
 from datahubirodsruleset.ingest.set_post_ingestion_error_avu import set_post_ingestion_error_avu
 from datahubirodsruleset.ingest.sync_collection_data import sync_collection_data
 from datahubirodsruleset.ingest.process_dropzone import process_dropzone
+from datahubirodsruleset.ingest.schedule_maintenance_ingest import schedule_maintenance_ingest

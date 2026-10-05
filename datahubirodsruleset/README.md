@@ -14,6 +14,40 @@ Individual rule files can be run using the ``run_test`` bash script. For example
 See ``tests/README.md`` for more details
 
 
+## Scheduling ingests around maintenance
+
+A RODS administrator can set a zone-wide maintenance window on `/nlmumc/ingest`.
+Pass the start and scheduled end as UTC Unix timestamps in seconds:
+
+```bash
+/rules/tests/run_test.sh -r set_ingest_maintenance_window -a "START_EPOCH_SECONDS,END_EPOCH_SECONDS" -u rods
+```
+
+The rule sets the `maintenanceStart` and `maintenanceEnd` collection AVUs.
+To change the schedule, run it again with both new timestamps. To remove the
+window, remove both AVUs as an administrator:
+
+```bash
+imeta rm -C /nlmumc/ingest maintenanceStart START_EPOCH_SECONDS
+imeta rm -C /nlmumc/ingest maintenanceEnd END_EPOCH_SECONDS
+```
+
+Use the currently stored values when removing them. A missing pair disables
+maintenance scheduling; a partial or invalid pair causes ingest submission to
+fail until corrected.
+
+During the 120 hours before maintenance, ingest submission queues a preflight
+rule and returns. The queued rule validates the dropzone to measure its current
+size. An ingest waits until the scheduled end from 120 hours before the
+start for sizes at least 500 GiB, 96 hours for at
+least 400 GiB, 72 hours for at least 300 GiB, 48 hours for at least 200 GiB,
+24 hours for at least 100 GiB, and 8 hours for every size. Every ingest
+submitted during maintenance also waits. Ingests that do not meet their lead
+time start after the preflight validation. Ingests delayed to the scheduled
+end are validated again when `process_dropzone` runs. Updating the window does
+not reschedule jobs already in the delay queue.
+
+
 ## Installation
 
 This package needs to be installed as the irods user.

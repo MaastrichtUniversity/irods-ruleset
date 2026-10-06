@@ -1,8 +1,8 @@
 import json
 import os
-from datetime import datetime, timezone
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.drop_zones.dropzone_size import store_dropzone_size
 
 
 @make(inputs=[0], outputs=[], handler=Output.STORE)
@@ -19,23 +19,25 @@ def calculate_mounted_dropzone_sizes(ctx, list_of_tokens):
     """
     def get_directory_size(path):
         """Calculate total size of all files in a directory."""
+        def raise_scan_error(error):
+            raise error
+
         total_size = 0
-        if os.path.exists(path):
-            for dirpath, dirnames, filenames in os.walk(path):
-                for filename in filenames:
-                    filepath = os.path.join(dirpath, filename)
-                    try:
-                        total_size += os.path.getsize(filepath)
-                    except (OSError, IOError):
-                        pass
+        for dirpath, dirnames, filenames in os.walk(path, onerror=raise_scan_error):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                total_size += os.path.getsize(filepath)
         return total_size
 
     for token in json.loads(list_of_tokens):
         dropzone_path = f"/nlmumc/ingest/zones/{token}"
         physical_dropzone_path = f"/mnt/ingest/zones/{token}"
         
-        size = get_directory_size(physical_dropzone_path)
-        ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", str(size))
-        ctx.callback.setCollectionAVU(
-            dropzone_path, "dropzoneSizeUpdated", str(int(datetime.now().timestamp()))
-        )
+        try:
+            size = get_directory_size(physical_dropzone_path)
+        except OSError as error:
+            ctx.callback.msiWriteRodsLog(
+                f"ERROR: Skipping dropzone size update for '{dropzone_path}': {error}", 0
+            )
+            continue
+        store_dropzone_size(ctx, dropzone_path, size)

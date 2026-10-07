@@ -3,17 +3,16 @@
 # To run it immediately (not recommended)
 # /rules/tests/run_test.sh -r calculate_all_dropzone_sizes
 import json
-from datetime import datetime, timezone
 
 from dhpythonirodsutils.enums import ProjectAVUs
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.drop_zones.dropzone_size import store_dropzone_size
 from datahubirodsruleset.formatters import format_project_path
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 
 RULE_ENGINE_INSTANCE = "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>"
-CURRENT_TIMESTAMP = str(int(datetime.now().timestamp()))
 
 
 def _calculate_direct_dropzone_size(ctx, token):
@@ -21,10 +20,7 @@ def _calculate_direct_dropzone_size(ctx, token):
     dropzone_path = f"/nlmumc/ingest/direct/{token}"
     size = ctx.callback.calcCollectionSize(dropzone_path, "B", "ceiling", "")["arguments"][3]
     
-    ctx.callback.msiSetACL("default", "admin:own", "rods", dropzone_path)
-    ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", size)
-    ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSizeUpdated", CURRENT_TIMESTAMP)
-    ctx.callback.msiSetACL("default", "null", "rods", dropzone_path)
+    store_dropzone_size(ctx, dropzone_path, size)
 
 
 def _get_ingest_resource_host(ctx, resource_name):
@@ -107,4 +103,3 @@ def calculate_all_dropzone_sizes_delay(ctx):
     ctx.callback.delayExec("<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
                             "calculate_all_dropzone_sizes()", 
                             "")
-            

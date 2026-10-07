@@ -3,100 +3,15 @@
 Run as irods on icat with the workspace rules installed. Each case creates and
 removes its own project, without requiring ingestion or external account setup.
 """
-import json
 import subprocess
-import time
 
 import pytest
 
 from dhpythonirodsutils.enums import ArchiveState, ProcessAttribute, UnarchiveState
-
-
-TAPE = "arcRescSURF01"
-DISK = "passRescUM01"
-REPLICATED_DISK = "replRescAZM02"
-
-
-def command(*args):
-    try:
-        return subprocess.check_output(args, encoding="utf-8", stderr=subprocess.STDOUT).strip()
-    except subprocess.CalledProcessError as err:
-        if args[0] == "iquest" and "CAT_NO_ROWS_FOUND" in err.output:
-            return ""
-        print(err.output)
-        raise
-
-
-def run_rule(name, *args):
-    return command("/rules/tests/run_test.sh", "-r", name, "-a", ",".join(args), "-u", "service-surfarchive")
-
-
-def replicas(path):
-    collection, name = path.rsplit("/", 1)
-    output = command(
-        "iquest", "%s|%s|%s",
-        f"SELECT DATA_REPL_NUM, DATA_REPL_STATUS, DATA_RESC_HIER WHERE COLL_NAME = '{collection}' AND DATA_NAME = '{name}'",
-    )
-    return [tuple(row.split("|")) for row in output.splitlines()]
-
-
-def wait_for_restart(project, attribute):
-    deadline = time.monotonic() + 120
-    while time.monotonic() < deadline:
-        state = command(
-            "iquest", "%s",
-            f"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{project}' AND META_COLL_ATTR_NAME = '{attribute}'",
-        )
-        assert "error-" not in state, state
-        if not state or "CAT_NO_ROWS_FOUND" in state:
-            scope = command(
-                "iquest", "%s",
-                f"SELECT META_COLL_ATTR_VALUE WHERE COLL_NAME = '{project}' AND META_COLL_ATTR_NAME = 'unArchivePath'",
-            )
-            if not scope or "CAT_NO_ROWS_FOUND" in scope:
-                return
-        time.sleep(1)
-    pytest.fail(f"Restart did not complete: {state}")
-
-
-@pytest.fixture(scope="module")
-def payload(tmp_path_factory):
-    path = tmp_path_factory.mktemp("tape-restart") / "payload"
-    with path.open("wb") as data:
-        data.truncate(262144001)  # Above the development tape's minimumFileSize.
-    return path
-
-
-@pytest.fixture
-def project(request):
-    disk = getattr(request, "param", DISK)
-    # Allocate normally: creating a project directly also updates the global counter.
-    result = command(
-        "/rules/tests/run_test.sh", "-r", "create_new_project", "-a",
-        f"ires-hnas-umResource,{disk},TapeRestartTest,rods,rods,UM-30001234X,{{}}",
-    )
-    path = json.loads(result)["project_path"]
-    try:
-        collection = f"{path}/C000000001"
-        command("imkdir", collection)
-        for attribute, value in (
-            ("enableArchive", "true"), ("enableUnarchive", "true"),
-            ("resource", disk), ("archiveDestinationResource", TAPE),
-        ):
-            command("imeta", "set", "-C", path, attribute, value)
-        yield collection
-    finally:
-        command("ichmod", "-rM", "own", "rods", path)
-        locked = command(
-            "iquest", "%s|%s|%s",
-            f"SELECT COLL_NAME, DATA_NAME, DATA_REPL_NUM WHERE COLL_NAME LIKE '{path}/%'"
-            " AND DATA_REPL_STATUS in ('2', '3', '4')",
-        )
-        for row in locked.splitlines():
-            collection, name, number = row.split("|")
-            command("iadmin", "modrepl", "logical_path", f"{collection}/{name}",
-                    "replica_number", number, "DATA_REPL_STATUS", "0")
-        command("irm", "-rf", path)
+from test_cases.tape_helpers import (
+    TAPE, DISK, REPLICATED_DISK, command, run_rule, replicas,
+    payload, project, wait_for_operation,
+)
 
 
 @pytest.mark.parametrize("operation,single_file,stored_scope", [
@@ -131,7 +46,7 @@ def test_restart_repairs_partial_transfer(project, payload, tmp_path, operation,
     restart_path = file_path if operation == "unarchive" and not stored_scope else project
     run_rule(f"restart_{operation}", restart_path)
 
-    wait_for_restart(project, attribute)
+    wait_for_operation(project, attribute)
 
     remaining = replicas(file_path)
     assert len(remaining) == 1
@@ -183,7 +98,7 @@ def test_restart_unarchive_restores_expected_replicas(
     command("imeta", "-M", "set", "-C", project, ProcessAttribute.UNARCHIVE.value,
             UnarchiveState.ERROR_UNARCHIVE_FAILED.value)
     run_rule("restart_unarchive", project)
-    wait_for_restart(project, ProcessAttribute.UNARCHIVE.value)
+    wait_for_operation(project, ProcessAttribute.UNARCHIVE.value)
 
     after = replicas(file_path)
     assert len(after) == expected_replicas and all(row[1] == "1" for row in after)

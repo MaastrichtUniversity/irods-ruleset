@@ -413,7 +413,8 @@ MAX_RETRIES = 10
 RETRY_DELAY_SECONDS = 60
 
 
-def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, delay_seconds=RETRY_DELAY_SECONDS):
+def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, delay_seconds=RETRY_DELAY_SECONDS,
+                        cancellation_check=None):
     """
     Retry a callable that may transiently fail with RuntimeError.
 
@@ -429,6 +430,9 @@ def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, del
         Total number of attempts.
     delay_seconds : int
         Seconds to sleep between attempts.
+    cancellation_check : Callable, optional
+        Called before attempts and every second during waits. Must raise an
+        exception other than RuntimeError to bypass transient-error retries.
 
     Returns
     -------
@@ -436,10 +440,14 @@ def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, del
         True if the operation succeeds, False if all retries are exhausted.
     """
     for attempt in range(1, retries + 1):
+        if cancellation_check is not None:
+            cancellation_check()
         try:
             operation()
             return True
         except RuntimeError as err:
+            if cancellation_check is not None:
+                cancellation_check()
             ctx.callback.msiWriteRodsLog(str(err), 0)
             if attempt == retries:
                 ctx.callback.msiWriteRodsLog(
@@ -452,12 +460,14 @@ def retry_runtime_error(ctx, operation_name, operation, retries=MAX_RETRIES, del
                 f"WARNING: {operation_name} failed (attempt {attempt}/{retries}), retrying in {delay_seconds}s",
                 0,
             )
-            tick = 10
+            tick = 1 if cancellation_check is not None else 10
             remaining = delay_seconds
             while remaining > 0:
                 time.sleep(tick)
                 remaining -= tick
-                if remaining > 0:
+                if cancellation_check is not None:
+                    cancellation_check()
+                if remaining > 0 and (cancellation_check is None or remaining % 10 == 0):
                     ctx.callback.msiWriteRodsLog(
                         f"INFO: {operation_name} retrying in {remaining}s",
                         0,

@@ -5,7 +5,7 @@
 import json
 from datetime import datetime, timezone
 
-from dhpythonirodsutils.enums import ProjectAVUs
+from dhpythonirodsutils.enums import ProjectAVUs, DropzoneAVUs
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
@@ -22,8 +22,8 @@ def _calculate_direct_dropzone_size(ctx, token):
     size = ctx.callback.calcCollectionSize(dropzone_path, "B", "ceiling", "")["arguments"][3]
     
     ctx.callback.msiSetACL("default", "admin:own", "rods", dropzone_path)
-    ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", size)
-    ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSizeUpdated", CURRENT_TIMESTAMP)
+    ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.DROPZONE_SIZE.value, size)
+    ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.DROPZONE_SIZE_UPDATED.value, CURRENT_TIMESTAMP)
     ctx.callback.msiSetACL("default", "null", "rods", dropzone_path)
 
 

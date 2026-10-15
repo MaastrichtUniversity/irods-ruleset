@@ -4,6 +4,7 @@ import json
 import os
 
 from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import DropzoneAVUs
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
@@ -71,11 +72,13 @@ def save_dropzone_pre_ingest_info(ctx, dropzone_path, depositor, dropzone_type, 
     result["creator"] = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
     result["project"] = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
     result["title"] = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
-    ctx.callback.setCollectionAVU(dropzone_path, "totalSize", str(size))
-    ctx.callback.setCollectionAVU(dropzone_path, "numFiles", str(file_count))
+    ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.TOTAL_SIZE.value, str(size))
+    ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.NUM_FILES.value, str(file_count))
 
     is_ingestable = not faulty_paths
-    ctx.callback.setCollectionAVU(dropzone_path, "isIngestable", formatters.format_boolean_to_string(is_ingestable))
+    ctx.callback.setCollectionAVU(
+        dropzone_path, DropzoneAVUs.IS_INGESTABLE.value, formatters.format_boolean_to_string(is_ingestable)
+    )
     for faulty_path in faulty_paths:
         relative_path = os.path.relpath(faulty_path, physical_path)
         logical_path = dropzone_path

@@ -51,9 +51,31 @@ class MaintenanceSchedulingTests(unittest.TestCase):
             INGESTED=SimpleNamespace(value="ingested"),
             ERROR_POST_INGESTION=SimpleNamespace(value="error-post-ingestion"),
             IN_QUEUE_FOR_VALIDATION=SimpleNamespace(value="in-queue-for-validation"),
+            IN_QUEUE_FOR_MAINTENANCE_END=SimpleNamespace(value="in-queue-for-maintenance-end"),
+            VALIDATING=SimpleNamespace(value="validating"),
             IN_QUEUE_FOR_INGESTION=SimpleNamespace(value="in-queue-for-ingestion"),
             WARNING_VALIDATION_INCORRECT=SimpleNamespace(value="warning-validation-incorrect"),
             WARNING_UNSUPPORTED_CHARACTER=SimpleNamespace(value="warning-unsupported-character"),
+        )
+        fake_modules["dhpythonirodsutils.enums"].DropzoneAVUs = SimpleNamespace(
+            DROPZONE_SIZE=SimpleNamespace(value="dropzoneSize"),
+            DROPZONE_SIZE_UPDATED=SimpleNamespace(value="dropzoneSizeUpdated"),
+            TOTAL_SIZE=SimpleNamespace(value="totalSize"),
+            NUM_FILES=SimpleNamespace(value="numFiles"),
+            IS_INGESTABLE=SimpleNamespace(value="isIngestable"),
+        )
+        fake_modules["dhpythonirodsutils.enums"].IngestAttribute = SimpleNamespace(
+            MAINTENANCE_START=SimpleNamespace(value="maintenanceStart"),
+            MAINTENANCE_END=SimpleNamespace(value="maintenanceEnd"),
+        )
+        fake_modules["dhpythonirodsutils.enums"].IngestStopRequestState = SimpleNamespace(
+            NOT_REQUESTED=SimpleNamespace(value="false"),
+            REQUESTED=SimpleNamespace(value="true"),
+        )
+        fake_modules["dhpythonirodsutils.enums"].IngestTransferState = SimpleNamespace(
+            ACTIVE=SimpleNamespace(value="active"),
+            STOPPED=SimpleNamespace(value="stopped"),
+            FINISHED=SimpleNamespace(value="finished"),
         )
         cls.modules_patch = patch.dict(sys.modules, fake_modules)
         cls.modules_patch.start()
@@ -80,6 +102,7 @@ class MaintenanceSchedulingTests(unittest.TestCase):
             "arguments": [path, name, self.catalog.get((path, name), fallback)]
         }
         self.callback.is_dropzone_state_ingestable.return_value = {"arguments": ["", "true"]}
+        self.callback.setCollectionAVU.side_effect = lambda path, name, value: self.catalog.__setitem__((path, name), value)
         self.callback.get_client_username.return_value = {"arguments": ["rods"]}
         self.callback.msiExit.side_effect = lambda code, message: (_ for _ in ()).throw(ValueError(message))
         self.scheduler.validate = Mock(side_effect=self.validate)
@@ -114,6 +137,8 @@ class MaintenanceSchedulingTests(unittest.TestCase):
         self.callback.validate_dropzone.assert_not_called()
 
     def assert_waiting_until_end(self, now, kind="direct"):
+        path = f"/nlmumc/ingest/{'direct' if kind == 'direct' else 'zones'}/example-token"
+        self.assertEqual(self.catalog[(path, "state")], "in-queue-for-maintenance-end")
         self.assertEqual(self.callback.delayExec.call_count, 2)
         args = self.callback.delayExec.call_args.args
         self.assertIn(f"<PLUSET>{END - now}s</PLUSET>", args[0])
@@ -236,7 +261,6 @@ class MaintenanceSchedulingTests(unittest.TestCase):
         self.submit(now)
         self.preflight(now)
         self.assert_waiting_until_end(now)
-        self.catalog[(DROPZONE, "state")] = "in-queue-for-validation"
         self.callback.validate_dropzone.return_value = {"arguments": [
             DROPZONE, "alice", "direct",
             json.dumps({"project_id": "P000000001", "validation_errors": ["project changed"]}),
@@ -248,6 +272,20 @@ class MaintenanceSchedulingTests(unittest.TestCase):
             DROPZONE, "state", "warning-validation-incorrect"
         )
         self.callback.perform_ingest.assert_not_called()
+
+    def test_delayed_process_revalidates_and_ingests_after_maintenance(self):
+        now = START - HOUR
+        self.submit(now)
+        self.preflight(now)
+        self.assert_waiting_until_end(now)
+        self.callback.validate_dropzone.return_value = {"arguments": [
+            DROPZONE, "alice", "direct",
+            json.dumps({"project_id": "P000000001", "validation_errors": []}),
+        ]}
+        self.process.process_dropzone(["example-token", "alice", "direct"], self.callback, None)
+        self.callback.validate_dropzone.assert_called_once_with(DROPZONE, "alice", "direct", "")
+        self.assertEqual(self.catalog[(DROPZONE, "state")], "in-queue-for-ingestion")
+        self.callback.perform_ingest.assert_called_once_with("P000000001", "alice", "example-token", "direct")
 
     def test_mounted_dropzone_uses_its_validated_size(self):
         self.size = 400 * GIB

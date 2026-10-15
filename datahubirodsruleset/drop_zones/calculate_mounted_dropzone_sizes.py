@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime, timezone
 
+from dhpythonirodsutils.enums import DropzoneAVUs
+
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -35,7 +37,7 @@ def calculate_mounted_dropzone_sizes(ctx, list_of_tokens):
         physical_dropzone_path = f"/mnt/ingest/zones/{token}"
         
         size = get_directory_size(physical_dropzone_path)
-        ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", str(size))
+        ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.DROPZONE_SIZE.value, str(size))
         ctx.callback.setCollectionAVU(
-            dropzone_path, "dropzoneSizeUpdated", str(int(datetime.now().timestamp()))
+            dropzone_path, DropzoneAVUs.DROPZONE_SIZE_UPDATED.value, str(int(datetime.now().timestamp()))
         )

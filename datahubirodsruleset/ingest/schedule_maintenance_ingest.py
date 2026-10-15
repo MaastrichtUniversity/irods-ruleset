@@ -2,7 +2,7 @@
 
 import time
 
-from dhpythonirodsutils.enums import DropzoneState
+from dhpythonirodsutils.enums import DropzoneState, DropzoneAVUs
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.ingest.maintenance import lead_seconds, parse_window
@@ -19,13 +19,13 @@ def schedule_maintenance_ingest(ctx, token, depositor, dropzone_type, start, end
         return stop_ingestion(ctx, dropzone_path, validation_results["validation_errors"])
 
     size = int(ctx.callback.getCollectionAVU(
-        dropzone_path, "totalSize", "", "", TRUE_AS_STRING
+        dropzone_path, DropzoneAVUs.TOTAL_SIZE.value, "", "", TRUE_AS_STRING
     )["arguments"][2])
     now = int(time.time())
     if now >= end or now < start - lead_seconds(size):
         return ingest(ctx, dropzone_path, validation_results["project_id"], depositor, token, dropzone_type)
 
-    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_VALIDATION.value)
+    ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_MAINTENANCE_END.value)
     ctx.delayExec(
         f"<PLUSET>{end - now}s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
         f"process_dropzone('{token}', '{depositor}', '{dropzone_type}')",

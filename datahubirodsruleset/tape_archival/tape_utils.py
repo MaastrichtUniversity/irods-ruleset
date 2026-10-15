@@ -5,7 +5,7 @@ import irods_types  # pylint: disable=import-error
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from dhpythonirodsutils import formatters, exceptions
-from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute
+from dhpythonirodsutils.enums import ProjectAVUs, ProcessAttribute, ResourceStatus, ReplicaStatus
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
@@ -105,7 +105,7 @@ def check_resources_available(ctx, tape_resource, project_resource, operation):
     """
     tape_resource_status = ctx.callback.get_resource_status(tape_resource, "")["arguments"][1]
     project_resource_status = ctx.callback.get_resource_status(project_resource, "")["arguments"][1]
-    if tape_resource_status == "down" or project_resource_status == "down":
+    if tape_resource_status == ResourceStatus.DOWN.value or project_resource_status == ResourceStatus.DOWN.value:
         error_message = f"The project or tape resource is currently unavailable: {operation} is not possible"
         ctx.callback.msiWriteRodsLog(error_message, 0)
         ctx.callback.msiExit("-1", error_message)
@@ -293,12 +293,19 @@ def clean_failed_destination_replicas(ctx, file_path, resource_name, expected_re
     ):
         if resource_name in hierarchy.split(";"):
             destination_replicas.append((repl_num, status))
-        elif status == "1" and (source_resource is None or source_resource in hierarchy.split(";")):
+        elif status == ReplicaStatus.GOOD.value and (
+            source_resource is None or source_resource in hierarchy.split(";")
+        ):
             good_source = True
 
-    replicas_to_trim = [(number, status) for number, status in destination_replicas if status in ("0", "2", "3", "4")]
+    replicas_to_trim = [
+        (number, status) for number, status in destination_replicas if status in (
+            ReplicaStatus.STALE.value, ReplicaStatus.INTERMEDIATE.value,
+            ReplicaStatus.READ_LOCKED.value, ReplicaStatus.WRITE_LOCKED.value,
+        )
+    ]
     if expected_replicas is not None:
-        good_replicas = sum(status == "1" for _, status in destination_replicas)
+        good_replicas = sum(status == ReplicaStatus.GOOD.value for _, status in destination_replicas)
         if good_replicas < expected_replicas:
             replicas_to_trim = destination_replicas
 
@@ -308,7 +315,9 @@ def clean_failed_destination_replicas(ctx, file_path, resource_name, expected_re
         raise RuntimeError(f"Cannot clean failed replicas of {file_path} on {resource_name}: no good source replica")
 
     for repl_num, status in replicas_to_trim:
-        if status not in ("2", "3", "4"):
+        if status not in (
+            ReplicaStatus.INTERMEDIATE.value, ReplicaStatus.READ_LOCKED.value, ReplicaStatus.WRITE_LOCKED.value,
+        ):
             continue
         ctx.callback.msiWriteRodsLog(
             f"INFO: Resetting locked replica {file_path} (repl {repl_num}) on {resource_name} to stale (0) before retry",
@@ -324,7 +333,7 @@ def clean_failed_destination_replicas(ctx, file_path, resource_name, expected_re
                     "replica_number",
                     repl_num,
                     "DATA_REPL_STATUS",
-                    "0",
+                    ReplicaStatus.STALE.value,
                 ],
                 shell=False,
             )

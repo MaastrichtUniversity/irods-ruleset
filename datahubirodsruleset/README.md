@@ -44,7 +44,9 @@ least 400 GiB, 72 hours for at least 300 GiB, 48 hours for at least 200 GiB,
 24 hours for at least 100 GiB, and 8 hours for every size. Every ingest
 submitted during maintenance also waits. Ingests that do not meet their lead
 time start after the preflight validation. Ingests delayed to the scheduled
-end are validated again when `process_dropzone` runs. Updating the window does
+end have the dropzone `state` AVU `in-queue-for-maintenance-end`, remain in
+progress, and cannot be edited or submitted again while waiting. They are
+validated again when `process_dropzone` runs. Updating the window does
 not reschedule jobs already in the delay queue.
 
 

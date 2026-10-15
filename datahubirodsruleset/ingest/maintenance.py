@@ -2,12 +2,12 @@
 
 import re
 
+from dhpythonirodsutils.enums import IngestAttribute
+
 from datahubirodsruleset.utils import FALSE_AS_STRING
 
 
 MAINTENANCE_COLLECTION = "/nlmumc/ingest/zones"
-MAINTENANCE_START = "maintenanceStart"
-MAINTENANCE_END = "maintenanceEnd"
 HOUR = 60 * 60
 GIB = 1024 ** 3
 MAX_LEAD_SECONDS = 120 * HOUR
@@ -24,10 +24,10 @@ def parse_window(start, end):
 
 def get_window(ctx):
     start = ctx.callback.getCollectionAVU(
-        MAINTENANCE_COLLECTION, MAINTENANCE_START, "", "", FALSE_AS_STRING
+        MAINTENANCE_COLLECTION, IngestAttribute.MAINTENANCE_START.value, "", "", FALSE_AS_STRING
     )["arguments"][2]
     end = ctx.callback.getCollectionAVU(
-        MAINTENANCE_COLLECTION, MAINTENANCE_END, "", "", FALSE_AS_STRING
+        MAINTENANCE_COLLECTION, IngestAttribute.MAINTENANCE_END.value, "", "", FALSE_AS_STRING
     )["arguments"][2]
     if not start and not end:
         return None

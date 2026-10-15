@@ -215,7 +215,7 @@ def test_small_ingest_waits_in_final_eight_hours(live, kind):
     set_window(start, end)
     live.submit(zone)
     rule_id = wait_for_process(token, end)
-    assert avu(path, "state") == "in-queue-for-validation"
+    assert avu(path, "state") == "in-queue-for-maintenance-end"
     assert 0 < int(avu(path, "totalSize")) < 100 * 1024 ** 3
     assert avu(path, "destination") is None
     # Updating the announcement must not change an already queued job.

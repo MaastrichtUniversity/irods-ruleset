@@ -3,9 +3,11 @@
 # Ubuntu: epoch seconds to UTC time: date -u -d @2000000000
 """Set the zone-wide ingest maintenance window."""
 
+from dhpythonirodsutils.enums import IngestAttribute
+
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.ingest.maintenance import (
-    MAINTENANCE_COLLECTION, MAINTENANCE_END, MAINTENANCE_START, parse_window,
+    MAINTENANCE_COLLECTION, parse_window,
 )
 
 
@@ -19,5 +21,5 @@ def set_ingest_maintenance_window(ctx, start, end):
     except ValueError as error:
         return ctx.callback.msiExit("-1", str(error))
 
-    ctx.callback.setCollectionAVU(MAINTENANCE_COLLECTION, MAINTENANCE_START, str(start))
-    ctx.callback.setCollectionAVU(MAINTENANCE_COLLECTION, MAINTENANCE_END, str(end))
+    ctx.callback.setCollectionAVU(MAINTENANCE_COLLECTION, IngestAttribute.MAINTENANCE_START.value, str(start))
+    ctx.callback.setCollectionAVU(MAINTENANCE_COLLECTION, IngestAttribute.MAINTENANCE_END.value, str(end))

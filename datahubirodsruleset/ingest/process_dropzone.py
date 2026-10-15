@@ -2,7 +2,7 @@
 import json
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import DropzoneState
+from dhpythonirodsutils.enums import DropzoneState, DropzoneAVUs
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
@@ -35,7 +35,12 @@ def process_dropzone(ctx, token, username, dropzone_type):
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.ERROR_INGESTION.value)
         ctx.callback.msiWriteRodsLog(f"Ingest already has a destination for {dropzone_path}; admin restart required", 0)
         return
-    if state not in ("in-queue-for-validation", "validating", "in-queue-for-ingestion"):
+    if state not in (
+        DropzoneState.IN_QUEUE_FOR_VALIDATION.value,
+        DropzoneState.IN_QUEUE_FOR_MAINTENANCE_END.value,
+        DropzoneState.VALIDATING.value,
+        DropzoneState.IN_QUEUE_FOR_INGESTION.value,
+    ):
         return
     validation_results, dropzone_path = validate(ctx, token, username, dropzone_type)
 
@@ -54,7 +59,9 @@ def validate(ctx, token, username, dropzone_type):
 
 
 def is_dropzone_ingestable(ctx, dropzone_path):
-    is_ingestable = ctx.callback.getCollectionAVU(dropzone_path, "isIngestable", "", "", TRUE_AS_STRING)["arguments"][2]
+    is_ingestable = ctx.callback.getCollectionAVU(
+        dropzone_path, DropzoneAVUs.IS_INGESTABLE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     return formatters.format_string_to_boolean(is_ingestable)
 
 

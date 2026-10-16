@@ -58,3 +58,14 @@ pep_api_reg_data_obj_pre(*INSTANCE_NAME, *COMM, *DATAOBJINFO, *OUTDATAOBJINFO){
    failmsg(-169000, 'rcRegDataObj is not allowed'); # SYS_NOT_ALLOWED
  }
 }
+
+# 20261005 - remove after 5.1.0
+# prevents custom groupadmin payload via USER_ADMIN_AN 714
+pep_database_reg_user_re_pre(*INST, *CTX, *OUT, *UINFO) {
+ *api_index = *CTX.api_index;
+ *user_type = *UINFO.user_type;
+ if ( "714" == *api_index && "rodsadmin" == *user_type) {
+   writeLine('serverLog', 'pep_database_reg_user_re_pre: api_index[*api_index] user_type[*user_type] DENIED (AN 714)');
+   failmsg(-169000, 'groupadmin creating rodsadmin is not allowed'); # SYS_NOT_ALLOWED
+ }
+}

@@ -2,13 +2,15 @@
 # Always to be called as administrator
 # /rules/tests/run_test.sh -r sync_collection_data -a "handsome-snake,/nlmumc/projects/P000000019/C000000001,dlinssen,direct"
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import DropzoneState, ProjectAVUs
+from dhpythonirodsutils.enums import (
+    DropzoneState, ProjectAVUs, IngestAttribute, IngestStopRequestState, IngestTransferState, IngestWorkerResult,
+)
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_path
-from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
+from datahubirodsruleset.utils import TRUE_AS_STRING
 from datahubirodsruleset.ingest.ingest_control import (
-    TRANSFER_STATE, STOP_REQUESTED, WORKER_RESULT, STOP_MESSAGE,
+    STOP_MESSAGE,
     IngestStopped, check_stop_requested, get_worker_result, require_inactive_transfer,
 )
 
@@ -75,11 +77,13 @@ def _sync_collection_data(ctx, token, destination_collection, depositor, dropzon
     # Get the ingest resource host
     ingest_resource_host = ctx.callback.get_dropzone_resource_host(dropzone_type, project_id, "")["arguments"][2]
 
-    ctx.callback.setCollectionAVU(dropzone_path, STOP_REQUESTED, FALSE_AS_STRING)
-    ctx.callback.remove_collection_attribute_value(dropzone_path, WORKER_RESULT)
-    ctx.callback.setCollectionAVU(dropzone_path, TRANSFER_STATE, "active")
+    ctx.callback.setCollectionAVU(
+        dropzone_path, IngestAttribute.STOP_REQUESTED.value, IngestStopRequestState.NOT_REQUESTED.value,
+    )
+    ctx.callback.remove_collection_attribute_value(dropzone_path, IngestAttribute.WORKER_RESULT.value)
+    ctx.callback.setCollectionAVU(dropzone_path, IngestAttribute.TRANSFER_STATE.value, IngestTransferState.ACTIVE.value)
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.INGESTING.value)
-    completed_state = "finished"
+    completed_state = IngestTransferState.FINISHED.value
     worker_returned = False
 
     # Execute the irsync call remotely for mounted ingests, as it needs access to the physical path
@@ -100,14 +104,14 @@ def _sync_collection_data(ctx, token, destination_collection, depositor, dropzon
                 )
             worker_returned = True
         except RuntimeError as err:
-            if get_worker_result(ctx, dropzone_path) == "stopped":
+            if get_worker_result(ctx, dropzone_path) == IngestWorkerResult.STOPPED.value:
                 raise IngestStopped(f"{STOP_MESSAGE}: {dropzone_path}") from err
             ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.ERROR_INGESTION.value)
             raise RuntimeError(f"Error syncing collection data for {dropzone_path}") from err
         # Cover requests arriving while the worker's success is being returned.
         check_stop_requested(ctx, dropzone_path)
     except IngestStopped as err:
-        if dropzone_type == "mounted" and get_worker_result(ctx, dropzone_path) != "stopped":
+        if dropzone_type == "mounted" and get_worker_result(ctx, dropzone_path) != IngestWorkerResult.STOPPED.value:
             ctx.remoteExec(
                 ingest_resource_host,
                 "<INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
@@ -124,13 +128,15 @@ def _sync_collection_data(ctx, token, destination_collection, depositor, dropzon
         state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
         if state != DropzoneState.ERROR_INGESTION.value:
             raise RuntimeError(f"Stop handling did not set error-ingestion for {dropzone_path}") from err
-        completed_state = "stopped"
+        completed_state = IngestTransferState.STOPPED.value
         raise
     finally:
         # A failed remoteExec may leave its worker running. Keep active unless
         # the callback returned or the worker reported that it has exited.
-        if worker_returned or get_worker_result(ctx, dropzone_path) in ("stopped", "exited"):
-            ctx.callback.setCollectionAVU(dropzone_path, TRANSFER_STATE, completed_state)
+        if worker_returned or get_worker_result(ctx, dropzone_path) in (
+            IngestWorkerResult.STOPPED.value, IngestWorkerResult.EXITED.value,
+        ):
+            ctx.callback.setCollectionAVU(dropzone_path, IngestAttribute.TRANSFER_STATE.value, completed_state)
 
     state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
     if state == DropzoneState.ERROR_INGESTION.value:

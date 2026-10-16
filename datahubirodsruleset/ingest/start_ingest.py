@@ -1,10 +1,13 @@
 # To be called as an admin at all times
 # /rules/tests/run_test.sh -r start_ingest -a "dlinssen,handsome-snake,direct"
+import time
+
 from dhpythonirodsutils.enums import DropzoneState
 from dhpythonirodsutils import formatters
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
+from datahubirodsruleset.ingest.maintenance import MAX_LEAD_SECONDS, get_window
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
 
@@ -30,11 +33,22 @@ def start_ingest(ctx, depositor, token, dropzone_type):
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
     # Check for valid state to start ingestion
     check_if_state_is_valid_to_start_ingestion(ctx, dropzone_path)
+    now = int(time.time())
+    window = get_window(ctx)
+    delayed_rule = f"process_dropzone('{token}', '{depositor}', '{dropzone_type}')"
+    if window is not None:
+        start, end = window
+        if start - MAX_LEAD_SECONDS <= now < end:
+            delayed_rule = (
+                f"schedule_maintenance_ingest('{token}', '{depositor}', "
+                f"'{dropzone_type}', '{start}', '{end}')"
+            )
+
     ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.IN_QUEUE_FOR_VALIDATION.value)
 
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        f"process_dropzone('{token}', '{depositor}', '{dropzone_type}')",
+        delayed_rule,
         "",
     )
 

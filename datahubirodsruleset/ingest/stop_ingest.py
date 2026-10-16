@@ -1,7 +1,7 @@
 # /rules/tests/run_test.sh -r stop_ingest -a "handsome-snake,direct"
 import time
 
-from dhpythonirodsutils.enums import DropzoneState
+from dhpythonirodsutils.enums import DropzoneState, IngestTransferState
 
 from datahubirodsruleset.utils import TRUE_AS_STRING
 from datahubirodsruleset.decorator import make, Output
@@ -22,7 +22,7 @@ def stop_ingest(ctx, token, dropzone_type):
         ctx.callback.msiExit("-1", "This rule can only be called by RODS!")
 
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
-    if get_transfer_state(ctx, dropzone_path) != "active":
+    if get_transfer_state(ctx, dropzone_path) != IngestTransferState.ACTIVE.value:
         ctx.callback.msiExit("-1", f"No active ingest transfer for {dropzone_path}.")
 
     request_ingest_stop(ctx, dropzone_path)
@@ -31,9 +31,9 @@ def stop_ingest(ctx, token, dropzone_type):
     deadline = time.monotonic() + STOP_TIMEOUT_SECONDS
     while True:
         transfer_state = get_transfer_state(ctx, dropzone_path)
-        if transfer_state != "active":
+        if transfer_state != IngestTransferState.ACTIVE.value:
             state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", "", TRUE_AS_STRING)["arguments"][2]
-            if transfer_state == "stopped" and state == DropzoneState.ERROR_INGESTION.value:
+            if transfer_state == IngestTransferState.STOPPED.value and state == DropzoneState.ERROR_INGESTION.value:
                 return
             ctx.callback.msiExit("-1", f"Transfer for {dropzone_path} already finished; stop not confirmed.")
         if time.monotonic() >= deadline:

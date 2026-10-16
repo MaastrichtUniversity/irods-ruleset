@@ -8,6 +8,7 @@ from dhpythonirodsutils.enums import (
     DropzoneState,
     ArchiveState,
     UnarchiveState,
+    DropzoneAVUs,
 )
 
 from dhpythonirodsutils.formatters import (
@@ -99,8 +100,8 @@ def get_drop_zone_percentage_ingested(ctx, drop_zone):
     size_ingested = json.loads(ret)["value"]
     if drop_zone["state"] == DropzoneState.INGESTED.value:
         percentage = 100
-    elif size_ingested and int(drop_zone["totalSize"]) > 0:
-        percentage = round(float(size_ingested) / float(drop_zone["totalSize"]) * 100, 1)
+    elif size_ingested and int(drop_zone[DropzoneAVUs.TOTAL_SIZE.value]) > 0:
+        percentage = round(float(size_ingested) / float(drop_zone[DropzoneAVUs.TOTAL_SIZE.value]) * 100, 1)
 
     drop_zone["percentage_ingested"] = percentage
     drop_zone["size_ingested"] = size_ingested

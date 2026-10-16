@@ -1,4 +1,4 @@
-from dhpythonirodsutils.enums import ProjectAVUs, DropzoneState
+from dhpythonirodsutils.enums import ProjectAVUs, DropzoneState, DropzoneAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 import json
 from datahubirodsruleset.decorator import make, Output
@@ -46,7 +46,9 @@ def perform_ingest_pre_hook(ctx, project_id, dropzone_path, token, depositor, dr
     ctx.callback.msiWriteRodsLog(f"Ingesting {dropzone_path} to {destination_project_collection_path}", 0)
     ctx.callback.setCollectionAVU(dropzone_path, "destination", collection_id)
 
-    total_size = ctx.callback.getCollectionAVU(dropzone_path, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
+    total_size = ctx.callback.getCollectionAVU(
+        dropzone_path, DropzoneAVUs.TOTAL_SIZE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
     destination_resource = ctx.callback.getCollectionAVU(
         format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
     )["arguments"][2]

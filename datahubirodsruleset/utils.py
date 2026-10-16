@@ -6,7 +6,7 @@ from subprocess import check_call, CalledProcessError  # nosec
 import irods_types  # pylint: disable=import-error
 import session_vars  # pylint: disable=import-error
 from dhpythonirodsutils import formatters, loggers
-from dhpythonirodsutils.enums import DropzoneState, AuditTailTopics, ProjectAVUs
+from dhpythonirodsutils.enums import DropzoneState, AuditTailTopics, ProjectAVUs, ReplicaStatus
 from genquery import *  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
@@ -498,7 +498,7 @@ def get_bad_status_replicas(ctx, collection):
     bad = []
     for result in row_iterator(
         "COLL_NAME, DATA_NAME, DATA_REPL_NUM, DATA_REPL_STATUS",
-        f"COLL_NAME LIKE '{collection}%' AND DATA_REPL_STATUS != '1'",
+        f"COLL_NAME LIKE '{collection}%' AND DATA_REPL_STATUS != '{ReplicaStatus.GOOD.value}'",
         AS_LIST,
         ctx.callback,
     ):

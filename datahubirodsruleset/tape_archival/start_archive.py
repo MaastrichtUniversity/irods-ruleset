@@ -20,6 +20,11 @@ def start_archive(ctx, archival_path, username_initiator):
         The username of the initiator, e.g. dlinssen
     """
     results = json.loads(ctx.callback.perform_archive_checks(archival_path, username_initiator, "")["arguments"][1])
+    queue_archive(ctx, archival_path, username_initiator, results)
+
+
+def queue_archive(ctx, archival_path, username_initiator, results, restart=False):
+    """Queue the archive workflow, preparing destination replicas on restart."""
 
     # Log statements
     ctx.callback.msiWriteRodsLog(f"DEBUG: Data will be moved onto resource {results['tape_resource']}", 0)
@@ -37,10 +42,13 @@ def start_archive(ctx, archival_path, username_initiator):
     # Perform the recursive SetACL call in the delay queue to not lock up on very large collections
     set_acl_call = f"msiSetACL('recursive', 'admin:own', '{results['service_account']}', '{results['project_collection_path']}')"
     perform_archive_call = f"perform_archive('{archival_path}', '{json.dumps(results)}', '{username_initiator}')"
+    calls = [set_acl_call, perform_archive_call]
+    if restart:
+        calls.insert(1, f"prepare_tape_restart('{archival_path}', '{results['tape_resource']}')")
 
     # Perform the rest of the steps in the Delay queue, as to not lock up the user until it finished
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
-        f"{set_acl_call};{perform_archive_call}",
+        ";".join(calls),
         "",
     )

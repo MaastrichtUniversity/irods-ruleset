@@ -1,5 +1,8 @@
 import json
+import os
 import subprocess
+
+import pytest
 
 from dhpythonirodsutils import formatters
 
@@ -92,6 +95,20 @@ class TestValidateDropzone:
         )
         assert f"value: {expected_state}" in ret
 
+    def _get_stored_validation_errors(self, token):
+        """Fetch validation errors from the latest pre-ingest document."""
+        rule = (
+            f'/rules/tests/run_test.sh -r get_dropzone_validation_errors'
+            f' -a "{token},{self.dropzone_type}"'
+        )
+        ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
+        return json.loads(ret.split('\n')[0])
+
+    def _assert_stored_validation_errors(self, token, expected_errors):
+        stored_result = self._get_stored_validation_errors(token)
+        assert stored_result["found"] is True
+        assert stored_result["validation_errors"] == expected_errors
+
     # ------------------------------------------------------------------
     # Tests
     # ------------------------------------------------------------------
@@ -105,6 +122,7 @@ class TestValidateDropzone:
 
             assert result["validation_errors"] == []
             assert result["project_id"] == self.project_id
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -117,6 +135,7 @@ class TestValidateDropzone:
         assert any(
             "does not exist" in err for err in result["validation_errors"]
         )
+        assert self._get_stored_validation_errors("nonexistent-token")["found"] is False
 
     def test_validate_dropzone_insufficient_permissions(self):
         """User without ingest write ACL receives an insufficient permissions error."""
@@ -133,6 +152,7 @@ class TestValidateDropzone:
                 "has insufficient DropZone permissions" in err
                 for err in result["validation_errors"]
             )
+            assert self._get_stored_validation_errors(token)["found"] is False
             self._assert_state_avu(dropzone_path, "open")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -150,6 +170,7 @@ class TestValidateDropzone:
                 "project or ingest resource is disabled" in err
                 for err in result["validation_errors"]
             )
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -167,6 +188,7 @@ class TestValidateDropzone:
                 "project or ingest resource is disabled" in err
                 for err in result["validation_errors"]
             )
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -186,6 +208,7 @@ class TestValidateDropzone:
                 "Unknown project" in err
                 for err in result["validation_errors"]
             )
+            assert self._get_stored_validation_errors(token)["found"] is False
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -208,6 +231,7 @@ class TestValidateDropzone:
             assert any(
                 "is not the creator" in err for err in result["validation_errors"]
             )
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             # Restore project sharing state before cleanup
@@ -242,6 +266,7 @@ class TestValidateDropzone:
             assert any(
                 "Metadata validation failed" in err for err in result["validation_errors"]
             )
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -283,6 +308,10 @@ class TestValidateDropzone:
             assert any(
                 "unsupported characters" in err for err in result["validation_errors"]
             )
+            assert any(
+                target_file in err for err in result["validation_errors"]
+            )
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
@@ -297,40 +326,108 @@ class TestValidateDropzone:
         """
         token = self._fresh_dropzone_with_metadata()
         dropzone_path = formatters.format_dropzone_path(token, self.dropzone_type)
-        file_logical_path = f"{dropzone_path}/validate_dz_stale.dat"
+        file_logical_path = f"{dropzone_path}/validate_dz_stale'file.dat"
+        local_file = "/tmp/validate_dz_stale.dat"
         try:
             subprocess.check_call(
-                "dd if=/dev/zero of=/tmp/validate_dz_stale.dat bs=1K count=1",
+                f"dd if=/dev/zero of={local_file} bs=1K count=1",
                 shell=True,
             )
             # Upload to staging resource (replica 0)
             subprocess.check_call(
-                f"iput -R stagingResc01 /tmp/validate_dz_stale.dat {file_logical_path}",
-                shell=True,
+                ["iput", "-R", "stagingResc01", local_file, file_logical_path],
+                shell=False,
             )
             # Create a second replica on the destination resource (replica 1)
             subprocess.check_call(
-                f"irepl -R {self.destination_resource} {file_logical_path}",
-                shell=True,
+                ["irepl", "-R", self.destination_resource, file_logical_path],
+                shell=False,
             )
             # Overwrite on staging resource — replica 1 on destination becomes stale
             subprocess.check_call(
-                f"iput -f -R stagingResc01 /tmp/validate_dz_stale.dat {file_logical_path}",
-                shell=True,
+                ["iput", "-f", "-R", "stagingResc01", local_file, file_logical_path],
+                shell=False,
             )
 
             result = self._run_validate_dropzone(dropzone_path)
 
             assert any("stale file" in err for err in result["validation_errors"])
             assert any(
-                "validate_dz_stale.dat" in err for err in result["validation_errors"]
+                "validate_dz_stale'file.dat" in err for err in result["validation_errors"]
             )
+            self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:
             remove_dropzone(token, self.dropzone_type)
 
+    @pytest.mark.parametrize("state", ["open", "warning-validation-incorrect", "warning-unsupported-character"])
+    def test_admin_unlock_direct_dropzone(self, tmp_path, state):
+        token = self._fresh_dropzone_with_metadata()
+        dropzone_path = formatters.format_dropzone_path(token, "direct")
+        local_file = tmp_path / "upload.dat"
+        local_file.write_bytes(b"original upload content")
+        nested = dropzone_path + "/nested"
+        files = [(dropzone_path, "locked'file.dat", "2"), (nested, "locked3.dat", "3"),
+                 (nested, "locked4.dat", "4"), (nested, "stale.dat", "0"), (nested, "good.dat", "1")]
+        uploaded = []
+
+        def run(*args, **kwargs):
+            return subprocess.check_output(list(args), text=True, **kwargs)
+
+        def statuses():
+            result = {}
+            for collection in (dropzone_path, nested):
+                output = run("iquest", "%s:%s", "SELECT DATA_NAME, DATA_REPL_STATUS "
+                             f"WHERE COLL_NAME = '{collection}'")
+                result.update({collection + "/" + line.rsplit(":", 1)[0]: line.rsplit(":", 1)[1]
+                               for line in output.splitlines()})
+            return result
+
+        try:
+            run("imkdir", nested)
+            for collection, name, status in files:
+                logical_path = collection + "/" + name
+                run("iput", "-R", "stagingResc01", str(local_file), logical_path)
+                uploaded.append(logical_path)
+                run("iadmin", "modrepl", "logical_path", logical_path,
+                    "replica_number", "0", "DATA_REPL_STATUS", status)
+            run("imeta", "set", "-C", dropzone_path, "state", "validating")
+            command = ["/rules/tests/run_test.sh", "-r", "admin_unlock_direct_dropzone", "-a", token]
+            rejected = subprocess.run(command, text=True, capture_output=True)
+            assert rejected.returncode != 0
+            assert all(statuses()[collection + "/" + name] == status for collection, name, status in files)
+
+            run("imeta", "set", "-C", dropzone_path, "state", state)
+            # jmelius belongs to DH-project-admins, but is a rodsuser.
+            rejected = subprocess.run(command + ["-u", self.depositor], text=True, capture_output=True)
+            assert rejected.returncode != 0
+
+            result = json.loads(run(*command).splitlines()[0])
+            assert result == {"unlocked_replica_count": 3}
+            repaired = statuses()
+            for collection, name, status in files:
+                assert repaired[collection + "/" + name] == ("1" if status == "1" else "0")
+            self._assert_state_avu(dropzone_path, state)
+            assert json.loads(run(*command).splitlines()[0]) == {"unlocked_replica_count": 0}
+
+            for logical_path in uploaded:
+                downloaded = tmp_path / "download.dat"
+                run("iget", "-f", "-n", "0", logical_path, str(downloaded))
+                assert downloaded.read_bytes() == local_file.read_bytes()
+
+            local_file.write_bytes(b"user reuploaded content")
+            user_env = dict(os.environ, clientUserName=self.depositor)
+            for logical_path in uploaded:
+                run("iput", "-f", "-R", "stagingResc01", str(local_file), logical_path, env=user_env)
+            assert all(statuses()[logical_path] == "1" for logical_path in uploaded)
+        finally:
+            for logical_path in uploaded:
+                run("iadmin", "modrepl", "logical_path", logical_path,
+                    "replica_number", "0", "DATA_REPL_STATUS", "0")
+            remove_dropzone(token, self.dropzone_type)
+
     def test_validate_dropzone_locked_file_direct(self):
-        """Direct dropzone containing a locked file replica (DATA_REPL_STATUS = 2) is reported as an error.
+        """Direct dropzone containing a locked file replica (DATA_REPL_STATUS = 2, 3, or 4) is reported as an error.
 
         Steps to create a locked replica:
           1. iput a file to stagingResc01 (replica 0, status = good).
@@ -351,6 +448,29 @@ class TestValidateDropzone:
                 shell=True,
             )
             print(subprocess.check_output(f"ils -l {file_logical_path}", shell=True, encoding="UTF-8"))
+            for repl_status in ("2", "3", "4"):
+                subprocess.check_call(
+                    [
+                        "iadmin",
+                        "modrepl",
+                        "logical_path",
+                        file_logical_path,
+                        "replica_number",
+                        "0",
+                        "DATA_REPL_STATUS",
+                        repl_status,
+                    ],
+                    shell=False,
+                )
+                result = self._run_validate_dropzone(dropzone_path)
+
+                assert any("locked file" in err for err in result["validation_errors"])
+                assert any(
+                    "validate_dz_locked.dat" in err for err in result["validation_errors"]
+                )
+                self._assert_stored_validation_errors(token, result["validation_errors"])
+                self._assert_state_avu(dropzone_path, "validating")
+
             subprocess.check_call(
                 [
                     "iadmin",
@@ -360,17 +480,13 @@ class TestValidateDropzone:
                     "replica_number",
                     "0",
                     "DATA_REPL_STATUS",
-                    "2",
+                    "1",
                 ],
                 shell=False,
             )
             result = self._run_validate_dropzone(dropzone_path)
-
-            assert any("locked file" in err for err in result["validation_errors"])
-            assert any(
-                "validate_dz_locked.dat" in err for err in result["validation_errors"]
-            )
-            self._assert_state_avu(dropzone_path, "validating")
+            assert result["validation_errors"] == []
+            self._assert_stored_validation_errors(token, [])
         finally:
             subprocess.check_call(
                 [

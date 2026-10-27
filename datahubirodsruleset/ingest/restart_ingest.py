@@ -29,6 +29,8 @@ def restart_ingest(ctx, token, dropzone_type):
     project_collection_path = format_project_collection_path(ctx, destination_project, destination_collection)
     creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
 
+    # The admin must confirm the previous coordinator and worker have exited.
+    # A stale active transfer AVU must not prevent this explicit restart.
     ctx.delayExec(
         "<PLUSET>1s</PLUSET><EF>30s REPEAT 0 TIMES</EF><INST_NAME>irods_rule_engine_plugin-irods_rule_language-instance</INST_NAME>",
         f"sync_collection_data('{token}', '{project_collection_path}', '{creator}', '{dropzone_type}')",

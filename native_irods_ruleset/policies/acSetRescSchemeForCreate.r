@@ -20,7 +20,8 @@ acSetRescSchemeForCreate {
                 failmsg(-1, "resource is empty!");
             }
 
-            msiWriteRodsLog("DEBUG: Setting resource for project *project to resource *resource", *status);
+            # The output of irsync is now logged in perform_irsync.py, so this log message is not needed.
+            # msiWriteRodsLog("DEBUG: Setting resource for project *project to resource *resource", *status);
             msiSetDefaultResc(*resource, "forced");
         } else {
             # Somebody tries to create a file outside of a projectcollection

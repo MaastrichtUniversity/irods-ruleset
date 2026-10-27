@@ -1,7 +1,7 @@
 # Entire collection:
 # /rules/tests/run_test.sh -r perform_archive_checks -a "/nlmumc/projects/P000000017/C000000001,dlinssen" -j -u service-surfarchive
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProjectAVUs
+from dhpythonirodsutils.enums import ProjectAVUs, ArchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING
@@ -35,6 +35,11 @@ def perform_archive_checks(ctx, archival_path):
     archival_path: str
         The full path of the collection to be archived, e.g. '/nlmumc/projects/P000000017/C000000001'
     """
+    return check_archive(ctx, archival_path)
+
+
+def check_archive(ctx, archival_path, restart=False):
+    """Run archive checks, requiring the matching failure state for a restart."""
     project_id, project_collection_id, project_collection_path, project_path = parse_project_collection_path(
         ctx, archival_path, "archive"
     )
@@ -56,7 +61,12 @@ def perform_archive_checks(ctx, archival_path):
     minimum_file_size = ctx.callback.getResourceAVU(tape_resource, "minimumFileSize", "", "0", "false")["arguments"][2]
 
     validate_caller_is_service_account(ctx, service_account, "Archiving")
-    validate_no_active_process(ctx, project_collection_path, "archival")
+    validate_no_active_process(
+        ctx,
+        project_collection_path,
+        "archival",
+        expected_archive_state=ArchiveState.ERROR_ARCHIVE_FAILED.value if restart else "",
+    )
 
     return {
         "service_account": service_account,

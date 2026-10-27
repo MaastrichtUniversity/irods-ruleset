@@ -2,8 +2,11 @@
 # Public rules
 from datahubirodsruleset.tape_archival.start_unarchive import start_unarchive
 from datahubirodsruleset.tape_archival.start_archive import start_archive
+from datahubirodsruleset.tape_archival.restart_archive import restart_archive
+from datahubirodsruleset.tape_archival.restart_unarchive import restart_unarchive
 
 # Private rules
+from datahubirodsruleset.tape_archival.tape_utils import prepare_tape_restart
 from datahubirodsruleset.tape_archival.perform_archive_checks import perform_archive_checks
 from datahubirodsruleset.tape_archival.perform_archive import perform_archive
 from datahubirodsruleset.tape_archival.set_tape_error_avu import set_tape_error_avu

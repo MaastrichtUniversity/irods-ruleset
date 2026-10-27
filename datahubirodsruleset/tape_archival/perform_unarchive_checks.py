@@ -5,7 +5,7 @@
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProjectAVUs
+from dhpythonirodsutils.enums import ProjectAVUs, UnarchiveState
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import FALSE_AS_STRING
@@ -44,6 +44,11 @@ def perform_unarchive_checks(ctx, unarchival_path):
     dict
         A dictionary containing information obtained with verification and needed in the unarchival process
     """
+    return check_unarchive(ctx, unarchival_path)
+
+
+def check_unarchive(ctx, unarchival_path, restart=False):
+    """Run unarchive checks, requiring the matching failure state for a restart."""
     project_id, project_collection_id, project_collection_path, project_path = parse_project_collection_path(
         ctx, unarchival_path, "unarchive"
     )
@@ -62,7 +67,12 @@ def perform_unarchive_checks(ctx, unarchival_path):
 
     service_account = get_service_account(ctx, tape_resource)
     validate_caller_is_service_account(ctx, service_account, "Unarchiving")
-    validate_no_active_process(ctx, project_collection_path, "unarchival")
+    validate_no_active_process(
+        ctx,
+        project_collection_path,
+        "unarchival",
+        expected_unarchive_state=UnarchiveState.ERROR_UNARCHIVE_FAILED.value if restart else "",
+    )
 
     for row in row_iterator("RESC_LOC", f"RESC_NAME = '{tape_resource}'", AS_LIST, ctx.callback):
         tape_resource_location = row[0]

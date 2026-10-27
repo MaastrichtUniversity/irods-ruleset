@@ -2,6 +2,8 @@ import json
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
+from datahubirodsruleset.ingest.ingest_control import IngestStopped
+from datahubirodsruleset.ingest.sync_collection_data import _sync_collection_data
 
 
 @make(inputs=range(4), outputs=[], handler=Output.STORE)
@@ -39,29 +41,18 @@ def perform_ingest(ctx, project_id, depositor, token, dropzone_type):
 
     # Ingest the files from local directory on resource server (mounted) or a iRODS virtual collection to iRODS destination collection
     try:
-        ctx.callback.sync_collection_data(token, destination_collection, depositor, dropzone_type)
+        # Keep the typed cancellation exception inside Python; iRODS callback
+        # boundaries turn it into an ordinary RuntimeError.
+        _sync_collection_data(ctx, token, destination_collection, depositor, dropzone_type)
+    except IngestStopped:
+        # The sync coordinator has already reported this intentional failure.
+        return
     except RuntimeError:
-        # sync_collection_data already set the dropzone state to 'error-ingestion'.
-        # Do NOT call set_ingestion_error_avu here: that function calls msiExit("-1", ...)
-        # which would terminate execution and prevent perform_ingest_post_hook and
-        # finish_ingest from running. For mounted ingests, perform_irsync retries
-        # internally on the resource server; a transient connection drop causes
-        # remoteExec to raise RuntimeError on icat even though the data may have been
-        # synced successfully. Allowing execution to continue lets finish_ingest
-        # complete the ingest when the data is present, or let downstream error
-        # handling (set_post_ingestion_error_avu) report a genuine failure.
-        ctx.callback.msiWriteRodsLog(
-            f"WARNING: sync_collection_data raised an error for {dropzone_path}, continuing with post-ingest steps", 0
-        )
-        # replace_metadata_placeholder_files is normally called by sync_collection_data
-        # on its success path (after the try/except). Since we caught an exception here,
-        # sync_collection_data exited early and never called it. For mounted ingests the
-        # irsync may still have succeeded (false-negative remoteExec disconnect), so
-        # call it here to ensure the metadata files are replaced before finish_ingest.
-        # For a genuine irsync failure it is called optimistically; validate_data_post_ingestion
-        # inside perform_ingest_post_hook will catch the actual missing-data condition.
-        if dropzone_type == "mounted":
-            ctx.callback.replace_metadata_placeholder_files(token, project_id, collection_id, depositor)
+        # A sync failure belongs to the ingestion phase. Stop here so mounted
+        # post-ingest processing cannot overwrite error-ingestion with
+        # error-post-ingestion.
+        ctx.callback.set_ingestion_error_avu(dropzone_path, "Error copying ingest zone", project_id, depositor)
+        return
 
     after = time.time()
     difference = float(after - before) + 1

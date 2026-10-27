@@ -136,3 +136,4 @@ def finish_ingest(ctx, project_id, depositor, token, collection_id, dropzone_typ
     ctx.callback.msiWriteRodsLog(
         f"Finished ingesting {dropzone_path} to {destination_project_collection_path}", 0
     )
+    # 'ingested' is set before closing/indexing; only now is replay a no-op.

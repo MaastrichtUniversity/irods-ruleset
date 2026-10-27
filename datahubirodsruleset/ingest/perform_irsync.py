@@ -1,41 +1,51 @@
 # Part of the ingest workflow. To use, call the rule sync_collection_data
 # Suppress [B404:blacklist] Consider possible security implications associated with subprocess module.
-# subprocess is only used for check_call to execute irsync.
-# The irsync check_call has 3 variable inputs:
+# subprocess is only used to execute iRODS commands.
+# The irsync command has 3 variable inputs:
 # * destination_resource, queried directly from iCAT with getCollectionAVU ProjectAVUs.RESOURCE
 # * source_collection, token is validated with format_dropzone_path & check the ACL with getCollectionAVU state
 # * destination_collection, validated with the formatter functions get_*_from_project_collection_path
-from subprocess import CalledProcessError, check_call  # nosec
+import os
+import selectors
+import time
+from subprocess import PIPE, STDOUT, CalledProcessError, Popen, TimeoutExpired, check_call  # nosec
 
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path
-from datahubirodsruleset.utils import get_bad_status_replicas, get_under_replicated_data_objects, retry_runtime_error
+from datahubirodsruleset.utils import (
+    TRUE_AS_STRING, get_bad_status_replicas, get_under_replicated_data_objects, retry_runtime_error,
+)
+from datahubirodsruleset.ingest.ingest_control import (
+    IngestStopped, WORKER_RESULT, check_stop_requested,
+)
 
-def _clean_failed_replicas(ctx, destination_collection):
+def _clean_failed_replicas(ctx, destination_collection, cancellation_check):
     """
     Remove all data objects under destination_collection whose replica status is not
     '1' (good), so that a subsequent irsync can recreate them from scratch.
 
-    Replicas with status '2' are first reset to '0' via 'iadmin modrepl' because
+    Replicas with status '2', '3', or '4' are first reset to '0' via 'iadmin modrepl' because
     iRODS treats them as authoritative and may refuse to overwrite them otherwise.
     Each unique data object is deleted at most once even if multiple failed replicas
     are reported for it.
     """
     # Collect all failed replicas grouped by data object path first, so that every
-    # locked replica (status '2') of the same object is reset to '0' before we attempt
-    # deletion.  Attempting to delete while a sibling replica is still in state '2'
+    # locked replica (status '2', '3', or '4') of the same object is reset to '0' before we attempt
+    # deletion.  Attempting to delete while a sibling replica is still locked
     # would be rejected by iRODS.
     failed_replicas = {}
+    cancellation_check()
     for full_data_obj_path, repl_num, repl_status in get_bad_status_replicas(ctx, destination_collection):
         failed_replicas.setdefault(full_data_obj_path, []).append((repl_num, repl_status))
 
     for full_data_obj_path, replicas in failed_replicas.items():
         for repl_num, repl_status in replicas:
-            # repl_status '2' means locked replica, which can happen if a previous irsync partially succeeded and got interrupted (e.g. by a timeout).
+            cancellation_check()
+            # repl_status '2', '3', or '4' means a locked replica, which can happen if a previous irsync partially succeeded and got interrupted (e.g. by a timeout).
             # locked files cant be removed by iRODS, and they will also cause subsequent irsync calls to fail, so we reset the status to '0' (stale) to allow cleanup and retry.
-            if repl_status == "2":
+            if repl_status in ("2", "3", "4"):
                 ctx.callback.msiWriteRodsLog(
                     f"INFO: Resetting stale replica {full_data_obj_path} (repl {repl_num}) status to 0 before removal",
                     0,
@@ -60,6 +70,7 @@ def _clean_failed_replicas(ctx, destination_collection):
                         0,
                     )
 
+        cancellation_check()
         ctx.callback.msiWriteRodsLog(
             f"INFO: Removing failed data object {full_data_obj_path}", 0
         )
@@ -68,7 +79,7 @@ def _clean_failed_replicas(ctx, destination_collection):
     return len(failed_replicas)
 
 
-def _check_replica_count(ctx, destination_collection, destination_resource):
+def _check_replica_count(ctx, destination_collection, destination_resource, cancellation_check):
     """
     Verify that every data object in destination_collection has the expected number
     of replicas.  Objects with a mismatched count are removed so a subsequent irsync
@@ -76,9 +87,11 @@ def _check_replica_count(ctx, destination_collection, destination_resource):
 
     Returns the number of objects removed.
     """
+    cancellation_check()
     under_replicated = get_under_replicated_data_objects(ctx, destination_collection, destination_resource)
 
     for full_data_obj_path, actual_replica_count, expected_replica_count in under_replicated:
+        cancellation_check()
         ctx.callback.msiWriteRodsLog(
             f"INFO: Removing under-replicated data object {full_data_obj_path}"
             f" (expected {expected_replica_count} replica(s), found {actual_replica_count})",
@@ -89,31 +102,128 @@ def _check_replica_count(ctx, destination_collection, destination_resource):
     return len(under_replicated)
 
 
-def _run_irsync(source_collection, destination_collection, destination_resource):
+def _terminate_irsync(process):
+    """Reap our child before acknowledging cancellation, escalating if needed."""
+    if process.poll() is None:
+        try:
+            process.terminate()
+        except ProcessLookupError:
+            pass
+    try:
+        process.wait(timeout=5)
+    except TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def _monitor_irsync_output(ctx, process, destination_collection, cancellation_check):
+    """Drain output without blocking stop checks, even when irsync is silent."""
+    rods_log_available = True
+    next_check = time.monotonic()
+
+    def log_line(line):
+        nonlocal rods_log_available, next_check
+        if time.monotonic() >= next_check:
+            cancellation_check()
+            next_check = time.monotonic() + 1
+        output_line = line.decode("utf-8", errors="replace").rstrip("\r\n")
+        if output_line and rods_log_available:
+            try:
+                ctx.callback.msiWriteRodsLog(f"INFO: irsync {destination_collection}: {output_line}", 0)
+            except Exception:  # pylint: disable=broad-except
+                # Continue draining output even if the log callback fails.
+                rods_log_available = False
+
+    try:
+        ctx.callback.msiWriteRodsLog(
+            f"INFO: irsync started for {destination_collection} (pid {process.pid})", 0
+        )
+    except Exception:  # pylint: disable=broad-except
+        rods_log_available = False
+    os.set_blocking(process.stdout.fileno(), False)
+    pending = b""
+    next_check = time.monotonic()
+    with selectors.DefaultSelector() as selector:
+        selector.register(process.stdout, selectors.EVENT_READ)
+        pipe_open = True
+        while pipe_open or process.poll() is None:
+            now = time.monotonic()
+            if now >= next_check:
+                cancellation_check()
+                next_check = time.monotonic() + 1
+            for key, _ in selector.select(timeout=max(0, next_check - time.monotonic())):
+                try:
+                    chunk = os.read(key.fd, 65536)
+                except BlockingIOError:
+                    continue
+                if not chunk:
+                    selector.unregister(process.stdout)
+                    pipe_open = False
+                    continue
+                pending += chunk
+                while b"\n" in pending:
+                    line, pending = pending.split(b"\n", 1)
+                    log_line(line)
+        if pending:
+            log_line(pending)
+
+
+def _run_irsync(ctx, source_collection, destination_collection, destination_resource, cancellation_check):
     """
     Execute a single irsync call, converting CalledProcessError to RuntimeError
-    so that retry_runtime_error can catch transient failures uniformly.
+    so that retry_runtime_error can catch transient failures uniformly. Stream
+    stdout and stderr to rodsLog so transfer details are visible to operators.
     """
+    irsync_command = ["irsync", 
+                      "-K", 
+                      "-v", 
+                      "-R", 
+                      destination_resource,
+                      "-r",
+                      source_collection,
+                      "i:" + destination_collection]
+    
+    cancellation_check()
     try:
-        check_call(
-            [
-                "irsync",
-                "-K",
-                "-v",
-                "-R",
-                destination_resource,
-                "-r",
-                source_collection,
-                "i:" + destination_collection,
-            ],
+        with open("/tmp/irsync.log", "a", encoding="utf-8") as log_file:
+            log_file.write(f"{irsync_command!r}\n")
+
+        with Popen(
+            irsync_command,
+            stdout=PIPE,
+            stderr=STDOUT,
+            bufsize=0,
             shell=False,
-        )
+        ) as process:
+            try:
+                _monitor_irsync_output(ctx, process, destination_collection, cancellation_check)
+                process.wait()
+                cancellation_check()
+            finally:
+                if process.poll() is None:
+                    _terminate_irsync(process)
+
+        if process.returncode:
+            raise CalledProcessError(process.returncode, irsync_command)
     except CalledProcessError as err:
         raise RuntimeError(f"irsync: cmd '{err.cmd}' retcode '{err.returncode}'") from err
 
 
 @make(inputs=range(5), outputs=[], handler=Output.STORE)
-def perform_irsync(ctx, destination_resource, token, destination_collection, depositor, dropzone_type):
+def perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart):
+    """Execute a transfer and acknowledge worker exit, including ordinary failures."""
+    dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
+    result = "exited"
+    try:
+        _perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart)
+    except IngestStopped as err:
+        result = "stopped"
+        ctx.callback.msiExit("-1", str(err))
+    finally:
+        ctx.callback.setCollectionAVU(dropzone_path, WORKER_RESULT, result)
+
+
+def _perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart):
     """
     This rule is part the ingest workflow.
     It takes care of actually copying (syncing) the content of the drop-zone into the destination collection.
@@ -130,10 +240,10 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
         The dropzone token, to locate the source collection; e.g: 'handsome-snake'
     destination_collection: str
         The absolute path to the newly created project collection; e.g: '/nlmumc/projects/P000000018/C000000001'
-    depositor: str
-        The iRODS username of the user who started the ingestion
     dropzone_type: str
         The type of dropzone to be ingested (mounted or direct)
+    ingest_restart: str
+        Whether this invocation restarts an ingestion from the error-ingestion state.
     """
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
     if dropzone_type == "mounted":
@@ -144,32 +254,52 @@ def perform_irsync(ctx, destination_resource, token, destination_collection, dep
         # We need to prefix the dropzone path with 'i:' to indicate to iRODS that it is an iRODS - iRODS sync
         source_collection = f"i:{dropzone_path}"
 
+    def cancellation_check():
+        check_stop_requested(ctx, dropzone_path)
+
+    def clean_replicas():
+        cancellation_check()
+        cleaned_count = _clean_failed_replicas(ctx, destination_collection, cancellation_check)
+        cancellation_check()
+        under_replicated_count = _check_replica_count(ctx, destination_collection, destination_resource, cancellation_check)
+        cancellation_check()
+        return cleaned_count + under_replicated_count
+
     def _irsync_with_cleanup():
+        cancellation_check()
         try:
-            _run_irsync(source_collection, destination_collection, destination_resource)
+            _run_irsync(ctx, source_collection, destination_collection, destination_resource, cancellation_check)
         except RuntimeError:
-            # Clean up all issues in one pass so the retry starts from a consistent state.
-            _clean_failed_replicas(ctx, destination_collection)
-            _check_replica_count(ctx, destination_collection, destination_resource)
+            # A stop bypasses cleanup, leaving partial replicas for restart.
+            clean_replicas()
             raise
 
-        # irsync can report success while silently leaving the destination in a
-        # partial state.  Run both checks together so a single retry is sufficient
-        # to address all issues found, regardless of which combination is present.
-        cleaned_count = _clean_failed_replicas(ctx, destination_collection)
-        under_replicated_count = _check_replica_count(ctx, destination_collection, destination_resource)
-        if cleaned_count + under_replicated_count > 0:
+        issue_count = clean_replicas()
+        if issue_count > 0:
             raise RuntimeError(
                 f"irsync completed without error but found issues with "
-                f"{cleaned_count + under_replicated_count} data object(s) in {destination_collection}"
+                f"{issue_count} data object(s) in {destination_collection}"
             )
 
-    operation_name = f"irsync {source_collection} -> {destination_collection}"
-    success = retry_runtime_error(
-        ctx,
-        operation_name,
-        _irsync_with_cleanup,
-    )
+    try:
+        cancellation_check()
+        if ingest_restart == TRUE_AS_STRING:
+            # A previous interrupted transfer may have left locked replicas.
+            clean_replicas()
+
+        operation_name = f"irsync {source_collection} -> {destination_collection}"
+        success = retry_runtime_error(
+            ctx,
+            operation_name,
+            _irsync_with_cleanup,
+            cancellation_check=cancellation_check,
+        )
+        cancellation_check()
+    except IngestStopped:
+        # Restore mounted access before the wrapper reports a stopped worker.
+        if dropzone_type == "mounted":
+            ctx.callback.set_dropzone_cifs_acl(token, "write")
+        raise
 
     if success:
         # NOTE: if perform_irsync was called via remoteExec, time.sleep() inside

@@ -1,21 +1,20 @@
-import json
+"""Retry scenarios with direct fixtures. Run serially: tests modify tape scripts."""
 import subprocess
-import time
 
 import pytest
-from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProcessState
 
-from test_cases.base_tape_archive import BaseTestTapeArchive
+from test_cases.tape_helpers import (
+    TAPE, DISK, command, payload, project, wait_for_operation,
+    assert_on_resource, assert_restored,
+)
 from test_cases.utils import (
-    add_metadata_files_to_direct_dropzone,
     get_log_position,
     read_new_log_lines,
     wait_for_log_matching,
 )
 
 
-class BaseTestTapeRetry(BaseTestTapeArchive):
+class TestTapeRetryUM:
     """
     Tests that specifically exercise the retry-on-transient-error behavior
     added to the archive and unarchive flows (perform_archive / perform_unarchive).
@@ -40,8 +39,6 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
     # Base path of the tape resource vault as mounted inside the container
     SURF_ARCHIVE_PROJECTS_PATH = "/mnt/SURF-Archive/projects"
 
-    dropzone_type = "direct"
-
     # How long to wait for the first retry log message before failing the test
     RETRY_LOG_DETECTION_TIMEOUT_SECONDS = 120
 
@@ -52,23 +49,26 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
     DMATTR_PATH = "/var/lib/irods/msiExecCmd_bin/dmattr"
     DMGET_PATH = "/var/lib/irods/msiExecCmd_bin/dmget"
 
-    @classmethod
-    def add_metadata_files_to_dropzone(cls, token):
-        add_metadata_files_to_direct_dropzone(token)
-
-    @classmethod
-    def add_archive_data_to_dropzone(cls):
-        cls._add_large_file_to_direct_dropzone()
-
-    @classmethod
-    def _add_large_file_to_direct_dropzone(cls):
-        dropzone_path = formatters.format_dropzone_path(cls.token, cls.dropzone_type)
-        large_file_path = "/tmp/large_file"
-        logical_path = f"{dropzone_path}/large_file"
-
-        with open(large_file_path, "wb") as large_file:
-            large_file.write(b"0" * 262144001)
-        subprocess.check_call(f"iput -R stagingResc01 {large_file_path} {logical_path}", shell=True)
+    @pytest.fixture(autouse=True)
+    def tape_scenario(self, project, request, tmp_path):
+        self.project_collection_path = project
+        self.project_id = project.rsplit("/", 2)[1]
+        self.manager1 = "rods"
+        self.service_account = "service-surfarchive"
+        self.destination_resource = DISK
+        self.large_file_logical_path = f"{project}/large_file"
+        self.run_ichmod = f"ichmod -rM own {self.service_account} {project}"
+        archive = request.node.name == "test_archive_retries_on_transient_tape_failure"
+        self.operation_attribute = "archiveState" if archive else "unArchiveState"
+        if archive:
+            self.local_payload = request.getfixturevalue("payload")
+        else:
+            self.local_payload = tmp_path / "payload"
+            self.local_payload.write_text("Tape retry payload.")
+        self.restored_path = tmp_path / "restored"
+        command("iput", "-K", "-R", DISK if archive else TAPE,
+                str(self.local_payload), self.large_file_logical_path)
+        command("ichmod", "-rM", "own", self.service_account, project)
 
     # region retry-specific tests
 
@@ -111,8 +111,7 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
 
             self._wait_for_process_completion()
 
-            output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
-            assert "arcRescSURF01" in output
+            assert_on_resource(self.large_file_logical_path, TAPE)
 
         finally:
             self._restore_tape_access()
@@ -123,11 +122,10 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         Verify that the unarchive flow retries when tape I/O fails transiently and
         completes successfully once access is restored.
 
-        Files must be on tape first, so a full archive cycle is run before the
-        failure scenario.
+        The fixture places the file directly on tape before the failure scenario.
 
         Flow:
-        1. Archive the collection (full happy path, files land on tape)
+        1. Seed a file directly on tape
         2. chmod 000 on /mnt/SURF-Archive/projects/{project_id}  (blocks tape I/O)
         3. start_unarchive  (checks pass: resource status is UP in iRODS catalog)
         4. perform_unarchive runs: every checksum raises RuntimeError (EACCES)
@@ -135,11 +133,8 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         5. Detect the retry log message within 2 minutes → confirm retries fire
         6. Restore tape access (chmod 750)
         7. perform_unarchive retries successfully → unarchive completes
-        8. Assert the large file is on the destination resource
+        8. Assert the file is on the destination resource
         """
-        # Files must be on tape for unarchive to have work to do
-        self.run_archive()
-
         try:
             self._block_tape_access()
 
@@ -164,13 +159,13 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
 
             self._wait_for_process_completion()
 
-            output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
-            assert self.destination_resource in output
+            assert_on_resource(self.large_file_logical_path, self.destination_resource)
+            assert_restored(self.large_file_logical_path, self.local_payload, self.restored_path)
 
         finally:
             self._restore_tape_access()
             self._remove_collection_avu(
-                self.project_collection_path, "unarchiveState", "error-unarchive-failed"
+                self.project_collection_path, "unArchiveState", "error-unarchive-failed"
             )
 
     def test_dm_attr_retries_on_transient_failure(self):
@@ -180,7 +175,7 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         successfully once the script is restored.
 
         Flow:
-        1. Archive the collection (files land on tape)
+        1. Seed a file directly on tape
         2. Set the dmattr script to exit 1 (simulate transient failure)
         3. start_unarchive  (checks pass, resource status is UP)
         4. move_offline_files_to_cache calls dm_attr → dmattr exits 1 → RuntimeError
@@ -188,10 +183,8 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         5. Detect the retry log message → confirm retries fire
         6. Restore the dmattr script to exit 0
         7. Unarchive completes successfully
-        8. Assert the large file is on the destination resource
+        8. Assert the file is on the destination resource
         """
-        self.run_archive()
-
         try:
             self._set_script_exit_code(self.DMATTR_PATH, 1)
 
@@ -215,13 +208,13 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
 
             self._wait_for_process_completion()
 
-            output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
-            assert self.destination_resource in output
+            assert_on_resource(self.large_file_logical_path, self.destination_resource)
+            assert_restored(self.large_file_logical_path, self.local_payload, self.restored_path)
 
         finally:
             self._set_script_exit_code(self.DMATTR_PATH, 0)
             self._remove_collection_avu(
-                self.project_collection_path, "unarchiveState", "error-unarchive-failed"
+                self.project_collection_path, "unArchiveState", "error-unarchive-failed"
             )
 
     def test_dmget_retries_on_transient_failure(self):
@@ -237,7 +230,7 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         cycle sees the files as online and hands off to perform_unarchive.
 
         Flow:
-        1. Archive the collection (files land on tape)
+        1. Seed a file directly on tape
         2. Patch dmattr to echo 'OFL' so dm_attr reports files as offline
         3. Set the dmget script to exit 1 (simulate transient failure)
         4. start_unarchive  (checks pass, resource status is UP)
@@ -247,10 +240,8 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         6. Detect the retry log message → confirm retries fire
         7. Restore dmget to exit 0 and dmattr to echo 'DUL'
         8. Unarchive completes successfully
-        9. Assert the large file is on the destination resource
+        9. Assert the file is on the destination resource
         """
-        self.run_archive()
-
         try:
             self._set_dmattr_status("OFL")
             self._set_script_exit_code(self.DMGET_PATH, 1)
@@ -281,14 +272,14 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
 
             self._wait_for_process_completion()
 
-            output = subprocess.check_output(self.check_large_file_resource, shell=True, encoding="UTF-8")
-            assert self.destination_resource in output
+            assert_on_resource(self.large_file_logical_path, self.destination_resource)
+            assert_restored(self.large_file_logical_path, self.local_payload, self.restored_path)
 
         finally:
             self._set_script_exit_code(self.DMGET_PATH, 0)
             self._set_dmattr_status("DUL")
             self._remove_collection_avu(
-                self.project_collection_path, "unarchiveState", "error-unarchive-failed"
+                self.project_collection_path, "unArchiveState", "error-unarchive-failed"
             )
 
     # endregion
@@ -360,20 +351,9 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         )
 
     def _wait_for_process_completion(self):
-        """
-        Poll get_user_active_processes until no archive/unarchive process is
-        in-progress or PROCESS_COMPLETION_TIMEOUT_SECONDS is exceeded.
-        """
-        deadline = time.time() + self.PROCESS_COMPLETION_TIMEOUT_SECONDS
-        active_processes = None
-        while time.time() < deadline:
-            ret = subprocess.check_output(self.rule_status, shell=True)
-            active_processes = json.loads(ret)
-            if not active_processes[ProcessState.IN_PROGRESS.value]:
-                return
-            time.sleep(5)
-        assert active_processes is not None and not active_processes[ProcessState.IN_PROGRESS.value], (
-            f"Archive/unarchive process did not complete within {self.PROCESS_COMPLETION_TIMEOUT_SECONDS}s"
+        wait_for_operation(
+            self.project_collection_path, self.operation_attribute,
+            timeout=self.PROCESS_COMPLETION_TIMEOUT_SECONDS,
         )
 
     @staticmethod
@@ -485,12 +465,3 @@ class BaseTestTapeRetry(BaseTestTapeArchive):
         )
 
     # endregion
-
-
-class TestTapeRetryDirectUM(BaseTestTapeRetry):
-    depositor = "tape_retry_test_manager"
-    manager1 = depositor
-    manager2 = "tape_retry_test_data_steward"
-    data_steward = manager2
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "passRescUM01"

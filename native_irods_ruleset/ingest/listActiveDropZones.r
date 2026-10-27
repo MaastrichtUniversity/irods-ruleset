@@ -113,6 +113,8 @@ IRULE_listActiveDropZones(*report, *result) {
         if ( *title == "" ) {
             msiAddKeyVal(*kvp, 'title', "no-title-AVU-set");
         } else {
+            # This is to make sure json.loads() does not interpret the title as a JSON type (e.g. boolean, number, null)
+            json_encode_string(*title);
             msiAddKeyVal(*kvp, 'title', *title);
         }
 
@@ -140,6 +142,8 @@ IRULE_listActiveDropZones(*report, *result) {
             msiAddKeyVal(*kvp, 'enableDropzoneSharing', "false");
         } else {
             msiAddKeyVal(*kvp, 'project', *project);
+            # This is to make sure json.loads() does not interpret the title as a JSON type (e.g. boolean, number, null)
+            json_encode_string(*projectTitle);
             msiAddKeyVal(*kvp, 'projectTitle', *projectTitle);
             msiAddKeyVal(*kvp, 'enableDropzoneSharing', *enableDropzoneSharing);
         }

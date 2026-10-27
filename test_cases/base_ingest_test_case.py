@@ -266,6 +266,15 @@ class BaseTestCaseIngest:
 
         assert total_size == self.dropzone_total_size
         assert num_files == self.dropzone_num_files
+
+    def test_dropzone_validation_errors_document(self):
+        """A successful direct or mounted ingest stores an empty validation error list."""
+        rule = (
+            f'/rules/tests/run_test.sh -r get_dropzone_validation_errors'
+            f' -a "{self.token},{self.dropzone_type}"'
+        )
+        result = json.loads(subprocess.check_output(rule, shell=True, encoding="UTF-8"))
+        assert result == {"found": True, "validation_errors": []}
     
     def test_size_ingested_avu(self):
         if not wait_for_log_matching(

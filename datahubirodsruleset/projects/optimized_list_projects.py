@@ -7,6 +7,10 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 from datahubirodsruleset.decorator import make, Output
 
 
+# Keep GenQuery IN conditions small even for catalog IDs with 19 digits.
+_PROJECT_BATCH_SIZE = 20
+
+
 @make(inputs=[], outputs=[0], handler=Output.STORE)
 def optimized_list_projects(ctx):
     """
@@ -27,57 +31,57 @@ def optimized_list_projects(ctx):
         a json list of projects objects
     """
 
-    output = []
-
-    project = reset_project_dict()
-
-    previous_project_flag = ""
-
-    # Query all the projects size in one query
-    ret = ctx.callback.get_projects_size("")["arguments"][0]
-    sizes = json.loads(ret)
-
-    # Query the service accounts to filter out of the output
-    ret = ctx.callback.get_service_accounts_id("")["arguments"][0]
-    filter = json.loads(ret)
-
-    # Query all the current existing users id.
-    # This is needed because of phantom COLL_ACCESS_USER_ID
-    # => when deleted users appear in the ACL
-    ret = ctx.callback.get_all_users_id("")["arguments"][0]
-    users_id = json.loads(ret)
-
-    for result in row_iterator(
-        "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME",
-        "COLL_PARENT_NAME = '/nlmumc/projects'",
-        AS_LIST,
-        ctx.callback,
+    # Let iRODS filter project visibility before fetching metadata or ACLs. This
+    # limits the following queries to projects the caller can access; each query
+    # still runs with the caller's normal iRODS permissions.
+    projects = {}
+    for collection_id, project_path in row_iterator(
+        "COLL_ID, COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback
     ):
-        project_path = result[0]
-        attribute_name = result[1]
-        attribute_value = result[2]
-        access_user_id = result[3]
-        access_level_name = result[4]
-        if previous_project_flag == project_path:
-            project[attribute_name] = attribute_value
+        project = reset_project_dict()
+        project["path"] = formatters.get_project_id_from_project_path(project_path)
+        project["dataSizeGiB"] = float(0)
+        projects[collection_id] = project
 
-            if access_user_id not in filter and access_user_id in users_id:
-                add_access_id_to_project(access_user_id, access_level_name, project)
-        else:
-            project = reset_project_dict()
-            project["path"] = formatters.get_project_id_from_project_path(project_path)
+    if not projects:
+        return []
 
-            # Calculate the project's size
-            if project["path"] in sizes:
-                project["dataSizeGiB"] = sizes[project["path"]]
-            else:
-                project["dataSizeGiB"] = float(0)
+    sizes = json.loads(ctx.callback.get_projects_size("")["arguments"][0])
+    service_accounts = set(json.loads(ctx.callback.get_service_accounts_id("")["arguments"][0]))
+    users_id = json.loads(ctx.callback.get_all_users_id("")["arguments"][0])
 
-            output.append(project)
+    # Fetch multiple projects per query to avoid a query per project, while
+    # keeping IN conditions bounded for callers who can see many projects.
+    collection_ids = list(projects)
+    for offset in range(0, len(collection_ids), _PROJECT_BATCH_SIZE):
+        batch = collection_ids[offset : offset + _PROJECT_BATCH_SIZE]
+        # IDs are catalog integers, so names containing quotes never enter the condition.
+        ids = ",".join(f"'{int(collection_id)}'" for collection_id in batch)
+        condition = f"COLL_ID in ({ids})"
 
-        previous_project_flag = project_path
+        # The old query joined every metadata field with every ACL entry. Its
+        # production plan repeated permission checks for each combined row.
+        # Separate metadata and ACL queries avoid that row multiplication.
+        for collection_id, attribute_name, attribute_value in row_iterator(
+            "COLL_ID, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE", condition, AS_LIST, ctx.callback
+        ):
+            projects[collection_id][attribute_name] = attribute_value
 
-    return output
+        # These ACLs populate the displayed roles; project visibility was already
+        # determined by the initial query, so restrict this query to those IDs.
+        for collection_id, access_user_id, access_level_name in row_iterator(
+            "COLL_ID, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME",
+            condition + " AND COLL_ACCESS_NAME in ('own', 'modify_object', 'read_object')",
+            AS_LIST,
+            ctx.callback,
+        ):
+            if access_user_id not in service_accounts and access_user_id in users_id:
+                add_access_id_to_project(access_user_id, access_level_name, projects[collection_id])
+
+    for project in projects.values():
+        project["dataSizeGiB"] = sizes.get(project["path"], float(0))
+
+    return sorted(projects.values(), key=lambda project: project["path"])
 
 
 def add_access_id_to_project(access_id, access_name, project):

@@ -88,7 +88,6 @@ def validate_dropzone(ctx, dropzone_path, username, dropzone_type):
         validation_errors = does_dropzone_contain_stale_or_locked_files(ctx, dropzone_path, validation_errors)
 
     # Create the pre-ingest document last, after all other validation errors are known.
-    # The physical content scan performed by this rule can add the unsupported-path error.
     validation_errors = create_pre_ingest_document(
         ctx, dropzone_type, project_id, dropzone_path, username, validation_errors
     )

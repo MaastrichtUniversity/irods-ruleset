@@ -16,6 +16,16 @@ from test_cases.utils import (
 )
 
 
+INGEST_SCENARIOS = [
+    pytest.param(("ires-hnas-umResource", "passRescUM01", False), id="um-manager"),
+    pytest.param(("ires-hnas-azmResource", "replRescAZM02", False), id="azm-manager"),
+    pytest.param(("ires-hnas-umResource", "replRescUMCeph01", False), id="s3-manager"),
+    pytest.param(("ires-hnas-umResource", "passRescUM01", True), id="um-contributor"),
+    pytest.param(("ires-hnas-azmResource", "replRescAZM02", True), id="azm-contributor"),
+    pytest.param(("ires-hnas-umResource", "replRescUMCeph01", True), id="s3-contributor"),
+]
+
+
 # TODO Test set_post_ingestion_error_avu
 # TODO Test for item added to delayed queue (iqstat)
 # TODO Test for trigger pre ingest error validation with corrupt metadata
@@ -92,38 +102,46 @@ class BaseTestCaseIngest:
         pass
 
     @classmethod
-    def perform_tasks_after_project_creation(cls):
-        pass
-
-    @classmethod
     def calculate_all_dropzone_sizes(cls):
         rule = '/rules/tests/run_test.sh -r calculate_all_dropzone_sizes'
         subprocess.check_call(rule, shell=True)
 
+    @pytest.fixture(scope="class", autouse=True)
     @classmethod
-    def setup_class(cls):
+    def ingest_scenario(cls, request):
+        cls.ingest_resource, cls.destination_resource, as_contributor = request.param
+        cls.depositor = BaseTestCaseIngest.depositor
+        cls.collection_creator = BaseTestCaseIngest.collection_creator
+        cls.project_path = ""
+        cls.project_id = ""
+        cls.token = ""
+        cls.log_position_before_ingest = 0
         print()
-        print(f"Start {cls.__name__}.setup_class")
+        print(f"Start {cls.__name__}.ingest_scenario")
         # Running the index all rule: delete the current elasticsearch index that could be in a bad state
         run_index_all_project_collections_metadata()
         project = create_project(cls)
         cls.project_path = project["project_path"]
         cls.project_id = project["project_id"]
-        cls.perform_tasks_after_project_creation()
+        if as_contributor:
+            cls.depositor = "dlinssen"
+            cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
+            rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "default,write,{cls.depositor},{cls.project_path}"'
+            subprocess.check_call(rule_set_acl, shell=True)
         cls.token = create_dropzone(cls)
         cls.add_metadata_files_to_dropzone(cls.token)
         cls.add_data_to_dropzone()
         cls.calculate_all_dropzone_sizes()
         cls.log_position_before_ingest = get_log_position()
         start_and_wait_for_ingest(cls)
-        print(f"End {cls.__name__}.setup_class")
+        print(f"End {cls.__name__}.ingest_scenario")
 
-    @classmethod
-    def teardown_class(cls):
+        yield
+
         print()
-        print(f"Start {cls.__name__}.teardown_class")
+        print(f"Start {cls.__name__}.ingest_scenario teardown")
         remove_project(cls.project_path)
-        print(f"End {cls.__name__}.teardown_class")
+        print(f"End {cls.__name__}.ingest_scenario teardown")
 
     # region tests
     def test_verify_dropzone_size_is_correct(self):

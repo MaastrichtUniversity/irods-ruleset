@@ -63,9 +63,6 @@ class BaseTestCaseStopIngest:
 
         self.project_path = None
         self.dropzone_path = None
-        self.ingest_started = False
-        self.ingest_finished = False
-        self.restart_pending = False
         try:
             self.prepare_ingest(tmp_path)
             self.start_ingest_and_wait_for_transfer()
@@ -104,7 +101,6 @@ class BaseTestCaseStopIngest:
             "start_ingest", self.depositor, self.token, self.dropzone_type,
             user=self.depositor if self.dropzone_type == "direct" else None,
         )
-        self.ingest_started = True
         self.wait_for_transfer()
 
     def wait_for_transfer(self):
@@ -147,14 +143,12 @@ class BaseTestCaseStopIngest:
 
     def restart_ingest(self):
         self.log_position = get_log_position()
-        self.restart_pending = True
         run_rule("restart_ingest", self.token, self.dropzone_type)
         # Restart is delayed; allow it to leave the previously stopped state.
         deadline = time.monotonic() + 60
         while self.get_dropzone_avu("state") == DropzoneState.ERROR_INGESTION.value and time.monotonic() < deadline:
             time.sleep(0.2)
         assert self.get_dropzone_avu("state") != DropzoneState.ERROR_INGESTION.value, "Restart did not begin"
-        self.restart_pending = False
 
     def restart_and_verify_ingest(self):
         self.restart_ingest()
@@ -184,28 +178,35 @@ class BaseTestCaseStopIngest:
         while time.monotonic() < deadline:
             delayed_rules = subprocess.check_output(["iqstat", "-a"], text=True)
             if removal_rule in delayed_rules or not self.get_dropzone_avu("state"):
-                self.ingest_finished = True
                 return
             time.sleep(1)
         pytest.fail(f"Post-ingest work did not schedule removal of {self.dropzone_path}")
 
     def cleanup_project(self):
-        # Never remove data underneath a transfer that has not confirmed a stop.
-        if self.restart_pending:
-            print(f"Restart still pending; retaining {self.dropzone_path} and {self.project_path}")
-            return
-        if self.dropzone_path and self.get_dropzone_avu("ingestTransferState") == "active":
-            try:
+        try:
+            if self.dropzone_path and self.get_dropzone_avu("ingestTransferState") == "active":
                 run_rule("stop_ingest", self.token, self.dropzone_type)
-            except subprocess.CalledProcessError:
-                print(f"Stop unconfirmed; retaining {self.dropzone_path} and {self.project_path} for inspection")
-                return
-        if self.ingest_started and not self.ingest_finished:
-            if not self.get_dropzone_avu("state").startswith("error-"):
-                print(f"Ingest workflow still unfinished; retaining {self.dropzone_path} and {self.project_path}")
-                return
-        if self.project_path:
-            remove_project(self.project_path)
+        finally:
+            try:
+                if self.dropzone_path:
+                    self.cleanup_dropzone()
+            finally:
+                if self.project_path:
+                    remove_project(self.project_path)
+
+    def cleanup_dropzone(self):
+        if self.get_dropzone_avu("state"):
+            subprocess.check_call(["ichmod", "-rM", "own", "rods", self.dropzone_path])
+        ingest_host = subprocess.check_output([
+            "iquest", "%s", f"SELECT RESC_LOC WHERE RESC_NAME = '{self.ingest_resource}'",
+        ], text=True).strip()
+        # Use the normal removal rule to also disable and delete physical zones.
+        # It tolerates a collection already removed by post-ingest cleanup.
+        subprocess.check_call([
+            "irule", "-r", "irods_rule_engine_plugin-irods_rule_language-instance",
+            f"removeDropzone('{self.dropzone_path}', '{ingest_host}', '{self.token}', '{self.dropzone_type}')",
+            "null", "ruleExecOut",
+        ])
 
 
 class TestStopDirectIngestUM(BaseTestCaseStopIngest):

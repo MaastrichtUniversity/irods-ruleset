@@ -210,15 +210,16 @@ STOP_INGEST_TEST_TYPE=mounted python3 -m pytest -v -s test_cases/test_stop_inges
 
 The test uses `ires-hnas-umResource` / `passRescUM01` and the existing test users.
 Set `STOP_INGEST_TEST_BYTES` to a larger byte count if the transfer finishes
-before the test observes it. Cleanup retains test data if a stop cannot be
-confirmed, so an unresponsive transfer can be inspected safely.
+before the test observes it. Cleanup always attempts to remove the dropzone and
+project, including when the test fails or a stop cannot be confirmed.
 
 The scenario methods separate preparation, transfer observation, stop checks,
 restart verification, and cleanup. Direct ingestion starts as the depositor;
 stop and restart run as `rods`. Metadata checks use the existing
 `get_collection_attribute_value` rule. The deletion check matches the explicit
-`removeDropzone(...)` call in `iqstat -a`. Cleanup retains data while a restart
-is still queued or a stop remains unconfirmed.
+`removeDropzone(...)` call in `iqstat -a`. Cleanup stops an active transfer before
+attempting dropzone removal, including physical ingest folders, and always
+attempts project removal even if stopping or dropzone removal fails.
 
 Reads and coordinator/worker writes use `getCollectionAVU`/`setCollectionAVU`;
 worker-result reset uses `remove_collection_attribute_value`, since iRODS

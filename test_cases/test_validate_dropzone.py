@@ -15,6 +15,7 @@ from test_cases.utils import (
 )
 
 
+# Resource outage tests require this entire class to run sequentially.
 class TestValidateDropzone:
     """
     Integration tests for validate_dropzone.

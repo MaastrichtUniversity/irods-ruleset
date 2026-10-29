@@ -1,5 +1,7 @@
+import fcntl
 import json
 import subprocess
+from contextlib import contextmanager
 import pytest
 
 from dhpythonirodsutils import formatters
@@ -17,13 +19,35 @@ from test_cases.utils import (
 
 
 INGEST_SCENARIOS = [
-    pytest.param(("ires-hnas-umResource", "passRescUM01", False), id="um-manager"),
-    pytest.param(("ires-hnas-azmResource", "replRescAZM02", False), id="azm-manager"),
-    pytest.param(("ires-hnas-umResource", "replRescUMCeph01", False), id="s3-manager"),
-    pytest.param(("ires-hnas-umResource", "passRescUM01", True), id="um-contributor"),
-    pytest.param(("ires-hnas-azmResource", "replRescAZM02", True), id="azm-contributor"),
-    pytest.param(("ires-hnas-umResource", "replRescUMCeph01", True), id="s3-contributor"),
+    pytest.param(("ires-hnas-umResource", "passRescUM01", False),
+                 id="um-manager", marks=pytest.mark.xdist_group("um-manager")),
+    pytest.param(("ires-hnas-azmResource", "replRescAZM02", False),
+                 id="azm-manager", marks=pytest.mark.xdist_group("azm-manager")),
+    pytest.param(("ires-hnas-umResource", "replRescUMCeph01", False),
+                 id="s3-manager", marks=pytest.mark.xdist_group("s3-manager")),
+    pytest.param(("ires-hnas-umResource", "passRescUM01", True),
+                 id="um-contributor", marks=pytest.mark.xdist_group("um-contributor")),
+    pytest.param(("ires-hnas-azmResource", "replRescAZM02", True),
+                 id="azm-contributor", marks=pytest.mark.xdist_group("azm-contributor")),
+    pytest.param(("ires-hnas-umResource", "replRescUMCeph01", True),
+                 id="s3-contributor", marks=pytest.mark.xdist_group("s3-contributor")),
 ]
+
+
+@contextmanager
+def ingest_preparation(request, tmp_path_factory):
+    if not hasattr(request.config, "workerinput"):
+        run_index_all_project_collections_metadata()
+        yield
+        return
+
+    # The session fixture has prepared the index. Stage files and calculate
+    # global sizes without races.
+    # Transfers and their assertions run after releasing this lock.
+    shared_directory = tmp_path_factory.getbasetemp().parent
+    with (shared_directory / "ingest-preparation.lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
 
 
 # TODO Test set_post_ingestion_error_avu
@@ -107,8 +131,9 @@ class BaseTestCaseIngest:
         subprocess.check_call(rule, shell=True)
 
     @pytest.fixture(scope="class", autouse=True)
-    @classmethod
-    def ingest_scenario(cls, request):
+    @staticmethod
+    def ingest_scenario(request, tmp_path_factory):
+        cls = request.cls
         cls.ingest_resource, cls.destination_resource, as_contributor = request.param
         cls.depositor = BaseTestCaseIngest.depositor
         cls.collection_creator = BaseTestCaseIngest.collection_creator
@@ -118,20 +143,19 @@ class BaseTestCaseIngest:
         cls.log_position_before_ingest = 0
         print()
         print(f"Start {cls.__name__}.ingest_scenario")
-        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
-        run_index_all_project_collections_metadata()
-        project = create_project(cls)
-        cls.project_path = project["project_path"]
-        cls.project_id = project["project_id"]
-        if as_contributor:
-            cls.depositor = "dlinssen"
-            cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
-            rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "default,write,{cls.depositor},{cls.project_path}"'
-            subprocess.check_call(rule_set_acl, shell=True)
-        cls.token = create_dropzone(cls)
-        cls.add_metadata_files_to_dropzone(cls.token)
-        cls.add_data_to_dropzone()
-        cls.calculate_all_dropzone_sizes()
+        with ingest_preparation(request, tmp_path_factory):
+            project = create_project(cls)
+            cls.project_path = project["project_path"]
+            cls.project_id = project["project_id"]
+            if as_contributor:
+                cls.depositor = "dlinssen"
+                cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
+                rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "default,write,{cls.depositor},{cls.project_path}"'
+                subprocess.check_call(rule_set_acl, shell=True)
+            cls.token = create_dropzone(cls)
+            cls.add_metadata_files_to_dropzone(cls.token)
+            cls.add_data_to_dropzone()
+            cls.calculate_all_dropzone_sizes()
         cls.log_position_before_ingest = get_log_position()
         start_and_wait_for_ingest(cls)
         print(f"End {cls.__name__}.ingest_scenario")
@@ -171,8 +195,8 @@ class BaseTestCaseIngest:
         assert self.manager1 in collection_detail["managers"]["users"]
         assert self.manager2 in collection_detail["managers"]["users"]
 
-    def test_collection_instance(self):
-        tmp_instance_path = "/tmp/tmp_instance.json"
+    def test_collection_instance(self, tmp_path):
+        tmp_instance_path = tmp_path / "instance.json"
         iget = f"iget -f {self.project_path}/{self.collection_id}/instance.json {tmp_instance_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_instance_path) as tmp_instance_file:
@@ -181,8 +205,8 @@ class BaseTestCaseIngest:
             assert pid.startswith("https://hdl.handle.net/")
             assert pid.endswith(f"{self.project_id}{self.collection_id}instance.1")
 
-    def test_collection_schema(self):
-        tmp_schema_path = "/tmp/tmp_schema.json"
+    def test_collection_schema(self, tmp_path):
+        tmp_schema_path = tmp_path / "schema.json"
         iget = f"iget -f {self.project_path}/{self.collection_id}/schema.json {tmp_schema_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_schema_path) as tmp_schema_file:
@@ -295,9 +319,10 @@ class BaseTestCaseIngest:
         assert result == {"found": True, "validation_errors": []}
     
     def test_size_ingested_avu(self):
+        collection_path = f"{self.project_path}/{self.collection_id}"
         if not wait_for_log_matching(
             self.log_position_before_ingest,
-            lambda msg: "sizeIngested" in msg and self.dropzone_total_size in msg,
+            lambda msg: collection_path in msg and "sizeIngested" in msg and self.dropzone_total_size in msg,
             self.SIZE_INGESTED_LOG_DETECTION_TIMEOUT_SECONDS,
         ):
             pytest.fail(

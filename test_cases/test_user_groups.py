@@ -76,6 +76,9 @@ getUsersInGroup
 """
 
 
+pytestmark = pytest.mark.parallel
+
+
 class TestUserGroups:
     project_path = ""
     project_id = ""

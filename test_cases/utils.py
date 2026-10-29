@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import tempfile
 import time
 import uuid
 from os import path
@@ -9,8 +10,10 @@ from typing import Callable
 import requests
 from dhpythonirodsutils import formatters, validators
 
-TMP_INSTANCE_PATH = "/tmp/metadata_instance.json"
-TMP_SCHEMA_PATH = "/tmp/metadata_schema.json"
+# Each pytest process owns its cache, including when xdist workers start together.
+_metadata_directory = tempfile.TemporaryDirectory(prefix="ruleset-metadata-")
+TMP_INSTANCE_PATH = path.join(_metadata_directory.name, "metadata_instance.json")
+TMP_SCHEMA_PATH = path.join(_metadata_directory.name, "metadata_schema.json")
 
 
 def get_instance():
@@ -56,16 +59,17 @@ def add_metadata_files_to_direct_dropzone(token):
 
 
 def add_data_to_direct_dropzone(dropzone_info):
-    for filename, size in dropzone_info.files_per_protocol.items():
-        file_path = f"/tmp/{filename}"
-        dropzone_path = formatters.format_dropzone_path(
-            dropzone_info.token, dropzone_info.dropzone_type
-        )
-        logical_path = f"{dropzone_path}/{filename}"
+    with tempfile.TemporaryDirectory(prefix="ingest-") as directory:
+        for filename, size in dropzone_info.files_per_protocol.items():
+            file_path = path.join(directory, filename)
+            dropzone_path = formatters.format_dropzone_path(
+                dropzone_info.token, dropzone_info.dropzone_type
+            )
+            logical_path = f"{dropzone_path}/{filename}"
 
-        with open(file_path, "wb") as file_buffer:
-            file_buffer.write(b"0" * size)
-        subprocess.check_call(["iput", "-R", "stagingResc01", file_path, logical_path])
+            with open(file_path, "wb") as file_buffer:
+                file_buffer.write(b"0" * size)
+            subprocess.check_call(["iput", "-R", "stagingResc01", file_path, logical_path])
 
 
 def revert_latest_project_collection_number(project_path):
@@ -184,31 +188,39 @@ def wait_for_set_acl_for_metadata_snapshot_to_finish(project_id):
     assert project_id not in output
 
 
-def wait_for_change_project_permissions_to_finish():
+def wait_for_change_project_permissions_to_finish(project_id):
     """
     Wait for upto 90 seconds for the delay queue part of changeProjectPermissions to finish
     Continue when completed in time
     """
-    cmd = "iqstat -a | grep changeProjectPermission"
+    # Native delayed rules keep *project in their stored context, not their
+    # displayed rule body. Filtering iqstat's text would miss pending changes.
+    cmd = [
+        "iquest", "%s",
+        "SELECT RULE_EXEC_ID WHERE RULE_EXEC_NAME LIKE '%changeProjectPermission%'"
+        f" AND RULE_EXEC_CONTEXT LIKE '%{project_id}%'",
+    ]
     fail_safe = 30
     output = ""
     while fail_safe != 0:
         try:
-            output = subprocess.check_output(cmd, shell=True)
+            output = subprocess.check_output(cmd, encoding="UTF-8").strip()
             fail_safe = fail_safe - 1
             time.sleep(3)
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as error:
+            if "CAT_NO_ROWS_FOUND" not in error.output:
+                raise
             fail_safe = 0
             output = ""
-    assert "changeProjectPermission" not in output
+    assert not output, f"Pending permission rules for {project_id}: {output}"
 
 
-def wait_for_revoke_project_collection_user_acl():
+def wait_for_revoke_project_collection_user_acl(project_id):
     """
     Wait for upto 90 seconds for the delay queue part of revoke_project_collection_user_acl to finish
     Continue when completed in time
     """
-    cmd = "iqstat -a | grep msiSetACL"
+    cmd = f"iqstat -a | grep msiSetACL | grep '{project_id}'"
     fail_safe = 30
     output = ""
     while fail_safe != 0:
@@ -310,6 +322,13 @@ def check_if_key_value_in_dict_list(dictionaries_list, key, value):
         if dictionary[key] == value:
             found = True
     return found
+
+
+def prepare_project_collections_index():
+    # Workers use the index initialized by the parallel_index session fixture.
+    # Explicit reindex tests still call run_index_all_project_collections_metadata.
+    if not os.environ.get("PYTEST_XDIST_WORKER"):
+        run_index_all_project_collections_metadata()
 
 
 def run_index_all_project_collections_metadata():

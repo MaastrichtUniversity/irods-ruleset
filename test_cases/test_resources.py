@@ -27,6 +27,9 @@ Native rules:
 """
 
 
+pytestmark = pytest.mark.parallel
+
+
 class TestResources:
     project_path = ""
     project_id = ""

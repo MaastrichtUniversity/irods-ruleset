@@ -12,6 +12,7 @@ from test_cases.utils import (
 )
 
 
+# Inherits an explicit global reindex test; keep this class sequential.
 class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
     @classmethod
     def run_after_ingest(cls):
@@ -21,7 +22,7 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
         assert instance["collection_id"] == cls.collection_id
 
         subprocess.check_call(cls.revoke_rule, shell=True)
-        wait_for_revoke_project_collection_user_acl()
+        wait_for_revoke_project_collection_user_acl(cls.project_id)
 
     def test_change_project_permissions(self):
         user_to_check = "auser"
@@ -44,7 +45,7 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
         assert user_to_check in project["contributors"]["users"]
         assert user_to_check not in project["viewers"]["users"]
 
-        wait_for_change_project_permissions_to_finish()
+        wait_for_change_project_permissions_to_finish(self.project_id)
 
         # Check that user_to_check is still not part of the project collection ACL.
         # changeProjectPermissions mustn't give access (back) to user to project collection that are deleted
@@ -54,6 +55,7 @@ class TestRevokeProjectUserAccess(BaseDataDeleteTestCase):
         assert f"{user_to_check}#nlmumc:read" not in ret_acl
 
 
+@pytest.mark.parallel
 class TestRevokeProjectUserAccessWithActiveProcess(BaseDataDelete):
     def test_revoke_project_collection_user_access(self):
         mod_acl = f"ichmod -M own rods {self.project_collection_path}"

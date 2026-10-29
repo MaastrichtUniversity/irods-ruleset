@@ -45,6 +45,7 @@ iRODS native rules usage summary:
 """
 
 
+# Resource outage tests require this entire class to run sequentially.
 class TestProjects:
     project_paths = []
     project_ids = []

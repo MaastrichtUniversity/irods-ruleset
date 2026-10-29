@@ -7,7 +7,11 @@ import subprocess
 from dhpythonirodsutils import formatters
 
 
+pytestmark = pytest.mark.parallel
+
+
 @pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="class")
+@pytest.mark.xdist_group("direct")
 class TestDirectIngest(BaseTestCaseIngest):
     dropzone_type = "direct"
     dropzone_total_size = "63169378"

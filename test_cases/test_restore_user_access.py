@@ -1,5 +1,7 @@
 import subprocess
 
+import pytest
+
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import DataDeletionAttribute
 
@@ -10,11 +12,14 @@ from test_cases.utils import (
 )
 
 
+pytestmark = pytest.mark.parallel
+
+
 class TestRestoreProjectUserAccess(BaseDataDelete):
     @classmethod
     def run_after_ingest(cls):
         subprocess.check_call(cls.revoke_rule, shell=True)
-        wait_for_revoke_project_collection_user_acl()
+        wait_for_revoke_project_collection_user_acl(cls.project_id)
 
         # First, restore the project
         restore_rule = f'/rules/tests/run_test.sh -r restore_project_user_access -a "{cls.project_path}" '

@@ -26,7 +26,8 @@ setuptools.setup(
         "pyrsistent==0.16.1",
         "requests==2.34.2",
         "elasticsearch==7.17.6",
-        "pytest",
+        "pytest>=7,<9.2",
+        "pytest-xdist>=3.8",
     ],
     # tests_requires=["pytest"],
 )

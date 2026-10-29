@@ -8,6 +8,7 @@ from test_cases.utils import (
 )
 
 
+# Inherits an explicit global reindex test; run sequentially.
 class TestDeleteProjectData(BaseDataDeleteTestCase):
     deletion_state = DataDeletionState.DELETED.value
     number_metadata_files = 4
@@ -15,7 +16,7 @@ class TestDeleteProjectData(BaseDataDeleteTestCase):
     @classmethod
     def run_after_ingest(cls):
         subprocess.check_call(cls.revoke_rule, shell=True)
-        wait_for_revoke_project_collection_user_acl()
+        wait_for_revoke_project_collection_user_acl(cls.project_id)
 
         delete_rule = f'/rules/tests/run_test.sh -r delete_project_data -a "{cls.project_path},true" '
         subprocess.check_call(delete_rule, shell=True)

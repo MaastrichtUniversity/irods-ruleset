@@ -14,6 +14,9 @@ from test_cases.tape_helpers import (
 )
 
 
+pytestmark = pytest.mark.parallel
+
+
 @pytest.mark.parametrize("operation,single_file,stored_scope", [
     ("archive", False, False), ("unarchive", False, True),
     ("unarchive", True, True), ("unarchive", False, False),

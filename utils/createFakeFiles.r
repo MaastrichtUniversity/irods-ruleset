@@ -8,8 +8,7 @@ def main(rule_args, callback, rei):
     rule_code=\
     '''def main(rule_args,callback,rei):
           import subprocess
-          subprocess.check_call("touch /tmp/0bytes.devfile && fallocate -l 50K /tmp/50K.devfile && fallocate -l 15M /tmp/15M.devfile && fallocate -l 45M /tmp/45M.devfile", shell=True)
-          subprocess.check_call("mv /tmp/*.devfile {}", shell=True)
+          subprocess.check_call("touch {0}/0bytes.devfile && fallocate -l 50K {0}/50K.devfile && fallocate -l 15M {0}/15M.devfile && fallocate -l 45M {0}/45M.devfile", shell=True)
     '''.format(dropzone_path)
     callback.py_remote(remote_resource, '<INST_NAME>irods_rule_engine_plugin-python-instance</INST_NAME>', rule_code, '')
 

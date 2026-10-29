@@ -1,6 +1,9 @@
 import json
 import subprocess
+import tempfile
 from os import path
+
+import pytest
 
 from dhpythonirodsutils import formatters
 
@@ -11,6 +14,9 @@ from test_cases.utils import (
     get_project_collection_instance_in_elastic,
     TMP_INSTANCE_PATH,
 )
+
+
+pytestmark = pytest.mark.parallel
 
 
 class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
@@ -29,18 +35,19 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
         if not path.exists(TMP_INSTANCE_PATH):
             get_instance()
 
-        tmp_edit_instance_path = "/tmp/edit_metadata_instance.json"
-        with open(TMP_INSTANCE_PATH, "r") as json_file, open(tmp_edit_instance_path, "w") as edit_json_file:
-            instance = json.load(json_file)
-            instance["3_Title"]["title"]["@value"] = cls.new_collection_title
-            edit_json_file.write(json.dumps(instance, sort_keys=True, indent=4))
+        with tempfile.TemporaryDirectory(prefix="edit-metadata-") as directory:
+            tmp_edit_instance_path = path.join(directory, "edit_metadata_instance.json")
+            with open(TMP_INSTANCE_PATH, "r") as json_file, open(tmp_edit_instance_path, "w") as edit_json_file:
+                instance = json.load(json_file)
+                instance["3_Title"]["title"]["@value"] = cls.new_collection_title
+                edit_json_file.write(json.dumps(instance, sort_keys=True, indent=4))
 
-        instance_collection_path = formatters.format_instance_collection_path(cls.project_id, cls.collection_id)
-        iput_instance = f"iput -f {tmp_edit_instance_path} {instance_collection_path}"
-        subprocess.check_call(iput_instance, shell=True)
+            instance_collection_path = formatters.format_instance_collection_path(cls.project_id, cls.collection_id)
+            iput_instance = f"iput -f {tmp_edit_instance_path} {instance_collection_path}"
+            subprocess.check_call(iput_instance, shell=True)
 
-    def test_collection_instance_version(self):
-        tmp_instance_path = "/tmp/tmp_instance.json"
+    def test_collection_instance_version(self, tmp_path):
+        tmp_instance_path = tmp_path / "instance.json"
         iget = f"iget -f {self.project_path}/{self.collection_id}/instance.json {tmp_instance_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_instance_path) as tmp_instance_file:
@@ -57,8 +64,8 @@ class BaseEditCollectionMetadata(BaseTestCaseCustomizableMetadata):
         collection_title = instance["3_Title"]["title"]["@value"]
         assert collection_title == self.new_collection_title
 
-    def test_collection_schema_version(self):
-        tmp_schema_path = "/tmp/tmp_schema.json"
+    def test_collection_schema_version(self, tmp_path):
+        tmp_schema_path = tmp_path / "schema.json"
         iget = f"iget -f {self.project_path}/{self.collection_id}/schema.json {tmp_schema_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_schema_path) as tmp_schema_file:

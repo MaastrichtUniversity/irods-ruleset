@@ -1,7 +1,6 @@
 """Tape flows with directly seeded projects; no dropzones or ingestion required.
 
-Run serially with the retry suite: resource availability checks modify shared
-resource status temporarily.
+Resource-down checks run sequentially; the other cases own their projects.
 """
 import subprocess
 
@@ -32,6 +31,7 @@ def start_and_wait(operation, collection, target):
     wait_for_operation(collection, attribute)
 
 
+@pytest.mark.parallel
 def test_archive(disk_project, disk, payload, tmp_path):
     large = f"{disk_project}/large_file"
     small = f"{disk_project}/small_file"
@@ -48,6 +48,7 @@ def test_archive(disk_project, disk, payload, tmp_path):
     assert_on_resource(small, disk)
 
 
+@pytest.mark.parallel
 def test_unarchive_collection(disk_project, disk, tmp_path):
     local = tmp_path / "payload"
     local.write_text("Restore every file in the collection.")
@@ -63,6 +64,7 @@ def test_unarchive_collection(disk_project, disk, tmp_path):
         assert_restored(path, local, tmp_path / f"restored-{index}")
 
 
+@pytest.mark.parallel
 def test_unarchive_file(disk_project, disk, tmp_path):
     local = tmp_path / "payload"
     local.write_text("Restore only the requested file.")
@@ -85,6 +87,7 @@ def assert_rejected(collection):
             run_rule(f"start_{operation}", collection, "rods")
 
 
+@pytest.mark.parallel
 def test_tape_avu_permissions(project):
     path = project.rsplit("/", 1)[0]
     command("imeta", "set", "-C", path, "enableArchive", "false")
@@ -96,11 +99,13 @@ def test_tape_avu_permissions(project):
     ("archiveState", "in-queue-for-archival"),
     ("unArchiveState", "in-queue-for-unarchival"),
 ])
+@pytest.mark.parallel
 def test_tape_running_process(project, attribute, state):
     command("imeta", "-M", "set", "-C", project, attribute, state)
     assert_rejected(project)
 
 
+# Changes shared resource status; run sequentially.
 @pytest.mark.parametrize("resource", [TAPE, DISK, REPLICATED_DISK, "replRescUMCeph01"])
 def test_tape_resource_down(project, resource):
     if resource != TAPE:
@@ -114,16 +119,19 @@ def test_tape_resource_down(project, resource):
         command("iadmin", "modresc", resource, "status", status or "up")
 
 
+@pytest.mark.parallel
 def test_unarchive_invalid_path():
     with pytest.raises(subprocess.CalledProcessError):
         run_rule("start_unarchive", "/nlmumc/home/rods", "rods")
 
 
 @pytest.mark.parametrize("operation", ["archive", "unarchive"])
+@pytest.mark.parallel
 def test_without_service_account(project, operation):
     with pytest.raises(subprocess.CalledProcessError):
         command("/rules/tests/run_test.sh", "-r", f"start_{operation}", "-a", f"{project},rods", "-u", "rods")
 
 
+@pytest.mark.parallel
 def test_tape_with_non_existent_pc(project):
     assert_rejected(f"{project.rsplit('/', 1)[0]}/C000000002")

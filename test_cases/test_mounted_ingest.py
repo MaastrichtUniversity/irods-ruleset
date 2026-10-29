@@ -5,7 +5,11 @@ from test_cases.utils import add_metadata_files_to_mounted_dropzone
 import subprocess
 
 
+pytestmark = pytest.mark.parallel
+
+
 @pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="class")
+@pytest.mark.xdist_group("mounted")
 class TestMountedIngest(BaseTestCaseIngest):
     dropzone_type = "mounted"
     # For mounted ingest tests, there are no files in the mounted 'network' dropzone folder /mnt/ingest/zones/*token.

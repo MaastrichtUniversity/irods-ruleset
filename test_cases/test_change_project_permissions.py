@@ -1,6 +1,8 @@
 import json
 import subprocess
 
+import pytest
+
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
@@ -14,13 +16,16 @@ from test_cases.utils import (
     create_data_steward,
     wait_for_change_project_permissions_to_finish,
     get_project_collection_instance_in_elastic,
-    run_index_all_project_collections_metadata,
+    prepare_project_collections_index,
 )
 
 """
 iRODS native rules usage summary:
 - changeProjectPermissions: valid
 """
+
+
+pytestmark = pytest.mark.parallel
 
 
 class TestChangeProjectPermissions:
@@ -55,8 +60,8 @@ class TestChangeProjectPermissions:
     def setup_class(cls):
         print()
         print(f"Start {cls.__name__}.setup_class")
-        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
-        run_index_all_project_collections_metadata()
+        # Prepare the index; parallel workers share session initialization.
+        prepare_project_collections_index()
         create_user(cls.depositor)
         create_data_steward(cls.data_steward)
         create_user(cls.new_user)
@@ -106,7 +111,7 @@ class TestChangeProjectPermissions:
         assert self.new_user not in project["contributors"]["users"]
         assert self.new_user not in project["viewers"]["users"]
 
-        wait_for_change_project_permissions_to_finish()
+        wait_for_change_project_permissions_to_finish(self.project_id)
 
         # Check that new user has been added to the collection ACL with read rights
         acl = f"ils -A {self.project_collection_path}"
@@ -131,7 +136,7 @@ class TestChangeProjectPermissions:
         assert self.new_user in project["contributors"]["users"]
         assert self.new_user not in project["viewers"]["users"]
 
-        wait_for_change_project_permissions_to_finish()
+        wait_for_change_project_permissions_to_finish(self.project_id)
 
         # Check that new user has been added to the collection ACL with read rights
         acl = f"ils -A {self.project_collection_path}"
@@ -152,7 +157,7 @@ class TestChangeProjectPermissions:
         assert self.new_user not in project["contributors"]["users"]
         assert self.new_user in project["viewers"]["users"]
 
-        wait_for_change_project_permissions_to_finish()
+        wait_for_change_project_permissions_to_finish(self.project_id)
 
         # Check that new user has been added to the collection ACL with read rights
         acl = f"ils -A {self.project_collection_path}"
@@ -173,7 +178,7 @@ class TestChangeProjectPermissions:
         assert self.new_user not in project["contributors"]["users"]
         assert self.new_user not in project["viewers"]["users"]
 
-        wait_for_change_project_permissions_to_finish()
+        wait_for_change_project_permissions_to_finish(self.project_id)
 
         # Check that new user has no rights anymore on the collection
         acl = f"ils -A {self.project_collection_path}"

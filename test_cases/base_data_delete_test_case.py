@@ -12,6 +12,7 @@ from test_cases.utils import (
     add_metadata_files_to_direct_dropzone,
     remove_project,
     run_index_all_project_collections_metadata,
+    prepare_project_collections_index,
     add_data_to_direct_dropzone,
     remove_dropzone,
 )
@@ -67,8 +68,8 @@ class BaseDataDelete:
         add_data_to_direct_dropzone(cls)
         start_and_wait_for_ingest(cls)
 
-        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
-        run_index_all_project_collections_metadata()
+        # Prepare the index; parallel workers share session initialization.
+        prepare_project_collections_index()
 
         # The rule revoke_project_collection_user_access checks if a dropzone is linked to the input project collection,
         # which is the case during the test case execution.

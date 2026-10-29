@@ -17,6 +17,7 @@ from test_cases.utils import (
 )
 
 
+# Checks the global project counter; run sequentially.
 class TestPolicies:
     project_path = ""
     project_id = ""

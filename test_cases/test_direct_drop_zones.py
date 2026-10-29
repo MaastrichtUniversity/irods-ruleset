@@ -1,9 +1,14 @@
 import json
 import subprocess
 
+import pytest
+
 from dhpythonirodsutils import formatters
 from test_cases.base_dropzone_test_case import BaseTestCaseDropZones
 from test_cases.utils import add_metadata_files_to_direct_dropzone
+
+
+pytestmark = pytest.mark.parallel
 
 
 class TestDirectDropZones(BaseTestCaseDropZones):

@@ -1,6 +1,8 @@
 import json
 import subprocess
 
+import pytest
+
 from dhpythonirodsutils import formatters
 
 from test_cases.utils import (
@@ -62,6 +64,9 @@ list_collections
 set_acl
     Used in MDR, RW and RS
 """
+
+
+pytestmark = pytest.mark.parallel
 
 
 class TestCollections:

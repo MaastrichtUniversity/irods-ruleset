@@ -11,7 +11,7 @@ from test_cases.utils import (
     does_path_exist,
     remove_project,
     wait_for_set_acl_for_metadata_snapshot_to_finish,
-    run_index_all_project_collections_metadata,
+    prepare_project_collections_index,
 )
 
 
@@ -57,8 +57,8 @@ class BaseTestCaseCustomizableMetadata:
         cls.add_metadata_files_to_dropzone(cls.token)
         start_and_wait_for_ingest(cls)
 
-        # Running the index all rule: delete the current elasticsearch index that could be in a bad state
-        run_index_all_project_collections_metadata()
+        # Prepare the index; parallel workers share session initialization.
+        prepare_project_collections_index()
         cls.project_collection_path = formatters.format_project_collection_path(cls.project_id, cls.collection_id)
         cls.edit_collection_metadata()
 

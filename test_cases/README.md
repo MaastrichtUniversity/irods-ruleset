@@ -73,13 +73,73 @@ Each scenario shares one project/dropzone ingest across its tests and removes
 the project afterwards. Use `-k` to select a scenario, or a quoted node ID to
 select one test within that scenario.
 
-# How to run all the test cases in parallel
+# Parallel and sequential execution
+
+The development launcher uses three workers by default. Choose another count
+with `--workers`, or disable parallel execution with `--workers 0`:
+
+```sh
+./rit.sh test irods
+./rit.sh test irods --workers 2
+./rit.sh test irods --workers 0
+./rit.sh test irods test_resources.py --workers 2
+./rit.sh test irods 'test_tape_archive.py::test_unarchive_file'
 ```
-./rit.sh exec icat
-su irods
-pip install pytest-xdist
-cd /rules/test_cases
-/var/lib/irods/.local/bin/pytest -p no:cacheprovider -n 3 --dist loadfile -v .
+
+`--parallel` remains accepted for compatibility. `--workers` works independently
+of that flag, and zero always selects sequential execution.
+
+Tests marked `pytest.mark.parallel` run together on icat with xdist's
+`loadgroup` scheduler. Each class stays on one worker in collection order; each
+direct/mounted ingest scenario retains its own group and shares one ingest
+across its assertions. The launcher waits for this phase to finish, runs all
+unmarked tests sequentially on icat, then runs mounted stop/restart tests on
+**ires-hnas-um**. A file or node selection is applied to both icat phases; an
+empty phase is allowed, while real failures stop the launcher immediately.
+With zero workers, all selected icat tests run once, in their original order.
+
+The parallel suites cover ingest, dropzones, collections, resources, metadata
+editing/schema changes, project permissions, restored access, user groups, tape
+restart, and revocation checks with an active process. Standalone tape archive
+checks are also parallel, except resource-down checks.
+
+These classes remain entirely sequential because they mix independent checks
+with operations that affect other tests:
+
+- `TestValidateDropzone` and `TestProjects`: temporarily take shared resources down.
+- `TestPolicies`: checks the global project counter.
+- `TestDeleteProjectData` and `TestRevokeProjectUserAccess`: deliberately rebuild the search index.
+- `TestTapeRetryUM`: changes tape permissions and shared tape scripts.
+- Stop/restart ingest tests: depend on transfer timing and scan global dropzone sizes.
+
+New tests are sequential unless explicitly marked and reviewed for isolation.
+A parallel pytest selection containing any unmarked test is rejected. Keep
+shared fixtures on one worker; do not mark resource outages, shared script
+changes, or explicit global reindex tests as parallel.
+
+The search index is initialized once before parallel test setup begins.
+Setup-only index preparation shares that initialization; explicit reindex tests
+still perform real resets in the sequential phase. Ingest project/dropzone
+preparation is serialized because size calculation scans all open dropzones;
+transfers and assertions run concurrently. Metadata caches, edited documents,
+payloads, and assertion downloads use separate temporary paths. Delayed-rule
+waits and progress checks match the test's own project or collection.
+
+The ruleset dependencies include `pytest-xdist>=3.8` and pin `pytest<9.2`.
+The released xdist grouping implementation is incompatible with pytest 9.2's
+node IDs and can silently split scenarios ([upstream issue](https://github.com/pytest-dev/pytest-xdist/issues/1386)).
+For an existing icat container, install compatible test dependencies once:
+
+```sh
+docker exec -u irods dev-icat-1 python3 -m pip install --user --break-system-packages 'pytest>=7,<9.2' 'pytest-xdist>=3.8'
+```
+
+For manual parallel runs on icat, select only marked tests and preserve grouping:
+
+```sh
+cd /rules
+/var/lib/irods/.local/bin/pytest -v -p no:cacheprovider -n 3 --dist loadgroup -m parallel test_cases
+/var/lib/irods/.local/bin/pytest -v -p no:cacheprovider -m 'not parallel' test_cases
 ```
 
 # Stop an active ingest
@@ -180,16 +240,19 @@ dependency, but do not start iRODS commands or require server Python modules:
 
 ```sh
 cd /rules
-python3 -m pytest -v tests/unit/test_stop_ingest.py
+python3 -m pytest -v tests/unit/test_stop_ingest_timing.py
 ```
 
 The direct and mounted live test classes share an ordered stop/restart scenario
-and are skipped by default. Each creates a project/dropzone, transfers a
-2 GiB test file, stops a confirmed running `irsync`, verifies process exit and
+and are skipped by default. Each creates a project/dropzone, stages two
+2 GiB test files, stops a confirmed payload transfer, verifies process exit and
 worker/coordinator stop acknowledgement, restarts and stops a second transfer,
 then restarts again and verifies successful ingestion and checksums. The test
-continues immediately after stop confirmation; retry cancellation is covered
-by the mocked tests rather than fixed 70-second observation windows.
+waits for its payload replicas to leave intermediate/locked states after each
+stop, because a server-side file request can outlive the cancelled client.
+Two payloads leave work for the second stop/restart cycle even if that request
+finishes copying the first file. These are condition-based waits, without fixed
+observation delays. Final checksum checks wait for post-ingest finalization.
 Normal support-ticket creation is exercised. Use the full-suite prerequisites
 above and the `irods` OS account with `rods` iRODS credentials.
 
@@ -213,12 +276,14 @@ Set `STOP_INGEST_TEST_BYTES` to a larger byte count if the transfer finishes
 before the test observes it. Cleanup always attempts to remove the dropzone and
 project, including when the test fails or a stop cannot be confirmed.
 
-The scenario methods separate preparation, transfer observation, stop checks,
-restart verification, and cleanup. Direct ingestion starts as the depositor;
-stop and restart run as `rods`. Metadata checks use the existing
+An autouse setup fixture prepares the ingest and registers teardown before
+preparation, so partial setup failures also trigger cleanup. The scenario methods
+separate transfer observation, stop checks, and restart verification. Direct
+ingestion starts as the depositor; stop and restart run as `rods`. Metadata checks use the existing
 `get_collection_attribute_value` rule. The deletion check matches the explicit
-`removeDropzone(...)` call in `iqstat -a`. Cleanup stops an active transfer before
-attempting dropzone removal, including physical ingest folders, and always
+`removeDropzone(...)` call in `iqstat -a`. Teardown stops an active transfer and
+cancels queued `removeDropzone` rules for the exact dropzone path with `iqdel`
+before removing the dropzone, including physical ingest folders. It always
 attempts project removal even if stopping or dropzone removal fails.
 
 Reads and coordinator/worker writes use `getCollectionAVU`/`setCollectionAVU`;

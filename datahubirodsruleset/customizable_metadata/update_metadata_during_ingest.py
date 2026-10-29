@@ -59,6 +59,7 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     tmp_instance = tempfile.NamedTemporaryFile(delete=True, mode = "w")
     try:
         tmp_instance.write(json.dumps(instance_object, indent=4))
+        tmp_instance.flush()
         ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified instance to local file '{tmp_instance.name}'", 0)
         iput_wrapper(ctx, tmp_instance.name, instance_location, project_id, True)
         ctx.callback.msiWriteRodsLog(f"DEBUG: Successfully overwrote {instance_location}'", 0)
@@ -75,8 +76,9 @@ def update_metadata_during_ingest(ctx, project_id, collection_id, handle, versio
     tmp_schema = tempfile.NamedTemporaryFile(delete=True, mode = "w")
     try:
         tmp_schema.write(json.dumps(schema_object, indent=4))
+        tmp_schema.flush()
         ctx.callback.msiWriteRodsLog(f"DEBUG: Writing modified schema to local file '{tmp_schema.name}'", 0)
         iput_wrapper(ctx, tmp_schema.name, schema_location, project_id, True)
         ctx.callback.msiWriteRodsLog(f"DEBUG: Successfully overwrote {schema_location}'", 0)
     finally:
-        tmp_instance.close()
+        tmp_schema.close()

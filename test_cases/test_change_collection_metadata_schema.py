@@ -1,11 +1,17 @@
 import json
 import subprocess
+import tempfile
 from os import path
+
+import pytest
 
 from dhpythonirodsutils import formatters
 
 from test_cases.base_customizable_metadata_test_case import BaseTestCaseCustomizableMetadata
 from test_cases.utils import add_metadata_files_to_direct_dropzone, get_schema, TMP_SCHEMA_PATH
+
+
+pytestmark = pytest.mark.parallel
 
 
 class BaseTestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
@@ -25,18 +31,19 @@ class BaseTestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
         if not path.exists(TMP_SCHEMA_PATH):
             get_schema()
 
-        tmp_edit_schema_path = "/tmp/edit_metadata_schema.json"
-        with open(TMP_SCHEMA_PATH, "r") as json_file, open(tmp_edit_schema_path, "w") as edit_json_file:
-            schema_json = json.load(json_file)
-            schema_json["schema:name"] = cls.new_schema_name
-            edit_json_file.write(json.dumps(schema_json))
+        with tempfile.TemporaryDirectory(prefix="edit-metadata-") as directory:
+            tmp_edit_schema_path = path.join(directory, "edit_metadata_schema.json")
+            with open(TMP_SCHEMA_PATH, "r") as json_file, open(tmp_edit_schema_path, "w") as edit_json_file:
+                schema_json = json.load(json_file)
+                schema_json["schema:name"] = cls.new_schema_name
+                edit_json_file.write(json.dumps(schema_json))
 
-        schema_collection_path = formatters.format_schema_collection_path(cls.project_id, cls.collection_id)
-        iput_instance = f"iput -f {tmp_edit_schema_path} {schema_collection_path}"
-        subprocess.check_call(iput_instance, shell=True)
+            schema_collection_path = formatters.format_schema_collection_path(cls.project_id, cls.collection_id)
+            iput_instance = f"iput -f {tmp_edit_schema_path} {schema_collection_path}"
+            subprocess.check_call(iput_instance, shell=True)
 
-    def test_collection_instance_version(self):
-        tmp_instance_path = "/tmp/tmp_instance.json"
+    def test_collection_instance_version(self, tmp_path):
+        tmp_instance_path = tmp_path / "instance.json"
         iget = f"iget -f {self.project_path}/{self.collection_id}/instance.json {tmp_instance_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_instance_path) as tmp_instance_file:
@@ -45,8 +52,8 @@ class BaseTestChangeCollectionMetadataSchema(BaseTestCaseCustomizableMetadata):
             assert pid.startswith("https://hdl.handle.net/")
             assert pid.endswith(f"{self.project_id}{self.collection_id}instance.2")
 
-    def test_collection_schema_version(self):
-        tmp_schema_path = "/tmp/tmp_schema.json"
+    def test_collection_schema_version(self, tmp_path):
+        tmp_schema_path = tmp_path / "schema.json"
         iget = f"iget -f {self.project_path}/{self.collection_id}/schema.json {tmp_schema_path}"
         subprocess.check_call(iget, shell=True)
         with open(tmp_schema_path) as tmp_schema_file:

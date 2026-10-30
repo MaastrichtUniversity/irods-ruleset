@@ -105,8 +105,8 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
 
     # Copy current metadata json files to /.metadata_versions
     try:
-        icp_wrapper(ctx, source_schema, destination_schema, project_id, False)
-        icp_wrapper(ctx, source_instance, destination_instance, project_id, False)
+        icp_wrapper(ctx, source_schema, destination_schema, project_id, False, transfer_threading=False)
+        icp_wrapper(ctx, source_instance, destination_instance, project_id, False, transfer_threading=False)
     except RuntimeError:
         ctx.callback.msiExit("-1", f"ERROR: Couldn't create the metadata snapshots '{metadata_folder_path}'")
 

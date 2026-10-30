@@ -6,6 +6,7 @@ from datahubirodsruleset.customizable_metadata.create_collection_metadata_snapsh
 )
 from datahubirodsruleset.customizable_metadata.create_ingest_metadata_snapshot import create_ingest_metadata_snapshot
 from datahubirodsruleset.customizable_metadata.set_acl_for_metadata_snapshot import set_acl_for_metadata_snapshot
+from datahubirodsruleset.customizable_metadata.read_dropzone_metadata import read_dropzone_metadata
 
 # Private rules
 from datahubirodsruleset.customizable_metadata.close_project_collection_snapshot import (

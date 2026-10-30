@@ -82,7 +82,7 @@ def replace_metadata_placeholder_files(ctx, token, project_id, collection_id, de
     ctx.callback.msiDataObjUnlink("objPath=" + pc_schema_path + "++++forceFlag=", 0)
 
     try:
-        icp_wrapper(ctx, dropzone_instance_path, pc_instance_path, project_id, True)
-        icp_wrapper(ctx, dropzone_schema_path, pc_schema_path, project_id, True)
+        icp_wrapper(ctx, dropzone_instance_path, pc_instance_path, project_id, True, transfer_threading=False)
+        icp_wrapper(ctx, dropzone_schema_path, pc_schema_path, project_id, True, transfer_threading=False)
     except RuntimeError:
         ctx.callback.msiExit("-1", "ERROR: Couldn't replace the metadata placeholder files")

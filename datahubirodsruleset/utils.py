@@ -219,10 +219,15 @@ def get_elastic_search_connection(ctx):
     return es
 
 
-def icp_wrapper(ctx, source, destination, project_id, overwrite):
+def icp_wrapper(ctx, source, destination, project_id, overwrite, transfer_threading=True):
     """
-    Workaround wrapper function to execute iRODS data object copy.
-    Execute an 'icp' with a sub-process instead of msiDataObjCopy.
+    Copy new objects with msiDataObjCopy. Retain the subprocess 'icp' workaround
+    for overwrites, which can fail with S3 resource hierarchies.
+
+    Parallel copies called from the Python rule engine can deadlock when transfer
+    threads try to enter the rule engine while the calling thread waits for them.
+    Metadata callers disable transfer threading to avoid this deadlock:
+    https://github.com/irods/irods_rule_engine_plugin_python/issues/54
 
     Parameters
     ----------
@@ -236,14 +241,26 @@ def icp_wrapper(ctx, source, destination, project_id, overwrite):
         e.g: P000000010
     overwrite: bool
         write data-object even it exists already; overwrite it
+    transfer_threading: bool
+        Allow transfer threads (default True, using the server's configured count).
+        False disables transfer threads; msiDataObjCopy requires numThreads=-1,
+        whereas icp uses -N 0. Microservice numThreads=0 means automatic threading.
     """
     destination_resource = ctx.callback.getCollectionAVU(
         format_project_path(ctx, project_id), ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
     )["arguments"][2]
 
-    icp_cmd = ["icp", "-R", destination_resource, source, destination]
-    if overwrite:
-        icp_cmd = ["icp", "-f", "-R", destination_resource, source, destination]
+    if not overwrite:
+        num_threads = 0 if transfer_threading else -1
+        ctx.callback.msiDataObjCopy(
+            source, destination, f"destRescName={destination_resource}++++numThreads={num_threads}", 0
+        )
+        return
+
+    icp_cmd = ["icp", "-f", "-R", destination_resource]
+    if not transfer_threading:
+        icp_cmd += ["-N", "0"]
+    icp_cmd += [source, destination]
 
     try:
         check_call(["ichmod", "-M", "own", "rods", source], shell=False)

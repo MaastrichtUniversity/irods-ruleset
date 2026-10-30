@@ -63,8 +63,8 @@ def create_ingest_metadata_snapshot(ctx, project_id, collection_id, source_colle
 
     # Copy current metadata json files to /.metadata_versions
     try:
-        icp_wrapper(ctx, source_schema, destination_schema, project_id, force_flag)
-        icp_wrapper(ctx, source_instance, destination_instance, project_id, force_flag)
+        icp_wrapper(ctx, source_schema, destination_schema, project_id, force_flag, transfer_threading=False)
+        icp_wrapper(ctx, source_instance, destination_instance, project_id, force_flag, transfer_threading=False)
     except RuntimeError:
         ctx.callback.set_post_ingestion_error_avu(
             project_id, collection_id, source_collection, "Failed to create metadata ingest snapshot", username

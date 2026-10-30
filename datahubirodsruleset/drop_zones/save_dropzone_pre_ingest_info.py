@@ -3,8 +3,6 @@ import glob
 import json
 import os
 
-from dhpythonirodsutils import formatters
-
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
@@ -41,7 +39,7 @@ def save_dropzone_pre_ingest_info(ctx, dropzone_path, depositor, dropzone_type, 
     Returns
     -------
     list[str]
-        The final validation errors, including errors found during the physical content scan.
+        The provided validation errors.
     """
     token = dropzone_path.split("/")[-1]
     physical_path = ""
@@ -53,8 +51,7 @@ def save_dropzone_pre_ingest_info(ctx, dropzone_path, depositor, dropzone_type, 
     validation_errors = json.loads(serialized_validation_errors)
     result = {"validation_errors": validation_errors}
 
-    faulty_paths = []
-    file_folder_structure = path_to_dict(physical_path, faulty_paths)
+    file_folder_structure = path_to_dict(physical_path)
     result["file_folder_structure"] = file_folder_structure
 
     size = 0
@@ -74,21 +71,12 @@ def save_dropzone_pre_ingest_info(ctx, dropzone_path, depositor, dropzone_type, 
     ctx.callback.setCollectionAVU(dropzone_path, "totalSize", str(size))
     ctx.callback.setCollectionAVU(dropzone_path, "numFiles", str(file_count))
 
-    is_ingestable = not faulty_paths
-    ctx.callback.setCollectionAVU(dropzone_path, "isIngestable", formatters.format_boolean_to_string(is_ingestable))
-    for faulty_path in faulty_paths:
-        relative_path = os.path.relpath(faulty_path, physical_path)
-        logical_path = dropzone_path
-        if relative_path != ".":
-            logical_path = f"{dropzone_path}/{relative_path.replace(os.sep, '/')}"
-        validation_errors.append(f"Dropzone contains path with unsupported characters '{logical_path}'")
-
     # Keep document creation as the final side effect, after all validation errors are known.
     save_pre_ingest_document(ctx, result, token)
     return validation_errors
 
 
-def path_to_dict(path, faulty_paths):
+def path_to_dict(path):
     """
     Recursive function to convert a folder to a dictionary containing all files and subdirectories (including files)
 
@@ -96,8 +84,6 @@ def path_to_dict(path, faulty_paths):
     ----------
     path: str
         Physical path to a directory
-    faulty_paths: list[str]
-        Physical paths containing an unsupported character combination
 
     Returns
     -------
@@ -105,12 +91,9 @@ def path_to_dict(path, faulty_paths):
         All files and subdirectories of the input path
     """
     d = {"name": os.path.basename(path)}
-    # Due to a bug in GenQuery https://github.com/irods/irods/issues/7302
-    if "'" in path and " and " in path:
-        faulty_paths.append(path)
     if os.path.isdir(path):
         d["type"] = "directory"
-        d["children"] = [path_to_dict(os.path.join(path, x), faulty_paths) for x in os.listdir(path)]
+        d["children"] = [path_to_dict(os.path.join(path, x)) for x in os.listdir(path)]
 
     else:
         d["type"] = "file"

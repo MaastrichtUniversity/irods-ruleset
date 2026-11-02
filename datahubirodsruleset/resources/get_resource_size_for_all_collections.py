@@ -1,5 +1,3 @@
-import json
-
 from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
@@ -25,22 +23,41 @@ def get_resource_size_for_all_collections(ctx):
         This includes replicated resources (so that amount is already doubled!)
     """
 
+    project_ids = {
+        formatters.get_project_id_from_project_path(path)
+        for path, in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback)
+    }
+    if not project_ids:
+        return {}
+
+    resource_names = {
+        resource_id: name
+        for name, resource_id in row_iterator("RESC_NAME, RESC_ID", "", AS_LIST, ctx.callback)
+    }
+    prices = {}
+    for name, price in row_iterator(
+        "RESC_NAME, META_RESC_ATTR_VALUE", "META_RESC_ATTR_NAME = 'NCIT:C88193'", AS_LIST, ctx.callback
+    ):
+        prices[name] = price
+
+    # Fetch the cached per-resource sizes once, without the collection-size
+    # helper's repeated resource queries and unused percentage calculations.
     resources = {}
-    for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback):
-        project_path = result[0]
-        project_id = formatters.get_project_id_from_project_path(project_path)
-        collection_size_per_resource = json.loads(
-            ctx.callback.get_collection_size_per_resource(project_id, "")["arguments"][1]
-        )
-        collection = collection_size_per_resource.values()
-        for collection_resources in collection:
-            for collection_resource in collection_resources:
-                if collection_resource["resourceName"] not in resources:
-                    resources[collection_resource["resourceName"]] = {"size": int(collection_resource["size"])}
-                else:
-                    resources[collection_resource["resourceName"]]["size"] += int(collection_resource["size"])
-    for resource in resources.keys():
-        cost_of_resource = ctx.callback.getResourceAVU(resource,"NCIT:C88193","","0","false")["arguments"][2]
+    for path, attribute, size in row_iterator(
+        "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
+        "META_COLL_ATTR_NAME like 'dcat:byteSize_resc%' AND COLL_NAME like '/nlmumc/projects/%/%'",
+        AS_LIST,
+        ctx.callback,
+    ):
+        if path.split("/")[3] not in project_ids:
+            continue
+        name = resource_names[attribute.removeprefix("dcat:byteSize_resc_")]
+        if name not in resources:
+            resources[name] = {"size": 0}
+        resources[name]["size"] += int(size)
+
+    for resource in resources:
+        cost_of_resource = prices.get(resource) or "0"
         cost_per_year = (
             float(resources[resource]["size"]) / 1000 / 1000 / 1000 * float(cost_of_resource)
         )

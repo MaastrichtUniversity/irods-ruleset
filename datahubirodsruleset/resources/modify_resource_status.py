@@ -1,6 +1,8 @@
 # /rules/tests/run_test.sh -r modify_resource_status -a "replRescUM01,down"
 import json
 
+from dhpythonirodsutils.enums import ResourceStatus
+
 from datahubirodsruleset.decorator import make, Output
 
 
@@ -38,7 +40,7 @@ def modify_resource_status(ctx, resource_name, status):
     if ctx.callback.get_client_username("")["arguments"][0] != "rods":
         ctx.callback.msiExit("-1", "This rule can only be called by RODS!")
 
-    valid_statuses = ["up", "down"]
+    valid_statuses = [status.value for status in ResourceStatus]
     if status not in valid_statuses:
         return json.dumps({
             "success": False,

@@ -2,7 +2,7 @@
 
 from datahubirodsruleset.formatters import format_project_path
 from datahubirodsruleset.decorator import make, Output
-from dhpythonirodsutils.enums import ProjectAVUs
+from dhpythonirodsutils.enums import ProjectAVUs, DropzoneAVUs, ReplicaStatus
 from dhpythonirodsutils.formatters import get_project_id_from_project_collection_path
 
 from datahubirodsruleset.utils import TRUE_AS_STRING, get_bad_status_replicas, get_under_replicated_data_objects
@@ -65,8 +65,12 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     ret = ctx.callback.get_data_object_size(project_collection, schema_file_name, "")["arguments"][2]
     collection_schema_size = int(ret)
 
-    dropzone_num_files = ctx.callback.getCollectionAVU(dropzone, "numFiles", "", "", TRUE_AS_STRING)["arguments"][2]
-    dropzone_size = ctx.callback.getCollectionAVU(dropzone, "totalSize", "", "", TRUE_AS_STRING)["arguments"][2]
+    dropzone_num_files = ctx.callback.getCollectionAVU(
+        dropzone, DropzoneAVUs.NUM_FILES.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
+    dropzone_size = ctx.callback.getCollectionAVU(
+        dropzone, DropzoneAVUs.TOTAL_SIZE.value, "", "", TRUE_AS_STRING
+    )["arguments"][2]
 
     match_num_files = int(dropzone_num_files) == int(collection_num_files)
     ctx.callback.msiWriteRodsLog(
@@ -122,7 +126,8 @@ def validate_data_post_ingestion(ctx, project_collection, dropzone, dropzone_typ
     )
     for path, repl_num, repl_status in bad_replicas:
         ctx.callback.msiWriteRodsLog(
-            f"ERROR: Replica {repl_num} of data object '{path}' has replication status {repl_status}, expected '1'",
+            f"ERROR: Replica {repl_num} of data object '{path}' has replication status {repl_status}, "
+            f"expected '{ReplicaStatus.GOOD.value}'",
             0,
         )
 

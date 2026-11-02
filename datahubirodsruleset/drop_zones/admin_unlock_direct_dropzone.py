@@ -4,6 +4,7 @@ from subprocess import CalledProcessError, check_call  # nosec: iadmin uses an a
 
 import irods_types  # pylint: disable=import-error
 from dhpythonirodsutils import formatters
+from dhpythonirodsutils.enums import ReplicaStatus
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
@@ -36,7 +37,8 @@ def admin_unlock_direct_dropzone(ctx, token):
     for condition in (f"COLL_NAME = '{dropzone_path}'", f"COLL_NAME LIKE '{dropzone_path}/%'"):
         for collection, name, replica in row_iterator(
             "COLL_NAME, DATA_NAME, DATA_REPL_NUM",
-            f"{condition} AND DATA_REPL_STATUS in ('2', '3', '4')",
+            f"{condition} AND DATA_REPL_STATUS in ('{ReplicaStatus.INTERMEDIATE.value}', "
+            f"'{ReplicaStatus.READ_LOCKED.value}', '{ReplicaStatus.WRITE_LOCKED.value}')",
             AS_LIST,
             ctx.callback,
         ):
@@ -47,7 +49,10 @@ def admin_unlock_direct_dropzone(ctx, token):
     for path, replica in replicas:
         try:
             check_call(
-                ["iadmin", "modrepl", "logical_path", path, "replica_number", replica, "DATA_REPL_STATUS", "0"],
+                [
+                    "iadmin", "modrepl", "logical_path", path, "replica_number", replica,
+                    "DATA_REPL_STATUS", ReplicaStatus.STALE.value,
+                ],
                 shell=False,
             )
         except (CalledProcessError, OSError) as err:

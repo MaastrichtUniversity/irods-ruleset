@@ -4,7 +4,7 @@ import json
 import irods_types  # pylint: disable=import-error
 
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProjectAVUs, DropzoneState
+from dhpythonirodsutils.enums import ProjectAVUs, DropzoneState, ReplicaStatus
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
@@ -152,14 +152,16 @@ def check_if_user_is_allowed_to_start_ingest(
 def does_dropzone_contain_stale_or_locked_files(ctx, dropzone_path, validation_errors):
     for failed_data_object in row_iterator(
         "COLL_NAME,DATA_NAME,DATA_REPL_NUM,DATA_REPL_STATUS",
-        f"COLL_NAME LIKE '{dropzone_path}%' AND DATA_REPL_STATUS != '1'",
+        f"COLL_NAME LIKE '{dropzone_path}%' AND DATA_REPL_STATUS != '{ReplicaStatus.GOOD.value}'",
         AS_LIST,
         ctx.callback
     ):
         data_path = f"{failed_data_object[0]}/{failed_data_object[1]}"
-        if failed_data_object[3] == "0":
+        if failed_data_object[3] == ReplicaStatus.STALE.value:
             validation_errors.append(f"Dropzone contains stale file '{data_path}'")
-        elif failed_data_object[3] in ("2", "3", "4"):
+        elif failed_data_object[3] in (
+            ReplicaStatus.INTERMEDIATE.value, ReplicaStatus.READ_LOCKED.value, ReplicaStatus.WRITE_LOCKED.value,
+        ):
             validation_errors.append(f"Dropzone contains locked file '{data_path}'")
         else:
             validation_errors.append(f"Dropzone contains file with unknown replication status '{data_path}'")

@@ -2,14 +2,10 @@
 
 import json
 
-from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
+from dhpythonirodsutils.enums import IngestAttribute, IngestStopRequestState, IngestTransferState
 
-# Coordinator: active until worker exit is confirmed and failure handling ends.
-TRANSFER_STATE = "ingestTransferState"
-# Coordinator resets this flag before starting; stop_ingest sets it as rods.
-STOP_REQUESTED = "ingestStopRequested"
-# Worker: stopped after cancellation handling, otherwise exited (also on error).
-WORKER_RESULT = "ingestWorkerResult"
+from datahubirodsruleset.utils import FALSE_AS_STRING
+
 STOP_MESSAGE = "Ingest stopped by rods"
 
 
@@ -24,11 +20,15 @@ class IngestStopped(Exception):
 
 
 def get_transfer_state(ctx, dropzone_path):
-    return ctx.callback.getCollectionAVU(dropzone_path, TRANSFER_STATE, "", "", FALSE_AS_STRING)["arguments"][2]
+    return ctx.callback.getCollectionAVU(
+        dropzone_path, IngestAttribute.TRANSFER_STATE.value, "", "", FALSE_AS_STRING,
+    )["arguments"][2]
 
 
 def get_worker_result(ctx, dropzone_path):
-    return ctx.callback.getCollectionAVU(dropzone_path, WORKER_RESULT, "", "", FALSE_AS_STRING)["arguments"][2]
+    return ctx.callback.getCollectionAVU(
+        dropzone_path, IngestAttribute.WORKER_RESULT.value, "", "", FALSE_AS_STRING,
+    )["arguments"][2]
 
 
 def request_ingest_stop(ctx, dropzone_path):
@@ -41,8 +41,16 @@ def request_ingest_stop(ctx, dropzone_path):
             "entity_name": dropzone_path,
             "entity_type": "collection",
             "operations": [
-                {"operation": "remove", "attribute": STOP_REQUESTED, "value": FALSE_AS_STRING},
-                {"operation": "add", "attribute": STOP_REQUESTED, "value": TRUE_AS_STRING},
+                {
+                    "operation": "remove",
+                    "attribute": IngestAttribute.STOP_REQUESTED.value,
+                    "value": IngestStopRequestState.NOT_REQUESTED.value,
+                },
+                {
+                    "operation": "add",
+                    "attribute": IngestAttribute.STOP_REQUESTED.value,
+                    "value": IngestStopRequestState.REQUESTED.value,
+                },
             ],
         }),
         "",
@@ -51,14 +59,15 @@ def request_ingest_stop(ctx, dropzone_path):
 
 def check_stop_requested(ctx, dropzone_path):
     requested = ctx.callback.getCollectionAVU(
-        dropzone_path, STOP_REQUESTED, "", FALSE_AS_STRING, FALSE_AS_STRING,
+        dropzone_path, IngestAttribute.STOP_REQUESTED.value, "",
+        IngestStopRequestState.NOT_REQUESTED.value, FALSE_AS_STRING,
     )["arguments"][2]
-    if requested == TRUE_AS_STRING:
+    if requested == IngestStopRequestState.REQUESTED.value:
         raise IngestStopped(f"{STOP_MESSAGE}: {dropzone_path}")
 
 
 def require_inactive_transfer(ctx, dropzone_path):
-    if get_transfer_state(ctx, dropzone_path) == "active":
+    if get_transfer_state(ctx, dropzone_path) == IngestTransferState.ACTIVE.value:
         ctx.callback.msiExit(
             "-1", f"A transfer is still active for {dropzone_path}; wait for it to finish stopping.",
         )

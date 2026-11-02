@@ -23,6 +23,19 @@ def update_metadata_during_edit_collection(ctx, project_id, collection_id, versi
         The version that should be used to create the handles (e.g: 3)
     """
 
+    instance = json.loads(
+        read_data_object_from_irods(ctx, format_instance_collection_path(ctx, project_id, collection_id))
+    )
+    schema = json.loads(
+        read_data_object_from_irods(ctx, format_schema_collection_path(ctx, project_id, collection_id))
+    )
+    write_versioned_metadata(ctx, project_id, collection_id, version, instance, schema)
+
+
+def write_versioned_metadata(ctx, project_id, collection_id, version, instance_object, schema_object):
+    """Finalize identifiers before writing each document once."""
+    # DHDO-2369: Apply identifiers in memory so staged saves need only one write
+    # per final document; legacy snapshot callers reuse the same identifier logic.
     # Getting the epicpid url and prefix
     epicpid_base = ctx.callback.get_env("EPICPID_URL", "true", "")["arguments"][2]
     epicpid_prefix = epicpid_base.rsplit("/", 2)[1]
@@ -31,11 +44,6 @@ def update_metadata_during_edit_collection(ctx, project_id, collection_id, versi
     schema_handle = f"https://hdl.handle.net/{epicpid_prefix}/{project_id}{collection_id}schema.{version}"
     instance_handle = f"https://hdl.handle.net/{epicpid_prefix}/{project_id}{collection_id}instance.{version}"
     project_collection_handle = f"https://hdl.handle.net/{epicpid_prefix}/{project_id}{collection_id}.{version}"
-
-    # Reading the instance.json and parsing it
-    instance_location = format_instance_collection_path(ctx, project_id, collection_id)
-    instance = read_data_object_from_irods(ctx, instance_location)
-    instance_object = json.loads(instance)
 
     # Set instance schema:isBasedOn to the schema version PID
     instance_object["schema:isBasedOn"] = schema_handle
@@ -48,21 +56,16 @@ def update_metadata_during_edit_collection(ctx, project_id, collection_id, versi
     # Set instance @id to the instance version PID
     instance_object["@id"] = instance_handle
 
-    # Opening the instance file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + instance_location + "++++openFlags=O_WRONLYO_TRUNC", 0)
-    opened_file = ret_val["arguments"][1]
-    ctx.callback.msiDataObjWrite(opened_file, json.dumps(instance_object, indent=4), 0)
-    ctx.callback.msiDataObjClose(opened_file, 0)
-
     # Setting the PID in the schema.json file
-    schema_location = format_schema_collection_path(ctx, project_id, collection_id)
-    # Reading the instance.json and parsing it
-    schema = read_data_object_from_irods(ctx, schema_location)
-    schema_object = json.loads(schema)
     schema_object["@id"] = schema_handle
 
-    # Opening the schema file with read/write access
-    ret_val = ctx.callback.msiDataObjOpen("objPath=" + schema_location + "++++openFlags=O_RDWR", 0)
-    opened_schema_file = ret_val["arguments"][1]
-    ctx.callback.msiDataObjWrite(opened_schema_file, json.dumps(schema_object, indent=4), 0)
-    ctx.callback.msiDataObjClose(opened_schema_file, 0)
+    for path, document in (
+        (format_instance_collection_path(ctx, project_id, collection_id), instance_object),
+        (format_schema_collection_path(ctx, project_id, collection_id), schema_object),
+    ):
+        ret_val = ctx.callback.msiDataObjOpen("objPath=" + path + "++++openFlags=O_WRONLYO_TRUNC", 0)
+        descriptor = ret_val["arguments"][1]
+        try:
+            ctx.callback.msiDataObjWrite(descriptor, json.dumps(document, indent=4), 0)
+        finally:
+            ctx.callback.msiDataObjClose(descriptor, 0)

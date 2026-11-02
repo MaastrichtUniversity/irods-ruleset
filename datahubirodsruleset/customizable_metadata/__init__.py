@@ -3,6 +3,7 @@
 from datahubirodsruleset.customizable_metadata.check_edit_metadata_permission import check_edit_metadata_permission
 from datahubirodsruleset.customizable_metadata.create_collection_metadata_snapshot import (
     create_collection_metadata_snapshot,
+    save_collection_metadata,
 )
 from datahubirodsruleset.customizable_metadata.create_ingest_metadata_snapshot import create_ingest_metadata_snapshot
 from datahubirodsruleset.customizable_metadata.set_acl_for_metadata_snapshot import set_acl_for_metadata_snapshot

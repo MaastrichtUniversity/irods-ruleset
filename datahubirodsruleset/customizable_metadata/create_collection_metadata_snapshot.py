@@ -1,5 +1,6 @@
 # /rules/tests/run_test.sh -r create_collection_metadata_snapshot -a "P000000014,C000000001" -u jmelius -j
 import json
+import re
 
 import irods_types  # pylint: disable=import-error
 from dhpythonirodsutils import formatters
@@ -14,7 +15,8 @@ from datahubirodsruleset.formatters import (
     format_instance_versioned_collection_path,
     format_project_path,
 )
-from datahubirodsruleset.utils import FALSE_AS_STRING, icp_wrapper
+from datahubirodsruleset.utils import FALSE_AS_STRING, icp_wrapper, read_data_object_from_irods
+from datahubirodsruleset.customizable_metadata.update_metadata_during_edit_collection import write_versioned_metadata
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -43,6 +45,20 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     bool
         PIDs request status; If true, the handle PIDs were successfully requested.
     """
+    return _create_collection_metadata_snapshot(ctx, project_id, collection_id)
+
+
+@make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
+def save_collection_metadata(ctx, project_id, collection_id, filename):
+    """Write submitted metadata once, with server-assigned versioned identifiers."""
+    # DHDO-2369: Accept staged JSON to avoid uploading final documents and then
+    # reading and rewriting them again solely to add versioned identifiers.
+    if not re.fullmatch(r"\.metadata-save-[0-9a-f]{32}\.json", filename):
+        ctx.callback.msiExit("-1", "Invalid collection metadata filename")
+    return _create_collection_metadata_snapshot(ctx, project_id, collection_id, filename)
+
+
+def _create_collection_metadata_snapshot(ctx, project_id, collection_id, filename=None):
     project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     project_path = format_project_path(ctx, project_id)
     metadata_folder_path = format_metadata_versions_path(ctx, project_id, collection_id)
@@ -53,6 +69,18 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
     can_edit_metadata = ctx.callback.check_edit_metadata_permission(project_path, "")["arguments"][1]
     if not formatters.format_string_to_boolean(can_edit_metadata):
         ctx.callback.msiExit("-1", f"ERROR: User has no edit metadata rights for  '{project_id}'")
+
+    data = None
+    if filename is not None:
+        # Derive the payload's home from the authenticated caller, not client input.
+        username = ctx.callback.get_client_username("")["arguments"][0]
+        data = json.loads(read_data_object_from_irods(ctx, f"/nlmumc/home/{username}/{filename}"))
+        if (
+            not isinstance(data["instance"], dict)
+            or (data["schema"] is not None and not isinstance(data["schema"], dict))
+            or not all(isinstance(data["metadata"][key], str) for key in ("schemaVersion", "schemaName", "title"))
+        ):
+            ctx.callback.msiExit("-1", "Invalid collection metadata payload")
 
     # Check .metadata_versions folder exists
     try:
@@ -99,7 +127,16 @@ def create_collection_metadata_snapshot(ctx, project_id, collection_id):
         pid_request_status = False
 
     try:
-        ctx.callback.update_metadata_during_edit_collection(project_id, collection_id, str(new_version))
+        if data is None:
+            # Retain the original snapshot path for callers that upload files first.
+            ctx.callback.update_metadata_during_edit_collection(project_id, collection_id, str(new_version))
+        else:
+            schema = data["schema"]
+            if schema is None:
+                schema = json.loads(read_data_object_from_irods(ctx, source_schema))
+            write_versioned_metadata(ctx, project_id, collection_id, str(new_version), data["instance"], schema)
+            for attribute in ("schemaVersion", "schemaName", "title"):
+                ctx.callback.setCollectionAVU(project_collection_path, attribute, data["metadata"][attribute])
     except RuntimeError:
         ctx.callback.msiExit("-1", f"ERROR: Couldn't update the instance snapshot '{destination_instance}'")
 

@@ -1,33 +1,58 @@
 import pytest
 
-from test_cases.base_ingest_test_case import BaseTestCaseIngest, INGEST_SCENARIOS
+from test_cases.base_ingest_test_case import (
+    BaseIngestScenario,
+    BaseTestCaseIngest,
+    INGEST_SCENARIOS,
+    MANAGER_INGEST_SCENARIOS,
+    # Module-level fixtures share one lifecycle across the three test classes.
+    ingest_scenario,
+    edited_collection,
+    schema_changed_collection,
+)
+from test_cases.base_customizable_metadata_test_case import (
+    BaseEditCollectionMetadata,
+    BaseTestChangeCollectionMetadataSchema,
+)
 from test_cases.utils import add_metadata_files_to_direct_dropzone, add_data_to_direct_dropzone
 import subprocess
 
 from dhpythonirodsutils import formatters
 
 
-pytestmark = pytest.mark.parallel
+pytestmark = [
+    pytest.mark.parallel,
+    pytest.mark.xdist_group("direct"),
+]
 
 
-@pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="class")
-@pytest.mark.xdist_group("direct")
-class TestDirectIngest(BaseTestCaseIngest):
+class IngestScenario(BaseIngestScenario):
     dropzone_type = "direct"
     dropzone_total_size = "63169378"
     dropzone_num_files = "6"
 
-    @classmethod
-    def add_metadata_files_to_dropzone(cls, token):
+    def add_metadata_files_to_dropzone(self, token):
         add_metadata_files_to_direct_dropzone(token)
 
-    @classmethod
-    def add_data_to_dropzone(cls):
-        add_data_to_direct_dropzone(cls)
+    def add_data_to_dropzone(self):
+        add_data_to_direct_dropzone(self)
 
-    def test_ingest_quote_and_combination(self, tmp_path):
+
+@pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="module")
+class TestDirectIngest(BaseTestCaseIngest):
+    def test_ingest_quote_and_combination(self, ingest_scenario, tmp_path):
         """Ingest a path containing both a single quote and ' and ' without changing its contents."""
-        collection_path = formatters.format_project_collection_path(self.project_id, self.collection_id)
+        collection_path = formatters.format_project_collection_path(ingest_scenario.project_id, ingest_scenario.collection_id)
         destination = tmp_path / "ingested.file"
         subprocess.check_call(["iget", "-K", f"{collection_path}/50K' and data.file", str(destination)])
         assert destination.read_bytes() == b"0" * 51200
+
+
+@pytest.mark.parametrize("ingest_scenario", MANAGER_INGEST_SCENARIOS, indirect=True, scope="module")
+class TestEditCollectionMetadata(BaseEditCollectionMetadata):
+    pass
+
+
+@pytest.mark.parametrize("ingest_scenario", MANAGER_INGEST_SCENARIOS, indirect=True, scope="module")
+class TestChangeCollectionMetadataSchema(BaseTestChangeCollectionMetadataSchema):
+    pass

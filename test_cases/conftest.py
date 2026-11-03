@@ -25,6 +25,24 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_finish(session):
+    # Keep each shared collection in lifecycle order, after pytest has grouped
+    # module-scoped parameters and applied -m/-k filters. This also preserves the
+    # order within each xdist loadgroup when classes are selected explicitly.
+    positions = [
+        index for index, item in enumerate(session.items)
+        if getattr(item.cls, "lifecycle_phase", None) is not None
+        and "ingest_scenario" in item.fixturenames
+    ]
+    modules = {}
+    for index in positions:
+        modules.setdefault(session.items[index].path, len(modules))
+    ordered = sorted(
+        (session.items[index] for index in positions),
+        key=lambda item: (modules[item.path], item.callspec.indices["ingest_scenario"], item.cls.lifecycle_phase),
+    )
+    for index, item in zip(positions, ordered):
+        session.items[index] = item
+
     # Check only the selection left after pytest has applied -m/-k filters.
     config = session.config
     if not session.items or not (hasattr(config, "workerinput") or config.getoption("numprocesses", 0)):

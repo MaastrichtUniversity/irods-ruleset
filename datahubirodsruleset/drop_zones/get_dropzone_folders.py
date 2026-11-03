@@ -3,6 +3,7 @@ from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import query_value
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -28,70 +29,27 @@ def get_dropzone_folders(ctx, token, path):
     absolute_path = f"{dropzone_path}{path}"
 
     root = []
-    walk_dropzone_folders(ctx, root, absolute_path, absolute_path)
-
-    return root
-
-
-def get_collection_sub_folders(ctx, parent, parent_path, dropzone_root):
-    """
-    Query the list of sub folders at the parent location.
-
-    Parameters
-    ----------
-    ctx: Context
-        Combined type of callback and rei struct.
-    parent: dict|list
-        If the parent is the root, the input type is the output list. Otherwise, the input parent is a JSON object/dict
-    parent_path: str
-        The absolute path to query the list of sub-folders. e.g: /nlmumc/ingest/direct/vast-dove/foo/bar
-    dropzone_root: str
-        The absolute dropzone root path. e.g: /nlmumc/ingest/direct/vast-dove
-
-    Returns
-    -------
-    dict|list
-        If the parent is the root, return the updated list with the sub-folders on the root level.
-        Otherwise, return the updated parent dict with the sub-folders list on the current location in the key "data".
-    """
-    for result in row_iterator(
-        "COLL_NAME, COLL_CREATE_TIME, COLL_MODIFY_TIME",
-        f"COLL_PARENT_NAME = '{parent_path}'",
+    children = {}
+    prefix = absolute_path.rstrip("/") + "/"
+    for folder, parent in row_iterator(
+        "order(COLL_NAME), COLL_PARENT_NAME",
+        f"COLL_NAME like {query_value(prefix + '%')}",
         AS_LIST,
         ctx.callback,
     ):
-        # Extract only the name of the sub_folder from the full name/path
-        name = result[0].rsplit("/", 1)[1]
-        relative_collection_path = result[0].replace(dropzone_root, "")
-        folder_node = {"value": name, "full_path": result[0], "id": relative_collection_path, "data": []}
-        if parent_path == dropzone_root:
-            parent.append(folder_node)
-        else:
-            parent["data"].append(folder_node)
+        # LIKE may match literal '%' or '_' in a folder name; only retain
+        # actual descendants and attach children through visible parents.
+        if not folder.startswith(prefix):
+            continue
+        node = {"value": folder.rsplit("/", 1)[1], "full_path": folder,
+                "id": folder.replace(absolute_path, ""), "data": []}
+        children.setdefault(parent, []).append(node)
 
-    return parent
-
-
-def walk_dropzone_folders(ctx, parent, parent_path, dropzone_root):
-    """
-    Recursive function to walk through the entire dropzone collection and update the original input parent list.
-
-    Parameters
-    ----------
-    ctx: Context
-        Combined type of callback and rei struct.
-    parent: dict|list
-        If the parent is the root, the input type is the output list. Otherwise, the input parent is a JSON object/dict
-    parent_path: str
-        The absolute path to query the list of sub-folders. e.g: /nlmumc/ingest/direct/vast-dove/foo/bar
-    dropzone_root: str
-        The absolute dropzone root path. e.g: /nlmumc/ingest/direct/vast-dove
-    """
-    child_collections = get_collection_sub_folders(ctx, parent, parent_path, dropzone_root)
-
-    collections_list = child_collections
-    if parent_path != dropzone_root:
-        collections_list = child_collections["data"]
-
-    for child_collection in collections_list:
-        walk_dropzone_folders(ctx, child_collection, child_collection["full_path"], dropzone_root)
+    # Keep the root spelling (including its trailing slash) used by the old
+    # parent-name query and relative IDs.
+    pending = [(absolute_path, root)]
+    while pending:
+        parent, output = pending.pop()
+        output.extend(children.get(parent, []))
+        pending.extend((node["full_path"], node["data"]) for node in output)
+    return root

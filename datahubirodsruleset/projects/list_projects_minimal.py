@@ -4,7 +4,7 @@ from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, collection_metadata
 
 
 @make(inputs=[], outputs=[0], handler=Output.STORE)
@@ -23,20 +23,10 @@ def list_projects_minimal(ctx):
         a json list of projects objects
     """
 
-    # Initialize the projects listing
-    projects = []
-
-    # Loop over all projects
-    for result in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '/nlmumc/projects'", AS_LIST, ctx.callback):
-        project = {
-            "id": formatters.get_project_id_from_project_path(result[0]),
-            ProjectAVUs.TITLE.value: ctx.getCollectionAVU(result[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING)[
-                "arguments"
-            ][2],
-        }
-
-        # Append this project to the list
-        projects.append(project)
-
-    # return projects listing
-    return projects
+    condition = "COLL_PARENT_NAME = '/nlmumc/projects'"
+    paths = [row[0] for row in row_iterator("COLL_NAME", condition, AS_LIST, ctx.callback)]
+    metadata = collection_metadata(ctx, condition, (ProjectAVUs.TITLE.value,)) if paths else {}
+    return [{
+        "id": formatters.get_project_id_from_project_path(path),
+        ProjectAVUs.TITLE.value: avu(ctx, metadata, path, ProjectAVUs.TITLE.value, fatal=True),
+    } for path in paths]

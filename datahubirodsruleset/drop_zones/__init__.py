@@ -23,3 +23,5 @@ from datahubirodsruleset.drop_zones.set_project_acl_to_dropzones import set_proj
 from datahubirodsruleset.drop_zones.set_single_user_project_acl_to_dropzones import (
     set_single_user_project_acl_to_dropzones,
 )
+
+from datahubirodsruleset.drop_zones.list_active_drop_zones import list_active_drop_zones

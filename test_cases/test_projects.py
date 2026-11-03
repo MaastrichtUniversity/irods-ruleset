@@ -20,22 +20,22 @@ from test_cases.utils import (
 )
 
 """
-iRODS native rules usage summary:
+Rule usage summary:
 - detailsProject: 
     * IN RW, not in MDR
     * IN RS (reportProjects)
 - getProjectCost: IN RS (detailsProject)
 
 
-- listProjectManagers: not in RW, not in MDR
+- list_project_managers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
     * obsolete: IN detailsProject 
 
-- listProjectContributors: not in RW, not in MDR
+- list_project_contributors: not in RW, not in MDR
     * valid: IN detailsProjectCollection
     * obsolete: IN detailsProject
 
-- listProjectViewers: not in RW, not in MDR
+- list_project_viewers: not in RW, not in MDR
     * valid: IN detailsProjectCollection
     * obsolete: IN detailsProject
 

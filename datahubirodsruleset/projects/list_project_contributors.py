@@ -1,8 +1,9 @@
 # /rules/tests/run_test.sh -r list_project_contributors -a "P000000010,false,false" -j -u jmelius
 from dhpythonirodsutils import formatters
-from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import project_acl
+from datahubirodsruleset.formatters import format_project_path
 
 
 @make(inputs=[0, 1, 2], outputs=[3], handler=Output.STORE)
@@ -28,70 +29,8 @@ def list_project_contributors(ctx, project_id, inherited, show_service_accounts)
     dict
         a json with the lists of groups and users
     """
-    groups = []
-    users = []
-
-    group_objects = []
-    user_objects = []
-
-    if formatters.format_string_to_boolean(inherited):
-        criteria = "'own', 'modify_object'"
-    else:
-        criteria = "'modify_object'"
-
-    for result in row_iterator(
-        "COLL_ACCESS_USER_ID",
-        f"COLL_ACCESS_NAME in ({criteria}) AND " + f"COLL_NAME = '/nlmumc/projects/{project_id}'",
-        AS_LIST,
-        ctx.callback,
-    ):
-
-        account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            account_name = account[0]
-            account_type = account[1]
-            display_name = account_name
-            description = ""
-
-            if account_type == "rodsgroup":
-                for group_result in row_iterator(
-                    "META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
-                    f"USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{account_id}'",
-                    AS_LIST,
-                    ctx.callback,
-                ):
-
-                    if "displayName" == group_result[0]:
-                        display_name = group_result[1]
-
-                    elif "description" == group_result[0]:
-                        description = group_result[1]
-
-                groups.append(account_name)
-                group_object = {
-                    "groupName": account_name,
-                    "groupId": account_id,
-                    "displayName": display_name,
-                    "description": description,
-                }
-                group_objects.append(group_object)
-
-            if account_type == "rodsuser":
-                # Filter out service account from output
-                if not formatters.format_string_to_boolean(show_service_accounts) and "service-" in account_name:
-                    continue
-
-                for user_result in row_iterator(
-                    "META_USER_ATTR_VALUE",
-                    f"USER_NAME = '{account_name}' AND META_USER_ATTR_NAME = 'displayName'",
-                    AS_LIST,
-                    ctx.callback,
-                ):
-                    display_name = user_result[0]
-
-                users.append(account_name)
-                user_object = {"userName": account_name, "userId": account_id, "displayName": display_name}
-                user_objects.append(user_object)
-            # All other cases of objectType, such as "" or "rodsadmin", are skipped
-
-    return {"users": users, "groups": groups, "groupObjects": group_objects, "userObjects": user_objects}
+    return project_acl(
+        ctx, format_project_path(ctx, project_id),
+        ("own", "modify_object") if formatters.format_string_to_boolean(inherited) else ("modify_object",),
+        formatters.format_string_to_boolean(show_service_accounts),
+    )

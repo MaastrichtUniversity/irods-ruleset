@@ -4,7 +4,8 @@ from dhpythonirodsutils.enums import ProjectAVUs
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path
-from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, collection_metadata, query_value
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -48,12 +49,9 @@ def get_project_acl_for_manager(ctx, project_id, show_service_accounts):
 
     project_path = format_project_path(ctx, project_id)
 
-    principal_investigator = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
-    data_steward = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
-        "arguments"
-    ][2]
+    metadata = collection_metadata(ctx, f"COLL_NAME = {query_value(project_path)}")
+    principal_investigator = avu(ctx, metadata, project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, fatal=True)
+    data_steward = avu(ctx, metadata, project_path, ProjectAVUs.DATA_STEWARD.value, fatal=True)
 
     output = {
         "managers": managers,

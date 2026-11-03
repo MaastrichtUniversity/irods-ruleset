@@ -21,9 +21,12 @@ irule_dummy() {
 IRULE_detailsProject(*project, *inherited, *result) {
     *details = "";
 
-    listProjectContributors(*project, *inherited, *contributors);
-    listProjectManagers(*project,*managers);
-    listProjectViewers(*project, *inherited, *viewers);
+    *managers = "";
+    *contributors = "";
+    *viewers = "";
+    list_project_contributors(*project, *inherited, "true", *contributors);
+    list_project_managers(*project, "true", *managers);
+    list_project_viewers(*project, *inherited, "true", *viewers);
 
     getCollectionAVU("/nlmumc/projects/*project","resource",*resource,"","true");
     getCollectionAVU("/nlmumc/projects/*project","title",*title,"","true");

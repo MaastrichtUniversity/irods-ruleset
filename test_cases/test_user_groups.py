@@ -63,14 +63,12 @@ set_user_attribute_value
     Not used in RS
     Used in MDR, RW
 
-iRODS Rule language rules
-
-getDataStewards
+get_data_stewards
     Not used in RS
     Used in MDR, RW
-getUsers
+get_users
     Used in MDR, RW and RS (get_all_users_groups_memberships)
-getUsersInGroup
+get_users_in_group
     Not used in RS
     Used in MDR, RW
 """
@@ -329,13 +327,13 @@ class TestUserGroups:
         assert output[self.manager1]["email"] == f"{self.manager1}@maastrichtuniversity.nl"
 
     def test_get_data_stewards(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getDataStewards.r"
+        rule = "/rules/tests/run_test.sh -r get_data_stewards"
         ret = subprocess.check_output(rule, shell=True)
         data_stewards = json.loads(ret)
         assert check_if_key_value_in_dict_list(data_stewards, "userName", self.data_steward)
 
     def test_get_users(self):
-        rule = "irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsers.r \"*showServiceAccounts='false'\""
+        rule = "/rules/tests/run_test.sh -r get_users -a false"
         ret = subprocess.check_output(rule, shell=True)
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)
@@ -345,7 +343,7 @@ class TestUserGroups:
         run_iquest = f'iquest "%s" "SELECT USER_ID WHERE USER_NAME = \'{self.group}\'"'
         group_id_iquest = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
 
-        rule = f"irule -r irods_rule_engine_plugin-irods_rule_language-instance -F /rules/native_irods_ruleset/misc/getUsersInGroup.r \"*groupId='{group_id_iquest}'\""
+        rule = f"/rules/tests/run_test.sh -r get_users_in_group -a {group_id_iquest}"
         ret = subprocess.check_output(rule, shell=True, encoding="UTF-8")
         users = json.loads(ret)
         assert check_if_key_value_in_dict_list(users, "userName", self.manager1)

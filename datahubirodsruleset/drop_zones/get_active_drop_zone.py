@@ -7,6 +7,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_path
+from datahubirodsruleset.listing_queries import metadata_for_paths
 from datahubirodsruleset.users.get_user_active_processes import get_drop_zone_percentage_ingested
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
@@ -106,6 +107,10 @@ def get_active_drop_zone(ctx, token, check_ingest_resource_status, dropzone_type
         # Query the resource status
         avu["resourceStatus"] = ctx.callback.get_resource_status(resource, "")["arguments"][1]
 
-    avu["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, avu)
+    destinations = []
+    if avu["destination"]:
+        destinations.append(formatters.format_project_collection_path(avu["project"], avu["destination"]))
+    metadata = metadata_for_paths(ctx, destinations, ("sizeIngested",))
+    avu["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, avu, metadata)
 
     return avu

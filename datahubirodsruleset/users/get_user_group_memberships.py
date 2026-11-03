@@ -4,6 +4,7 @@ from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import in_conditions
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -26,47 +27,22 @@ def get_user_group_memberships(ctx, show_special_groups, username):
         a json list of groups objects
     """
     user_id = ctx.callback.get_user_id(username, "")["arguments"][1]
-    output = []
-
-    for result in row_iterator(
+    groups = {}
+    for name, group_id in row_iterator(
         "order(USER_GROUP_NAME), USER_GROUP_ID", f"USER_ID = '{user_id}'", AS_LIST, ctx.callback
     ):
-
-        group_name = result[0]
-        group_id = result[1]
-        group_display_name = result[0]
-        group_description = ""
-
-        if group_name != username:
-            for metadata_result in row_iterator(
-                "META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
-                f"USER_TYPE = 'rodsgroup' AND USER_GROUP_ID = '{group_id}'",
-                AS_LIST,
-                ctx.callback,
-            ):
-
-                if "displayName" == metadata_result[0]:
-                    group_display_name = metadata_result[1]
-
-                elif "description" == metadata_result[0]:
-                    group_description = metadata_result[1]
-
-            group_object = {
-                "groupId": group_id,
-                "name": group_name,
-                "displayName": group_display_name,
-                "description": group_description,
-            }
-
-            if not formatters.format_string_to_boolean(show_special_groups):
-                if (
-                    group_name != "public"
-                    and group_name != "rodsadmin"
-                    and group_name != "DH-ingest"
-                    and group_name != "DH-project-admins"
-                ):
-                    output.append(group_object)
-            else:
-                output.append(group_object)
-
-    return output
+        if name == username:
+            continue
+        if not formatters.format_string_to_boolean(show_special_groups) and name in (
+            "public", "rodsadmin", "DH-ingest", "DH-project-admins"
+        ):
+            continue
+        groups[group_id] = {"groupId": group_id, "name": name, "displayName": name, "description": ""}
+    for condition in in_conditions("USER_ID", groups):
+        for group_id, attribute, value in row_iterator(
+            "USER_ID, META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
+            condition + " AND USER_TYPE = 'rodsgroup' AND META_USER_ATTR_NAME in ('displayName','description')",
+            AS_LIST, ctx.callback,
+        ):
+            groups[group_id][attribute] = value
+    return list(groups.values())

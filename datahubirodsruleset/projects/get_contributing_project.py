@@ -1,13 +1,11 @@
 # /rules/tests/run_test.sh -r get_contributing_project -a "P000000010,false" -j -u psuppers
-import json
-
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path
-from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, collection_metadata, project_roles, query_value
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -53,30 +51,11 @@ def get_contributing_project(ctx, project_id, show_service_accounts):
     for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
         project = {"id": formatters.get_project_id_from_project_path(collection_result[0])}
 
-        # List Managers
-        ret = ctx.callback.list_project_managers(project["id"], show_service_accounts, "")["arguments"][2]
-        project["managers"] = json.loads(ret)
-
-        # List Contributors
-        ret = ctx.callback.list_project_contributors(project["id"], FALSE_AS_STRING, show_service_accounts, "")[
-            "arguments"
-        ][3]
-        project["contributors"] = json.loads(ret)
-
-        # List Viewers
-        ret = ctx.callback.list_project_viewers(project["id"], FALSE_AS_STRING, show_service_accounts, "")["arguments"][
-            3
-        ]
-        project["viewers"] = json.loads(ret)
-
-        project[ProjectAVUs.TITLE.value] = ctx.callback.getCollectionAVU(
-            collection_result[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
-        project[ProjectAVUs.RESOURCE.value] = ctx.callback.getCollectionAVU(
-            collection_result[0], ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
-        project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
-            collection_result[0], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
-
+        roles = project_roles(ctx, collection_result[0], formatters.format_string_to_boolean(show_service_accounts))
+        project["managers"] = roles["own"]
+        project["contributors"] = roles["modify_object"]
+        project["viewers"] = roles["read_object"]
+        metadata = collection_metadata(ctx, f"COLL_NAME = {query_value(collection_result[0])}")
+        for attribute in (ProjectAVUs.TITLE.value, ProjectAVUs.RESOURCE.value, ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value):
+            project[attribute] = avu(ctx, metadata, collection_result[0], attribute, fatal=True)
     return project

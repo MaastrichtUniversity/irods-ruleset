@@ -5,7 +5,8 @@ from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, collection_metadata, project_roles, query_value
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -36,67 +37,32 @@ def get_project_details(ctx, project_path, show_service_accounts):
     project["path"] = project_path
     project["project"] = formatters.get_project_id_from_project_path(project_path)
 
-    # List Contributors
-    ret = ctx.callback.list_project_contributors(project["project"], FALSE_AS_STRING, show_service_accounts, "")[
-        "arguments"
-    ][3]
-    project["contributors"] = json.loads(ret)
-
-    # List Managers
-    ret = ctx.callback.list_project_managers(project["project"], show_service_accounts, "")["arguments"][2]
-    project["managers"] = json.loads(ret)
-
-    # List Viewers
-    ret = ctx.callback.list_project_viewers(project["project"], FALSE_AS_STRING, show_service_accounts, "")[
-        "arguments"
-    ][3]
-    project["viewers"] = json.loads(ret)
+    roles = project_roles(ctx, project_path, formatters.format_string_to_boolean(show_service_accounts))
+    project["contributors"] = roles["modify_object"]
+    project["managers"] = roles["own"]
+    project["viewers"] = roles["read_object"]
+    metadata = collection_metadata(ctx, f"COLL_NAME = {query_value(project_path)}")
 
     # Get project metadata
-    # Note: Retrieving the rule outcome is done with '["arguments"][2]'
-    project[ProjectAVUs.TITLE.value] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    project[ProjectAVUs.TITLE.value] = avu(ctx, metadata, project_path, ProjectAVUs.TITLE.value, "", fatal=True)
 
-    project[ProjectAVUs.ENABLE_ARCHIVE.value] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.ENABLE_ARCHIVE.value, "", FALSE_AS_STRING, FALSE_AS_STRING
-    )["arguments"][2]
+    project[ProjectAVUs.ENABLE_ARCHIVE.value] = avu(ctx, metadata, project_path, ProjectAVUs.ENABLE_ARCHIVE.value, FALSE_AS_STRING, fatal=False)
 
-    project[ProjectAVUs.ENABLE_UNARCHIVE.value] = ctx.callback.getCollectionAVU(
-        project["path"],
-        ProjectAVUs.ENABLE_UNARCHIVE.value,
-        "",
-        project[ProjectAVUs.ENABLE_ARCHIVE.value],
-        FALSE_AS_STRING,
-    )["arguments"][2]
+    project[ProjectAVUs.ENABLE_UNARCHIVE.value] = avu(ctx, metadata, project_path, ProjectAVUs.ENABLE_UNARCHIVE.value, project[ProjectAVUs.ENABLE_ARCHIVE.value], fatal=False)
 
-    project[ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, "", FALSE_AS_STRING, FALSE_AS_STRING
-    )["arguments"][2]
+    project[ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value] = avu(ctx, metadata, project_path, ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, FALSE_AS_STRING, fatal=False)
 
-    project[ProjectAVUs.DESCRIPTION.value] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.DESCRIPTION.value, "", "", FALSE_AS_STRING
-    )["arguments"][2]
+    project[ProjectAVUs.DESCRIPTION.value] = avu(ctx, metadata, project_path, ProjectAVUs.DESCRIPTION.value, "", fatal=False)
 
-    project["respCostCenter"] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    project["respCostCenter"] = avu(ctx, metadata, project_path, ProjectAVUs.RESPONSIBLE_COST_CENTER.value, "", fatal=True)
 
-    project["storageQuotaGiB"] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.STORAGE_QUOTA_GB.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    project["storageQuotaGiB"] = avu(ctx, metadata, project_path, ProjectAVUs.STORAGE_QUOTA_GB.value, "", fatal=True)
 
-    project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    project[ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value] = avu(ctx, metadata, project_path, ProjectAVUs.COLLECTION_METADATA_SCHEMAS.value, "", fatal=True)
 
-    project[ProjectAVUs.ENABLE_DROPZONE_SHARING.value] = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.ENABLE_DROPZONE_SHARING.value, "", FALSE_AS_STRING, FALSE_AS_STRING
-    )["arguments"][2]
+    project[ProjectAVUs.ENABLE_DROPZONE_SHARING.value] = avu(ctx, metadata, project_path, ProjectAVUs.ENABLE_DROPZONE_SHARING.value, FALSE_AS_STRING, fatal=False)
 
-    ret = ctx.callback.getCollectionAVU(
-        project["path"], ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
-    )["arguments"][2]
+    ret = avu(ctx, metadata, project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", fatal=True)
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the PI
@@ -104,9 +70,7 @@ def get_project_details(ctx, project_path, show_service_accounts):
         if user["userName"] == ret:
             project["principalInvestigatorDisplayName"] = user["displayName"]
 
-    ret = ctx.callback.getCollectionAVU(project["path"], ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
-        "arguments"
-    ][2]
+    ret = avu(ctx, metadata, project_path, ProjectAVUs.DATA_STEWARD.value, "", fatal=True)
     if ret == username:
         has_financial_view_access = True
     # Get the display name value for the data steward

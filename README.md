@@ -3,10 +3,10 @@
 The rulesets for the DataHub iRODS installation
 
 ## Usage
-Individual rule files can be run using irule. For example:
+Rules can be run using the included test helper. For example:
 
 ```bash
-irule -F misc/getUsers.r "*showServiceAccounts='true'"
+tests/run_test.sh -r get_users -a true
 
 ``` 
 

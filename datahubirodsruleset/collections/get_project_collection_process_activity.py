@@ -93,7 +93,7 @@ def check_active_dropzone_by_project_collection_path(ctx, project_collection_pat
     project_id = formatters.get_project_id_from_project_collection_path(project_collection_path)
     collection_id = formatters.get_collection_id_from_project_collection_path(project_collection_path)
 
-    ret = ctx.callback.listActiveDropZones("false", "")["arguments"][1]
+    ret = ctx.callback.list_active_drop_zones("false", "")["arguments"][1]
     drop_zones = json.loads(ret)
 
     for drop_zone in drop_zones:

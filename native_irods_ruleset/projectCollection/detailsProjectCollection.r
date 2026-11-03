@@ -25,9 +25,12 @@ IRULE_detailsProjectCollection(*project, *collection, *inherited, *result) {
     getCollectionAVU("/nlmumc/projects/*project","enableArchive",*enableArchive,"false","false");
     getCollectionAVU("/nlmumc/projects/*project","enableUnarchive",*enableUnarchive,*enableArchive,"false");
 
-    listProjectManagers(*project, *managers);
-    listProjectContributors(*project, *inherited, *contributors);
-    listProjectViewers(*project, *inherited, *viewers);
+    *managers = "";
+    *contributors = "";
+    *viewers = "";
+    list_project_managers(*project, "true", *managers);
+    list_project_contributors(*project, *inherited, "true", *contributors);
+    list_project_viewers(*project, *inherited, "true", *viewers);
 
     *details = '{"project": "*project", "collection": "*collection", "enableArchive": "*enableArchive", "enableUnarchive": "*enableUnarchive", "creator": "*creator", "numFiles": "*numFiles", "PID": "*PID", "byteSize": *byteSize, "managers": *managers, "contributors": *contributors, "viewers": *viewers}';
 

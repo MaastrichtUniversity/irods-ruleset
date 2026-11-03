@@ -1,6 +1,4 @@
 # /rules/tests/run_test.sh -r get_user_active_processes -a "true,true,true" -u dlinssen -j
-import json
-
 from dhpythonirodsutils.enums import (
     ProcessAttribute,
     ProcessType,
@@ -20,7 +18,8 @@ from dhpythonirodsutils.formatters import (
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, metadata_for_paths
+from datahubirodsruleset.drop_zones.list_active_drop_zones import list_drop_zones
 
 
 ARCHIVAL_REPOSITORY_NAME = "SURFSara Tape"
@@ -72,7 +71,7 @@ def get_user_active_processes(ctx, query_drop_zones, query_archive, query_unarch
     return output
 
 
-def get_drop_zone_percentage_ingested(ctx, drop_zone):
+def get_drop_zone_percentage_ingested(ctx, drop_zone, metadata):
     """
     Calculate the current percentage of data ingested towards the project collection destination.
 
@@ -81,7 +80,7 @@ def get_drop_zone_percentage_ingested(ctx, drop_zone):
     ctx : Context
         Combined type of callback and rei struct.
     drop_zone: dict
-        A drop-zone object item from listActiveDropZones
+        A drop-zone object item from list_active_drop_zones
 
     Returns
     -------
@@ -93,8 +92,7 @@ def get_drop_zone_percentage_ingested(ctx, drop_zone):
         return percentage
 
     collection_path = format_project_collection_path(drop_zone["project"], drop_zone["destination"])
-    ret = ctx.callback.get_collection_attribute_value(collection_path, "sizeIngested", "")["arguments"][2]
-    size_ingested = json.loads(ret)["value"]
+    size_ingested = metadata.get(collection_path, {}).get("sizeIngested", "")
     if drop_zone["state"] == DropzoneState.INGESTED.value:
         percentage = 100
     elif size_ingested and int(drop_zone["totalSize"]) > 0:
@@ -114,12 +112,14 @@ def get_list_active_drop_zones(ctx, output):
     output: dict
         The rule output to extend
     """
-    ret = ctx.callback.listActiveDropZones("false", "")["arguments"][1]
-    drop_zones = json.loads(ret)
+    drop_zones, _ = list_drop_zones(ctx)
+    destinations = [format_project_collection_path(drop_zone["project"], drop_zone["destination"])
+                    for drop_zone in drop_zones if drop_zone["destination"]]
+    metadata = metadata_for_paths(ctx, destinations, ("sizeIngested",))
 
     for drop_zone in drop_zones:
         drop_zone["process_type"] = ProcessType.DROP_ZONE.value
-        drop_zone["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, drop_zone)
+        drop_zone["percentage_ingested"] = get_drop_zone_percentage_ingested(ctx, drop_zone, metadata)
         add_process_to_output(drop_zone, output)
 
 
@@ -137,13 +137,16 @@ def get_list_active_project_processes(ctx, output):
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = f"META_COLL_ATTR_NAME in ('{ProcessAttribute.ARCHIVE.value}', '{ProcessAttribute.UNARCHIVE.value}') AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
-    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+    rows = list(row_iterator(parameters, conditions, AS_LIST, ctx.callback))
+    paths = [path for row in rows for path in (row[0], get_project_path_from_project_collection_path(row[0]))]
+    metadata = metadata_for_paths(ctx, paths, ("title",))
+    for result in rows:
         attribute = result[1]
         process = None
         if attribute == ProcessAttribute.ARCHIVE.value:
-            process = get_project_process_information(ctx, result, ProcessType.ARCHIVE)
+            process = get_project_process_information(ctx, result, ProcessType.ARCHIVE, metadata)
         if attribute == ProcessAttribute.UNARCHIVE.value:
-            process = get_project_process_information(ctx, result, ProcessType.UNARCHIVE)
+            process = get_project_process_information(ctx, result, ProcessType.UNARCHIVE, metadata)
         add_process_to_output(process, output)
 
 
@@ -164,8 +167,11 @@ def get_list_active_project_process(ctx, attribute, process_type, output):
     parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_ID"
     conditions = f"META_COLL_ATTR_NAME = '{attribute.value}' AND COLL_PARENT_NAME LIKE '/nlmumc/projects/%' "
 
-    for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        process = get_project_process_information(ctx, result, process_type)
+    rows = list(row_iterator(parameters, conditions, AS_LIST, ctx.callback))
+    paths = [path for row in rows for path in (row[0], get_project_path_from_project_collection_path(row[0]))]
+    metadata = metadata_for_paths(ctx, paths, ("title",))
+    for result in rows:
+        process = get_project_process_information(ctx, result, process_type, metadata)
         add_process_to_output(process, output)
 
 
@@ -212,7 +218,7 @@ def get_process_repository_and_state(query_result, process_type):
     return repository, state
 
 
-def get_project_process_information(ctx, query_result, process_type):
+def get_project_process_information(ctx, query_result, process_type, metadata):
     """
     Gather the project process information, then create and return a project process dictionary.
 
@@ -236,10 +242,8 @@ def get_project_process_information(ctx, query_result, process_type):
     process = {
         "project_id": get_project_id_from_project_collection_path(project_collection_path),
         "collection_id": get_collection_id_from_project_collection_path(project_collection_path),
-        "project_title": ctx.callback.getCollectionAVU(project_path, "title", "", "", TRUE_AS_STRING)["arguments"][2],
-        "collection_title": ctx.callback.getCollectionAVU(project_collection_path, "title", "", "", TRUE_AS_STRING)[
-            "arguments"
-        ][2],
+        "project_title": avu(ctx, metadata, project_path, "title", fatal=True),
+        "collection_title": avu(ctx, metadata, project_collection_path, "title", fatal=True),
         "state": state.strip(),
         "repository": repository,
         "process_id": process_id,

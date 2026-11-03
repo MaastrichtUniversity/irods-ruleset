@@ -1,8 +1,11 @@
 # /rules/tests/run_test.sh -r list_collections -a "/nlmumc/projects/P000000014" -j
+from collections import Counter
+
 from dhpythonirodsutils import formatters
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import collection_metadata, query_value
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -22,62 +25,39 @@ def list_collections(ctx, project_path):
     list
         a json list of collections objects
     """
-    # Files to exclude from the user uploaded files
-    # How to extend the list: "'metadata.xml', 'foobar.json'"
-    num_files_exclusion = "'metadata.xml'"
+    return _list_collections(ctx, project_path)
 
-    project_id = formatters.get_project_id_from_project_path(project_path)
 
-    # Initialize the collections dictionary
-    project_collections = []
+def _list_collections(ctx, project_path, admin=False):
+    formatters.get_project_id_from_project_path(project_path)
+    condition = f"COLL_PARENT_NAME = {query_value(project_path)}"
+    paths = [row[0] for row in row_iterator("COLL_NAME", condition, AS_LIST, ctx.callback)]
+    if not paths:
+        return []
 
-    for proj_coll in row_iterator("COLL_NAME", "COLL_PARENT_NAME = '" + project_path + "'", AS_LIST, ctx.callback):
-        # Initialize the collections dictionary
-        project_collection = {}
-        project_collection["size"] = 0
-        project_collection["title"] = ""
-        project_collection["creator"] = ""
-        project_collection["PID"] = ""
-        project_collection["numFiles"] = 0
-        project_collection["id"] = formatters.get_collection_id_from_project_collection_path(proj_coll[0])
-
-        parameters = "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-        conditions = f"META_COLL_ATTR_NAME in ('dcat:byteSize', 'title', 'creator', 'PID', 'numFiles', 'latest_version_number') AND COLL_NAME = '{proj_coll[0]}' "
-        latest_version_number = ""
-        for result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-            # Loop over metadata
-            if result[1] == "dcat:byteSize":
-                project_collection["size"] = int(result[2])
-            if result[1] == "title":
-                project_collection["title"] = result[2]
-            if result[1] == "creator":
-                project_collection["creator"] = result[2]
-            if result[1] == "PID":
-                project_collection["PID"] = result[2]
-            if result[1] == "numFiles":
-                project_collection["numFiles"] = int(result[2])
-            if result[1] == "latest_version_number":
-                latest_version_number = result[2]
-
-        # Calculate the number of user uploaded files
-        metadata_files = 0
-
-        if latest_version_number:
-            metadata_files = (int(latest_version_number) * 2) + 2
-
-        project_collection_path = formatters.format_project_collection_path(project_id, project_collection["id"])
-
-        for row in row_iterator(
-            "DATA_NAME",
-            f"COLL_NAME = '{project_collection_path}' AND DATA_NAME in ({num_files_exclusion})",
-            AS_LIST,
-            ctx.callback,
-        ):
-            if row:
-                metadata_files = metadata_files + 1
-
-        project_collection["numUserFiles"] = int(project_collection["numFiles"]) - metadata_files
-
-        project_collections.append(project_collection)
-
-    return project_collections
+    attributes = ("dcat:byteSize", "title", "creator", "PID", "numFiles", "latest_version_number", "deletionState")
+    metadata = collection_metadata(ctx, condition, attributes)
+    excluded_files = Counter(path for path, _ in row_iterator(
+        "COLL_NAME, DATA_NAME", condition + " AND DATA_NAME in ('metadata.xml')", AS_LIST, ctx.callback
+    ))
+    result = []
+    for path in paths:
+        values = metadata.get(path, {})
+        size = values.get("dcat:byteSize", "0")
+        num_files = values.get("numFiles", "0")
+        # The admin rule historically uses getCollectionAVU's empty-value
+        # fallbacks and floating byte sizes; the regular listing uses integers.
+        size = float(size or "0") if admin else int(size)
+        num_files = int(num_files or "0") if admin else int(num_files)
+        versions = values.get("latest_version_number", "")
+        metadata_files = (int(versions) * 2 + 2) if versions else 0
+        collection = {
+            "size": size, "title": values.get("title", ""), "creator": values.get("creator", ""),
+            "PID": values.get("PID", ""), "numFiles": num_files,
+            "id": formatters.get_collection_id_from_project_collection_path(path),
+            "numUserFiles": num_files - metadata_files - excluded_files[path],
+        }
+        if admin:
+            collection["deletionState"] = values.get("deletionState", "")
+        result.append(collection)
+    return result

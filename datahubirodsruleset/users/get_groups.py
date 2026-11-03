@@ -22,36 +22,20 @@ def get_groups(ctx, show_special_groups):
     list
         a json list of collections objects
     """
-    # Initialize the groups array
-    groups = []
-
-    for item in row_iterator("USER_NAME, USER_ID", "USER_TYPE = 'rodsgroup'", AS_LIST, ctx.callback):
-        group_name = item[0]
-        group_id = item[1]
-        display_name = item[0]
-        description = ""
-
-        for meta in row_iterator(
-            "META_USER_ATTR_NAME, META_USER_ATTR_VALUE, USER_GROUP_ID, USER_GROUP_NAME",
-            f"USER_TYPE = 'rodsgroup' and USER_GROUP_ID = '{group_id}'",
+    groups = {}
+    for name, group_id in row_iterator("USER_NAME, USER_ID", "USER_TYPE = 'rodsgroup'", AS_LIST, ctx.callback):
+        if not formatters.format_string_to_boolean(show_special_groups) and name in (
+            "public", "rodsadmin", "DH-ingest", "DH-project-admins"
+        ):
+            continue
+        groups[group_id] = {"name": name, "groupId": group_id, "displayName": name, "description": ""}
+    if groups:
+        for group_id, attribute, value in row_iterator(
+            "USER_ID, META_USER_ATTR_NAME, META_USER_ATTR_VALUE",
+            "USER_TYPE = 'rodsgroup' AND META_USER_ATTR_NAME in ('displayName','description')",
             AS_LIST,
             ctx.callback,
         ):
-            if "displayName" == meta[0]:
-                display_name = meta[1]
-            elif "description" == meta[0]:
-                description = meta[1]
-
-        group_object = {
-            "name": group_name,
-            "groupId": group_id,
-            "displayName": display_name,
-            "description": description,
-        }
-        if not formatters.format_string_to_boolean(show_special_groups):
-            if group_name not in ["public", "rodsadmin", "DH-ingest", "DH-project-admins"]:
-                groups.append(group_object)
-        else:
-            groups.append(group_object)
-
-    return groups
+            if group_id in groups:
+                groups[group_id][attribute] = value
+    return list(groups.values())

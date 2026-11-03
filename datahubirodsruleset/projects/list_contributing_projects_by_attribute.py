@@ -4,7 +4,7 @@ from dhpythonirodsutils.enums import ProjectAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import TRUE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, metadata_for_paths
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -46,14 +46,11 @@ def list_contributing_projects_by_attribute(ctx, attribute):
         f"COLL_ACCESS_NAME in ('own', 'modify_object') and COLL_ACCESS_USER_ID in ({access_user_id}) and COLL_PARENT_NAME = '/nlmumc/projects' and META_COLL_ATTR_NAME = '{attribute}' AND META_COLL_ATTR_VALUE = 'true'"
     )
 
-    for project_path in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
-        project = {
-            "id": formatters.get_project_id_from_project_path(project_path[0]),
-            "path": project_path[0],
-            ProjectAVUs.TITLE.value: ctx.callback.getCollectionAVU(
-                project_path[0], ProjectAVUs.TITLE.value, "", "", TRUE_AS_STRING
-            )["arguments"][2],
-        }
-        projects.append(project)
-
+    paths = [row[0] for row in row_iterator(parameters, conditions, AS_LIST, ctx.callback)]
+    metadata = metadata_for_paths(ctx, paths, (ProjectAVUs.TITLE.value,))
+    for path in paths:
+        projects.append({
+            "id": formatters.get_project_id_from_project_path(path), "path": path,
+            ProjectAVUs.TITLE.value: avu(ctx, metadata, path, ProjectAVUs.TITLE.value, fatal=True),
+        })
     return projects

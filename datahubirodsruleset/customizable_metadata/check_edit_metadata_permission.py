@@ -5,7 +5,8 @@ from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
 
 from datahubirodsruleset.decorator import make, Output
-from datahubirodsruleset.utils import FALSE_AS_STRING, TRUE_AS_STRING
+from datahubirodsruleset.utils import FALSE_AS_STRING
+from datahubirodsruleset.listing_queries import avu, collection_metadata, query_value
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -32,18 +33,15 @@ def check_edit_metadata_permission(ctx, project_path):
     # If user is the Principal Investigator he is allowed to edit the metadata
     # If this query fails, the user has no rights to this project or project does not exist so False should be returned
     try:
-        ret = ctx.callback.getCollectionAVU(
-            project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, "", "", TRUE_AS_STRING
-        )["arguments"][2]
+        metadata = collection_metadata(ctx, f"COLL_NAME = {query_value(project_path)}")
+        ret = avu(ctx, metadata, project_path, ProjectAVUs.PRINCIPAL_INVESTIGATOR.value, fatal=True)
         if ret == username:
             return True
     except RuntimeError:
         return False
 
     # If user is the Data Steward he is allowed to edit the metadata
-    ret = ctx.callback.getCollectionAVU(project_path, ProjectAVUs.DATA_STEWARD.value, "", "", TRUE_AS_STRING)[
-        "arguments"
-    ][2]
+    ret = avu(ctx, metadata, project_path, ProjectAVUs.DATA_STEWARD.value, fatal=True)
     if ret == username:
         return True
 
@@ -60,9 +58,7 @@ def check_edit_metadata_permission(ctx, project_path):
 
     # If user is a contributor or in one of the contributing groups and enableContributorEditMetadata is true,
     # he is allowed to edit the metadata
-    ret = ctx.callback.getCollectionAVU(
-        project_path, ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value, "", "", FALSE_AS_STRING
-    )["arguments"][2]
+    ret = avu(ctx, metadata, project_path, ProjectAVUs.ENABLE_CONTRIBUTOR_EDIT_METADATA.value)
     if formatters.format_string_to_boolean(ret):
         ret = ctx.callback.list_project_contributors(project_id, FALSE_AS_STRING, FALSE_AS_STRING, "")["arguments"][3]
         contributors = json.loads(ret)

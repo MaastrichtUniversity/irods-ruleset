@@ -56,10 +56,10 @@ def ingest_preparation(request, tmp_path_factory):
 # TODO Test for trigger post ingest with missing dropzone creator email
 
 """
-iRODS Rule language rules
+Rule usage summary
 
 checkDropZoneACL:
-    *   In RS (create_drop_zone, get_active_drop_zone, validate_dropzone & listActiveDropZones)
+    *   In RS (create_drop_zone, get_active_drop_zone, validate_dropzone & list_active_drop_zones)
 
 createRemoteDirectory:
     *   In RS (create_drop_zone)
@@ -70,7 +70,7 @@ delayRemoveDropzone:
 editIngest:
     *   In MDR, RW
 
-listActiveDropZones:
+list_active_drop_zones:
     *   NOT in RW, MDR
     *   In RS (get_user_active_processes)
 """

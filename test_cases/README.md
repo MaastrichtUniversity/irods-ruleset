@@ -66,25 +66,25 @@ cd /rules/test_cases
 ./rit.sh test irods 'test_direct_ingest.py::TestDirectIngest::test_collection_avu[um-manager]'
 ```
 
-The direct and mounted ingest modules expose `TestDirectIngest` and
-`TestMountedIngest`, each with six parametrized scenarios: `um-manager`,
-`azm-manager`, `s3-manager`, `um-contributor`, `azm-contributor`, and
-`s3-contributor`.
+The direct and mounted ingest modules each expose three classes:
+`TestDirectIngest` / `TestMountedIngest`, `TestEditCollectionMetadata`, and
+`TestChangeCollectionMetadataSchema`. All three use the same six parametrized
+scenarios: `um-manager`, `azm-manager`, `s3-manager`, `um-contributor`,
+`azm-contributor`, and `s3-contributor`.
 
-The direct module also exposes `TestEditCollectionMetadata` and
-`TestChangeCollectionMetadataSchema`. These run once per resource, using only
-`um-manager`, `azm-manager`, and `s3-manager`. They reuse those direct ingests:
-verify ingest (version 1), edit metadata (version 2), then change its schema
-(version 3). Mounted and contributor ingests run their ingest checks only.
-The project is removed after the selected phases finish.
+Running an entire module shares one project/dropzone ingest per scenario across
+these phases: verify ingest (version 1), edit metadata (version 2), then change
+its schema (version 3). The project is removed after the selected phases finish.
+Metadata edits run as the project manager, including after contributor ingests.
 The former `test_edit_collection_metadata.py` and
-`test_change_collection_metadata_schema.py` checks now live in the direct module.
+`test_change_collection_metadata_schema.py` checks now live in these modules.
 
 Run either metadata class independently through the launcher; include `.py`
 before the class selector:
 
 ```sh
-./rit.sh test irods test_direct_ingest.py::TestEditCollectionMetadata
+./rit.sh test irods test_mounted_ingest.py::TestEditCollectionMetadata
+./rit.sh test irods test_mounted_ingest.py::TestChangeCollectionMetadataSchema
 ./rit.sh test irods test_direct_ingest.py::TestChangeCollectionMetadataSchema
 ```
 
@@ -100,7 +100,7 @@ Use `-k` with manual pytest to select a scenario, or pass a quoted node ID to th
 launcher to select one assertion:
 
 ```sh
-./rit.sh test irods 'test_direct_ingest.py::TestChangeCollectionMetadataSchema::test_collection_schema_version[um-manager]'
+./rit.sh test irods 'test_mounted_ingest.py::TestChangeCollectionMetadataSchema::test_collection_schema_version[um-manager]'
 ```
 
 # Parallel and sequential execution
@@ -121,8 +121,8 @@ of that flag, and zero always selects sequential execution.
 
 Tests marked `pytest.mark.parallel` run together on icat with xdist's
 `loadgroup` scheduler. Each class stays on one worker in collection order; each
-direct/mounted ingest scenario retains its own group. Direct manager scenarios
-share their ingest with the metadata classes. The launcher waits for this phase to
+direct/mounted ingest scenario retains its own group and shares one ingest
+across its ingest and metadata classes. The launcher waits for this phase to
 finish, runs all unmarked tests sequentially on icat, then runs mounted stop/restart tests on
 **ires-hnas-um**. A file or node selection is applied to both icat phases; an
 empty phase is allowed, while real failures stop the launcher immediately.

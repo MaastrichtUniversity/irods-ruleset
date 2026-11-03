@@ -4,7 +4,6 @@ from test_cases.base_ingest_test_case import (
     BaseIngestScenario,
     BaseTestCaseIngest,
     INGEST_SCENARIOS,
-    MANAGER_INGEST_SCENARIOS,
     # Module-level fixtures share one lifecycle across the three test classes.
     ingest_scenario,
     edited_collection,
@@ -22,6 +21,7 @@ from dhpythonirodsutils import formatters
 
 pytestmark = [
     pytest.mark.parallel,
+    pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="module"),
     pytest.mark.xdist_group("direct"),
 ]
 
@@ -38,7 +38,6 @@ class IngestScenario(BaseIngestScenario):
         add_data_to_direct_dropzone(self)
 
 
-@pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="module")
 class TestDirectIngest(BaseTestCaseIngest):
     def test_ingest_quote_and_combination(self, ingest_scenario, tmp_path):
         """Ingest a path containing both a single quote and ' and ' without changing its contents."""
@@ -48,11 +47,9 @@ class TestDirectIngest(BaseTestCaseIngest):
         assert destination.read_bytes() == b"0" * 51200
 
 
-@pytest.mark.parametrize("ingest_scenario", MANAGER_INGEST_SCENARIOS, indirect=True, scope="module")
 class TestEditCollectionMetadata(BaseEditCollectionMetadata):
     pass
 
 
-@pytest.mark.parametrize("ingest_scenario", MANAGER_INGEST_SCENARIOS, indirect=True, scope="module")
 class TestChangeCollectionMetadataSchema(BaseTestChangeCollectionMetadataSchema):
     pass

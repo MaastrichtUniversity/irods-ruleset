@@ -4,7 +4,14 @@ from test_cases.base_ingest_test_case import (
     BaseIngestScenario,
     BaseTestCaseIngest,
     INGEST_SCENARIOS,
+    # Module-level fixtures share one lifecycle across the three test classes.
     ingest_scenario,
+    edited_collection,
+    schema_changed_collection,
+)
+from test_cases.base_customizable_metadata_test_case import (
+    BaseEditCollectionMetadata,
+    BaseTestChangeCollectionMetadataSchema,
 )
 from test_cases.utils import add_metadata_files_to_mounted_dropzone
 import subprocess
@@ -37,4 +44,12 @@ class IngestScenario(BaseIngestScenario):
 
 
 class TestMountedIngest(BaseTestCaseIngest):
+    pass
+
+
+class TestEditCollectionMetadata(BaseEditCollectionMetadata):
+    pass
+
+
+class TestChangeCollectionMetadataSchema(BaseTestChangeCollectionMetadataSchema):
     pass

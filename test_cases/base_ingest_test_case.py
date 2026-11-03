@@ -20,16 +20,13 @@ from test_cases.utils import (
 )
 
 
-MANAGER_INGEST_SCENARIOS = [
+INGEST_SCENARIOS = [
     pytest.param(("ires-hnas-umResource", "passRescUM01", False),
                  id="um-manager", marks=pytest.mark.xdist_group("um-manager")),
     pytest.param(("ires-hnas-azmResource", "replRescAZM02", False),
                  id="azm-manager", marks=pytest.mark.xdist_group("azm-manager")),
     pytest.param(("ires-hnas-umResource", "replRescUMCeph01", False),
                  id="s3-manager", marks=pytest.mark.xdist_group("s3-manager")),
-]
-
-INGEST_SCENARIOS = MANAGER_INGEST_SCENARIOS + [
     pytest.param(("ires-hnas-umResource", "passRescUM01", True),
                  id="um-contributor", marks=pytest.mark.xdist_group("um-contributor")),
     pytest.param(("ires-hnas-azmResource", "replRescAZM02", True),

@@ -1,6 +1,6 @@
 # /rules/tests/run_test.sh -r get_project_resource_availability -a "P000000014,true,false,false" -j
 from dhpythonirodsutils import formatters
-from dhpythonirodsutils.enums import ProjectAVUs
+from dhpythonirodsutils.enums import ProjectAVUs, ResourceStatus
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
@@ -47,21 +47,27 @@ def get_project_resource_availability(
         ingest_resource = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.INGEST_RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        ingest_status = ctx.callback.get_resource_status(ingest_resource, "")["arguments"][1] != "down"
+        ingest_status = (
+            ctx.callback.get_resource_status(ingest_resource, "")["arguments"][1] != ResourceStatus.DOWN.value
+        )
 
     destination_status = False
     if check_destination_resource:
         destination_resource = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        destination_status = ctx.callback.get_resource_status(destination_resource, "")["arguments"][1] != "down"
+        destination_status = (
+            ctx.callback.get_resource_status(destination_resource, "")["arguments"][1] != ResourceStatus.DOWN.value
+        )
 
     archive_status = False
     if check_archive_resource:
         archive_resource = ctx.callback.getCollectionAVU(
             project_path, ProjectAVUs.ARCHIVE_DESTINATION_RESOURCE.value, "", "", TRUE_AS_STRING
         )["arguments"][2]
-        archive_status = ctx.callback.get_resource_status(archive_resource, "")["arguments"][1] != "down"
+        archive_status = (
+            ctx.callback.get_resource_status(archive_resource, "")["arguments"][1] != ResourceStatus.DOWN.value
+        )
 
     return (
         check_ingest_resource is ingest_status

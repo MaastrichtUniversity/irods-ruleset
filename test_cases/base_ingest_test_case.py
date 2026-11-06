@@ -132,6 +132,14 @@ class BaseIngestScenario:
 
 @pytest.fixture(scope="module")
 def ingest_scenario(request, tmp_path_factory):
+    """Set up one ingest per module/scenario, shared across its test classes.
+
+    Tests request this fixture directly or through the metadata fixtures.
+    request.param contains the resource/role scenario selected by indirect
+    parametrization. Code before yield is setup; pytest runs the scenario's
+    tests at yield, then resumes below it for teardown, even if a test fails.
+    If setup fails before reaching yield, that teardown is not registered.
+    """
     scenario = request.module.IngestScenario()
     scenario.ingest_resource, scenario.destination_resource, as_contributor = request.param
     scenario.depositor = BaseIngestScenario.depositor
@@ -159,7 +167,7 @@ def ingest_scenario(request, tmp_path_factory):
     start_and_wait_for_ingest(scenario)
     print(f"End {type(scenario).__name__}.ingest_scenario")
 
-    yield scenario
+    yield scenario  # Hand control to the tests; resume here afterwards to clean up.
 
     print()
     print(f"Start {type(scenario).__name__}.ingest_scenario teardown")

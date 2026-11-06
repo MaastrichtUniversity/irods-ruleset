@@ -8,6 +8,7 @@ from genquery import row_iterator, AS_LIST
 from datahubirodsruleset import FALSE_AS_STRING
 from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import apply_collection_deletion_metadata
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import account_identities
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -101,17 +102,18 @@ def restore_project_collection_user_acl(ctx, user_project, user_project_collecti
     user_project_collection : str
         The absolute path of the project collection
     """
-    for result in row_iterator(
+    entries = list(row_iterator(
         "COLL_ACCESS_USER_ID",
         f"COLL_NAME = '{user_project}'",
         AS_LIST,
         ctx.callback,
-    ):
-        account_id = result[0]
-
-        for account in row_iterator("USER_NAME", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            account_name = account[0]
-            ctx.callback.msiSetACL("recursive", "admin:read", account_name, user_project_collection)
+    ))
+    accounts = account_identities(ctx, (entry[0] for entry in entries))
+    for account_id, in entries:
+        account = accounts.get(account_id)
+        if account is None:
+            continue
+        ctx.callback.msiSetACL("recursive", "admin:read", account[0], user_project_collection)
 
     ctx.callback.msiWriteRodsLog(f"INFO: Users ACL restored for '{user_project_collection}'", 0)
 

@@ -2,6 +2,7 @@
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import in_conditions
 
 
 @make(inputs=[0], outputs=[1], handler=Output.STORE)
@@ -21,41 +22,47 @@ def get_project_finance(ctx, project_path):
     dict
         The project financial information
     """
+    return get_projects_finance_details(ctx, [project_path])[project_path]
+
+
+def get_projects_finance_details(ctx, project_paths):
+    collections = {path: {} for path in project_paths}
+    # Keep empty collections, and query only direct children of selected projects.
+    for condition in in_conditions("COLL_PARENT_NAME", collections):
+        for path, in row_iterator("COLL_NAME", condition, AS_LIST, ctx.callback):
+            collections[path.rsplit("/", 1)[0]][path] = []
+        for path, attribute, value in row_iterator(
+            "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
+            condition + " AND META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%'",
+            AS_LIST,
+            ctx.callback,
+        ):
+            collections[path.rsplit("/", 1)[0]][path].append((attribute, value))
+
+    resources_prices = {}
+    if any(sizes for project in collections.values() for sizes in project.values()):
+        for resource_id, price in row_iterator(
+            "RESC_ID, META_RESC_ATTR_VALUE", "META_RESC_ATTR_NAME = 'NCIT:C88193'", AS_LIST, ctx.callback
+        ):
+            resources_prices[resource_id] = price
+
+    return {path: calculate_project_finance(project, resources_prices) for path, project in collections.items()}
+
+
+def calculate_project_finance(collections, resources_prices):
     project_cost = 0
     project_size = 0
-    resources_prices = {}
     project_collections_output = []
 
-    # Get all project's collections
-    for result in row_iterator("COLL_NAME", f"COLL_PARENT_NAME = '{project_path}'", AS_LIST, ctx.callback):
-        # collections.append(result[0])
-
-        project_collection_path = result[0]
+    for project_collection_path, sizes in collections.items():
         collection_cost = 0
         collection_size = 0
         resources_details = []
 
-        # Get the collection size on each resource
-        parameters = "META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE"
-        conditions = f"META_COLL_ATTR_NAME like 'dcat:byteSize_resc_%' AND COLL_NAME = '{project_collection_path}'"
-        for collection_result in row_iterator(parameters, conditions, AS_LIST, ctx.callback):
+        for collection_result in sizes:
             resource_id = collection_result[0].replace("dcat:byteSize_resc_", "")
             collection_size_on_resource = float(collection_result[1])
 
-            query_resource_price = True
-            # Check resources_prices before even querying iCAT
-            if resource_id in resources_prices:
-                query_resource_price = False
-
-            # Only query if price_per_gb_per_year(NCIT:C88193) was not found in resources_prices
-            if query_resource_price:
-                for resource_result in row_iterator(
-                    "META_RESC_ATTR_VALUE",
-                    f"RESC_ID = '{resource_id}' and META_RESC_ATTR_NAME = 'NCIT:C88193'",
-                    AS_LIST,
-                    ctx.callback,
-                ):
-                    resources_prices[resource_id] = resource_result[0]
             price_per_gb_per_year = float(resources_prices[resource_id])
 
             # Convert to GB (for calculation and display of costs)

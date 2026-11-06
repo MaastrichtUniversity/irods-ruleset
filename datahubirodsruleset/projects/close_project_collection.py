@@ -4,6 +4,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path, format_project_collection_path
+from datahubirodsruleset.listing_queries import account_identities
 
 
 @make(inputs=[0, 1], outputs=[2], handler=Output.STORE)
@@ -29,26 +30,32 @@ def close_project_collection(ctx, project_id, collection_id):
     project_collection_path = format_project_collection_path(ctx, project_id, collection_id)
     project_path = format_project_path(ctx, project_id)
 
-    for result in row_iterator(
+    entries = list(row_iterator(
         "DATA_ACCESS_USER_ID",
         f"COLL_NAME = '{project_collection_path}' AND DATA_NAME = 'instance.json'",
         AS_LIST,
         ctx.callback,
-    ):
-        account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            # Remove permissions for all users on the PC that have access on the instance.json 
-            # This is to mitigate an issue where individual users, that are part of a group, still have own access on their 
-            # individual account
-            ctx.callback.msiSetACL("recursive", "admin:null", account[0], project_collection_path)
+    ))
+    accounts = account_identities(ctx, (entry[0] for entry in entries))
+    for account_id, in entries:
+        account = accounts.get(account_id)
+        if account is None:
+            continue
+        # Remove permissions for all users on the PC that have access on the instance.json
+        # This is to mitigate an issue where individual users, that are part of a group, still have own access on their
+        # individual account
+        ctx.callback.msiSetACL("recursive", "admin:null", account[0], project_collection_path)
 
-    for result in row_iterator(
+    entries = list(row_iterator(
         "COLL_ACCESS_USER_ID",
         f"COLL_NAME = '{project_path}'",
         AS_LIST,
         ctx.callback,
-    ):
-        account_id = result[0]
-        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            # Add back read permissions for all users that have rights on the project.
-            ctx.callback.msiSetACL("recursive", "admin:read", account[0], project_collection_path)
+    ))
+    accounts = account_identities(ctx, (entry[0] for entry in entries))
+    for account_id, in entries:
+        account = accounts.get(account_id)
+        if account is None:
+            continue
+        # Add back read permissions for all users that have rights on the project.
+        ctx.callback.msiSetACL("recursive", "admin:read", account[0], project_collection_path)

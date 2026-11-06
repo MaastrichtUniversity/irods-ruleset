@@ -9,6 +9,7 @@ from datahubirodsruleset import IRODS_BACKUP_ACL_BASE_PATH, IRODS_ZONE_BASE_PATH
 from datahubirodsruleset.data_deletion.restore_project_user_access import map_access_name_to_access_level
 from datahubirodsruleset.data_deletion.revoke_project_collection_user_access import SERVICE_ACCOUNT_ALLOW_LIST
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import account_identities
 
 
 @make(inputs=[0, 1, 2], outputs=[], handler=Output.STORE)
@@ -52,23 +53,26 @@ def revoke_project_user_access(ctx, user_project, reason, description):
 
     ctx.callback.msiWriteRodsLog(f"INFO: Create ACL backup for project '{backup_project}'", 0)
 
-    for result in row_iterator(
+    entries = list(row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
         f"COLL_NAME = '{user_project}'",
         AS_LIST,
         ctx.callback,
-    ):
+    ))
+    accounts = account_identities(ctx, (entry[0] for entry in entries))
+    for result in entries:
         account_id = result[0]
         account_access = result[1]
         user_access = map_access_name_to_access_level(account_access)
 
-        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            account_name = account[0]
-            account_type = account[1]
-            ctx.callback.msiSetACL("default", user_access, account_name, backup_project)
+        account = accounts.get(account_id)
+        if account is None:
+            continue
+        account_name, account_type = account
+        ctx.callback.msiSetACL("default", user_access, account_name, backup_project)
 
-            if account_type != "rodsadmin" and account_name not in SERVICE_ACCOUNT_ALLOW_LIST:
-                ctx.callback.msiSetACL("default", "null", account_name, user_project)
+        if account_type != "rodsadmin" and account_name not in SERVICE_ACCOUNT_ALLOW_LIST:
+            ctx.callback.msiSetACL("default", "null", account_name, user_project)
 
     ctx.callback.msiWriteRodsLog(f"INFO: Users ACL revoked for project '{user_project}'", 0)
 

@@ -49,6 +49,16 @@ def avu(ctx, metadata, path, attribute, default="", fatal=False):
     return value
 
 
+def account_identities(ctx, identifiers):
+    result = {}
+    for condition in in_conditions("USER_ID", identifiers):
+        for account_id, name, account_type in row_iterator(
+            "USER_ID, USER_NAME, USER_TYPE", condition, AS_LIST, ctx.callback
+        ):
+            result[account_id] = (name, account_type)
+    return result
+
+
 def accounts(ctx, condition):
     result = {}
     for name, account_id, account_type in row_iterator(

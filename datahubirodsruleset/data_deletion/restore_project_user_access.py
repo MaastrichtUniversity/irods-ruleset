@@ -13,6 +13,7 @@ from datahubirodsruleset.data_deletion.restore_project_collection_user_access im
     check_collection_delete_data_state,
 )
 from datahubirodsruleset.decorator import make, Output
+from datahubirodsruleset.listing_queries import account_identities
 
 
 @make(inputs=[0], outputs=[], handler=Output.STORE)
@@ -56,23 +57,26 @@ def restore_project_user_acl(ctx, user_project_path, backup_project_path):
         The absolute path of the backup project ACL
     """
     acl_operations = []
-    for result in row_iterator(
+    entries = list(row_iterator(
         "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
         f"COLL_NAME = '{backup_project_path}'",
         AS_LIST,
         ctx.callback,
-    ):
+    ))
+    accounts = account_identities(ctx, (entry[0] for entry in entries))
+    for result in entries:
         account_id = result[0]
         account_access = result[1]
         user_access = map_access_name_to_access_level(account_access)
 
-        for account in row_iterator("USER_NAME", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            account_name = account[0]
-            acl_operation = {
-                "entity_name": account_name,
-                "acl": user_access,
-            }
-            acl_operations.append(acl_operation)
+        account = accounts.get(account_id)
+        if account is None:
+            continue
+        acl_operation = {
+            "entity_name": account[0],
+            "acl": user_access,
+        }
+        acl_operations.append(acl_operation)
 
     apply_batch_acl_operation(ctx, user_project_path, acl_operations)
     ctx.callback.msiWriteRodsLog(f"INFO: Users ACL restored  for '{user_project_path}'", 0)

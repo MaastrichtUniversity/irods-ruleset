@@ -12,6 +12,7 @@ from datahubirodsruleset.collections.set_acl import set_acl
 from datahubirodsruleset.collections.remove_collection_attribute_value import remove_collection_attribute_value
 
 # Private rules
+from datahubirodsruleset.collections.calculate_collection_statistics import calculate_collection_statistics
 from datahubirodsruleset.collections.get_collection_size import get_collection_size
 from datahubirodsruleset.collections.get_data_object_size import get_data_object_size
 from datahubirodsruleset.collections.create_project_collection import create_project_collection

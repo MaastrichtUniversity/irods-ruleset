@@ -5,6 +5,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_project_path
+from datahubirodsruleset.listing_queries import avu, metadata_for_paths
 from datahubirodsruleset.utils import FALSE_AS_STRING
 
 
@@ -48,12 +49,12 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
         f"COLL_PARENT_NAME = '/nlmumc/ingest/direct' AND META_COLL_ATTR_NAME = 'project' AND META_COLL_ATTR_VALUE = '{project_id}'"
     )
 
-    for item in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback):
-        dropzone_path = item[0]
-        creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", FALSE_AS_STRING)["arguments"][2]
-        dropzone_state = ctx.callback.getCollectionAVU(dropzone_path, "state", "", FALSE_AS_STRING, FALSE_AS_STRING)[
-            "arguments"
-        ][2]
+    dropzones = [row[0] for row in row_iterator(query_parameters, query_conditions, AS_LIST, ctx.callback)]
+    metadata = metadata_for_paths(ctx, dropzones, ("creator", "state"))
+    privilege = None
+    for dropzone_path in dropzones:
+        creator = avu(ctx, metadata, dropzone_path, "creator")
+        dropzone_state = avu(ctx, metadata, dropzone_path, "state", FALSE_AS_STRING)
 
         # Check if the dropzone is still in an ingestable state
         ingestable = ctx.callback.is_dropzone_state_ingestable(dropzone_state, "")["arguments"][1]
@@ -62,7 +63,8 @@ def set_single_user_project_acl_to_dropzones(ctx, project_id, username):
 
         # Do not revoke / add permissions if the creator's permissions were changed on the project
         if sharing_enabled and username != creator:
-            privilege = get_username_permission(ctx, project_path, username)
+            if privilege is None:
+                privilege = get_username_permission(ctx, project_path, username)
             if privilege == "own" or privilege == "modify_object":
                 set_single_own_permissions_dropzone(ctx, dropzone_path, username, prefix)
             else:

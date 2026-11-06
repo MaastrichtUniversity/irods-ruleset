@@ -5,6 +5,7 @@ from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.formatters import format_dropzone_path, format_project_path
+from datahubirodsruleset.listing_queries import account_identities, avu, in_conditions
 from datahubirodsruleset.utils import TRUE_AS_STRING, FALSE_AS_STRING
 
 
@@ -89,7 +90,7 @@ def set_own_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix,
     ctx.callback.msiSetACL("default", admin_prefix + "read", caller, dropzone_path + "/instance.json")
     ctx.callback.msiSetACL("default", admin_prefix + "read", caller, dropzone_path + "/schema.json")
 
-def revoke_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix, caller):
+def revoke_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix, caller, metadata=None):
     """
     Revoke recursively all the user permissions on the dropzone. And then re-set the creator permissions.
 
@@ -105,13 +106,18 @@ def revoke_permissions_dropzone(ctx, dropzone_path, contributors, admin_prefix, 
         If the client user is an admin, set the ACL with admin mode
     caller: str
         The caller of this rule
+    metadata: dict
+        Preloaded dropzone metadata, when called by the bulk rule.
     """
     # Remove permissions of all contributors
     for contributor in contributors:
         if contributor != caller:
             ctx.callback.msiSetACL("recursive", admin_prefix + "null", contributor, dropzone_path)
 
-    creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+    if metadata is None:
+        creator = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
+    else:
+        creator = avu(ctx, metadata, dropzone_path, "creator", fatal=True)
     # Give creator back permissions
     ctx.callback.msiSetACL("recursive", admin_prefix + "own", creator, dropzone_path)
     ctx.callback.msiSetACL("default", admin_prefix + "read", creator, dropzone_path + "/instance.json")
@@ -135,21 +141,26 @@ def get_contributors_for_project_or_dropzone(ctx, path):
     list[str]
         List of the project's contributors usernames.
     """
-    criteria = "'own', 'modify_object'"
-    output = []
-    for result in row_iterator(
-        "COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
-        f"COLL_ACCESS_NAME in ({criteria}) AND " + f"COLL_NAME = '{path}'",
-        AS_LIST,
-        ctx.callback,
-    ):
-        account_id = result[0]
+    return get_contributors_for_paths(ctx, [path])[path]
 
-        for account in row_iterator("USER_NAME, USER_TYPE", f"USER_ID = '{account_id}'", AS_LIST, ctx.callback):
-            account_name = account[0]
-            account_type = account[1]
 
-            if account_type != "rodsadmin" and "service-" not in account_name:
-                output.append(account_name)
+def get_contributors_for_paths(ctx, paths):
+    output = {path: [] for path in paths}
+    entries = []
+    for condition in in_conditions("COLL_NAME", output):
+        entries.extend(row_iterator(
+            "COLL_NAME, COLL_ACCESS_USER_ID, COLL_ACCESS_NAME, COLL_ACCESS_TYPE",
+            condition + " AND COLL_ACCESS_NAME in ('own', 'modify_object')",
+            AS_LIST,
+            ctx.callback,
+        ))
+    accounts = account_identities(ctx, (entry[1] for entry in entries))
+    for path, account_id, _, _ in entries:
+        account = accounts.get(account_id)
+        if account is None:
+            continue
+        account_name, account_type = account
+        if account_type != "rodsadmin" and "service-" not in account_name:
+            output[path].append(account_name)
 
     return output

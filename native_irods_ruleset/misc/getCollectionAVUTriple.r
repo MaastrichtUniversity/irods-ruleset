@@ -20,7 +20,7 @@ IRULE_getCollectionAVUTriple(*path, *attribute, *overrideValue, *fatal, *result)
     *arrayops = '[]';
     *arraySize = 0;
     *result = '';
-    foreach (*avu in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS WHERE COLL_NAME == "*path") {
+    foreach (*avu in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS WHERE COLL_NAME == "*path" AND META_COLL_ATTR_NAME == *attribute) {
         if ( *avu.META_COLL_ATTR_NAME == *attribute) {
             *value = *avu.META_COLL_ATTR_VALUE;
             *unit = *avu.META_COLL_ATTR_UNITS;

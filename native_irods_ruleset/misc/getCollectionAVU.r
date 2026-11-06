@@ -15,7 +15,7 @@ irule_dummy() {
 
 IRULE_getCollectionAVU(*collName, *attribute, *value, *overrideValue, *fatal) {
     *value = "";
-    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*collName") {
+    foreach (*av in SELECT META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE WHERE COLL_NAME == "*collName" AND META_COLL_ATTR_NAME == *attribute) {
         if ( *av.META_COLL_ATTR_NAME == *attribute) {
             *value = *av.META_COLL_ATTR_VALUE;
         }

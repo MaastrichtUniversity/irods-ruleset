@@ -15,7 +15,7 @@ irule_dummy() {
 
 IRULE_getResourceAVU(*resourceName, *attribute, *value, *overrideValue, *fatal) {
     *value = "";
-    foreach (*av in SELECT META_RESC_ATTR_NAME, META_RESC_ATTR_VALUE WHERE RESC_NAME == "*resourceName") {
+    foreach (*av in SELECT META_RESC_ATTR_NAME, META_RESC_ATTR_VALUE WHERE RESC_NAME == "*resourceName" AND META_RESC_ATTR_NAME == *attribute) {
         if ( *av.META_RESC_ATTR_NAME == *attribute) {
             *value = *av.META_RESC_ATTR_VALUE;
         }

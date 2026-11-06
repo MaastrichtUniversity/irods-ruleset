@@ -109,6 +109,14 @@ class BaseTestCaseIngest:
     @pytest.fixture(scope="class", autouse=True)
     @classmethod
     def ingest_scenario(cls, request):
+        """Set up one ingest per class/scenario, shared by all its test methods.
+
+        autouse=True runs this fixture without tests naming it as an argument.
+        request.param contains the resource/role scenario selected by indirect
+        parametrization. Code before yield is setup; pytest runs the scenario's
+        tests at yield, then resumes below it for teardown, even if a test fails.
+        If setup fails before reaching yield, that teardown is not registered.
+        """
         cls.ingest_resource, cls.destination_resource, as_contributor = request.param
         cls.depositor = BaseTestCaseIngest.depositor
         cls.collection_creator = BaseTestCaseIngest.collection_creator
@@ -136,7 +144,7 @@ class BaseTestCaseIngest:
         start_and_wait_for_ingest(cls)
         print(f"End {cls.__name__}.ingest_scenario")
 
-        yield
+        yield  # Hand control to the tests; resume here afterwards to clean up.
 
         print()
         print(f"Start {cls.__name__}.ingest_scenario teardown")

@@ -44,30 +44,27 @@ def check_user_is_deletable(ctx, username):
     # Check for projects that have this user as DS or PI
     for project in row_iterator(
         "COLL_NAME, META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE",
-        f"COLL_NAME like '/nlmumc/projects/%' AND META_COLL_ATTR_NAME IN ('dataSteward','OBI:0000103') AND META_COLL_ATTR_VALUE = '{username}'",
+        f"COLL_PARENT_NAME = '/nlmumc/projects' AND META_COLL_ATTR_NAME IN ('dataSteward','OBI:0000103') AND META_COLL_ATTR_VALUE = '{username}'",
         AS_LIST,
         ctx.callback,
     ):
         reasons.append(f"{project[2]} is the {project[1]} for project {project[0]}")
     
 
-    # Check for projects with this user as its only manager
-    for access_query_results in row_iterator(
-        "COLL_ACCESS_USER_ID, COLL_NAME",
-        f"COLL_ACCESS_NAME = 'own' AND COLL_NAME like '/nlmumc/projects/%' AND COLL_ACCESS_USER_ID = '{user_id}'",
+    # Fetch project owners once; descendant collections do not define project managers.
+    project_managers = {}
+    for project_path, manager_id in row_iterator(
+        "COLL_NAME, COLL_ACCESS_USER_ID",
+        "COLL_ACCESS_NAME = 'own' AND COLL_PARENT_NAME = '/nlmumc/projects'",
         AS_LIST,
         ctx.callback,
     ):
-        project_path = access_query_results[1]
-        for num_managers_result in row_iterator(
-            "count(COLL_ACCESS_NAME)",
-            f"COLL_NAME = '{project_path}' AND COLL_ACCESS_NAME ='own'",
-            AS_LIST,
-            ctx.callback,
-        ):
-            # 'rods' is always a manager on all projects, so if there's 2 managers and this user is one of them, then there will only be the user 'rods' as a manager afterwards.
-            if int(num_managers_result[0]) <= 2:
-                reasons.append(f"{username} is the only manager left for project '{project_path}'")
+        project_managers.setdefault(project_path, set()).add(manager_id)
+
+    for project_path, managers in project_managers.items():
+        # 'rods' is always a manager, so two owners means only 'rods' would remain.
+        if user_id in managers and len(managers) <= 2:
+            reasons.append(f"{username} is the only manager left for project '{project_path}'")
 
     # Check for open dropzones for this user
     for dropzone in row_iterator(

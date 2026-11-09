@@ -10,6 +10,8 @@ import selectors
 import time
 from subprocess import PIPE, STDOUT, CalledProcessError, Popen, TimeoutExpired, check_call  # nosec
 
+from dhpythonirodsutils.enums import IngestAttribute, IngestWorkerResult, ReplicaStatus
+
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.decorator import make, Output
@@ -18,7 +20,7 @@ from datahubirodsruleset.utils import (
     TRUE_AS_STRING, get_bad_status_replicas, get_under_replicated_data_objects, retry_runtime_error,
 )
 from datahubirodsruleset.ingest.ingest_control import (
-    IngestStopped, WORKER_RESULT, check_stop_requested,
+    IngestStopped, check_stop_requested,
 )
 
 def _clean_failed_replicas(ctx, destination_collection, cancellation_check):
@@ -45,7 +47,9 @@ def _clean_failed_replicas(ctx, destination_collection, cancellation_check):
             cancellation_check()
             # repl_status '2', '3', or '4' means a locked replica, which can happen if a previous irsync partially succeeded and got interrupted (e.g. by a timeout).
             # locked files cant be removed by iRODS, and they will also cause subsequent irsync calls to fail, so we reset the status to '0' (stale) to allow cleanup and retry.
-            if repl_status in ("2", "3", "4"):
+            if repl_status in (
+                ReplicaStatus.INTERMEDIATE.value, ReplicaStatus.READ_LOCKED.value, ReplicaStatus.WRITE_LOCKED.value,
+            ):
                 ctx.callback.msiWriteRodsLog(
                     f"INFO: Resetting stale replica {full_data_obj_path} (repl {repl_num}) status to 0 before removal",
                     0,
@@ -60,7 +64,7 @@ def _clean_failed_replicas(ctx, destination_collection, cancellation_check):
                             "replica_number",
                             repl_num,
                             "DATA_REPL_STATUS",
-                            "0",
+                            ReplicaStatus.STALE.value,
                         ],
                         shell=False,
                     )
@@ -213,14 +217,14 @@ def _run_irsync(ctx, source_collection, destination_collection, destination_reso
 def perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart):
     """Execute a transfer and acknowledge worker exit, including ordinary failures."""
     dropzone_path = format_dropzone_path(ctx, token, dropzone_type)
-    result = "exited"
+    result = IngestWorkerResult.EXITED.value
     try:
         _perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart)
     except IngestStopped as err:
-        result = "stopped"
+        result = IngestWorkerResult.STOPPED.value
         ctx.callback.msiExit("-1", str(err))
     finally:
-        ctx.callback.setCollectionAVU(dropzone_path, WORKER_RESULT, result)
+        ctx.callback.setCollectionAVU(dropzone_path, IngestAttribute.WORKER_RESULT.value, result)
 
 
 def _perform_irsync(ctx, destination_resource, token, destination_collection, dropzone_type, ingest_restart):

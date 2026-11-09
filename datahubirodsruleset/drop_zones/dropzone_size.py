@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from dhpythonirodsutils.enums import DropzoneAVUs
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
 from datahubirodsruleset.utils import FALSE_AS_STRING, map_access_name_to_access_level
@@ -27,7 +28,7 @@ def store_dropzone_size(ctx, dropzone_path, size):
         ctx.callback.msiSetACL("default", "admin:own", "rods", dropzone_path)
     try:
         previous_size = ctx.callback.getCollectionAVU(
-            dropzone_path, "dropzoneSize", "", "", FALSE_AS_STRING
+            dropzone_path, DropzoneAVUs.DROPZONE_SIZE.value, "", "", FALSE_AS_STRING
         )["arguments"][2]
         if previous_size == "" or int(previous_size) != int(size):
             # Keep the old size on failure so the next calculation retries the touch.
@@ -36,9 +37,9 @@ def store_dropzone_size(ctx, dropzone_path, size):
                 "options": {"no_create": True},
             }))
 
-        ctx.callback.setCollectionAVU(dropzone_path, "dropzoneSize", size)
+        ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.DROPZONE_SIZE.value, size)
         ctx.callback.setCollectionAVU(
-            dropzone_path, "dropzoneSizeUpdated", str(int(datetime.now().timestamp()))
+            dropzone_path, DropzoneAVUs.DROPZONE_SIZE_UPDATED.value, str(int(datetime.now().timestamp()))
         )
     finally:
         if previous_access != "own":

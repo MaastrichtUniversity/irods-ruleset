@@ -3,7 +3,7 @@ import json
 
 from genquery import row_iterator, AS_LIST  # pylint: disable=import-error
 
-from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState
+from dhpythonirodsutils.enums import ProcessAttribute, UnarchiveState, ReplicaStatus
 
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import irepl_wrapper
@@ -140,7 +140,7 @@ def check_unarchive_replica_count(ctx, file_path, check_results):
     hierarchies = {
         row[0] for row in row_iterator(
             "DATA_RESC_HIER",
-            f"COLL_NAME = '{collection}' AND DATA_NAME = '{name}' AND DATA_REPL_STATUS = '1'",
+            f"COLL_NAME = '{collection}' AND DATA_NAME = '{name}' AND DATA_REPL_STATUS = '{ReplicaStatus.GOOD.value}'",
             AS_LIST, ctx.callback,
         ) if check_results["project_resource"] in row[0].split(";")
     }

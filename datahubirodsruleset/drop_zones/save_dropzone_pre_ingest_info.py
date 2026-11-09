@@ -3,6 +3,8 @@ import glob
 import json
 import os
 
+from dhpythonirodsutils.enums import DropzoneAVUs
+
 from datahubirodsruleset.decorator import make, Output
 from datahubirodsruleset.utils import TRUE_AS_STRING
 
@@ -68,8 +70,8 @@ def save_dropzone_pre_ingest_info(ctx, dropzone_path, depositor, dropzone_type, 
     result["creator"] = ctx.callback.getCollectionAVU(dropzone_path, "creator", "", "", TRUE_AS_STRING)["arguments"][2]
     result["project"] = ctx.callback.getCollectionAVU(dropzone_path, "project", "", "", TRUE_AS_STRING)["arguments"][2]
     result["title"] = ctx.callback.getCollectionAVU(dropzone_path, "title", "", "", TRUE_AS_STRING)["arguments"][2]
-    ctx.callback.setCollectionAVU(dropzone_path, "totalSize", str(size))
-    ctx.callback.setCollectionAVU(dropzone_path, "numFiles", str(file_count))
+    ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.TOTAL_SIZE.value, str(size))
+    ctx.callback.setCollectionAVU(dropzone_path, DropzoneAVUs.NUM_FILES.value, str(file_count))
 
     # Keep document creation as the final side effect, after all validation errors are known.
     save_pre_ingest_document(ctx, result, token)

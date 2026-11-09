@@ -33,7 +33,12 @@ def process_dropzone(ctx, token, username, dropzone_type):
         ctx.callback.setCollectionAVU(dropzone_path, "state", DropzoneState.ERROR_INGESTION.value)
         ctx.callback.msiWriteRodsLog(f"Ingest already has a destination for {dropzone_path}; admin restart required", 0)
         return
-    if state not in ("in-queue-for-validation", "validating", "in-queue-for-ingestion"):
+    if state not in (
+        DropzoneState.IN_QUEUE_FOR_VALIDATION.value,
+        DropzoneState.IN_QUEUE_FOR_MAINTENANCE_END.value,
+        DropzoneState.VALIDATING.value,
+        DropzoneState.IN_QUEUE_FOR_INGESTION.value,
+    ):
         return
     validation_results, dropzone_path = validate(ctx, token, username, dropzone_type)
 

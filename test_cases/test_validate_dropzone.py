@@ -29,7 +29,7 @@ class TestValidateDropzone:
       2. User with insufficient dropzone permissions
       3. Non-creator ingesting a direct dropzone when dropzone sharing is disabled
       4. Metadata validation failure (empty / unparseable metadata files)
-      5. Dropzone not ingestable (file with unsupported characters in its name)
+      5. Paths containing both a single quote and ' and ' are accepted
       6. Dropzone contains a stale file replica
     """
 
@@ -271,12 +271,8 @@ class TestValidateDropzone:
         finally:
             remove_dropzone(token, self.dropzone_type)
 
-    def test_validate_dropzone_not_ingestable(self):
-        """Dropzone whose physical directory contains a file with unsupported characters fails the ingestable check.
-
-        save_dropzone_pre_ingest_info walks the physical vault path and sets the 'isIngestable'
-        AVU to 'false' when any path contains both a single-quote (') and the substring ' and '.
-        """
+    def test_validate_dropzone_quote_and_combination(self):
+        """Paths containing both a single quote and ' and ' pass validation."""
         token = self._fresh_dropzone_with_metadata()
         dropzone_path = formatters.format_dropzone_path(token, self.dropzone_type)
         try:
@@ -294,23 +290,13 @@ class TestValidateDropzone:
             # Upload the file into the subdirectory with a name containing " and "
             # Use list form to avoid shell quoting issues with the special characters
             target_file = f"{dropzone_path}/{subdir}/invalid and char.dat"
-            try:
-                subprocess.check_call(
-                    ["iput", "-R", "stagingResc01", temp_file, target_file]
-                )
-            except subprocess.CalledProcessError:
-                # iput may fail due to the unsupported characters in the path, but that's OK.
-                # The validation logic will still detect them when walking the physical path.
-                pass
+            subprocess.check_call(
+                ["iput", "-R", "stagingResc01", temp_file, target_file]
+            )
 
             result = self._run_validate_dropzone(dropzone_path)
 
-            assert any(
-                "unsupported characters" in err for err in result["validation_errors"]
-            )
-            assert any(
-                target_file in err for err in result["validation_errors"]
-            )
+            assert result["validation_errors"] == []
             self._assert_stored_validation_errors(token, result["validation_errors"])
             self._assert_state_avu(dropzone_path, "validating")
         finally:

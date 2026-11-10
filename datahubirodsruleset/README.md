@@ -106,6 +106,11 @@ This label indicates the rule is safe to be executed by irods clients
  * Private:
 This label indicates the rule is usually only called by other rules and/or is not safe to be executed by irods clients, because it is part of a larger workflow (ingest, tape)
 
+## Housekeeping
+
+See the [housekeeping README](housekeeping/README.md) for setup, controller usage,
+report retention, AVU auditing and replication-resource rebalancing.
+
 
 ## Acknowledgements
 

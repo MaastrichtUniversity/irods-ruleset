@@ -1,4 +1,5 @@
 import subprocess
+import uuid
 import pytest
 from dhpythonirodsutils import formatters
 from dhpythonirodsutils.enums import ProjectAVUs
@@ -60,6 +61,25 @@ class TestPolicies:
         remove_project(cls.project_path)
         remove_dropzone(cls.token, cls.dropzone_type)
         print(f"End {cls.__name__}.teardown_class")
+
+    def test_trash_policy_bypasses_trash(self, tmp_path):
+        """Normal deletion must remove the object instead of moving it to trash."""
+        name = "trash-policy-" + uuid.uuid4().hex
+        logical_path = "/nlmumc/home/rods/" + name
+        source = tmp_path / name
+        source.write_text("trash policy test\n")
+        query = ["iquest", "%s", f"SELECT COLL_NAME WHERE DATA_NAME = '{name}'"]
+        subprocess.check_call(["iput", "-R", "passRescUM01", str(source), logical_path])
+        try:
+            subprocess.check_call(["irm", logical_path])
+            # Search the whole catalogue, including trash, for this unique name.
+            result = subprocess.run(query, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            assert "CAT_NO_ROWS_FOUND" in result.stdout, result.stdout
+        finally:
+            remaining = subprocess.run(query, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if remaining.returncode == 0:
+                for collection in remaining.stdout.splitlines():
+                    subprocess.check_call(["irm", "-f", collection + "/" + name])
 
     def test_post_proc_for_coll_create(self):
         """

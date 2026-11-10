@@ -1,9 +1,11 @@
 import json
 from pathlib import Path
 import subprocess
-import uuid
+from types import SimpleNamespace
 
 import pytest
+
+from test_cases.utils import create_project, remove_project
 
 
 pytestmark = pytest.mark.parallel
@@ -31,9 +33,13 @@ def set_size(project, collection, installed):
 
 @pytest.fixture(scope="module")
 def statistics_objects(tmp_path_factory):
-    project = "P" + str(100000000 + int(uuid.uuid4().hex[:8], 16) % 900000000)
-    path = "/nlmumc/projects/" + project
-    command("imkdir", path)
+    created = create_project(SimpleNamespace(
+        project_title="COLLECTION_STATISTICS_TEST", manager1="jmelius", manager2="opalmen",
+        ingest_resource="ires-hnas-umResource", destination_resource="passRescUM01",
+        budget_number="UM-30001234X",
+    ))
+    project = created["project_id"]
+    path = created["project_path"]
     try:
         collection = path + "/C000000001"
         empty = path + "/C000000002"
@@ -56,8 +62,7 @@ def statistics_objects(tmp_path_factory):
             resources[name] = command("iquest", "%s", f"SELECT RESC_ID WHERE RESC_NAME = '{name}'")
         yield project, collection, empty, resources
     finally:
-        command("ichmod", "-M", "-r", "own", "rods", path)
-        command("irm", "-rf", path)
+        remove_project(path)
 
 
 @pytest.mark.parametrize("installed", [False, True])

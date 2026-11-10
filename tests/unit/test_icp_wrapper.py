@@ -5,6 +5,7 @@ from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, call, patch
 
 import pytest
+from dhpythonirodsutils import enums
 
 
 def load_module(name, path):
@@ -23,10 +24,7 @@ def copy_rule(monkeypatch):
         "session_vars": ModuleType("session_vars"),
         "genquery": ModuleType("genquery"),
         "dhpythonirodsutils": SimpleNamespace(formatters=Mock(), loggers=Mock()),
-        "dhpythonirodsutils.enums": SimpleNamespace(
-            DropzoneState=Mock(), AuditTailTopics=Mock(),
-            ProjectAVUs=SimpleNamespace(RESOURCE=SimpleNamespace(value="resource")),
-        ),
+        "dhpythonirodsutils.enums": enums,
         "datahubirodsruleset": ModuleType("datahubirodsruleset"),
         "datahubirodsruleset.decorator": decorator,
         "datahubirodsruleset.formatters": SimpleNamespace(

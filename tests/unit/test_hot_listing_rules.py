@@ -7,6 +7,8 @@ from types import ModuleType, SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
+from dhpythonirodsutils import enums
+
 
 ROOT = Path(__file__).resolve().parents[2] / 'datahubirodsruleset'
 PROJECT = '/nlmumc/projects/P000000001'
@@ -21,10 +23,6 @@ def load(name, relative):
     return module
 
 
-def constants(**values):
-    return SimpleNamespace(**{key: SimpleNamespace(value=value) for key, value in values.items()})
-
-
 class RuleTests(unittest.TestCase):
     def setUp(self):
         self.query = Mock(side_effect=self.rows)
@@ -35,19 +33,6 @@ class RuleTests(unittest.TestCase):
         self.callback.get_user_group_memberships.return_value = {'arguments': ['', '', '[]']}
         self.callback.checkDropZoneACL.return_value = {'arguments': ['', '', 'true']}
         self.callback.msiExit.side_effect = lambda code, message: (_ for _ in ()).throw(RuntimeError(message))
-        project_avus = constants(TITLE='title', RESOURCE='resource', COLLECTION_METADATA_SCHEMAS='collectionMetadataSchemas',
-                                 ENABLE_ARCHIVE='enableArchive', ENABLE_UNARCHIVE='enableUnarchive',
-                                 ENABLE_CONTRIBUTOR_EDIT_METADATA='enableContributorEditMetadata', DESCRIPTION='description',
-                                 RESPONSIBLE_COST_CENTER='responsibleCostCenter', STORAGE_QUOTA_GB='storageQuotaGb',
-                                 ENABLE_DROPZONE_SHARING='enableDropzoneSharing', PRINCIPAL_INVESTIGATOR='OBI:0000103', DATA_STEWARD='dataSteward')
-        self.enums = SimpleNamespace(
-            ProjectAVUs=project_avus, ProcessAttribute=constants(ARCHIVE='archiveState', UNARCHIVE='unArchiveState'),
-            ProcessType=constants(DROP_ZONE='drop_zone', ARCHIVE='archive', UNARCHIVE='unarchive'),
-            ProcessState=constants(COMPLETED='completed', ERROR='error', IN_PROGRESS='in_progress', OPEN='open'),
-            DropzoneState=constants(INGESTED='ingested', OPEN='open', WARNING_VALIDATION_INCORRECT='warning-validation-incorrect',
-                                    WARNING_UNSUPPORTED_CHARACTER='warning-unsupported-character'),
-            ArchiveState=constants(ARCHIVE_DONE='archive-done'), UnarchiveState=constants(UNARCHIVE_DONE='unarchive-done'),
-        )
         self.formatters = SimpleNamespace(
             format_string_to_boolean=lambda value: value == 'true',
             format_project_path=lambda value: '/nlmumc/projects/' + value,
@@ -62,7 +47,7 @@ class RuleTests(unittest.TestCase):
             'genquery': SimpleNamespace(row_iterator=self.query, AS_LIST=object()),
             'dhpythonirodsutils': SimpleNamespace(formatters=self.formatters, validators=SimpleNamespace(
                 validate_project_collections_action_avu=lambda value: None), exceptions=SimpleNamespace(ValidationError=ValueError)),
-            'dhpythonirodsutils.formatters': self.formatters, 'dhpythonirodsutils.enums': self.enums,
+            'dhpythonirodsutils.formatters': self.formatters, 'dhpythonirodsutils.enums': enums,
             'datahubirodsruleset.utils': SimpleNamespace(TRUE_AS_STRING='true', FALSE_AS_STRING='false'),
             'datahubirodsruleset.formatters': SimpleNamespace(format_project_path=lambda ctx, identifier: PROJECT[:-10] + identifier),
         }

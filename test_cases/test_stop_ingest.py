@@ -56,27 +56,26 @@ class BaseTestCaseStopIngest:
     collection_title = "Stopingesttest"
     schema_name = "DataHub_general_schema"
     schema_version = "1.0.0"
+    payload_names = ("stop-test-1.bin", "stop-test-2.bin")
 
-    def test_stop_running_ingest_and_restart(self, tmp_path):
+    @pytest.fixture(autouse=True)
+    def setup(self, request, tmp_path):
         if os.environ.get("STOP_INGEST_TEST_TYPE") != self.dropzone_type:
             pytest.skip("Opt in on the transfer host with STOP_INGEST_TEST_TYPE=direct or mounted")
 
         self.project_path = None
         self.dropzone_path = None
-        self.ingest_started = False
-        self.ingest_finished = False
-        self.restart_pending = False
-        try:
-            self.prepare_ingest(tmp_path)
-            self.start_ingest_and_wait_for_transfer()
-            self.stop_and_verify_transfer()
-            self.restart_ingest()
-            self.wait_for_transfer()
-            self.stop_and_verify_transfer()
-            self.restart_and_verify_ingest()
-            self.wait_for_dropzone_removal_to_be_scheduled()
-        finally:
-            self.cleanup_project()
+        self.destination = None
+        request.addfinalizer(self.teardown)
+        self.prepare_ingest(tmp_path)
+
+    def test_stop_running_ingest_and_restart(self):
+        self.start_ingest_and_wait_for_transfer()
+        self.stop_and_verify_transfer()
+        self.restart_ingest()
+        self.wait_for_transfer()
+        self.stop_and_verify_transfer()
+        self.restart_and_verify_ingest()
 
     def get_dropzone_avu(self, attribute):
         result = run_rule("get_collection_attribute_value", self.dropzone_path, attribute)
@@ -104,7 +103,6 @@ class BaseTestCaseStopIngest:
             "start_ingest", self.depositor, self.token, self.dropzone_type,
             user=self.depositor if self.dropzone_type == "direct" else None,
         )
-        self.ingest_started = True
         self.wait_for_transfer()
 
     def wait_for_transfer(self):
@@ -114,7 +112,8 @@ class BaseTestCaseStopIngest:
             if collection_id:
                 self.destination = f"{self.project_path}/{collection_id}"
                 pids = get_irsync_pids_from_log(self.log_position, self.destination)
-                if pids and is_irsync_process_running(pids[-1], self.destination):
+                if (pids and is_irsync_process_running(pids[-1], self.destination)
+                        and any(status == "2" for _, status in self.get_payload_replica_states())):
                     self.transfer_pid = pids[-1]
                     assert self.get_dropzone_avu("ingestTransferState") == "active"
                     assert self.get_dropzone_avu("ingestStopRequested") == "false"
@@ -124,9 +123,37 @@ class BaseTestCaseStopIngest:
             assert not state.startswith("error-"), f"{self.dropzone_path} entered {state} before stopping"
             time.sleep(0.1)
         pytest.fail(
-            f"No running irsync observed for {self.dropzone_path}: run on icat for direct, "
+            f"No active payload transfer observed for {self.dropzone_path}: run on icat for direct, "
             "ires-hnas-um for mounted; increase STOP_INGEST_TEST_BYTES if the transfer finishes too quickly"
         )
+
+    def get_payload_replica_states(self):
+        query = (
+            "SELECT DATA_NAME, DATA_REPL_STATUS "
+            f"WHERE COLL_NAME = '{self.destination}'"
+        )
+        try:
+            output = subprocess.check_output(["iquest", "%s|%s", query], text=True)
+        except subprocess.CalledProcessError as error:
+            if "CAT_NO_ROWS_FOUND" in error.output:
+                return []
+            raise
+        return [
+            (name, status) for name, status in (line.rsplit("|", 1) for line in output.splitlines())
+            if name in self.payload_names
+        ]
+
+    def wait_for_payload_replicas_to_settle(self):
+        # A server-side copy can outlive the cancelled irsync client. Wait for
+        # its real replica transition before restarting or removing test data.
+        deadline = time.monotonic() + 120
+        while True:
+            states = self.get_payload_replica_states()
+            if all(status in ("0", "1") for _, status in states):
+                return
+            if time.monotonic() >= deadline:
+                pytest.fail(f"Payload replicas still active for {self.destination}: {states}")
+            time.sleep(1)
 
     def stop_and_verify_transfer(self):
         before = time.monotonic()
@@ -137,24 +164,25 @@ class BaseTestCaseStopIngest:
         assert self.get_dropzone_avu("ingestTransferState") == "stopped"
         assert self.get_dropzone_avu("ingestStopRequested") == "true"
         assert self.get_dropzone_avu("ingestWorkerResult") == "stopped"
-        # stop_ingest returns after worker exit and coordinator acknowledgement.
-        # Retry cancellation is covered by the mocked tests; no fixed wait here.
+        # Keep the stop acknowledgement and source-preservation assertions
+        # separate from waiting for the server's current file request to finish.
         subprocess.check_call(["ils", f"{self.dropzone_path}/instance.json"])
         if self.dropzone_type == "mounted":
-            assert self.source_file.stat().st_size == self.file_size
+            for name in self.payload_names:
+                assert (self.source_file.parent / name).stat().st_size == self.file_size
         else:
-            subprocess.check_call(["ils", f"{self.dropzone_path}/stop-test.bin"])
+            for name in self.payload_names:
+                subprocess.check_call(["ils", f"{self.dropzone_path}/{name}"])
+        self.wait_for_payload_replicas_to_settle()
 
     def restart_ingest(self):
         self.log_position = get_log_position()
-        self.restart_pending = True
         run_rule("restart_ingest", self.token, self.dropzone_type)
         # Restart is delayed; allow it to leave the previously stopped state.
         deadline = time.monotonic() + 60
         while self.get_dropzone_avu("state") == DropzoneState.ERROR_INGESTION.value and time.monotonic() < deadline:
             time.sleep(0.2)
         assert self.get_dropzone_avu("state") != DropzoneState.ERROR_INGESTION.value, "Restart did not begin"
-        self.restart_pending = False
 
     def restart_and_verify_ingest(self):
         self.restart_ingest()
@@ -162,6 +190,7 @@ class BaseTestCaseStopIngest:
         assert self.get_dropzone_avu("ingestTransferState") == "finished"
         assert self.get_dropzone_avu("ingestStopRequested") == "false"
         assert self.get_dropzone_avu("ingestWorkerResult") == "exited"
+        self.wait_for_dropzone_removal_to_be_scheduled()
         subprocess.check_call(["ichksum", "-Mr", self.destination])
         subprocess.check_call(["ichksum", "-K", "-r", self.destination])
         assert get_irsync_pids_from_log(self.log_position, self.destination)
@@ -184,28 +213,50 @@ class BaseTestCaseStopIngest:
         while time.monotonic() < deadline:
             delayed_rules = subprocess.check_output(["iqstat", "-a"], text=True)
             if removal_rule in delayed_rules or not self.get_dropzone_avu("state"):
-                self.ingest_finished = True
                 return
             time.sleep(1)
         pytest.fail(f"Post-ingest work did not schedule removal of {self.dropzone_path}")
 
-    def cleanup_project(self):
-        # Never remove data underneath a transfer that has not confirmed a stop.
-        if self.restart_pending:
-            print(f"Restart still pending; retaining {self.dropzone_path} and {self.project_path}")
-            return
-        if self.dropzone_path and self.get_dropzone_avu("ingestTransferState") == "active":
-            try:
+    def teardown(self):
+        try:
+            if self.dropzone_path and self.get_dropzone_avu("ingestTransferState") == "active":
                 run_rule("stop_ingest", self.token, self.dropzone_type)
-            except subprocess.CalledProcessError:
-                print(f"Stop unconfirmed; retaining {self.dropzone_path} and {self.project_path} for inspection")
-                return
-        if self.ingest_started and not self.ingest_finished:
-            if not self.get_dropzone_avu("state").startswith("error-"):
-                print(f"Ingest workflow still unfinished; retaining {self.dropzone_path} and {self.project_path}")
-                return
-        if self.project_path:
-            remove_project(self.project_path)
+            if self.destination:
+                self.wait_for_payload_replicas_to_settle()
+        finally:
+            try:
+                if self.dropzone_path:
+                    self.cleanup_dropzone()
+            finally:
+                if self.project_path:
+                    remove_project(self.project_path)
+
+    def cleanup_dropzone(self):
+        # Cancel post-ingest removal before deleting its source collection.
+        query = (
+            "SELECT RULE_EXEC_ID WHERE RULE_EXEC_NAME LIKE "
+            f"'%removeDropzone(''{self.dropzone_path}'',%'"
+        )
+        try:
+            rule_ids = subprocess.check_output(["iquest", "%s", query], text=True).splitlines()
+        except subprocess.CalledProcessError as error:
+            if "CAT_NO_ROWS_FOUND" not in error.output:
+                raise
+            rule_ids = []
+        for rule_id in rule_ids:
+            subprocess.check_call(["iqdel", rule_id])
+        if not self.get_dropzone_avu("state"):
+            return
+        subprocess.check_call(["ichmod", "-rM", "own", "rods", self.dropzone_path])
+        ingest_host = subprocess.check_output([
+            "iquest", "%s", f"SELECT RESC_LOC WHERE RESC_NAME = '{self.ingest_resource}'",
+        ], text=True).strip()
+        # Use the normal removal rule to also disable and delete physical zones.
+        subprocess.check_call([
+            "irule", "-r", "irods_rule_engine_plugin-irods_rule_language-instance",
+            f"removeDropzone('{self.dropzone_path}', '{ingest_host}', '{self.token}', '{self.dropzone_type}')",
+            "null", "ruleExecOut",
+        ])
 
 
 class TestStopDirectIngestUM(BaseTestCaseStopIngest):
@@ -213,9 +264,10 @@ class TestStopDirectIngestUM(BaseTestCaseStopIngest):
 
     def add_data_to_dropzone(self, tmp_path):
         self.create_source_file(tmp_path / "stop-test.bin")
-        subprocess.check_call([
-            "iput", "-R", "stagingResc01", str(self.source_file), f"{self.dropzone_path}/stop-test.bin",
-        ])
+        for name in self.payload_names:
+            subprocess.check_call([
+                "iput", "-R", "stagingResc01", str(self.source_file), f"{self.dropzone_path}/{name}",
+            ])
         for metadata_path in (
             formatters.format_instance_dropzone_path(self.token, self.dropzone_type),
             formatters.format_schema_dropzone_path(self.token, self.dropzone_type),
@@ -228,6 +280,7 @@ class TestStopMountedIngestUM(BaseTestCaseStopIngest):
     dropzone_type = "mounted"
 
     def add_data_to_dropzone(self, tmp_path):
-        source_file = Path(f"/mnt/ingest/zones/{self.token}/stop-test.bin")
-        assert source_file.parent.is_dir(), "Run the mounted case on ires-hnas-um as the irods OS user"
-        self.create_source_file(source_file)
+        directory = Path(f"/mnt/ingest/zones/{self.token}")
+        assert directory.is_dir(), "Run the mounted case on ires-hnas-um as the irods OS user"
+        for name in self.payload_names:
+            self.create_source_file(directory / name)

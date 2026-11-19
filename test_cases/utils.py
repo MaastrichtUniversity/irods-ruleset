@@ -65,8 +65,7 @@ def add_data_to_direct_dropzone(dropzone_info):
 
         with open(file_path, "wb") as file_buffer:
             file_buffer.write(b"0" * size)
-        iput = f"iput -R stagingResc01 {file_path} {logical_path}"
-        subprocess.check_call(iput, shell=True)
+        subprocess.check_call(["iput", "-R", "stagingResc01", file_path, logical_path])
 
 
 def revert_latest_project_collection_number(project_path):
@@ -224,9 +223,9 @@ def wait_for_revoke_project_collection_user_acl():
 
 
 def does_path_exist(absolute_path):
-    run_ilocate = f"ilocate {absolute_path}"
+    run_ils = f"ils {absolute_path}"
     try:
-        subprocess.check_output(run_ilocate, shell=True).strip()
+        subprocess.check_output(run_ils, shell=True).strip()
     except subprocess.CalledProcessError:
         return False
 

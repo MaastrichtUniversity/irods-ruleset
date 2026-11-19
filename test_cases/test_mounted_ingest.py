@@ -1,9 +1,12 @@
-from test_cases.base_ingest_test_case import BaseTestCaseIngest
+import pytest
+
+from test_cases.base_ingest_test_case import BaseTestCaseIngest, INGEST_SCENARIOS
 from test_cases.utils import add_metadata_files_to_mounted_dropzone
 import subprocess
 
 
-class BaseTestCaseMountedIngest(BaseTestCaseIngest):
+@pytest.mark.parametrize("ingest_scenario", INGEST_SCENARIOS, indirect=True, scope="class")
+class TestMountedIngest(BaseTestCaseIngest):
     dropzone_type = "mounted"
     # For mounted ingest tests, there are no files in the mounted 'network' dropzone folder /mnt/ingest/zones/*token.
     # This is why dropzone_total_size = 0
@@ -22,40 +25,3 @@ class BaseTestCaseMountedIngest(BaseTestCaseIngest):
         remote_resource = subprocess.check_output(run_iquest, shell=True, encoding="UTF-8").strip()
         rule = f"irule -r irods_rule_engine_plugin-python-instance -F /rules/utils/createFakeFiles.r '*dropzonePath=\"/mnt/ingest/zones/{cls.token}\"' '*remoteResource=\"{remote_resource}\"'"
         subprocess.check_call(rule, shell=True)
-
-class BaseTestCaseMountedIngestAsContributor(BaseTestCaseMountedIngest):
-    @classmethod
-    def perform_tasks_after_project_creation(cls):
-        cls.depositor = "dlinssen"
-        cls.collection_creator = "d.linssen@maastrichtuniversity.nl"
-        rule_set_acl = f'/rules/tests/run_test.sh -r set_acl -a "default,write,{cls.depositor},{cls.project_path}"'
-        subprocess.check_call(rule_set_acl, shell=True)
-
-class TestMountedIngestUM(BaseTestCaseMountedIngest):
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "passRescUM01"
-
-
-class TestMountedIngestAZM(BaseTestCaseMountedIngest):
-    ingest_resource = "ires-hnas-azmResource"
-    destination_resource = "replRescAZM02"
-
-
-class TestMountedIngestS3(BaseTestCaseMountedIngest):
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUMCeph01"
-
-
-class TestMountedIngestUMAsContributor(BaseTestCaseMountedIngestAsContributor):
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "passRescUM01"
-
-
-class TestMountedIngestAZMAsContributor(BaseTestCaseMountedIngestAsContributor):
-    ingest_resource = "ires-hnas-azmResource"
-    destination_resource = "replRescAZM02"
-
-
-class TestMountedIngestS3AsContributor(BaseTestCaseMountedIngestAsContributor):
-    ingest_resource = "ires-hnas-umResource"
-    destination_resource = "replRescUMCeph01"

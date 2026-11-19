@@ -12,7 +12,7 @@ elasticsearch needs to be up
 ```
 # Prevent pytest cache warnings
 ```
-Make sure the irods user has write access to the test_cases folder (inside ires-hnas-um container)
+Make sure the irods user has write access to the test_cases folder (inside the container running pytest)
 chmod 777 /rules/test_cases
 or
 add the argument -p no:cacheprovider
@@ -20,8 +20,20 @@ add the argument -p no:cacheprovider
 ```
 
 # How to run all the test cases
+
+From the `docker-dev` directory, use the development launcher:
+
+```sh
+./rit.sh test irods
 ```
-./rit.sh exec ires-hnas-um
+
+The launcher runs the suite on **icat**, including both direct and mounted ingest
+tests. It then runs the mounted stop/restart tests on **ires-hnas-um**.
+Run the ingest suites on icat so their progress checks can read its iRODS log.
+To run pytest manually on icat:
+
+```
+./rit.sh exec icat
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v .
@@ -30,7 +42,7 @@ cd /rules/test_cases
 
 # How to run all the test cases with print enabled
 ```
-./rit.sh exec ires-hnas-um
+./rit.sh exec icat
 su irods
 cd /rules/test_cases
 /var/lib/irods/.local/bin/pytest -v -s -p no:cacheprovider .
@@ -38,25 +50,28 @@ cd /rules/test_cases
 
 # How to run a single test file
 ```
-./rit.sh exec ires-hnas-um
-su irods
-cd /rules/test_cases
-/var/lib/irods/.local/bin/pytest -v test_direct_ingest.py
+./rit.sh test irods test_direct_ingest.py
+# Or the mounted ingest suite:
+./rit.sh test irods test_mounted_ingest.py
 ```
 # How to run a single test case
 ```
-./rit.sh exec ires-hnas-um
+./rit.sh exec icat
 su irods
 cd /rules/test_cases
-/var/lib/irods/.local/bin/pytest -v test_direct_ingest.py::TestDirectIngestUM
+/var/lib/irods/.local/bin/pytest -v test_direct_ingest.py::TestDirectIngest -k um-manager
 ```
 # How to run a single test
 ```
-./rit.sh exec ires-hnas-um
-su irods
-cd /rules/test_cases
-/var/lib/irods/.local/bin/pytest -v test_direct_ingest.py::TestDirectIngestUM::test_collection_avu
+./rit.sh test irods 'test_direct_ingest.py::TestDirectIngest::test_collection_avu[um-manager]'
 ```
+
+The direct and mounted ingest suites use `TestDirectIngest` and
+`TestMountedIngest`, each with six scenarios: `um-manager`, `azm-manager`,
+`s3-manager`, `um-contributor`, `azm-contributor`, and `s3-contributor`.
+Each scenario shares one project/dropzone ingest across its tests and removes
+the project afterwards. Use `-k` to select a scenario, or a quoted node ID to
+select one test within that scenario.
 
 # How to run all the test cases in parallel
 ```
@@ -195,15 +210,16 @@ STOP_INGEST_TEST_TYPE=mounted python3 -m pytest -v -s test_cases/test_stop_inges
 
 The test uses `ires-hnas-umResource` / `passRescUM01` and the existing test users.
 Set `STOP_INGEST_TEST_BYTES` to a larger byte count if the transfer finishes
-before the test observes it. Cleanup retains test data if a stop cannot be
-confirmed, so an unresponsive transfer can be inspected safely.
+before the test observes it. Cleanup always attempts to remove the dropzone and
+project, including when the test fails or a stop cannot be confirmed.
 
 The scenario methods separate preparation, transfer observation, stop checks,
 restart verification, and cleanup. Direct ingestion starts as the depositor;
 stop and restart run as `rods`. Metadata checks use the existing
 `get_collection_attribute_value` rule. The deletion check matches the explicit
-`removeDropzone(...)` call in `iqstat -a`. Cleanup retains data while a restart
-is still queued or a stop remains unconfirmed.
+`removeDropzone(...)` call in `iqstat -a`. Cleanup stops an active transfer before
+attempting dropzone removal, including physical ingest folders, and always
+attempts project removal even if stopping or dropzone removal fails.
 
 Reads and coordinator/worker writes use `getCollectionAVU`/`setCollectionAVU`;
 worker-result reset uses `remove_collection_attribute_value`, since iRODS
